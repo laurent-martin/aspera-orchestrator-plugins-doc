@@ -25,7 +25,7 @@ actions/my_plugin/
 └── MyPlugin.png          # Plugin icon (optional)
 ```
 
-## Common Patterns Identified
+## Plugin Architecture Patterns
 
 After analyzing multiple plugins (DivaArchive, HelloWorld, Filter, LocalExecution), the following common patterns emerge:
 
@@ -143,18 +143,22 @@ The `metadata.yml` file contains plugin metadata:
 :description: Short description of the plugin
 ```
 
-## Data Types
+## API Reference
+
+This section provides reference information for constants and types used in plugin development.
+
+### Data Types
 
 Available data types for inputs/outputs:
 
-- `TYPE_STRING` : String
-- `TYPE_INT` : Integer
-- `TYPE_FLOAT` : Float/Decimal
+- `TYPE_STRING` : String value
+- `TYPE_INT` : Integer number
+- `TYPE_FLOAT` : Float/Decimal number
 - `TYPE_FLAG` : Boolean (true/false)
-- `TYPE_HASH` : Hash/Dictionary
-- `TYPE_ARRAY` : Array
+- `TYPE_HASH` : Hash/Dictionary structure
+- `TYPE_ARRAY` : Array/List structure
 
-## Execution Status
+### Execution Status
 
 Possible statuses returned by `execute`:
 
@@ -164,7 +168,7 @@ Possible statuses returned by `execute`:
 - `STATUS_INPROGRESS` : In progress (for asynchronous execution)
 - `STATUS_PAUSED` : Paused
 
-## Categories
+### Categories
 
 Available plugin categories:
 
@@ -268,7 +272,7 @@ end
 :description: A simple plugin that demonstrates the basic structure of an Orchestrator action
 ```
 
-## How It Works
+### How It Works
 
 1. **Input**: The plugin receives a `name` parameter
 2. **Processing**: It creates a greeting message: "Hello, [name]!"
@@ -348,7 +352,7 @@ end
 7. **Cleanup**: Clean up temporary files and resources
 8. **Progress Reporting**: Use `report_progress` for long operations
 
-## Common Patterns
+## Advanced Usage Patterns
 
 ### Using Payload Variables
 
