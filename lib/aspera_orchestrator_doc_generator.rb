@@ -18,10 +18,10 @@ Encoding.default_internal = Encoding::UTF_8
 Encoding.default_external = Encoding::UTF_8
 
 # Load stub classes and modules for missing dependencies
-require_relative '../erb_stubs'
+require_relative 'erb_stubs'
 
 # Load ERB helper methods for template rendering
-require_relative '../erb_helpers'
+require_relative 'erb_helpers'
 
 # generate documentation for Aspera Orchestrator plugins
 # 1. read metadata from metadata.yml
