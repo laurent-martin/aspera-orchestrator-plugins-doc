@@ -8,9 +8,35 @@
 require 'yaml'
 require 'fileutils'
 require 'date'
+require 'erb'
+require 'logger'
 
 Encoding.default_internal = Encoding::UTF_8
 Encoding.default_external = Encoding::UTF_8
+
+# Override require to ignore missing gems during documentation generation
+module Kernel
+  alias original_require require
+
+  def require(name)
+    original_require(name)
+  rescue LoadError => e
+    # Ignore missing gems - they're not needed for documentation
+    warn "Warning: Skipping missing gem: #{name}"
+    false
+  end
+end
+
+# Load stub classes and modules for missing dependencies
+require_relative 'erb_stubs'
+
+# Load ERB helper methods for template rendering
+require_relative 'erb_helpers'
+
+if WorkInput.respond_to?(:clone_for_workstep) == false
+  Rails.logger.error 'Plugin not compatible with Orchestrator version < 2.6.0'
+  raise Exception.new('Plugin not compatible with Orchestrator version < 2.6.0')
+end
 
 # generate documentation for Aspera Orchestrator plugins
 # 1. read metadata from metadata.yml
@@ -82,6 +108,25 @@ class AsperaOrchestratorDocGenerator
   end
 
   def erb_to_html(file)
+    return '<br/>documentation coming soon...' unless File.exist?(file)
+
+    plugin_folder = File.dirname(file)
+    plugin_name = File.basename(plugin_folder).gsub(/s$/, '')
+
+    begin
+      load(File.join(plugin_folder, "#{plugin_name}.rb"))
+      helpers = ErbHelpers.new
+      ERB.new(File.read(file)).result(helpers.get_binding)
+    rescue LoadError => e
+      Rails.logger.warn "Failed to load plugin #{plugin_name}: #{e.message} - using fallback"
+      '<br/>documentation coming soon...'
+    rescue Exception => e
+      Rails.logger.error "Error processing plugin #{plugin_name}: #{e.message}"
+      '<br/>documentation coming soon...'
+    end
+  end
+
+  def erb_to_html_ok(file)
     return '<br/>documentation coming soon...' unless File.exist?(file)
 
     doc = File.read(file)
