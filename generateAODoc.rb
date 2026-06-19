@@ -109,7 +109,7 @@ class AsperaOrchestratorDocGenerator
   end
 
   def erb_to_html(file)
-    return '<br/>documentation coming soon...' unless File.exist?(file)
+    return '<p class="coming-soon">Documentation coming soon...</p>' unless File.exist?(file)
 
     plugin_folder = File.dirname(file)
     plugin_name = File.basename(plugin_folder).gsub(/s$/, '')
@@ -191,11 +191,11 @@ class AsperaOrchestratorDocGenerator
         end
       end
       one_plugin[:doc] = +''
-      one_plugin[:doc] << "<table width=\"100%\" bgcolor=\"#DDDDDD\"><tr><td><h2>#{one_plugin[:meta][:display_name]}</h2></td></tr></table>\n"
-      one_plugin[:doc] << "<img src=\"#{one_plugin[:html_icon_path]}\" alt=\"#{one_plugin[:meta][:display_name]} icon\"/><br/>#{one_plugin[:meta][:description]}<br/>\n"
+      one_plugin[:doc] << "<div class=\"plugin-section\"><h2>#{one_plugin[:meta][:display_name]}</h2></div>\n"
+      one_plugin[:doc] << "<div class=\"plugin-header\"><img src=\"#{one_plugin[:html_icon_path]}\" alt=\"#{one_plugin[:meta][:display_name]} icon\" class=\"plugin-icon\"/><p class=\"plugin-description\">#{one_plugin[:meta][:description]}</p></div>\n"
 
       if one_plugin[:meta].has_key?(:revision_history)
-        one_plugin[:doc] << '<table border="1px"><tr><th>Version</th><th>Comment</th></tr>'
+        one_plugin[:doc] << '<table class="revision-history"><tr><th>Version</th><th>Comment</th></tr>'
         one_plugin[:meta][:revision_history].reverse_each do |v|
           one_plugin[:doc] << "<tr><td>#{v[:version]}</td><td>#{v[:change_description]}</td></tr>"
         end

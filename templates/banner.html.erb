@@ -59,12 +59,13 @@ body > p {
     transform: translateY(-5px);
     box-shadow: 0 8px 12px rgba(0,0,0,0.2);
 }
-.plugin td {
+.plugin-name {
     color: #2c3e50;
     font-size: 0.85rem;
     font-weight: 500;
     line-height: 1.4;
-    padding: 8px 0 0 0;
+    margin-top: 8px;
+    display: block;
 }
 .icon {
     width: 64px;
@@ -86,7 +87,7 @@ body > p {
 <% simplified_name.gsub!(/ trigger$/i, '') %>
 <% simplified_name.gsub!(/ transcoding$/i, '') %>
 <% simplified_name.gsub!(/ watcher$/i, '') %>
-<table class="plugin"><tr><td><img src="<%= one_plugin[:html_icon_path] %>" alt="<%= simplified_name %> icon" class="icon"><br/><%= simplified_name %></td></tr></table>
+<div class="plugin"><img src="<%= one_plugin[:html_icon_path] %>" alt="<%= simplified_name %> icon" class="icon"><span class="plugin-name"><%= simplified_name %></span></div>
 <% end %>
 <% end %>
 </body></html>

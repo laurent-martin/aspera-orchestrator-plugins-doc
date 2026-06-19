@@ -38,7 +38,7 @@ class ErbHelpers
       "<tr>#{cells}</tr>"
     end.join("\n")
 
-    "<table border='1' cellpadding='5' cellspacing='0'>\n#{header_html}\n#{rows_html}\n</table>"
+    "<table class='data-table'>\n#{header_html}\n#{rows_html}\n</table>"
   end
 
   def raw(a)
@@ -94,7 +94,7 @@ class ErbHelpers
   end
 
   def add_generic_input_help(action_name)
-    "<h4>Input description</h4>The list of inputs depends on the configuration of the #{action_name} action template.<br/>"
+    "<h4>Input description</h4><p>The list of inputs depends on the configuration of the #{action_name} action template.</p>"
   end
 
   def add_comments(action_name)
