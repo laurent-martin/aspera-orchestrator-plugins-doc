@@ -16,7 +16,7 @@ This guide explains how to develop a plugin (action) for Aspera Orchestrator. Pl
 
 An Aspera Orchestrator plugin consists of several files organized in a dedicated directory:
 
-```
+```text
 actions/my_plugin/
 ├── my_plugin.rb           # Main plugin class
 ├── metadata.yml           # Metadata and version history
@@ -29,14 +29,14 @@ actions/my_plugin/
 
 After analyzing multiple plugins (DivaArchive, HelloWorld, Filter, LocalExecution), the following common patterns emerge:
 
-### 1. Class Structure
+### Class Structure
 
 - All plugins inherit from `ActiveRecord::Base`
 - All plugins include the `Action` module
 - Plugins define constants for variable names and default values
 - Instance variables `@inputs`, `@outputs`, and `@status` are commonly used
 
-### 2. Core Methods
+### Core Methods
 
 Every plugin implements these essential methods:
 
@@ -46,7 +46,7 @@ Every plugin implements these essential methods:
 - `category` - Categorizes the plugin
 - `execute` - Contains main execution logic
 
-### 3. Execution Patterns
+### Execution Patterns
 
 - Synchronous execution: Returns status immediately
 - Asynchronous execution: Returns `STATUS_INPROGRESS` and uses `check_status`
@@ -55,7 +55,7 @@ Every plugin implements these essential methods:
 
 ## Required Elements
 
-### 1. Main Ruby Class
+### Main Ruby Class
 
 Each plugin must:
 
@@ -63,7 +63,7 @@ Each plugin must:
 - Include the `Action` module
 - Define essential methods
 
-### 2. Required Methods
+### Required Methods
 
 #### `self.version`
 
@@ -123,7 +123,7 @@ def execute
 end
 ```
 
-### 3. metadata.yml File
+### metadata.yml File
 
 The `metadata.yml` file contains plugin metadata:
 
