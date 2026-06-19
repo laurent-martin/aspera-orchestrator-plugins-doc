@@ -2,45 +2,90 @@
 # Laurent Martin
 
 # working folder
-BUILD_MAIN_DIR=build/$(VERSION)/
-BUILD_SRC_DIR=$(BUILD_MAIN_DIR)src/
-BUILD_OUT_DIR=$(BUILD_MAIN_DIR)out/
+def build_main_dir
+  "build/#{ENV['VERSION']}/"
+end
 
-all: $(BUILD_OUT_DIR)doc.created
+def build_src_dir
+  "#{build_main_dir}src/"
+end
+
+def build_out_dir
+  "#{build_main_dir}out/"
+end
+
+desc 'Build all documentation'
+task default: "#{build_out_dir}doc.created"
 
 # requires: brew install wkhtmltopdf
-$(BUILD_OUT_DIR)doc.created: $(BUILD_OUT_DIR)doc.html
-	wkhtmltopdf --enable-local-file-access file://$$(pwd -P)/$(BUILD_OUT_DIR)doc.html $(BUILD_OUT_DIR)Orchestrator_$(VERSION)_Plugin_Manual.pdf
-	wkhtmltopdf --enable-local-file-access file://$$(pwd -P)/$(BUILD_OUT_DIR)summary.html $(BUILD_OUT_DIR)Orchestrator_$(VERSION)_Plugin_List.pdf
-	wkhtmltopdf --enable-local-file-access -O landscape file://$$(pwd -P)/$(BUILD_OUT_DIR)banner.html $(BUILD_OUT_DIR)Orchestrator_$(VERSION)_Plugin_Banner.pdf
-	touch $@
+file "#{build_out_dir}doc.created" => ["#{build_out_dir}doc.html"] do
+  pwd = Dir.pwd
+  version = ENV['VERSION']
+
+  sh "wkhtmltopdf --enable-local-file-access file://#{pwd}/#{build_out_dir}doc.html #{build_out_dir}Orchestrator_#{version}_Plugin_Manual.pdf"
+  sh "wkhtmltopdf --enable-local-file-access file://#{pwd}/#{build_out_dir}summary.html #{build_out_dir}Orchestrator_#{version}_Plugin_List.pdf"
+  sh "wkhtmltopdf --enable-local-file-access -O landscape file://#{pwd}/#{build_out_dir}banner.html #{build_out_dir}Orchestrator_#{version}_Plugin_Banner.pdf"
+
+  touch "#{build_out_dir}doc.created"
+end
 
 # build doc (create latest link)
-$(BUILD_OUT_DIR)doc.html: $(BUILD_MAIN_DIR)
-	./generateAODoc.rb $(VERSION) $(BUILD_SRC_DIR) $(BUILD_OUT_DIR)
-$(BUILD_MAIN_DIR):
-	@echo "do: VERSION=xxx RPM=/path/to/rpm make extract_rpm  or  make extract_remote"
-	@exit 1
-extract_rpm:
-	@if test -z "$(RPM)";then echo "set RPM env var";exit 1;fi
-	@if test -z "$(VERSION)";then echo "set VERSION env var";exit 1;fi
-	echo "Version: $(VERSION)"
-	mkdir -p $(BUILD_MAIN_DIR)
-	mkdir $(BUILD_OUT_DIR)
-	mkdir -p $(BUILD_SRC_DIR)lib
-	mkdir $(BUILD_MAIN_DIR)rpmout
-	rpm2cpio $(RPM)|(cd $(BUILD_MAIN_DIR)rpmout && cpio -idv "*" "*/actions/*" "*/lib/action_tools.rb")
-	mv $(BUILD_MAIN_DIR)rpmout/opt/aspera/orchestrator*/actions $(BUILD_SRC_DIR)
-	mv $(BUILD_MAIN_DIR)rpmout/opt/aspera/orchestrator*/lib/action_tools.rb $(BUILD_SRC_DIR)lib
-	#rm -fr $(BUILD_MAIN_DIR)rpmout
-extract_remote:
-	@if test -z "$(RPM)";then echo "set RPM env var";exit 1;fi
-	@if test -z "$(VERSION)";then echo "set VERSION env var";exit 1;fi
-	echo "Version: $(VERSION)"
-	mkdir -p $(BUILD_MAIN_DIR)
-	mkdir $(BUILD_OUT_DIR)
-	mkdir -p $(BUILD_SRC_DIR)lib
-	$(ASCP) -l 100m $(KEYS) -d --mode=recv --host=$(REMOTE_HOST) --user=$(REMOTE_USER) --src-base=/opt/aspera/orchestrator/actions /opt/aspera/orchestrator/actions $(BUILD_SRC_DIR)actions
-	$(ASCP) -l 100m $(KEYS) -d --mode=recv --host=$(REMOTE_HOST) --user=$(REMOTE_USER) /opt/aspera/orchestrator/lib/action_tools.rb $(BUILD_SRC_DIR)lib
-clean:
-	rm -f $(BUILD_OUT_DIR)*.{html,pdf,created}
+file "#{build_out_dir}doc.html" => [build_main_dir] do
+  version = ENV['VERSION']
+  sh "./generateAODoc.rb #{version} #{build_src_dir} #{build_out_dir}"
+end
+
+directory build_main_dir do
+  puts 'do: VERSION=xxx RPM=/path/to/rpm rake extract_rpm  or  rake extract_remote'
+  exit 1
+end
+
+desc 'Extract RPM package'
+task :extract_rpm do
+  rpm = ENV['RPM']
+  version = ENV['VERSION']
+
+  raise 'set RPM env var' if rpm.nil? || rpm.empty?
+  raise 'set VERSION env var' if version.nil? || version.empty?
+
+  puts "Version: #{version}"
+
+  mkdir_p build_main_dir
+  mkdir_p build_out_dir
+  mkdir_p "#{build_src_dir}lib"
+  mkdir_p "#{build_main_dir}rpmout"
+
+  sh "rpm2cpio #{rpm} | (cd #{build_main_dir}rpmout && cpio -idv \"*\" \"*/actions/*\" \"*/lib/action_tools.rb\")"
+  sh "mv #{build_main_dir}rpmout/opt/aspera/orchestrator*/actions #{build_src_dir}"
+  sh "mv #{build_main_dir}rpmout/opt/aspera/orchestrator*/lib/action_tools.rb #{build_src_dir}lib"
+  # sh "rm -fr #{build_main_dir}rpmout"
+end
+
+desc 'Extract from remote server'
+task :extract_remote do
+  rpm = ENV['RPM']
+  version = ENV['VERSION']
+  ascp = ENV['ASCP']
+  keys = ENV['KEYS']
+  remote_host = ENV['REMOTE_HOST']
+  remote_user = ENV['REMOTE_USER']
+
+  raise 'set RPM env var' if rpm.nil? || rpm.empty?
+  raise 'set VERSION env var' if version.nil? || version.empty?
+
+  puts "Version: #{version}"
+
+  mkdir_p build_main_dir
+  mkdir_p build_out_dir
+  mkdir_p "#{build_src_dir}lib"
+
+  sh "#{ascp} -l 100m #{keys} -d --mode=recv --host=#{remote_host} --user=#{remote_user} --src-base=/opt/aspera/orchestrator/actions /opt/aspera/orchestrator/actions #{build_src_dir}actions"
+  sh "#{ascp} -l 100m #{keys} -d --mode=recv --host=#{remote_host} --user=#{remote_user} /opt/aspera/orchestrator/lib/action_tools.rb #{build_src_dir}lib"
+end
+
+desc 'Clean generated files'
+task :clean do
+  rm_f Dir.glob("#{build_out_dir}*.{html,pdf,created}")
+end
+
+# Made with Bob
