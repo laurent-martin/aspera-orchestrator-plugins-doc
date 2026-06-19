@@ -1,6 +1,8 @@
 # Build plugin doc for IBM Aspera Orchestrator
 # Laurent Martin
 
+require_relative 'lib/aspera_orchestrator_doc_generator'
+
 # working folder
 def build_main_dir
   "build/#{ENV['VERSION']}/"
@@ -32,7 +34,7 @@ end
 # build doc (create latest link)
 file "#{build_out_dir}doc.html" => [build_main_dir] do
   version = ENV['VERSION']
-  sh "./generateAODoc.rb #{version} #{build_src_dir} #{build_out_dir}"
+  AsperaOrchestratorDocGenerator.new.build_doc(version, build_src_dir, build_out_dir)
 end
 
 directory build_main_dir do

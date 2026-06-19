@@ -1,9 +1,8 @@
-#!/usr/bin/env ruby
 # frozen_string_literal: true
 
 # Laurent/Aspera
 # generate pdf doc for Orchestrator
-# look at Makefile for details to generate pdf from the html
+# look at Rakefile for details to generate pdf from the html
 
 require 'yaml'
 require 'json'
@@ -18,13 +17,11 @@ require 'set'
 Encoding.default_internal = Encoding::UTF_8
 Encoding.default_external = Encoding::UTF_8
 
-LOGGER = Logger.new(STDOUT)
-
 # Load stub classes and modules for missing dependencies
-require_relative 'erb_stubs'
+require_relative '../erb_stubs'
 
 # Load ERB helper methods for template rendering
-require_relative 'erb_helpers'
+require_relative '../erb_helpers'
 
 # generate documentation for Aspera Orchestrator plugins
 # 1. read metadata from metadata.yml
@@ -47,7 +44,10 @@ class AsperaOrchestratorDocGenerator
   RE_STRING_BODY = /.+?/.freeze
   RE_STRING_ARGUMENT = /['"](#{RE_STRING_BODY})['"]\s*/.freeze
 
-  def initialize
+  attr_reader :logger
+
+  def initialize(logger: nil)
+    @logger = logger || Logger.new(STDOUT)
     # NOTE: category is returned by method category() in the main plugin ruby file (plugin_name.rb)
     # the category in metadata.yml is not always good.
     # categories are listed in: lib/action_tools.rb, like this: CATEGORY_<CONST_NAME> = '<Display Name>'
@@ -107,10 +107,10 @@ class AsperaOrchestratorDocGenerator
       source = source.gsub(/require(_relative)?\s+['"]([^'"]+)['"]/, '')
       ERB.new(File.read(file)).result(ErbHelpers.new.get_binding(source)).gsub('line-height: 0.5;', '')
     rescue SyntaxError => e
-      LOGGER.warn "Ignoring: #{file} due to syntax error: #{e}"
+      @logger.warn "Ignoring: #{file} due to syntax error: #{e}"
       e.to_s
     rescue StandardError => e
-      LOGGER.warn "Ignoring: #{file} due to exception: #{e}"
+      @logger.warn "Ignoring: #{file} due to exception: #{e}"
       e.to_s
     end
   end
@@ -228,10 +228,4 @@ class AsperaOrchestratorDocGenerator
   end
 end
 
-unless ARGV.length.eql?(3)
-  puts("Usage: #{$0} <version> <main folder> <out folder>")
-  puts('Example: 4.0.0 /opt/aspera/orchestrator .')
-  Process.exit(1)
-end
-
-AsperaOrchestratorDocGenerator.new.build_doc(ARGV[0], ARGV[1], ARGV[2])
+# Made with Bob
