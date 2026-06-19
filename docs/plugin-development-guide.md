@@ -212,7 +212,7 @@ end
 
 #### `inputs_spec`
 
-Defines required and optional input parameters.
+Defines required and optional input parameters. This method is used for validation when saving a workflow.
 
 ```ruby
 def inputs_spec
@@ -222,9 +222,21 @@ def inputs_spec
 end
 ```
 
+**Available Input/Output Types:**
+
+- `TYPE_STRING` - String value
+- `TYPE_INT` - Integer value
+- `TYPE_ARRAY` - Array value
+- `TYPE_HASH` - Hash/dictionary value
+- `TYPE_FLAG` - Boolean flag
+- `TYPE_DATE` - Date value
+- `TYPE_OBJECT` - Generic object
+- `TYPE_PASSWORD` - Password (masked in UI)
+- `TYPE_ATTACHMENT` - File attachment
+
 #### `outputs_spec`
 
-Defines output variables produced by the plugin.
+Defines output variables produced by the plugin. Sets the parameter name, type, and value to be output.
 
 ```ruby
 def outputs_spec
@@ -234,17 +246,31 @@ end
 
 #### `category`
 
-Defines the plugin's category in the UI.
+Defines the plugin's category in the UI. Available categories:
 
 ```ruby
 def category
-  return [CATEGORY_FILEOPERATIONS]  # or CATEGORY_SYSTEM, CATEGORY_INTEGRATION, etc.
+  return [CATEGORY_FILEOPERATIONS]
 end
 ```
 
+**Available Categories:**
+
+- `CATEGORY_OTHER` - 'Other Utilities'
+- `CATEGORY_SYSTEM` - 'System'
+- `CATEGORY_TRIGGERS` - 'Triggers'
+- `CATEGORY_FILEOPERATIONS` - 'File Operations'
+- `CATEGORY_FILETRANSFORMATIONS` - 'File Transformations'
+- `CATEGORY_FILETRANSFER` - 'File Transfer'
+- `CATEGORY_USERINTERACTIONS` - 'User Interactions'
+- `CATEGORY_INTEGRATION` - 'Integration'
+- `CATEGORY_SCHEDULING` - 'Scheduling'
+- `CATEGORY_TRANSCODING` - 'Transcoding'
+- `CATEGORY_QUALITY_CONTROL` - 'Quality Control'
+
 #### `execute`
 
-Contains the main execution logic.
+Contains the main execution logic. This method must return three values:
 
 ```ruby
 def execute
@@ -254,6 +280,35 @@ def execute
   return STATUS_COMPLETE, "Execution successful", @outputs
 end
 ```
+
+**Return Values:**
+
+1. **@status** - Plugin execution status (see Status Constants below)
+2. **@status_details** - String describing the current state (e.g., "Processing complete", "Error occurred")
+3. **@outputs** - Hash containing output variables defined in `outputs_spec`
+
+**Instance Variables:**
+
+- `@inputs` - Hash of input values provided by the workflow engine
+- `@outputs` - Hash of output values to return to the workflow engine
+
+**Status Constants:**
+
+- `STATUS_COMPLETE` - Execution completed successfully
+- `STATUS_INPROGRESS` - Execution in progress (for asynchronous plugins)
+- `STATUS_FAILED` - Execution failed
+- `STATUS_ERROR` - Error occurred during execution
+- `STATUS_PAUSED` - Execution paused
+- `STATUS_PAUSING` - Execution is pausing
+- `STATUS_CANCELING` - Execution is being canceled
+- `STATUS_RESUMING` - Execution is resuming
+- `STATUS_ROLLINGBACK` - Execution is rolling back
+- `STATUS_INACTIVE` - Plugin is inactive
+- `STATUS_ACTIVATING` - Plugin is activating
+- `STATUS_OBSOLETE` - Plugin is obsolete
+- `STATUS_UNDEFINED` - Status could not be determined
+- `STATUS_TRUE` - Boolean true status
+- `STATUS_FALSE` - Boolean false status
 
 ### metadata.yml File
 
@@ -413,12 +468,26 @@ end
 
 ## Testing Your Plugin
 
-1. Place your plugin directory in `actions/`
-2. Restart Orchestrator
+### Development vs Production Paths
+
+- **Development path**: `/opt/aspera/orchestrator/actions` - Place plugins here during development
+- **Production path**: `/opt/aspera/var/config/orchestrator/actions` - Plugins are loaded from here (configurable via `actionplugins_load_directory`)
+- Database tables are updated when plugins are moved from development to production path
+
+### Testing Steps
+
+1. Place your plugin directory in the development `actions/` directory
+2. Restart Orchestrator to load the plugin
 3. The plugin will appear in the action list under the specified category
 4. Create a workflow step using your plugin
 5. Provide the required inputs
 6. Execute and verify the outputs
+
+### Important Notes
+
+- **No empty classes**: Orchestrator will attempt to process empty classes and throw errors if they are present
+- **JavaScript in views**: JavaScript code should be added directly to the `edit.html.erb` file, not in separate files
+- **Database columns**: All plugins inherit standard columns from the `Action` base class (name, comments, etc.)
 
 ## Advanced Features
 
@@ -445,9 +514,12 @@ end
 **Key Points:**
 
 - Migration files must be prefixed with timestamp: `YYYYMMDDHHMMSS_description.rb`
+- File must start with underscore: `_create_my_plugins.rb`
+- File name must be plural and match the folder name (tableize is used to validate)
 - Table name must follow pattern: `action_#{plugin_name.tableize}` (e.g., `action_my_plugins`)
 - Migrations are executed automatically when plugin is loaded
 - Use standard `Rails` migration methods: `create_table`, `add_column`, `change_column`, etc.
+- Multiple migration files can exist in a plugin directory
 
 **Versioning Migrations:**
 When updating a plugin, create new migration files with later timestamps:
@@ -493,7 +565,12 @@ def check_status
 end
 ```
 
-**Important:** The third return value from `check_status` specifies the polling interval in seconds.
+**Important Notes:**
+
+- `synchronous_execution?` should return `false` to indicate asynchronous execution
+- This prevents the action from blocking the Slave Queue Thread
+- The third return value from `check_status` specifies the polling interval in seconds
+- **Only use for triggers and long-running processes** - synchronous execution should be `true` for most plugins
 
 ### Trigger Plugins
 
@@ -536,10 +613,17 @@ end
 
 **Trigger Persistence:**
 
-- Use  to get previously triggered events
-- Use  to mark new events
-- Use  to save state
-- See  for complete example
+- Use `@current_triggers` to get previously triggered events
+- Use `register_triggers([event_id])` to mark new events
+- Use `persist_triggers(@current_triggers)` to save state
+- Include `ModuleTriggerTools` module for trigger persistence methods
+
+**Important Notes:**
+
+- `synchronous_execution?` must return `false` for triggers
+- `multiple_execution?` should return `true` to allow multiple workflow instances
+- Triggers sit idle until an event occurs, so they shouldn't block the queue
+- Use trigger persistence to avoid re-triggering on the same event
 
 ### Lifecycle Control (Pause/Resume/Cancel/Rollback)
 
@@ -979,4 +1063,46 @@ For more examples and advanced techniques, explore the existing plugins in the `
 - Dynamic code evaluation
 - External gem dependencies
 
-The plugin system is powerful and flexible - use it to extend Orchestrator to meet your specific workflow automation needs.
+## Additional Resources
+
+### Learning Ruby
+
+For developers new to Ruby, these resources are recommended:
+
+- [Ruby Tutorial - TutorialsPoint](http://www.tutorialspoint.com/ruby/) - Comprehensive Ruby tutorial
+- [Codecademy Ruby Track](http://www.codecademy.com/tracks/ruby) - Interactive Ruby learning
+- [Try Ruby](http://tryruby.org/levels/1/challenges/0) - Browser-based Ruby introduction
+- [Ruby Monk](https://rubymonk.com/) - Interactive Ruby tutorials
+
+### SOAP Integration (for SOAP-based plugins)
+
+When working with SOAP web services:
+
+```ruby
+# Enable SOAP debugging to see request/response details
+@driver = SOAP::WSDLDriverFactory.new(WSDL_URL).create_rpc_driver
+@driver.wiredump_dev = STDOUT
+
+# Get available methods from WSDL
+available_methods = @driver.methods - Object.methods
+
+# Get detailed information about input parameters
+SOAP::Mapping.get_attributes()  # Shows what the WSDL requires
+```
+
+**WSDL Files:**
+
+- Store WSDL files in the plugin directory (e.g., `actions/my_plugin/wsdl/service.wsdl`)
+- Include XSD files for validation if provided
+- Reference local WSDL files to avoid network dependencies
+
+### Plugin Development Tips
+
+1. **Folder Naming**: Plugin folder must be plural (e.g., `cerify_file_verifications`)
+2. **Migration Naming**: Must start with underscore, be plural, and match folder name
+3. **Controller Usage**: Add controllers for plugins requiring server-supplied data for the action template
+   - Name: `{plugin_name}_controller.rb` (e.g., `cerify_file_verifications_controller.rb`)
+4. **View Files**: All forms push data to the back-end from fields present in `edit.html.erb`
+5. **Engine Variables**: The engine only sees `@inputs` and `@outputs` variables in the plugin
+6. **Return Format**: All plugins must return `[@status, @status_details, @outputs]`
+7. **Empty Classes**: No empty classes are allowed - Orchestrator will attempt to process them and throw errors
