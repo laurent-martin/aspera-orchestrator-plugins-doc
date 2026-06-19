@@ -2,6 +2,40 @@
 # Laurent Martin
 
 require_relative 'lib/aspera_orchestrator_doc_generator'
+require_relative 'lib/pdf_generator'
+
+# Load pandoc helper from aspera-cli if DIR_PANDOC is set
+if ENV['DIR_PANDOC']
+  # Convert DIR_PANDOC to absolute path
+  ENV['DIR_PANDOC'] = File.expand_path(ENV['DIR_PANDOC'], __dir__)
+
+  # Load required dependencies from aspera-cli
+  aspera_cli_build = File.expand_path('../aspera-cli/build', __dir__)
+  $LOAD_PATH.unshift(File.join(aspera_cli_build, 'lib'))
+
+  require 'pathname'
+  require 'fileutils'
+  require 'logger'
+
+  # Define minimal stubs for missing dependencies
+  module Paths
+    TMP = Pathname.new('tmp')
+    TMP.mkpath
+  end
+
+  module BuildTools
+    def run(*cmd, **options)
+      system(*cmd) || raise("Command failed: #{cmd.join(' ')}")
+    end
+
+    def log
+      @log ||= Logger.new(STDOUT)
+    end
+  end
+
+  # Now load pandoc.rb
+  require File.join(aspera_cli_build, 'lib', 'pandoc.rb')
+end
 
 # working folder
 def build_main_dir
@@ -16,18 +50,19 @@ def build_out_dir
   "#{build_main_dir}out/"
 end
 
-desc 'Build all documentation'
-task default: "#{build_out_dir}doc.created"
+desc 'Build all documentation (HTML + PDF)'
+task default: [:pdf]
 
-# requires: brew install wkhtmltopdf
+desc 'Generate HTML documentation'
+task html: "#{build_out_dir}doc.html"
+
+desc 'Generate PDF documentation'
+task pdf: "#{build_out_dir}doc.created"
+
+# Generate PDFs from HTML files
 file "#{build_out_dir}doc.created" => ["#{build_out_dir}doc.html"] do
-  pwd = Dir.pwd
   version = ENV['VERSION']
-
-  sh "wkhtmltopdf --enable-local-file-access file://#{pwd}/#{build_out_dir}doc.html #{build_out_dir}Orchestrator_#{version}_Plugin_Manual.pdf"
-  sh "wkhtmltopdf --enable-local-file-access file://#{pwd}/#{build_out_dir}summary.html #{build_out_dir}Orchestrator_#{version}_Plugin_List.pdf"
-  sh "wkhtmltopdf --enable-local-file-access -O landscape file://#{pwd}/#{build_out_dir}banner.html #{build_out_dir}Orchestrator_#{version}_Plugin_Banner.pdf"
-
+  PdfGenerator.generate_all(out_dir: build_out_dir, version: version)
   touch "#{build_out_dir}doc.created"
 end
 
@@ -88,6 +123,21 @@ end
 desc 'Clean generated files'
 task :clean do
   rm_f Dir.glob("#{build_out_dir}*.{html,pdf,created}")
+  rm_f 'docs/plugin-development-guide.pdf'
 end
 
-# Made with Bob
+# Generate PDF from Markdown documentation
+namespace :doc do
+  desc 'Generate PDF from plugin development guide'
+  task :guide do
+    if ENV['DIR_PANDOC']
+      markdown_to_pdf(
+        md: 'docs/plugin-development-guide.md',
+        pdf: 'docs/plugin-development-guide.pdf'
+      )
+    else
+      puts 'Warning: DIR_PANDOC not set. Install aspera-cli or set DIR_PANDOC environment variable.'
+      puts 'Example: DIR_PANDOC=../aspera-cli/build/doc/pandoc rake doc:guide'
+    end
+  end
+end

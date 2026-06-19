@@ -1,3 +1,11 @@
+<!--
+PANDOC_DEFAULTS_BEGIN
+metadata:
+  title: "Aspera Orchestrator Plugin Development Guide"
+  author: "IBM Aspera"
+PANDOC_DEFAULTS_END
+-->
+
 # Aspera Orchestrator Plugin Development Guide
 
 ## Introduction

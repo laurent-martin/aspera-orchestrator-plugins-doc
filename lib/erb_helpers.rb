@@ -123,5 +123,3 @@ class ErbHelpers
     binding
   end
 end
-
-# Made with Bob

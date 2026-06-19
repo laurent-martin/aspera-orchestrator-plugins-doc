@@ -227,5 +227,3 @@ class AsperaOrchestratorDocGenerator
     end
   end
 end
-
-# Made with Bob
