@@ -117,7 +117,7 @@ class AsperaOrchestratorDocGenerator
     begin
       load(File.join(plugin_folder, "#{plugin_name}.rb"))
       helpers = ErbHelpers.new
-      ERB.new(File.read(file)).result(helpers.get_binding)
+      ERB.new(File.read(file)).result(helpers.get_binding).gsub('line-height: 0.5;', '')
     rescue LoadError => e
       Rails.logger.warn "Failed to load plugin #{plugin_name}: #{e.message} - using fallback"
       '<br/>documentation coming soon...'
@@ -125,58 +125,6 @@ class AsperaOrchestratorDocGenerator
       Rails.logger.error "Error processing plugin #{plugin_name}: #{e.message}"
       '<br/>documentation coming soon...'
     end
-  end
-
-  def erb_to_html_ok(file)
-    return '<br/>documentation coming soon...' unless File.exist?(file)
-
-    doc = File.read(file)
-
-    # preformat fix
-    doc.gsub!('line-height: 0.5;', '')
-
-    # parameters
-    doc.gsub!(/<%=\s*begin_parameters_list\s*%>/, '')
-    doc.gsub!(/<%=\s*add_name\(#{RE_STRING_ARGUMENT}\)\s*%>/,
-              '<h3>Description</h3><h4>Saved Parameters Description</h4>')
-    doc.gsub!(/<%=\s*end_parameters_list\s*%>/, '</ul>')
-    doc.gsub!(/<%=\s*add_parameter_help\(#{RE_STRING_ARGUMENT},\s*#{RE_STRING_ARGUMENT}\)\s*%>/,
-              '<li><b>\\1</b>: \\2</li>')
-
-    # inputs
-    doc.gsub!(/<%=\s*begin_list\s*%>/, '<ul>')
-    doc.gsub!(/<%=\s*end_list\s*%>/, '</ul>')
-    doc.gsub!(/<%=\s*add_input_help\(#{RE_STRING_ARGUMENT},\s*#{RE_STRING_ARGUMENT}\)\s*%>/,
-              '<li><b>\\1</b>: \\2</li>')
-    doc.gsub!(/<%=\s*begin_inputs_description\s*%>/, '')
-    doc.gsub!(/<%=\s*add_generic_input_help\(#{RE_STRING_ARGUMENT}\)\s*%>/,
-              '<h4>Input description</h4>The list of inputs depends on the configuration of the \\1 action template.<br/>')
-    doc.gsub!(/<%=\s*end_inputs_description\s*%>/, '')
-    doc.gsub!(/<%=\s*add_comments\(\s*#{RE_STRING_ARGUMENT}\)\s*%>/,
-              '<li><b>Name</b>: The name used to identify a saved \\2 configured instance.</li><li><b>Comments</b>: Some comments about this saved \\2 configured instance.</li>')
-
-    # outputs
-    doc.gsub!(/<%=\s*begin_outputs_description\s*%>/, '<h4>Outputs description</h4>')
-    doc.gsub!(/<%=\s*end_outputs_description\s*%>/, '')
-    doc.gsub!(/<%=\s*add_output_help\(["'](#{RE_STRING_BODY})["'],\s*#{RE_STRING_ARGUMENT}\s*\)\s*%>/,
-              '<li><b>\\1</b>: \\2</li>')
-    doc.gsub!(/<%=\s*add_output_help\((#{RE_STRING_BODY}),\s*#{RE_STRING_ARGUMENT}\)\s*%>/,
-              '<li><b>\\1</b>: \\2</li>')
-    doc.gsub!(/add_output_help/, 'XXXXXXXXXXXXXX')
-
-    # instructions
-    doc.gsub!(/<%=\s*operating_instructions_start\s*%>/, '<h4>Operating Instructions</h4>')
-    doc.gsub!(/<%=\s*[A-Xa-z]+::([A-Z_]+)\s*%>/, '"\\1 "')
-    doc.gsub!(/<%=\s*operating_instructions_end\s*%>/, '')
-
-    # special strings
-    doc.gsub!(/<%=\s*supported_actions_help\s*%>/, '')
-
-    # delete other generated stuff
-    doc.gsub!(/<%=\s*supported_actions_help\s*%>/, '')
-    doc.gsub!(/<%=\s*dependencies_help\s*%>/, '')
-    doc.gsub!(%r{<img src="(http://feeds.feedburner.com/)}, '&lt;img src=&quot;\1')
-    doc
   end
 
   # Render an ERB template with the given binding
