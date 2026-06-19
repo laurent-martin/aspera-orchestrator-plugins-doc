@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 30px;
+    min-height: 100vh;
+}
+h1 {
+    color: #2c3e50;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-align: center;
+}
+p {
+    text-align: center;
+    color: #555;
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+table, th, td {
+   border: none;
+   vertical-align: middle;
+}
+th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+td {
+    padding: 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+tr:last-child td {
+    border-bottom: none;
+}
+tr:hover {
+    background-color: #f8f9fa;
+}
+.category {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 600;
+    padding: 15px 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.plugin_name {
+    white-space: nowrap;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+td:nth-child(3) {
+    color: #667eea;
+    font-weight: 500;
+}
+td:nth-child(4) {
+    color: #555;
+    line-height: 1.6;
+}
+</style>
+<title><%= doctitle %></title>
+</head>
+<body><h1><%= doctitle %></h1><p>Count: <%= plugin_count %> plugins</p>
+<table>
+<% sections.each do |section| %>
+<tr><td colspan="4" class="category"><%= section %></td></tr>
+<% plugin_data.each do |one_plugin| %>
+<% next unless section.eql?(one_plugin[:meta][:category]) %>
+<tr><td><img src="<%= one_plugin[:html_icon_path] %>" alt="<%= one_plugin[:meta][:display_name] %> icon" class="icon"></td><td class="plugin_name"><%= one_plugin[:meta][:display_name] %></td><td><%= one_plugin[:meta][:release_version] %></td><td><%= one_plugin[:meta][:description] %></td></tr>
+<% end %>
+<% end %>
+</table>
+</body></html>

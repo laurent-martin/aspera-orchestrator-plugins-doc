@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background: #f5f5f5;
+    padding: 20px;
+}
+.doctitle {
+    text-align: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 30px 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+h1 {
+    color: white;
+    font-size: 1.8rem;
+    font-weight: 600;
+    padding: 15px 20px;
+}
+h2 {
+    color: #2c3e50;
+    margin: 20px 0 10px 0;
+    font-size: 1.5rem;
+}
+h3 {
+    color: #34495e;
+    margin: 15px 0 10px 0;
+    font-size: 1.3rem;
+}
+h4 {
+    color: #555;
+    margin: 12px 0 8px 0;
+    font-size: 1.1rem;
+}
+p {
+    margin: 10px 0;
+    line-height: 1.8;
+}
+pre {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 15px;
+    font-family: 'Courier New', Consolas, monospace;
+    white-space: pre-wrap;
+    line-height: 1.5;
+    overflow-x: auto;
+    margin: 10px 0;
+}
+table {
+    border-collapse: collapse;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    width: 100%;
+    margin: 20px 0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+th, td {
+    padding: 12px 20px;
+    text-align: left;
+}
+th {
+    background-color: rgba(0,0,0,0.2);
+    color: white;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+}
+td {
+    background-color: white;
+    color: #333;
+    border-bottom: 1px solid #e9ecef;
+}
+tr:last-child td {
+    border-bottom: none;
+}
+tr:hover td {
+    background-color: #f8f9fa;
+}
+ul, ol {
+    margin: 10px 0 10px 30px;
+}
+li {
+    margin: 5px 0;
+    line-height: 1.6;
+}
+li b {
+    color: #667eea;
+}
+img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+.plugin-section {
+    background: white;
+    padding: 25px;
+    margin: 20px 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+</style>
+<title><%= doctitle %></title>
+</head>
+<body><p class="doctitle"><%= doctitle %></p>
+<% sections.each do |section| %>
+<table><tr><td><h1><%= section %></h1></td></tr></table>
+<% plugin_data.each do |one_plugin| %>
+<% next unless section.eql?(one_plugin[:meta][:category]) %>
+<%= one_plugin[:doc] %>
+<% end %>
+<% end %>
+</body></html>

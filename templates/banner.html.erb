@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 40px 20px;
+    min-height: 100vh;
+}
+.doc_title {
+    color: white;
+    font-size: 3rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+body > p {
+    color: rgba(255,255,255,0.9);
+    text-align: center;
+    font-size: 1.2rem;
+    margin-bottom: 40px;
+}
+.category {
+    background: rgba(255,255,255,0.95);
+    color: #2c3e50;
+    font-size: 1.5rem;
+    font-weight: 600;
+    padding: 15px 25px;
+    margin: 30px 0 20px 0;
+    border-radius: 8px;
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.plugin {
+    display: inline-block;
+    vertical-align: top;
+    text-align: center;
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    margin: 10px;
+    width: 120px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+.plugin:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 12px rgba(0,0,0,0.2);
+}
+.plugin td {
+    color: #2c3e50;
+    font-size: 0.85rem;
+    font-weight: 500;
+    line-height: 1.4;
+    padding: 8px 0 0 0;
+}
+.icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+</style>
+<title><%= doctitle %></title>
+</head>
+<body><p class="doc_title"><%= doctitle %></p><p>Count: <%= plugin_count %> plugins</p>
+<% sections.each do |section| %>
+<div class="category"><%= section %></div>
+<% plugin_data.each do |one_plugin| %>
+<% next unless section.eql?(one_plugin[:meta][:category]) %>
+<% simplified_name = one_plugin[:meta][:display_name].dup %>
+<% simplified_name.gsub!(/ operation$/i, '') %>
+<% simplified_name.gsub!(/ trigger$/i, '') %>
+<% simplified_name.gsub!(/ transcoding$/i, '') %>
+<% simplified_name.gsub!(/ watcher$/i, '') %>
+<table class="plugin"><tr><td><img src="<%= one_plugin[:html_icon_path] %>" alt="<%= simplified_name %> icon" class="icon"><br/><%= simplified_name %></td></tr></table>
+<% end %>
+<% end %>
+</body></html>

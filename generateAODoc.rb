@@ -49,6 +49,7 @@ end
 class AsperaOrchestratorDocGenerator
   DIRNAME_ACTIONS = 'actions'
   DIRNAME_ICONS = 'icons'
+  DIRNAME_TEMPLATES = 'templates'
   ACTION_TOOLS = 'lib/action_tools.rb'
   FILENAME_METADATA = 'metadata.yml'
   FILENAME_HELP = 'help.html.erb'
@@ -178,6 +179,15 @@ class AsperaOrchestratorDocGenerator
     doc
   end
 
+  # Render an ERB template with the given binding
+  def render_template(template_name, binding_context)
+    template_path = File.join(DIRNAME_TEMPLATES, template_name)
+    raise "Template not found: #{template_path}" unless File.exist?(template_path)
+
+    template_content = File.read(template_path)
+    ERB.new(template_content).result(binding_context)
+  end
+
   def build_doc(orch_version, source_folder, out_folder)
     raise 'version must not be empty' if orch_version.empty?
     raise 'source folder must exist' unless Dir.exist?(source_folder)
@@ -256,358 +266,28 @@ class AsperaOrchestratorDocGenerator
     File.open(File.join(out_folder, '/doc.html'), 'w') do |tmpdocfile|
       puts("Generating: #{tmpdocfile.path}")
       doctitle = "Aspera Orchestrator v#{orch_version} Plugins Manuals"
-      tmpdocfile.write("<!DOCTYPE html>
-<html lang=\"en\">
-<head>
-<meta charset=\"UTF-8\">
-<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
-<style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    line-height: 1.6;
-    color: #333;
-    background: #f5f5f5;
-    padding: 20px;
-}
-.doctitle {
-    text-align: center;
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #2c3e50;
-    margin: 30px 0;
-    padding: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-h1 {
-    color: white;
-    font-size: 1.8rem;
-    font-weight: 600;
-    padding: 15px 20px;
-}
-h2 {
-    color: #2c3e50;
-    margin: 20px 0 10px 0;
-    font-size: 1.5rem;
-}
-h3 {
-    color: #34495e;
-    margin: 15px 0 10px 0;
-    font-size: 1.3rem;
-}
-h4 {
-    color: #555;
-    margin: 12px 0 8px 0;
-    font-size: 1.1rem;
-}
-p {
-    margin: 10px 0;
-    line-height: 1.8;
-}
-pre {
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 4px;
-    padding: 15px;
-    font-family: 'Courier New', Consolas, monospace;
-    white-space: pre-wrap;
-    line-height: 1.5;
-    overflow-x: auto;
-    margin: 10px 0;
-}
-table {
-    border-collapse: collapse;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    width: 100%;
-    margin: 20px 0;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-th, td {
-    padding: 12px 20px;
-    text-align: left;
-}
-th {
-    background-color: rgba(0,0,0,0.2);
-    color: white;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.9rem;
-    letter-spacing: 0.5px;
-}
-td {
-    background-color: white;
-    color: #333;
-    border-bottom: 1px solid #e9ecef;
-}
-tr:last-child td {
-    border-bottom: none;
-}
-tr:hover td {
-    background-color: #f8f9fa;
-}
-ul, ol {
-    margin: 10px 0 10px 30px;
-}
-li {
-    margin: 5px 0;
-    line-height: 1.6;
-}
-li b {
-    color: #667eea;
-}
-img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 4px;
-    margin: 10px 0;
-}
-.plugin-section {
-    background: white;
-    padding: 25px;
-    margin: 20px 0;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-</style>
-<title>#{doctitle}</title>
-</head>
-<body><p class=\"doctitle\">#{doctitle}</p>
-")
-      sections.each do |section|
-        tmpdocfile.write("<table><tr><td><h1>#{section}</h1></td></tr></table>")
-        plugin_data.each do |one_plugin|
-          next unless section.eql?(one_plugin[:meta][:category])
 
-          tmpdocfile.write(one_plugin[:doc])
-        end
-      end
-      tmpdocfile.write('</body></html>')
+      html_content = render_template('doc.html.erb', binding)
+      tmpdocfile.write(html_content)
     end
 
     ################################################################################################
     # 4: generate summary
     File.open(File.join(out_folder, 'summary.html'), 'w') do |tmpsumfile|
       doctitle = "Aspera Orchestrator v#{orch_version} Plugin Summary"
-      tmpsumfile.write("<!DOCTYPE html>\n<html lang=\"en\">\n")
-      tmpsumfile.write("<head>
-<meta charset=\"UTF-8\">
-<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
-<style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    line-height: 1.6;
-    color: #333;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    padding: 30px;
-    min-height: 100vh;
-}
-h1 {
-    color: #2c3e50;
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 10px;
-    text-align: center;
-}
-p {
-    text-align: center;
-    color: #555;
-    font-size: 1.1rem;
-    margin-bottom: 30px;
-}
-table {
-    border-collapse: collapse;
-    width: 100%;
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-}
-table, th, td {
-   border: none;
-   vertical-align: middle;
-}
-th {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 15px;
-    text-align: left;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-td {
-    padding: 15px;
-    border-bottom: 1px solid #e9ecef;
-}
-tr:last-child td {
-    border-bottom: none;
-}
-tr:hover {
-    background-color: #f8f9fa;
-}
-.category {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    font-size: 1.5rem;
-    font-weight: 600;
-    padding: 15px 20px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-.icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-.plugin_name {
-    white-space: nowrap;
-    font-weight: 600;
-    color: #2c3e50;
-    font-size: 1.1rem;
-}
-td:nth-child(3) {
-    color: #667eea;
-    font-weight: 500;
-}
-td:nth-child(4) {
-    color: #555;
-    line-height: 1.6;
-}
-</style>
-<title>#{doctitle}</title>
-</head>
-<body><h1>#{doctitle}</h1><p>Count: #{plugin_data.length} plugins</p>
-")
-      tmpsumfile.write('<table>')
-      sections.each do |section|
-        tmpsumfile.write("<tr><td colspan=\"4\" class=\"category\">#{section}</td></tr>")
-        plugin_data.each do |one_plugin|
-          next unless section.eql?(one_plugin[:meta][:category])
+      plugin_count = plugin_data.length
 
-          tmpsumfile.write("<tr><td><img src=\"#{one_plugin[:html_icon_path]}\" alt=\"#{one_plugin[:meta][:display_name]} icon\" class=\"icon\"></td><td class=\"plugin_name\">#{one_plugin[:meta][:display_name]}</td><td>#{one_plugin[:meta][:release_version]}</td><td>#{one_plugin[:meta][:description]}</td></tr>")
-        end
-      end
-      tmpsumfile.write('</table>')
-      tmpsumfile.write('</body></html>')
+      html_content = render_template('summary.html.erb', binding)
+      tmpsumfile.write(html_content)
     end
     ################################################################################################
-    # 4: generate condensed summary
+    # 5: generate condensed summary (banner)
     File.open(File.join(out_folder, 'banner.html'), 'w') do |tmpsumfile|
       doctitle = "Aspera Orchestrator v#{orch_version} Plugins"
-      tmpsumfile.write("<!DOCTYPE html>\n<html lang=\"en\">\n")
-      tmpsumfile.write("<head>
-<meta charset=\"UTF-8\">
-<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
-<style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 40px 20px;
-    min-height: 100vh;
-}
-.doc_title {
-    color: white;
-    font-size: 3rem;
-    font-weight: 700;
-    text-align: center;
-    margin-bottom: 10px;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-}
-body > p {
-    color: rgba(255,255,255,0.9);
-    text-align: center;
-    font-size: 1.2rem;
-    margin-bottom: 40px;
-}
-.category {
-    background: rgba(255,255,255,0.95);
-    color: #2c3e50;
-    font-size: 1.5rem;
-    font-weight: 600;
-    padding: 15px 25px;
-    margin: 30px 0 20px 0;
-    border-radius: 8px;
-    display: block;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-.plugin {
-    display: inline-block;
-    vertical-align: top;
-    text-align: center;
-    background: white;
-    border-radius: 12px;
-    padding: 15px;
-    margin: 10px;
-    width: 120px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-.plugin:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 12px rgba(0,0,0,0.2);
-}
-.plugin td {
-    color: #2c3e50;
-    font-size: 0.85rem;
-    font-weight: 500;
-    line-height: 1.4;
-    padding: 8px 0 0 0;
-}
-.icon {
-    width: 64px;
-    height: 64px;
-    border-radius: 8px;
-    margin-bottom: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-</style>
-<title>#{doctitle}</title>
-</head>
-<body><p class=\"doc_title\">#{doctitle}</p><p>Count: #{plugin_data.length} plugins</p>
-")
-      # max_columns = 16
-      sections.each do |section|
-        # cur_column = 1
-        tmpsumfile.write("<div class=\"category\">#{section}</div>")
-        plugin_data.each do |one_plugin|
-          next unless section.eql?(one_plugin[:meta][:category])
+      plugin_count = plugin_data.length
 
-          simplified_name = one_plugin[:meta][:display_name]
-          simplified_name.gsub!(/ operation$/i, '')
-          simplified_name.gsub!(/ trigger$/i, '')
-          simplified_name.gsub!(/ transcoding$/i, '')
-          simplified_name.gsub!(/ watcher$/i, '')
-          tmpsumfile.write("<table class=\"plugin\"><tr><td><img src=\"#{one_plugin[:html_icon_path]}\" alt=\"#{simplified_name} icon\" class=\"icon\"><br/>#{simplified_name}</td></tr></table>")
-        end
-        # tmpsumfile.write("</li>")
-      end
-      # tmpsumfile.write("</tr></table>")
-      # tmpsumfile.write("</ul>")
-      tmpsumfile.write('</body></html>')
+      html_content = render_template('banner.html.erb', binding)
+      tmpsumfile.write(html_content)
     end
   end
 end
