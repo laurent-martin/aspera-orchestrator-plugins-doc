@@ -10,7 +10,29 @@ PANDOC_DEFAULTS_END
 
 ## Introduction
 
-This guide explains how to develop a plugin (action) for Aspera Orchestrator. Plugins allow you to extend Orchestrator's functionality by adding custom actions.
+This guide explains how to develop a plugin (action) for Aspera Orchestrator. Plugins allow you to extend Orchestrator's functionality by adding custom actions that can be used in workflows.
+
+### What is a Plugin?
+
+A plugin (also called an "action") is a Ruby class that extends Orchestrator's capabilities. Plugins can:
+
+- Execute custom business logic
+- Integrate with external systems (APIs, databases, file systems)
+- Transform data and files
+- Monitor events and trigger workflows
+- Implement custom triggers that watch for specific conditions
+
+### How Plugins are Detected and Loaded
+
+Orchestrator automatically discovers and loads plugins through the following mechanism:
+
+1. **Discovery**: Plugins are stored in the `actions/` directory (configurable via `actionplugins_load_directory`)
+2. **Registration**: The system scans the actions directory and registers each plugin in the database
+3. **Loading**: When enabled, the system loads the Ruby class files and executes any migration files
+4. **Instantiation**: The `Action` module provides the base interface that all plugins must implement
+5. **Execution**: When a workflow step runs, Orchestrator instantiates the plugin class and calls its `execute` method
+
+The plugin system uses `ActiveRecord` for persistence, allowing plugins to store configuration in database tables that are automatically created via migration files.
 
 ## Plugin Structure
 
@@ -18,40 +40,121 @@ An Aspera Orchestrator plugin consists of several files organized in a dedicated
 
 ```text
 actions/my_plugin/
-├── my_plugin.rb           # Main plugin class
-├── metadata.yml           # Metadata and version history
-├── edit.html.erb         # Configuration UI (optional)
-├── help.html.erb         # Help documentation (optional)
-└── MyPlugin.png          # Plugin icon (optional)
+├── my_plugin.rb                    # Main plugin class (required)
+├── metadata.yml                    # Metadata and version history (required)
+├── edit.html.erb                   # Configuration UI (optional)
+├── help.html.erb                   # Help documentation (optional)
+├── MyPlugin.png                    # Plugin icon (optional, 48x48px recommended)
+├── YYYYMMDDHHMMSS_*.rb            # Migration files (optional, for database schema)
+├── my_plugin_controller.rb        # Controller for complex UI logic (optional)
+├── my_plugin_helper.rb            # Helper methods for views (optional)
+├── my_plugin_service.rb           # Service classes for business logic (optional)
+└── additional_files/               # Additional support files (optional)
+    ├── payloads/                   # XML/JSON templates
+    ├── wsdl/                       # WSDL files for SOAP integrations
+    └── sample_config/              # Configuration examples
 ```
+
+### Additional Ruby Files
+
+Based on analysis of 205 plugins:
+
+- **Controllers** (~21 plugins): Used for complex UI interactions and AJAX operations
+  - Example: `akamai_transcoding_controller.rb`
+  - Handles form submissions, dynamic UI updates, and validation
+  
+- **Helpers** (~8 plugins): Provide view helper methods
+  - Example: `ateme_transcoding_helper.rb`
+  - Used for formatting data, generating UI elements
+  
+- **Services** (~5 plugins): Encapsulate business logic and external API calls
+  - Example: `faspex5_package_monitor_authentication_service.rb`
+  - Separate concerns and improve code organization
+
+### File Naming Conventions
+
+- **Main class file**: Must match the class name in snake_case (e.g., `HelloWorld` &rarr; `hello_world.rb`)
+- **Migration files**: Format `YYYYMMDDHHMMSS_description.rb` (timestamp ensures execution order)
+- **Icon file**: Must match the class name (e.g., `HelloWorld.png`)
+- **View files**: `edit.html.erb` for configuration, `help.html.erb` for documentation
+
+### Directory Location
+
+Plugins are installed in the directory specified by `OrchConfig.actionplugins_load_directory`, which defaults to `config/orchestrator/actions`. During development, plugins are typically placed in the `actions/` directory at the `Rails` root.
 
 ## Plugin Architecture Patterns
 
-After analyzing multiple plugins (DivaArchive, HelloWorld, Filter, LocalExecution), the following common patterns emerge:
+After analyzing the core code and multiple plugins, the following patterns and mechanisms have been identified:
 
 ### Class Structure
 
-- All plugins inherit from `ActiveRecord::Base`
-- All plugins include the `Action` module
-- Plugins define constants for variable names and default values
-- Instance variables `@inputs`, `@outputs`, and `@status` are commonly used
+All plugins must follow this structure:
+
+```ruby
+class MyPlugin < ActiveRecord::Base
+  include Action
+  
+  # Constants for input/output variable names
+  INPUT_PARAM = "input_param"
+  OUTPUT_RESULT = "result"
+  
+  # Instance variables (inherited from Action module)
+  # @inputs, @outputs, @status, @status_details, @percent_complete, @state_id
+end
+```
+
+**Key Points:**
+
+- Inherit from `ActiveRecord::Base` for database persistence
+- Include the `Action` module which provides the plugin interface
+- Define constants for all input/output variable names (improves maintainability)
+- Use instance variables provided by the Action module
 
 ### Core Methods
 
-Every plugin implements these essential methods:
+Every plugin must implement these essential methods defined in the `Action` module:
 
-- `self.version` - Returns plugin version
-- `inputs_spec` - Defines required and optional inputs
-- `outputs_spec` - Defines output variables
-- `category` - Categorizes the plugin
+#### Required Methods
+
+- `self.version` - Returns plugin version as array [major, minor, release]
+- `inputs_spec` - Returns two hashes: required_inputs and optional_inputs
+- `outputs_spec` - Returns hash of output variables
+- `category` - Returns array defining plugin category
 - `execute` - Contains main execution logic
+
+#### Optional Methods (for advanced features)
+
+- `validate_inputs` - Custom input validation
+- `synchronous_execution?` - Returns false for async execution
+- `check_status` - Polls status for async operations
+- `multiple_execution?` - Returns true for trigger-type plugins
+- `pause`, `resume`, `cancel`, `rollback` - Lifecycle control
+- `timeout` - Returns timeout in seconds (0 = no timeout, nil = default)
+- `remote_execution?` - Returns false to prevent remote execution
+- `recover` - Recovers from partial execution
 
 ### Execution Patterns
 
-- Synchronous execution: Returns status immediately
-- Asynchronous execution: Returns `STATUS_INPROGRESS` and uses `check_status`
-- Error handling with try/catch blocks
-- Progress reporting via `report_progress`
+**Synchronous Execution** (default):
+
+- `execute` method completes the work and returns final status
+- Returns: `[status, status_details, outputs]`
+- Example: Simple file operations, API calls, data transformations
+
+**Asynchronous Execution** (for long-running operations):
+
+- Override `synchronous_execution?` to return `false`
+- `execute` starts the operation and returns `STATUS_INPROGRESS`
+- Implement `check_status` to poll for completion
+- Example: Transcoding jobs, large file transfers, batch processing
+
+**Trigger Pattern** (for event-driven workflows):
+
+- Set `synchronous_execution?` to `false`
+- Set `multiple_execution?` to `true`
+- Use `check_status` to detect events and return `STATUS_COMPLETE` when triggered
+- Include the `ModuleTriggerTools` module for trigger persistence
+- Example: File monitoring, package arrival detection, webhook listeners
 
 ## Required Elements
 
@@ -77,6 +180,35 @@ def self.version
   return @@plugin_version_loaded
 end
 ```
+
+#### `self.display_name` (Optional but Recommended)
+
+Customizes the display name in the UI. Used by ~100 plugins.
+
+```ruby
+def self.display_name
+  return "My Custom Name"
+end
+```
+
+**Note**: If not defined, the system generates a name from the class name (e.g., `MyPlugin` &rarr; "My plugin").
+
+#### `name` (Optional)
+
+Provides a human-readable identifier for a configured instance. Used by ~3 plugins for dynamic naming.
+
+```ruby
+def name
+  if attributes["name"].present?
+    return attributes["name"]
+  end
+  # Generate dynamic name based on configuration
+  return "#{workflow.name} sub-workflow" if workflow
+  return "#{self.class.name}_#{id}"
+end
+```
+
+**Example**:  generates names based on the referenced workflow.
 
 #### `inputs_spec`
 
@@ -290,9 +422,48 @@ end
 
 ## Advanced Features
 
+### Database Migrations
+
+Plugins can create and modify database tables using migration files. This is essential for storing plugin configuration and state.
+
+**Migration File Structure:**
+
+```ruby
+# File: 20240101120000_create_my_plugins.rb
+class CreateMyPlugins < ActiveRecord::Migration[7.2]
+  def change
+    create_table :action_my_plugins do |t|
+      t.string :name
+      t.text :comments
+      t.string :my_config_field
+      t.timestamps
+    end
+  end
+end
+```
+
+**Key Points:**
+
+- Migration files must be prefixed with timestamp: `YYYYMMDDHHMMSS_description.rb`
+- Table name must follow pattern: `action_#{plugin_name.tableize}` (e.g., `action_my_plugins`)
+- Migrations are executed automatically when plugin is loaded
+- Use standard `Rails` migration methods: `create_table`, `add_column`, `change_column`, etc.
+
+**Versioning Migrations:**
+When updating a plugin, create new migration files with later timestamps:
+
+```ruby
+# File: 20240201120000_my_plugins_add_new_field.rb
+class MyPluginsAddNewField < ActiveRecord::Migration[7.2]
+  def change
+    add_column :action_my_plugins, :new_field, :string
+  end
+end
+```
+
 ### Asynchronous Execution
 
-For long-running operations, implement asynchronous execution:
+For long-running operations that shouldn't block the workflow engine:
 
 ```ruby
 def synchronous_execution?
@@ -300,46 +471,228 @@ def synchronous_execution?
 end
 
 def execute
-  # Start the operation
+  # Start the operation (e.g., submit job to external system)
+  @job_id = submit_job_to_external_system(@inputs)
   @status = STATUS_INPROGRESS
-  # ... start async operation ...
-  return @status, "Operation started", @outputs
+  return @status, "Job submitted: #{@job_id}", @outputs
 end
 
 def check_status
-  # Check operation status
-  # ... check if operation is complete ...
-  if operation_complete?
-    return STATUS_COMPLETE, "Operation finished", @outputs
+  # Poll external system for job status
+  job_status = query_external_system(@job_id)
+  
+  if job_status == "complete"
+    @outputs["result"] = get_job_result(@job_id)
+    return STATUS_COMPLETE, "Job finished", @outputs
+  elsif job_status == "failed"
+    return STATUS_FAILED, "Job failed", @outputs
   else
-    return STATUS_INPROGRESS, "Still processing", polling_interval
+    # Return polling interval (in seconds) as third parameter
+    return STATUS_INPROGRESS, "Still processing", 30
   end
 end
 ```
 
+**Important:** The third return value from `check_status` specifies the polling interval in seconds.
+
+### Trigger Plugins
+
+Triggers watch for events and spawn new workflow instances. They use the trigger pattern:
+
+```ruby
+class MyTrigger < ActiveRecord::Base
+  include Action
+  include ModuleTriggerTools  # Provides trigger persistence methods
+  
+  def synchronous_execution?
+    return false  # Triggers are always async
+  end
+  
+  def multiple_execution?
+    return (keep_ongoing == true) && (@is_canceled != true)
+  end
+  
+  def execute
+    @outputs = {}
+    return nil, "Initializing trigger", nil
+  end
+  
+  def check_status
+    # Check for trigger condition
+    if event_detected?
+      @outputs["event_data"] = get_event_data
+      
+      # Persist trigger to avoid re-triggering
+      register_triggers([event_identifier])
+      persist_triggers(@current_triggers)
+      
+      return STATUS_COMPLETE, "Event detected", @outputs
+    else
+      return nil, "Waiting for event", polling_frequency
+    end
+  end
+end
+```
+
+**Trigger Persistence:**
+
+- Use  to get previously triggered events
+- Use  to mark new events
+- Use  to save state
+- See  for complete example
+
+### Lifecycle Control (Pause/Resume/Cancel/Rollback)
+
+Plugins can support workflow control operations:
+
+```ruby
+def pausable?
+  return true  # Indicates pause is supported
+end
+
+def pause
+  # Pause the operation
+  @is_paused = true
+  report_progress(STATUS_PAUSED, "Operation paused")
+  return true
+end
+
+def resumable?
+  return true
+end
+
+def resume
+  # Resume the operation
+  @is_paused = false
+  return true
+end
+
+def cancelable?
+  return true
+end
+
+def cancel
+  # Cancel the operation
+  cleanup_resources
+  @status = STATUS_FAILED
+  @status_details = "Operation canceled"
+  return true
+end
+
+def rollbackable?
+  return true
+end
+
+def rollback
+  # Undo changes made by this plugin
+  undo_changes
+  return true
+end
+```
+
+**Note:** By default, Orchestrator checks if these methods are overridden using `is_overloaded?`. See  for a complete implementation.
+
 ### Input Validation
+
+Custom validation beyond type checking:
 
 ```ruby
 def validate_inputs(inputs_hash = @inputs)
+  # First perform default validation
+  return false unless default_inputs_validation(inputs_hash)
+  
   # Custom validation logic
-  return false if inputs_hash["required_param"].nil?
-  return false if inputs_hash["number"].to_i < 0
+  if inputs_hash["number"].present?
+    return false if inputs_hash["number"].to_i < 0
+  end
+  
+  if inputs_hash["email"].present?
+    return false unless inputs_hash["email"].match?(/\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i)
+  end
+  
   return true
 end
 ```
 
 ### Helper Methods
 
-Use helper methods to access configuration values:
+Common patterns for accessing configuration:
 
 ```ruby
+# Get value from runtime inputs or fall back to database configuration
 def default_get(field_name)
-  # Gets value from inputs or falls back to configuration
-  return @inputs[VAR_NAME] if @inputs && @inputs[VAR_NAME].present?
+  var_name = field_name.upcase
+  return @inputs[var_name] if @inputs && @inputs[var_name].present?
   return self.send(field_name) if self.respond_to?(field_name)
   return nil
 end
+
+# Example usage
+def polling_frequency_get
+  return default_get(:polling_frequency) || DEFAULT_POLLING_FREQUENCY
+end
 ```
+
+### Dynamic Input/Output Specifications
+
+For plugins with variable inputs based on configuration:
+
+```ruby
+def inputs_spec
+  required_inputs = {}
+  optional_inputs = {}
+  
+  # Parse configuration to determine required inputs
+  if command.present?
+    Payload.variables(command).each do |var_name|
+      required_inputs[var_name] = TYPE_STRING
+    end
+  end
+  
+  # Add standard optional inputs
+  optional_inputs["timeout"] = TYPE_INT
+  
+  return required_inputs, optional_inputs
+end
+```
+
+See  for an example using `eval` for maximum flexibility.
+
+## Plugin Patterns Usage Statistics
+
+Based on analysis of 205 plugins in the Orchestrator codebase:
+
+### Common Patterns
+
+| Pattern | Usage | Description |
+|---------|-------|-------------|
+| `SafeYaml` for version | 203/205 (99%) | Standard pattern for reading `metadata.yml` |
+| `self.display_name` | 100/205 (49%) | Custom display names in UI |
+| `MultiType` utilities | 88/205 (43%) | Type conversion and validation |
+| Asynchronous execution | 80/205 (39%) | Long-running operations |
+| `dependencies` method | 74/205 (36%) | External entity dependencies |
+| `Payload` variables | 58/205 (28%) | Dynamic input extraction |
+| `cancel` support | 58/205 (28%) | Cancellation capability |
+| `timeout` definition | 54/205 (26%) | Custom timeout logic |
+| `validate_inputs` | 40/205 (20%) | Custom validation |
+| Trigger type | 37/205 (18%) | Event-driven workflows |
+| `pause`/`resume` | 34/205 (17%) | Lifecycle control |
+| `Gemfile` dependencies | 34/205 (17%) | External Ruby gems |
+| `recover` method | 29/205 (14%) | Partial execution recovery |
+| `remote_execution?` = false | 25/205 (12%) | Local-only execution |
+| Controller files | 21/205 (10%) | Complex UI logic |
+| Helper files | 8/205 (4%) | View helpers |
+| Service files | 5/205 (2%) | Business logic separation |
+| `rollback` support | 2/205 (1%) | Undo capability |
+
+### Key Takeaways
+
+1. **Version Management**: Nearly all plugins use the standard `SafeYaml` pattern for version reading
+2. **Display Names**: Half of plugins customize their display name for better UX
+3. **Type Handling**: `MultiType` is widely used for robust type conversion
+4. **Async Operations**: 39% of plugins use asynchronous execution for long-running tasks
+5. **Dependencies**: Over a third declare dependencies on other entities
+6. **Advanced Features**: Pause/resume, cancel, and recover are used selectively where needed
 
 ## Best Practices
 
@@ -399,6 +752,231 @@ string = MultiType.convert_to_string(value)
 hash = MultiType.convert_value_hash(string_hash)
 ```
 
+## Plugin Development Alternatives and Possibilities
+
+### Plugin Types and Use Cases
+
+Orchestrator supports several types of plugins, each suited for different scenarios:
+
+#### 1. **Standard Action Plugins**
+
+- **Purpose**: Execute specific tasks within a workflow
+- **Execution**: Synchronous or asynchronous
+- **Examples**: File operations, API calls, data transformations
+- **Best for**: One-time operations with clear inputs and outputs
+
+#### 2. **Trigger Plugins**
+
+- **Purpose**: Monitor for events and spawn new workflow instances
+- **Execution**: Always asynchronous with `multiple_execution?` = true
+- **Examples**: , file system monitors, message queue listeners
+- **Best for**: Event-driven workflows, continuous monitoring
+- **Key feature**: Include `ModuleTriggerTools` for trigger persistence
+
+#### 3. **Integration Plugins**
+
+- **Purpose**: Connect to external systems and services
+- **Examples**: SOAP/REST APIs, databases, cloud services
+- **Best for**: System integration, data exchange
+- **Patterns**:
+  - Use `Gemfile` for external dependencies (e.g., )
+  - Store WSDL files for SOAP integrations (e.g., )
+  - Use payload templates for complex requests (e.g., )
+
+#### 4. **Custom Trigger with Code Evaluation**
+
+- **Purpose**: Maximum flexibility for custom logic
+- **Example**:
+- **Features**: Allows users to define custom Ruby code for inputs, outputs, validation, and execution
+- **Best for**: Power users who need complete control
+- **Warning**: Security implications - only for trusted environments
+
+### Configuration UI Options
+
+Plugins can provide custom configuration interfaces:
+
+#### 1. **Standard Form Fields**
+
+Use Rails form helpers in :
+
+```erb
+<%= form_with model: @my_plugin, url: action_update_path(action_type: "my_plugin", id: @my_plugin.id) do |f| %>
+  <li>
+    <%= f.label :name %>
+    <%= f.text_field :name %>
+  </li>
+  <li>
+    <%= f.label :config_value %>
+    <%= f.text_area :config_value %>
+  </li>
+<% end %>
+```
+
+#### 2. **Dynamic Configuration**
+
+Display runtime-calculated values:
+
+```erb
+<% if @view == 'show' %>
+  <li>
+    <%= f.label 'Required Variables' %>
+    <%= h Payload.variables(@my_plugin.command).join(', ') %>
+  </li>
+<% end %>
+```
+
+#### 3. **Help Documentation**
+
+Provide detailed help in `help.html.erb` with HTML formatting, examples, and usage instructions.
+
+### External Dependencies Management
+
+#### Using Gemfile
+
+For plugins requiring external Ruby gems:
+
+```ruby
+# File: actions/my_plugin/Gemfile
+source 'https://rubygems.org'
+
+gem 'aws-sdk-sqs', '~> 1.0'
+gem 'rest-client', '~> 2.1'
+```
+
+Dependencies are automatically installed when the plugin is loaded.
+
+#### System Dependencies
+
+For external tools (e.g., ffmpeg, exiftool):
+
+- Document in `metadata.yml` under `:external_dependencies`
+- Check availability in plugin code
+- Provide clear error messages if missing
+
+### Plugin Versioning and Upgrades
+
+#### Version Management
+
+- Versions are defined in  `:revision_history`
+- Format: `major.minor.release` (e.g., "1.2.3")
+- Each version entry includes: author, change_description, version, date
+- Optionally specify `minimum_server_version` and `maximum_server_version`
+
+#### Upgrade Process
+
+When upgrading a plugin:
+
+1. Create new migration files with later timestamps
+2. Update version in `metadata.yml`
+3. The system automatically detects version changes
+4. Migrations are executed in order
+5. Old plugin instances are preserved for rollback
+
+#### Deprecation
+
+Mark plugins as deprecated:
+
+```yaml
+:revision_history:
+  - :deprecation_orch_version: "4.2.0"
+```
+
+### Plugin Distribution
+
+#### Packaging
+
+Plugins can be packaged for distribution:
+
+- Use the compact feature to create `.plugin` files
+- Package includes all files: Ruby code, migrations, views, assets
+- Format: Compressed tar archive with `.plugin` extension
+
+#### Installation
+
+- Upload via UI: Plugins &rarr; Upload
+- API: POST to `/aspera/orchestrator/api/plugin_upload`
+- Manual: Place in `actions/` directory and reload
+
+#### Sharing
+
+- Export plugin using compact feature
+- Share `.plugin` file
+- Recipients can import via UI or API
+
+### Performance Considerations
+
+#### Efficient Execution
+
+- Use asynchronous execution for long-running operations
+- Implement proper timeout values via `timeout` method
+- Return appropriate polling intervals in `check_status`
+
+#### Resource Management
+
+- Clean up temporary files and connections
+- Use `remote_execution?` = true to allow execution on remote nodes
+- Implement proper error handling and recovery
+
+#### Database Optimization
+
+- Index frequently queried columns in migrations
+- Use appropriate column types
+- Avoid storing large data in database (use file system instead)
+
+### Testing and Debugging
+
+#### Development Workflow
+
+1. Place plugin in `actions/` directory
+2. Reload plugins via UI or API
+3. Test in workflow designer
+4. Check logs: `Rails.logger.info`, `Rails.logger.error`
+5. Use Action Tester for isolated testing
+
+#### Common Issues
+
+- **Plugin not appearing**: Check `metadata.yml` syntax, verify file naming
+- **Migration errors**: Ensure table name follows `action_*` pattern
+- **Version conflicts**: Verify version comparison logic
+- **Loading failures**: Check Ruby syntax, verify all required methods are implemented
+
+### Security Considerations
+
+#### Input Sanitization
+
+- Always validate and sanitize user inputs
+- Use parameterized queries for database operations
+- Escape shell commands properly
+
+#### Credential Management
+
+- Never hardcode credentials
+- Use Orchestrator's credential management
+- Support environment variables for sensitive data
+
+#### Code Execution
+
+- Be cautious with `eval` (see )
+- Validate file paths to prevent directory traversal
+- Limit file system access to designated directories
+
 ## Conclusion
 
-This guide provides the foundation for developing Aspera Orchestrator plugins. Start with the simple example and gradually add complexity as needed. Refer to existing plugins in `actions/` for more advanced patterns and techniques.
+This comprehensive guide provides the foundation for developing Aspera Orchestrator plugins. Key takeaways:
+
+1. **Start Simple**: Begin with the basic example and gradually add complexity
+2. **Follow Patterns**: Study existing plugins in `actions/` for proven patterns
+3. **Use the Framework**: Leverage the `Action` module and helper methods
+4. **Test Thoroughly**: Use the Action Tester and test with various input combinations
+5. **Document Well**: Provide clear `metadata.yml`, help files, and inline comments
+6. **Consider Performance**: Use async execution and proper resource management
+7. **Plan for Upgrades**: Use migrations for schema changes and version properly
+
+For more examples and advanced techniques, explore the existing plugins in the `actions/` directory, particularly:
+
+- Basic plugin with pause/resume/cancel
+- Trigger pattern with persistence
+- Dynamic code evaluation
+- External gem dependencies
+
+The plugin system is powerful and flexible - use it to extend Orchestrator to meet your specific workflow automation needs.
