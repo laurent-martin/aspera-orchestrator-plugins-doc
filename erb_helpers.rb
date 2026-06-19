@@ -118,7 +118,8 @@ class ErbHelpers
   end
 
   # Returns the binding of this instance for ERB evaluation
-  def get_binding
+  def get_binding(source)
+    eval(source)
     binding
   end
 end

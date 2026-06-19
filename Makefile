@@ -29,10 +29,10 @@ extract_rpm:
 	mkdir $(BUILD_OUT_DIR)
 	mkdir -p $(BUILD_SRC_DIR)lib
 	mkdir $(BUILD_MAIN_DIR)rpmout
-	rpm2cpio $(RPM)|(cd $(BUILD_MAIN_DIR)rpmout && cpio -idv "*/actions/*" "*/lib/action_tools.rb")
+	rpm2cpio $(RPM)|(cd $(BUILD_MAIN_DIR)rpmout && cpio -idv "*" "*/actions/*" "*/lib/action_tools.rb")
 	mv $(BUILD_MAIN_DIR)rpmout/opt/aspera/orchestrator*/actions $(BUILD_SRC_DIR)
 	mv $(BUILD_MAIN_DIR)rpmout/opt/aspera/orchestrator*/lib/action_tools.rb $(BUILD_SRC_DIR)lib
-	rm -fr $(BUILD_MAIN_DIR)rpmout
+	#rm -fr $(BUILD_MAIN_DIR)rpmout
 extract_remote:
 	@if test -z "$(RPM)";then echo "set RPM env var";exit 1;fi
 	@if test -z "$(VERSION)";then echo "set VERSION env var";exit 1;fi
