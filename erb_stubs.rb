@@ -46,7 +46,7 @@ module Action
 end
 
 module ActionsHelper
-  MANDATORY = 'mandatory'
+  MANDATORY = '(mandatory)'
   ORDERED_LIST = 'ordered_list'
 end
 

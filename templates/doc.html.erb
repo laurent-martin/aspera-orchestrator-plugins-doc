@@ -134,16 +134,19 @@ img {
     margin: 0 0 20px 0;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 .plugin-icon {
-    float: left;
-    margin-right: 15px;
     width: 64px;
     height: 64px;
+    flex-shrink: 0;
 }
 .plugin-description {
     margin: 0;
     line-height: 1.8;
+    flex: 1;
 }
 .coming-soon {
     font-style: italic;
