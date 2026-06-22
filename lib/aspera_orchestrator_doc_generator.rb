@@ -104,7 +104,7 @@ class AsperaOrchestratorDocGenerator
 
     begin
       src_file = plugin_folder / "#{plugin_name}.rb"
-      ERB.new(file.read).result(ErbHelpers.new.get_binding(src_file)).gsub('line-height: 0.5;', '')
+      ERB.new(file.read).result(ErbHelpers.new.get_binding(src_file)).gsub(/\sstyle="[^"]*"/, '')
       # rescue SyntaxError => e
       #  Log.log.error "Ignoring: #{file} due to syntax error: #{e}"
       #  e.to_s
