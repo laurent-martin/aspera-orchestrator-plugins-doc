@@ -1106,3 +1106,36 @@ SOAP::Mapping.get_attributes()  # Shows what the WSDL requires
 5. **Engine Variables**: The engine only sees `@inputs` and `@outputs` variables in the plugin
 6. **Return Format**: All plugins must return `[@status, @status_details, @outputs]`
 7. **Empty Classes**: No empty classes are allowed - Orchestrator will attempt to process them and throw errors
+
+## Annex
+
+### Adding a gem to Orchestrator 4.1.x
+
+#### Global Gem
+
+Edit the file: `/opt/aspera/orchestrator/Gemfile`
+
+Example, add:
+
+```ruby
+gem 'prawn'
+gem 'prawn-table'
+```
+
+Then do:
+
+```bash
+cd /opt/aspera/orchestrator/
+bundle install
+orchestrator restart
+```
+
+#### Plugin Gem
+
+Each plugin can have its own dependencies in:
+
+```text
+/opt/aspera/orchestrator/actions/<PLUGIN_NAME>/Gemfile
+```
+
+Install dependencies like for global gems.
