@@ -43,30 +43,4 @@ module PdfGenerator
     puts "Generating PDF: #{pdf_file}"
     system(*cmd) || raise("Failed to generate PDF: #{pdf_file}")
   end
-
-  # Generate all three PDFs from HTML files
-  # @param out_dir [String, Pathname] Output directory containing HTML files
-  # @param version [String] Version string for PDF filenames
-  def self.generate_all(out_dir:, version:)
-    out_dir = Pathname.new(out_dir)
-
-    # Generate main manual (portrait)
-    html_to_pdf(
-      html_file: out_dir / 'doc.html',
-      pdf_file: out_dir / "Orchestrator_#{version}_Plugin_Manual.pdf"
-    )
-
-    # Generate summary list (portrait)
-    html_to_pdf(
-      html_file: out_dir / 'summary.html',
-      pdf_file: out_dir / "Orchestrator_#{version}_Plugin_List.pdf"
-    )
-
-    # Generate banner (landscape)
-    html_to_pdf(
-      html_file: out_dir / 'banner.html',
-      pdf_file: out_dir / "Orchestrator_#{version}_Plugin_Banner.pdf",
-      options: { orientation: 'landscape' }
-    )
-  end
 end

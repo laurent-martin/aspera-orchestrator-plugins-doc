@@ -61,20 +61,63 @@ def build_out_dir
   build_main_dir / 'out'
 end
 
+# PDF output file paths
+def pdf_manual_path
+  build_out_dir / "Orchestrator_#{build_version}_Plugin_Manual.pdf"
+end
+
+def pdf_list_path
+  build_out_dir / "Orchestrator_#{build_version}_Plugin_List.pdf"
+end
+
+def pdf_banner_path
+  build_out_dir / "Orchestrator_#{build_version}_Plugin_Banner.pdf"
+end
+
 desc 'Build all documentation (HTML + PDF)'
 task default: [:pdf]
 
 desc 'Generate HTML documentation'
 task html: build_out_dir / 'doc.html'
 
-desc 'Generate PDF documentation'
-task pdf: build_out_dir / 'doc.created'
+desc 'Generate all PDF documentation'
+task pdf: %i[pdf_manual pdf_list pdf_banner]
 
-# Generate PDFs from HTML files
-file (build_out_dir / 'doc.created').to_s => [(build_out_dir / 'doc.html').to_s] do
+desc 'Generate Plugin Manual PDF'
+task pdf_manual: pdf_manual_path.to_s
+
+desc 'Generate Plugin List PDF'
+task pdf_list: pdf_list_path.to_s
+
+desc 'Generate Plugin Banner PDF'
+task pdf_banner: pdf_banner_path.to_s
+
+# Generate Plugin Manual PDF (portrait)
+file pdf_manual_path.to_s => [(build_out_dir / 'doc.html').to_s] do
   build_out_dir.mkpath
-  PdfGenerator.generate_all(out_dir: build_out_dir, version: build_version)
-  FileUtils.touch((build_out_dir / 'doc.created').to_s)
+  PdfGenerator.html_to_pdf(
+    html_file: build_out_dir / 'doc.html',
+    pdf_file: pdf_manual_path
+  )
+end
+
+# Generate Plugin List PDF (portrait)
+file pdf_list_path.to_s => [(build_out_dir / 'summary.html').to_s] do
+  build_out_dir.mkpath
+  PdfGenerator.html_to_pdf(
+    html_file: build_out_dir / 'summary.html',
+    pdf_file: pdf_list_path
+  )
+end
+
+# Generate Plugin Banner PDF (landscape)
+file pdf_banner_path.to_s => [(build_out_dir / 'banner.html').to_s] do
+  build_out_dir.mkpath
+  PdfGenerator.html_to_pdf(
+    html_file: build_out_dir / 'banner.html',
+    pdf_file: pdf_banner_path,
+    options: { orientation: 'landscape' }
+  )
 end
 
 # build doc (create latest link)
