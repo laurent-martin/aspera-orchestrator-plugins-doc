@@ -37,9 +37,20 @@ if ENV['DIR_PANDOC']
   require File.join(aspera_cli_build, 'lib', 'pandoc.rb')
 end
 
+def build_version
+  return $build_version if $build_version
+  raise 'Set env var VERSION' unless ENV.key?('VERSION')
+
+  $build_version = ENV['VERSION']
+  src = build_src_dir
+  raise "No src dir found in #{src}" unless Dir.exist?(src)
+
+  $build_version
+end
+
 # working folder
 def build_main_dir
-  "build/#{ENV['VERSION']}/"
+  "build/#{build_version}/"
 end
 
 def build_src_dir
@@ -61,15 +72,15 @@ task pdf: "#{build_out_dir}doc.created"
 
 # Generate PDFs from HTML files
 file "#{build_out_dir}doc.created" => ["#{build_out_dir}doc.html"] do
-  version = ENV['VERSION']
-  PdfGenerator.generate_all(out_dir: build_out_dir, version: version)
+  mkdir_p build_out_dir
+  PdfGenerator.generate_all(out_dir: build_out_dir, version: build_version)
   touch "#{build_out_dir}doc.created"
 end
 
 # build doc (create latest link)
 file "#{build_out_dir}doc.html" => [build_main_dir] do
-  version = ENV['VERSION']
-  AsperaOrchestratorDocGenerator.new.build_doc(version, build_src_dir, build_out_dir)
+  mkdir_p build_out_dir
+  AsperaOrchestratorDocGenerator.new.build_doc(build_version, build_src_dir, build_out_dir)
 end
 
 directory build_main_dir do
@@ -80,13 +91,10 @@ end
 desc 'Extract RPM package'
 task :extract_rpm do
   rpm = ENV['RPM']
-  version = ENV['VERSION']
-
   raise 'set RPM env var' if rpm.nil? || rpm.empty?
-  raise 'set VERSION env var' if version.nil? || version.empty?
 
+  version = build_version
   puts "Version: #{version}"
-
   mkdir_p build_main_dir
   mkdir_p build_out_dir
   mkdir_p "#{build_src_dir}lib"
@@ -101,7 +109,7 @@ end
 desc 'Extract from remote server'
 task :extract_remote do
   rpm = ENV['RPM']
-  version = ENV['VERSION']
+  version = build_version
   ascp = ENV['ASCP']
   keys = ENV['KEYS']
   remote_host = ENV['REMOTE_HOST']
@@ -122,8 +130,7 @@ end
 
 desc 'Clean generated files'
 task :clean do
-  rm_f Dir.glob("#{build_out_dir}*.{html,pdf,created}")
-  rm_f 'docs/plugin-development-guide.pdf'
+  rm_rf build_out_dir
 end
 
 # Generate PDF from Markdown documentation

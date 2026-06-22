@@ -13,6 +13,9 @@ require 'date'
 require 'erb'
 require 'logger'
 require 'set'
+require 'aspera/log'
+
+include Aspera
 
 Encoding.default_internal = Encoding::UTF_8
 Encoding.default_external = Encoding::UTF_8
@@ -44,10 +47,7 @@ class AsperaOrchestratorDocGenerator
   RE_STRING_BODY = /.+?/.freeze
   RE_STRING_ARGUMENT = /['"](#{RE_STRING_BODY})['"]\s*/.freeze
 
-  attr_reader :logger
-
   def initialize(logger: nil)
-    @logger = logger || Logger.new(STDOUT)
     # NOTE: category is returned by method category() in the main plugin ruby file (plugin_name.rb)
     # the category in metadata.yml is not always good.
     # categories are listed in: lib/action_tools.rb, like this: CATEGORY_<CONST_NAME> = '<Display Name>'
@@ -70,19 +70,18 @@ class AsperaOrchestratorDocGenerator
     # replace with category from plugin source
     one_plugin[:meta][:category] = @cat_const_to_name[category_alias]
     raise 'no category found' if one_plugin[:meta][:category].nil?
-
     return if category_meta.eql?(one_plugin[:meta][:category])
 
-    puts "Warning: category mismatch: #{one_plugin[:long_name]}: src=#{one_plugin[:meta][:category]},meta=#{category_meta}"
+    Log.log.warn "category mismatch: #{one_plugin[:long_name]}: src=#{one_plugin[:meta][:category]},meta=#{category_meta}"
   end
 
   # loads plugin metadata
   def set_metadata(one_plugin)
     filepath_metadata = File.join(one_plugin[:folder], FILENAME_METADATA)
     if File.exist?(filepath_metadata)
-      $stdout.puts("---->[#{filepath_metadata}]\n")
+      Log.log.info(filepath_metadata)
       one_plugin[:meta] = YAML.load_file(filepath_metadata, permitted_classes: [Date, Symbol])
-      # $stdout.puts("---->[#{one_plugin}]\n")
+      Log.dump(:plugin, one_plugin)
       one_plugin[:meta][:category] = 'No Category' if one_plugin[:meta][:category].empty?
     else
       one_plugin[:meta] = {
@@ -103,15 +102,14 @@ class AsperaOrchestratorDocGenerator
     plugin_name = File.basename(plugin_folder).gsub(/s$/, '')
 
     begin
-      source = File.read(File.join(plugin_folder, "#{plugin_name}.rb"))
-      source = source.gsub(/require(_relative)?\s+['"]([^'"]+)['"]/, '')
-      ERB.new(File.read(file)).result(ErbHelpers.new.get_binding(source)).gsub('line-height: 0.5;', '')
-    rescue SyntaxError => e
-      @logger.warn "Ignoring: #{file} due to syntax error: #{e}"
-      e.to_s
-    rescue StandardError => e
-      @logger.warn "Ignoring: #{file} due to exception: #{e}"
-      e.to_s
+      src_file = File.join(plugin_folder, "#{plugin_name}.rb")
+      ERB.new(File.read(file)).result(ErbHelpers.new.get_binding(src_file)).gsub('line-height: 0.5;', '')
+      # rescue SyntaxError => e
+      #  Log.log.error "Ignoring: #{file} due to syntax error: #{e}"
+      #  e.to_s
+      # rescue StandardError => e
+      #  Log.log.error "Ignoring: #{file} due to exception: #{e}"
+      #  e.to_s
     end
   end
 
@@ -137,8 +135,8 @@ class AsperaOrchestratorDocGenerator
         .scan(/\bCATEGORY_(\S+) = ["']([^"']+)["']/) do |alias_name, value|
       @cat_const_to_name[alias_name] = value
     end
-    puts "Categories: #{@cat_const_to_name.values.sort.join(',')}"
-    puts "Plugin folder: #{actions_folder}"
+    Log.log.info "Categories: #{@cat_const_to_name.values.sort.join(',')}"
+    Log.log.info "Plugin folder: #{actions_folder}"
     plugin_data = []
     ################################################################################################
     # 2: build doc
@@ -159,7 +157,7 @@ class AsperaOrchestratorDocGenerator
       next unless File.exist?(one_plugin[:source_path])
 
       one_plugin[:ShortName] = one_plugin[:long_name].split('_').map(&:capitalize).join('')
-      # puts "plugin: #{one_plugin}"
+      # Log.log.info "plugin: #{one_plugin}"
 
       set_metadata(one_plugin)
 
@@ -171,7 +169,7 @@ class AsperaOrchestratorDocGenerator
       if File.exist?(icon_src_file)
         FileUtils.cp(icon_src_file, icons_folder)
       else
-        puts "Warning: no icon for #{icon_filename}"
+        Log.log.warn "no icon for #{icon_filename}"
         # patch a la mano
         if icon_filename.eql?('FfprobeInfo.png')
           FileUtils.cp(File.join(actions_folder, 'ffmpg_transcodings/FfmpgTranscoding.png'),
@@ -200,7 +198,7 @@ class AsperaOrchestratorDocGenerator
     # 3: generate doc
     sections = plugin_data.each.map { |p| p[:meta][:category] }.sort.uniq
     File.open(File.join(out_folder, '/doc.html'), 'w') do |tmpdocfile|
-      puts("Generating: #{tmpdocfile.path}")
+      Log.log.info("Generating: #{tmpdocfile.path}")
       doctitle = "Aspera Orchestrator v#{orch_version} Plugins Manuals"
 
       html_content = render_template('doc.html.erb', binding)

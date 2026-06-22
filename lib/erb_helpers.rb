@@ -3,6 +3,11 @@
 # Helper class for ERB template rendering
 # Provides HTML generation methods used in plugin help.html.erb files
 class ErbHelpers
+  # Alias File class to avoid conflicts with ErbHelpers::File
+  File = ::File # unless defined?(File)
+  # Alias Net module to avoid conflicts with ErbHelpers::Net
+  Net = ::Net # unless defined?(Net)
+
   def populate_list(items, list_type = nil)
     return '' if items.nil? || items.empty?
 
@@ -118,7 +123,15 @@ class ErbHelpers
   end
 
   # Returns the binding of this instance for ERB evaluation
-  def get_binding(source)
+  # @param source [String] Ruby code to place in binding
+  def get_binding(src_file)
+    source = File.read(src_file)
+    source = source.gsub(/^\s*require_relative\s+(.+)$/) do |match|
+      file_path = ::Regexp.last_match(1).gsub(/['"]/, '')
+      "load File.expand_path('#{file_path}.rb', '#{File.dirname(src_file)}')"
+    end
+    source = source.gsub(/^\s*require\s+.*$/, '')
+    source = source.gsub('__FILE__', "'#{src_file}'")
     eval(source)
     binding
   end

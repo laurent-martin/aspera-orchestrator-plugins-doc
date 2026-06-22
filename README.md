@@ -1,9 +1,5 @@
 # Generate HTML and PDF plugin doc for IBM Aspera Orchestrator
 
-The main tool is `generateAODoc.rb`.
-It can be used standalone to generate HTML only.
-For PDF, use the Rakefile.
-
 The Rakefile provides ways to get Orchestrator sources in case there is no local install.
 
 The main target (`all`) generates files under: `./build/current/out`
