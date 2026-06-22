@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'pathname'
+
 # Helper class for ERB template rendering
 # Provides HTML generation methods used in plugin help.html.erb files
 class ErbHelpers
@@ -123,12 +125,13 @@ class ErbHelpers
   end
 
   # Returns the binding of this instance for ERB evaluation
-  # @param source [String] Ruby code to place in binding
+  # @param src_file [String, Pathname] Path to source file
   def get_binding(src_file)
-    source = File.read(src_file)
+    src_file = Pathname.new(src_file) unless src_file.is_a?(Pathname)
+    source = src_file.read
     source = source.gsub(/^\s*require_relative\s+(.+)$/) do |match|
       file_path = ::Regexp.last_match(1).gsub(/['"]/, '')
-      "load File.expand_path('#{file_path}.rb', '#{File.dirname(src_file)}')"
+      "load (Pathname.new('#{src_file.dirname}') / '#{file_path}.rb').expand_path.to_s"
     end
     source = source.gsub(/^\s*require\s+.*$/, '')
     source = source.gsub('__FILE__', "'#{src_file}'")

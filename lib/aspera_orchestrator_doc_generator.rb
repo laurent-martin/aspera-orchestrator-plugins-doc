@@ -4,6 +4,7 @@
 # generate pdf doc for Orchestrator
 # look at Rakefile for details to generate pdf from the html
 
+require 'pathname'
 require 'yaml'
 require 'json'
 require 'net/http'
@@ -57,7 +58,7 @@ class AsperaOrchestratorDocGenerator
   # finds the category of plugin
   def set_plugin_category(one_plugin)
     # get first category from source file
-    match_cat_method = File.read(one_plugin[:source_path]).match(/def\s+category.*?end/m)
+    match_cat_method = one_plugin[:source_path].read.match(/def\s+category.*?end/m)
     raise "ERROR: category method not found in #{one_plugin[:source_path]}" if match_cat_method.nil?
 
     match_categories = match_cat_method[0].match(/CATEGORY_([A-Z_]+)/)
@@ -77,10 +78,10 @@ class AsperaOrchestratorDocGenerator
 
   # loads plugin metadata
   def set_metadata(one_plugin)
-    filepath_metadata = File.join(one_plugin[:folder], FILENAME_METADATA)
-    if File.exist?(filepath_metadata)
-      Log.log.info(filepath_metadata)
-      one_plugin[:meta] = YAML.load_file(filepath_metadata, permitted_classes: [Date, Symbol])
+    filepath_metadata = one_plugin[:folder] / FILENAME_METADATA
+    if filepath_metadata.exist?
+      Log.log.info(filepath_metadata.to_s)
+      one_plugin[:meta] = YAML.load_file(filepath_metadata.to_s, permitted_classes: [Date, Symbol])
       Log.dump(:plugin, one_plugin)
       one_plugin[:meta][:category] = 'No Category' if one_plugin[:meta][:category].empty?
     else
@@ -96,14 +97,14 @@ class AsperaOrchestratorDocGenerator
   end
 
   def erb_to_html(file)
-    return '<p class="coming-soon">Documentation coming soon...</p>' unless File.exist?(file)
+    return '<p class="coming-soon">Documentation coming soon...</p>' unless file.exist?
 
-    plugin_folder = File.dirname(file)
-    plugin_name = File.basename(plugin_folder).gsub(/s$/, '')
+    plugin_folder = file.parent
+    plugin_name = plugin_folder.basename.to_s.gsub(/s$/, '')
 
     begin
-      src_file = File.join(plugin_folder, "#{plugin_name}.rb")
-      ERB.new(File.read(file)).result(ErbHelpers.new.get_binding(src_file)).gsub('line-height: 0.5;', '')
+      src_file = plugin_folder / "#{plugin_name}.rb"
+      ERB.new(file.read).result(ErbHelpers.new.get_binding(src_file)).gsub('line-height: 0.5;', '')
       # rescue SyntaxError => e
       #  Log.log.error "Ignoring: #{file} due to syntax error: #{e}"
       #  e.to_s
@@ -115,24 +116,27 @@ class AsperaOrchestratorDocGenerator
 
   # Render an ERB template with the given binding
   def render_template(template_name, binding_context)
-    template_path = File.join(DIRNAME_TEMPLATES, template_name)
-    raise "Template not found: #{template_path}" unless File.exist?(template_path)
+    template_path = Pathname.new(DIRNAME_TEMPLATES) / template_name
+    raise "Template not found: #{template_path}" unless template_path.exist?
 
-    template_content = File.read(template_path)
+    template_content = template_path.read
     ERB.new(template_content).result(binding_context)
   end
 
   def build_doc(orch_version, source_folder, out_folder)
     raise 'version must not be empty' if orch_version.empty?
-    raise 'source folder must exist' unless Dir.exist?(source_folder)
-    raise 'dest folder must exist' unless Dir.exist?(out_folder)
 
-    actions_folder = File.join(source_folder, DIRNAME_ACTIONS)
-    icons_folder = File.join(out_folder, DIRNAME_ICONS)
-    FileUtils.mkdir_p(icons_folder)
+    source_folder = Pathname.new(source_folder)
+    out_folder = Pathname.new(out_folder)
+    raise 'source folder must exist' unless source_folder.exist?
+    raise 'dest folder must exist' unless out_folder.exist?
+
+    actions_folder = source_folder / DIRNAME_ACTIONS
+    icons_folder = out_folder / DIRNAME_ICONS
+    icons_folder.mkpath
     # read category names
-    File.read(File.join(source_folder, ACTION_TOOLS))
-        .scan(/\bCATEGORY_(\S+) = ["']([^"']+)["']/) do |alias_name, value|
+    (source_folder / ACTION_TOOLS).read
+      .scan(/\bCATEGORY_(\S+) = ["']([^"']+)["']/) do |alias_name, value|
       @cat_const_to_name[alias_name] = value
     end
     Log.log.info "Categories: #{@cat_const_to_name.values.sort.join(',')}"
@@ -140,21 +144,20 @@ class AsperaOrchestratorDocGenerator
     plugin_data = []
     ################################################################################################
     # 2: build doc
-    Dir.entries(actions_folder).each do |entry|
-      # skip pseudo folders
-      next if entry.eql?('.') || entry.eql?('..')
+    actions_folder.children.each do |entry_path|
+      # skip non-directories
+      next unless entry_path.directory?
 
+      entry = entry_path.basename.to_s
       # init plugin data
       one_plugin = {
-        folder: File.join(actions_folder, entry),
+        folder: entry_path,
         long_name: entry.gsub(/s$/, '')
       }
-      # plugin entry is a folder
-      next unless File.directory?(one_plugin[:folder])
 
       # check source code
-      one_plugin[:source_path] = File.join(one_plugin[:folder], one_plugin[:long_name] + '.rb')
-      next unless File.exist?(one_plugin[:source_path])
+      one_plugin[:source_path] = one_plugin[:folder] / "#{one_plugin[:long_name]}.rb"
+      next unless one_plugin[:source_path].exist?
 
       one_plugin[:ShortName] = one_plugin[:long_name].split('_').map(&:capitalize).join('')
       # Log.log.info "plugin: #{one_plugin}"
@@ -164,16 +167,16 @@ class AsperaOrchestratorDocGenerator
       set_plugin_category(one_plugin)
 
       icon_filename = one_plugin[:ShortName] + EXTENSION_ICON
-      icon_src_file = File.join(one_plugin[:folder], icon_filename)
-      one_plugin[:html_icon_path] = File.join(DIRNAME_ICONS, icon_filename)
-      if File.exist?(icon_src_file)
-        FileUtils.cp(icon_src_file, icons_folder)
+      icon_src_file = one_plugin[:folder] / icon_filename
+      one_plugin[:html_icon_path] = Pathname.new(DIRNAME_ICONS) / icon_filename
+      if icon_src_file.exist?
+        FileUtils.cp(icon_src_file.to_s, icons_folder.to_s)
       else
         Log.log.warn "no icon for #{icon_filename}"
         # patch a la mano
         if icon_filename.eql?('FfprobeInfo.png')
-          FileUtils.cp(File.join(actions_folder, 'ffmpg_transcodings/FfmpgTranscoding.png'),
-                       File.join(icons_folder, icon_filename))
+          FileUtils.cp((actions_folder / 'ffmpg_transcodings' / 'FfmpgTranscoding.png').to_s,
+                       (icons_folder / icon_filename).to_s)
         end
       end
       one_plugin[:doc] = +''
@@ -188,7 +191,7 @@ class AsperaOrchestratorDocGenerator
         one_plugin[:doc] << '</table>'
       end
 
-      one_plugin[:doc] << erb_to_html(File.join(one_plugin[:folder], FILENAME_HELP))
+      one_plugin[:doc] << erb_to_html(one_plugin[:folder] / FILENAME_HELP)
       plugin_data.push(one_plugin)
     end
     # sort list of plugins by name
@@ -197,7 +200,7 @@ class AsperaOrchestratorDocGenerator
     ################################################################################################
     # 3: generate doc
     sections = plugin_data.each.map { |p| p[:meta][:category] }.sort.uniq
-    File.open(File.join(out_folder, '/doc.html'), 'w') do |tmpdocfile|
+    (out_folder / 'doc.html').open('w') do |tmpdocfile|
       Log.log.info("Generating: #{tmpdocfile.path}")
       doctitle = "Aspera Orchestrator v#{orch_version} Plugins Manuals"
 
@@ -207,7 +210,7 @@ class AsperaOrchestratorDocGenerator
 
     ################################################################################################
     # 4: generate summary
-    File.open(File.join(out_folder, 'summary.html'), 'w') do |tmpsumfile|
+    (out_folder / 'summary.html').open('w') do |tmpsumfile|
       doctitle = "Aspera Orchestrator v#{orch_version} Plugin Summary"
       plugin_count = plugin_data.length
 
@@ -216,7 +219,7 @@ class AsperaOrchestratorDocGenerator
     end
     ################################################################################################
     # 5: generate condensed summary (banner)
-    File.open(File.join(out_folder, 'banner.html'), 'w') do |tmpsumfile|
+    (out_folder / 'banner.html').open('w') do |tmpsumfile|
       doctitle = "Aspera Orchestrator v#{orch_version} Plugins"
       plugin_count = plugin_data.length
 
