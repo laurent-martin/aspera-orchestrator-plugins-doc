@@ -30,6 +30,8 @@ PATH_BANNER_PDF = PATH_DOCS / 'Orchestrator_Plugin_Banner.pdf'
 PATH_BUILD_MAIN = Pathname.new('build') / BUILD_VERSION
 PATH_BUILD_SRC = (PATH_BUILD_MAIN / 'src').mkpath
 PATH_BUILD_OUT = (PATH_BUILD_MAIN / 'out').mkpath
+PATH_BUILD_LIB = (PATH_BUILD_SRC / 'lib').mkpath
+PATH_RPM_OUT = (PATH_BUILD_MAIN / 'rpmout').mkpath
 
 # Output file paths
 HTML_DOC_PATH = PATH_BUILD_OUT / 'doc.html'
@@ -38,7 +40,7 @@ HTML_BANNER_PATH = PATH_BUILD_OUT / 'banner.html'
 PLUGIN_DATA_PATH = PATH_BUILD_OUT / 'plugin_data.marshal'
 
 desc 'Build all documentation (HTML + PDF)'
-task default: [:pdf]
+task default: :pdf
 
 desc 'Generate HTML documentation'
 task html: HTML_DOC_PATH
@@ -56,7 +58,7 @@ desc 'Generate Plugin Banner PDF'
 task pdf_banner: PATH_BANNER_PDF
 
 # Generate Plugin Manual Markdown from HTML
-file PATH_MANUAL_MD.to_s => [HTML_DOC_PATH] do
+file PATH_MANUAL_MD => HTML_DOC_PATH do
   run(
     'pandoc',
     '-f', 'html',
@@ -90,21 +92,15 @@ file PATH_MANUAL_MD.to_s => [HTML_DOC_PATH] do
 end
 
 # Generate Plugin Manual PDF from Markdown using pandoc
-file PATH_MANUAL_PDF.to_s => [PATH_MANUAL_MD] do
-  if ENV['DIR_PANDOC']
-    markdown_to_pdf(
-      md: PATH_MANUAL_MD.to_s,
-      pdf: PATH_MANUAL_PDF.to_s
-    )
-  else
-    puts 'Warning: DIR_PANDOC not set. Cannot generate PDF with pandoc.'
-    puts 'Example: DIR_PANDOC=../aspera-cli/build/doc/pandoc rake pdf_manual'
-    exit 1
-  end
+file PATH_MANUAL_PDF => PATH_MANUAL_MD do
+  markdown_to_pdf(
+    md: PATH_MANUAL_MD,
+    pdf: PATH_MANUAL_PDF
+  )
 end
 
 # Generate Plugin List PDF (portrait)
-file PATH_LIST_PDF.to_s => [HTML_SUMMARY_PATH] do
+file PATH_LIST_PDF => HTML_SUMMARY_PATH do
   PdfGenerator.html_to_pdf(
     html_file: HTML_SUMMARY_PATH,
     pdf_file: PATH_LIST_PDF
@@ -112,7 +108,7 @@ file PATH_LIST_PDF.to_s => [HTML_SUMMARY_PATH] do
 end
 
 # Generate Plugin Banner PDF (landscape)
-file PATH_BANNER_PDF => [HTML_BANNER_PATH] do
+file PATH_BANNER_PDF => HTML_BANNER_PATH do
   PdfGenerator.html_to_pdf(
     html_file: HTML_BANNER_PATH,
     pdf_file: PATH_BANNER_PDF,
@@ -121,17 +117,16 @@ file PATH_BANNER_PDF => [HTML_BANNER_PATH] do
 end
 
 # Load plugin data (step 1-2: parse plugins and metadata)
-file PLUGIN_DATA_PATH.to_s => [PATH_BUILD_MAIN] do
+file PLUGIN_DATA_PATH => PATH_BUILD_MAIN do
   generator = AsperaOrchestratorDocGenerator.new
   plugin_data = generator.load_plugin_data(PATH_BUILD_SRC, PATH_BUILD_OUT)
   File.open(PLUGIN_DATA_PATH, 'wb') { |f| Marshal.dump(plugin_data, f) }
 end
 
 # Generate doc.html (step 3)
-file HTML_DOC_PATH.to_s => [PLUGIN_DATA_PATH] do
+file HTML_DOC_PATH => PLUGIN_DATA_PATH do
   generator = AsperaOrchestratorDocGenerator.new
   plugin_data = Marshal.load(File.read(PLUGIN_DATA_PATH))
-
   generator.render_and_write_template(
     HTML_DOC_PATH,
     'doc.html.erb',
@@ -142,10 +137,9 @@ file HTML_DOC_PATH.to_s => [PLUGIN_DATA_PATH] do
 end
 
 # Generate summary.html (step 4)
-file HTML_SUMMARY_PATH.to_s => [PLUGIN_DATA_PATH] do
+file HTML_SUMMARY_PATH => PLUGIN_DATA_PATH do
   generator = AsperaOrchestratorDocGenerator.new
   plugin_data = Marshal.load(File.read(PLUGIN_DATA_PATH))
-
   generator.render_and_write_template(
     HTML_SUMMARY_PATH,
     'summary.html.erb',
@@ -157,7 +151,7 @@ file HTML_SUMMARY_PATH.to_s => [PLUGIN_DATA_PATH] do
 end
 
 # Generate banner.html (step 5)
-file HTML_BANNER_PATH.to_s => [PLUGIN_DATA_PATH] do
+file HTML_BANNER_PATH => PLUGIN_DATA_PATH do
   generator = AsperaOrchestratorDocGenerator.new
   plugin_data = Marshal.load(File.read(PLUGIN_DATA_PATH))
 
@@ -171,7 +165,7 @@ file HTML_BANNER_PATH.to_s => [PLUGIN_DATA_PATH] do
   )
 end
 
-directory PATH_BUILD_MAIN.to_s do
+directory PATH_BUILD_MAIN do
   puts 'do: VERSION=xxx RPM=/path/to/rpm rake extract_rpm  or  rake extract_remote'
   exit 1
 end
@@ -184,21 +178,21 @@ task :extract_rpm do
   version = BUILD_VERSION
   puts "Version: #{version}"
   PATH_BUILD_MAIN.mkpath
-  (PATH_BUILD_SRC / 'lib').mkpath
-  rpmout_dir = PATH_BUILD_MAIN / 'rpmout'
-  rpmout_dir.mkpath
+  PATH_BUILD_SRC.rmtree
+  PATH_BUILD_SRC.mkpath
 
-  sh %(rpm2cpio #{rpm} | (cd #{rpmout_dir} && cpio -idv "*" "*/actions/*" "*/lib/action_tools.rb"))
+  # sh %(rpm2cpio #{rpm} | (cd #{PATH_RPM_OUT} && cpio -idv "*/actions/*" "*/lib/action_tools.rb" "*/app/helpers/action_helper.rb"))
+  sh %(rpm2cpio #{rpm} | (cd #{PATH_RPM_OUT} && cpio -idv))
 
   # Move actions directory
-  actions_src = Dir.glob("#{rpmout_dir}/opt/aspera/orchestrator*/actions").first
-  FileUtils.mv(actions_src, PATH_BUILD_SRC.to_s) if actions_src
+  FileUtils.mv(PATH_RPM_OUT / 'opt/aspera/orchestrator/actions', PATH_BUILD_SRC)
 
   # Move action_tools.rb file
-  action_tools_src = Dir.glob("#{rpmout_dir}/opt/aspera/orchestrator*/lib/action_tools.rb").first
-  FileUtils.mv(action_tools_src, (PATH_BUILD_SRC / 'lib').to_s) if action_tools_src
+  PATH_BUILD_LIB.mkpath
+  FileUtils.mv(PATH_RPM_OUT / 'opt/aspera/orchestrator/lib/action_tools.rb', PATH_BUILD_LIB)
+  FileUtils.mv(PATH_RPM_OUT / 'opt/aspera/orchestrator/app/helpers/actions_helper.rb', PATH_BUILD_LIB)
 
-  # FileUtils.rm_rf(rpmout_dir.to_s)
+  # FileUtils.rm_rf(PATH_RPM_OUT)
 end
 
 # Generate PDF from Markdown documentation
@@ -206,8 +200,8 @@ namespace :doc do
   desc 'Generate PDF from plugin development guide'
   task :guide do
     markdown_to_pdf(
-      md: (PATH_DOCS / 'plugin-development-guide.md').to_s,
-      pdf: (PATH_DOCS / 'plugin-development-guide.pdf').to_s
+      md: PATH_DOCS / 'plugin-development-guide.md',
+      pdf: PATH_DOCS / 'plugin-development-guide.pdf'
     )
   end
 end
