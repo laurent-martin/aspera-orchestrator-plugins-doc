@@ -124,6 +124,8 @@ class ActionTools
   end
 end
 
+module ActionView; module Helpers; module FormHelper; end; end; end
+
 class ManagedQueue
   DEFAULT_PRIORITY = 0
   DEFAULT_WEIGHT = 1

@@ -24,17 +24,7 @@ Encoding.default_external = Encoding::UTF_8
 # Load stub classes and modules for missing dependencies
 require_relative 'erb_stubs'
 
-# Load ERB helper methods for template rendering
-require_relative 'erb_helpers'
-
-# generate documentation for Aspera Orchestrator plugins
-# 1. read metadata from metadata.yml
-# 2. read help.html.erb and convert erb to html
-# 3. generate doc.html
-# 4. generate summary.html
-# 5. generate banner.html
-# 6. copy icons
-# 7. copy pdfs
+# Generate documentation for Aspera Orchestrator plugins
 class AsperaOrchestratorDocGenerator
   DIRNAME_ACTIONS = 'actions'
   DIRNAME_ICONS = 'icons'
@@ -48,14 +38,14 @@ class AsperaOrchestratorDocGenerator
   RE_STRING_BODY = /.+?/.freeze
   RE_STRING_ARGUMENT = /['"](#{RE_STRING_BODY})['"]\s*/.freeze
 
-  def initialize(logger: nil)
-    # NOTE: category is returned by method category() in the main plugin ruby file (plugin_name.rb)
-    # the category in metadata.yml is not always good.
-    # categories are listed in: lib/action_tools.rb, like this: CATEGORY_<CONST_NAME> = '<Display Name>'
+  def initialize
     @cat_const_to_name = {}
   end
 
-  # finds the category of plugin
+  # Finds the category of plugin
+  # NOTE: category is returned by method category() in the main plugin ruby file (plugin_name.rb)
+  # the category in metadata.yml is not always good.
+  # categories are listed in: lib/action_tools.rb, like this: CATEGORY_<CONST_NAME> = '<Display Name>'
   def set_plugin_category(one_plugin)
     # get first category from source file
     match_cat_method = one_plugin[:source_path].read.match(/def\s+category.*?end/m)
@@ -96,22 +86,49 @@ class AsperaOrchestratorDocGenerator
     nil
   end
 
+  # Returns the binding for ERB evaluation with plugin source code
+  # @param src_file [Pathname] Path to plugin source file
+  def get_binding(src_file)
+    require 'actions_helper'
+
+    source = src_file.read
+    source = source.gsub(/^\s*require_relative\s+['"]([^'"]+)['"]\s*$/) do
+      file_path = Regexp.last_match(1)
+      "load (Pathname.new('#{src_file.dirname}') / '#{file_path}.rb').expand_path.to_s"
+    end
+    source = source.gsub(/^\s*require\s+.*$/, '')
+    source = source.gsub('__FILE__', "'#{src_file}'")
+
+    # Evaluate plugin source at top-level so constants referenced by ERB remain accessible
+    TOPLEVEL_BINDING.eval(source)
+
+    # Create a context object that includes ActionsHelper
+    context = Object.new
+    context.extend(ActionsHelper)
+
+    # Define the raw method in the context (identity function for HTML strings)
+    context.define_singleton_method(:raw) do |string|
+      string
+    end
+
+    context.instance_eval { binding }
+  end
+
   def erb_to_html(file)
-    return '<p class="coming-soon">Documentation coming soon...</p>' unless file.exist?
+    return '<p class="coming-soon">No Documentation.</p>' unless file.exist?
 
     plugin_folder = file.parent
+    # TODO: custom_rubies -> custom_ruby
     plugin_name = plugin_folder.basename.to_s.gsub(/s$/, '')
-
-    begin
-      src_file = plugin_folder / "#{plugin_name}.rb"
-      ERB.new(file.read).result(ErbHelpers.new.get_binding(src_file)).gsub(/\sstyle="[^"]*"/, '')
-      # rescue SyntaxError => e
-      #  Log.log.error "Ignoring: #{file} due to syntax error: #{e}"
-      #  e.to_s
-      # rescue StandardError => e
-      #  Log.log.error "Ignoring: #{file} due to exception: #{e}"
-      #  e.to_s
-    end
+    source = file.read
+    source = source.gsub('<strong>"Continue Monitoring"</strong>', '<strong>Continue Monitoring</strong>')
+    source = source.gsub('Select "Continue Monitoring"', 'Select <strong>Continue Monitoring</strong>')
+    ERB.new(source).result(get_binding(plugin_folder / "#{plugin_name}.rb")).gsub(
+      /\sstyle="[^"]*"/, ''
+    )
+       .gsub('<h4>', '<h3>').gsub('</h4>', '</h3>')
+       .gsub('<h2>', '<h3>').gsub('</h2>', '</h3>')
+       .gsub('<br>', '<p>').gsub('<br/>', '<p>').gsub('</br>', '')
   end
 
   # Render an ERB template with the given binding
