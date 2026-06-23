@@ -123,9 +123,29 @@ class AsperaOrchestratorDocGenerator
     ERB.new(template_content).result(binding_context)
   end
 
-  def build_doc(orch_version, source_folder, out_folder)
-    raise 'version must not be empty' if orch_version.empty?
+  # Render a template and write it to a file
+  # @param output_path [Pathname] The path where to write the rendered template
+  # @param template_name [String] The name of the template file (e.g., 'doc.html.erb')
+  # @param template_vars [Hash] Hash of variables to make available in the template (as keyword arguments)
+  def render_and_write_template(output_path, template_name, **template_vars)
+    # Create a binding with the template variables
+    template_binding = binding
+    template_vars.each do |key, value|
+      template_binding.local_variable_set(key, value)
+    end
 
+    output_path.open('w') do |file|
+      Log.log.info("Generating: #{file.path}")
+      html_content = render_template(template_name, template_binding)
+      file.write(html_content)
+    end
+  end
+
+  # Load and parse plugin data from source folder
+  # @param source_folder [Pathname] Source folder containing actions
+  # @param out_folder [Pathname] Output folder for icons
+  # @return [Array<Hash>] Array of plugin data hashes
+  def load_plugin_data(source_folder, out_folder)
     source_folder = Pathname.new(source_folder)
     out_folder = Pathname.new(out_folder)
     raise 'source folder must exist' unless source_folder.exist?
@@ -134,6 +154,7 @@ class AsperaOrchestratorDocGenerator
     actions_folder = source_folder / DIRNAME_ACTIONS
     icons_folder = out_folder / DIRNAME_ICONS
     icons_folder.mkpath
+
     # read category names
     (source_folder / ACTION_TOOLS).read
       .scan(/\bCATEGORY_(\S+) = ["']([^"']+)["']/) do |alias_name, value|
@@ -141,9 +162,8 @@ class AsperaOrchestratorDocGenerator
     end
     Log.log.info "Categories: #{@cat_const_to_name.values.sort.join(',')}"
     Log.log.info "Plugin folder: #{actions_folder}"
+
     plugin_data = []
-    ################################################################################################
-    # 2: build doc
     actions_folder.children.each do |entry_path|
       # skip non-directories
       next unless entry_path.directory?
@@ -196,35 +216,61 @@ class AsperaOrchestratorDocGenerator
     end
     # sort list of plugins by name
     plugin_data.sort! { |a, b| a[:ShortName] <=> b[:ShortName] }
+    plugin_data
+  end
 
-    ################################################################################################
-    # 3: generate doc
-    sections = plugin_data.each.map { |p| p[:meta][:category] }.sort.uniq
-    (out_folder / 'doc.html').open('w') do |tmpdocfile|
-      Log.log.info("Generating: #{tmpdocfile.path}")
-      doctitle = "Aspera Orchestrator v#{orch_version} Plugins Manuals"
+  # Generate doc.html from plugin data
+  # @param orch_version [String] Orchestrator version
+  # @param plugin_data [Array<Hash>] Array of plugin data
+  # @param out_folder [Pathname] Output folder
+  def generate_doc_html(orch_version, plugin_data, out_folder)
+    render_and_write_template(
+      Pathname.new(out_folder) / 'doc.html',
+      'doc.html.erb',
+      sections: plugin_data.map { |p| p[:meta][:category] }.sort.uniq,
+      doctitle: "Aspera Orchestrator v#{orch_version} Plugins Manuals",
+      plugin_data: plugin_data
+    )
+  end
 
-      html_content = render_template('doc.html.erb', binding)
-      tmpdocfile.write(html_content)
-    end
+  # Generate summary.html from plugin data
+  # @param orch_version [String] Orchestrator version
+  # @param plugin_data [Array<Hash>] Array of plugin data
+  # @param out_folder [Pathname] Output folder
+  def generate_summary_html(orch_version, plugin_data, out_folder)
+    render_and_write_template(
+      Pathname.new(out_folder) / 'summary.html',
+      'summary.html.erb',
+      sections: plugin_data.map { |p| p[:meta][:category] }.sort.uniq,
+      doctitle: "Aspera Orchestrator v#{orch_version} Plugin Summary",
+      plugin_count: plugin_data.length,
+      plugin_data: plugin_data
+    )
+  end
 
-    ################################################################################################
-    # 4: generate summary
-    (out_folder / 'summary.html').open('w') do |tmpsumfile|
-      doctitle = "Aspera Orchestrator v#{orch_version} Plugin Summary"
-      plugin_count = plugin_data.length
+  # Generate banner.html from plugin data
+  # @param orch_version [String] Orchestrator version
+  # @param plugin_data [Array<Hash>] Array of plugin data
+  # @param out_folder [Pathname] Output folder
+  def generate_banner_html(orch_version, plugin_data, out_folder)
+    render_and_write_template(
+      Pathname.new(out_folder) / 'banner.html',
+      'banner.html.erb',
+      sections: plugin_data.map { |p| p[:meta][:category] }.sort.uniq,
+      doctitle: "Aspera Orchestrator v#{orch_version} Plugins",
+      plugin_count: plugin_data.length,
+      plugin_data: plugin_data
+    )
+  end
 
-      html_content = render_template('summary.html.erb', binding)
-      tmpsumfile.write(html_content)
-    end
-    ################################################################################################
-    # 5: generate condensed summary (banner)
-    (out_folder / 'banner.html').open('w') do |tmpsumfile|
-      doctitle = "Aspera Orchestrator v#{orch_version} Plugins"
-      plugin_count = plugin_data.length
+  # Legacy method for backward compatibility - loads plugin data and generates all HTML files
+  # @deprecated Use load_plugin_data and individual generate_*_html methods instead
+  def build_doc(orch_version, source_folder, out_folder)
+    raise 'version must not be empty' if orch_version.empty?
 
-      html_content = render_template('banner.html.erb', binding)
-      tmpsumfile.write(html_content)
-    end
+    plugin_data = load_plugin_data(source_folder, out_folder)
+    generate_doc_html(orch_version, plugin_data, out_folder)
+    generate_summary_html(orch_version, plugin_data, out_folder)
+    generate_banner_html(orch_version, plugin_data, out_folder)
   end
 end

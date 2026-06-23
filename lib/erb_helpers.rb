@@ -49,11 +49,11 @@ class ErbHelpers
   end
 
   def raw(a)
-    a
+    "<code>#{a}</code>"
   end
 
   def begin_parameters_list
-    ''
+    '<ul>'
   end
 
   def end_parameters_list

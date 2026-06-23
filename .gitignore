@@ -2,3 +2,4 @@
 /build/
 /.vscode/
 Gemfile.lock
+.DS_Store
