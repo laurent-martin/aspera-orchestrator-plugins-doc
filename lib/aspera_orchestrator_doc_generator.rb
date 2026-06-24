@@ -43,6 +43,165 @@ class AsperaOrchestratorDocGenerator
     @cat_const_to_name = {}
   end
 
+  # Render a template and write it to a file
+  # @param output_path [Pathname] The path where to write the rendered template
+  # @param template_name [String] The name of the template file (e.g., 'doc.html.erb')
+  # @param template_vars [Hash] Hash of variables to make available in the template (as keyword arguments)
+  def render_and_write_template(output_path, template_name, **template_vars)
+    # Create a binding with the template variables
+    template_binding = binding
+    template_vars.each do |key, value|
+      template_binding.local_variable_set(key, value)
+    end
+
+    output_path.open('w') do |file|
+      Log.info("Generating: #{file.path}")
+      html_content = render_template(template_name, template_binding)
+      file.write(html_content)
+    end
+  end
+
+  # Load and parse plugin data from source folder
+  # @param source_folder [Pathname] Source folder containing actions
+  # @param out_folder [Pathname] Output folder for icons
+  # @return [Array<Hash>] Array of plugin data hashes
+  def load_plugin_data(source_folder, out_folder)
+    source_folder = Pathname.new(source_folder)
+    out_folder = Pathname.new(out_folder)
+    raise 'source folder must exist' unless source_folder.exist?
+    raise 'dest folder must exist' unless out_folder.exist?
+
+    actions_folder = source_folder / DIRNAME_ACTIONS
+    icons_folder = out_folder / DIRNAME_ICONS
+    icons_folder.mkpath
+
+    # read category names
+    (source_folder / ACTION_TOOLS).read
+      .scan(/\bCATEGORY_(\S+) = ["']([^"']+)["']/) do |alias_name, value|
+      @cat_const_to_name[alias_name] = value
+    end
+    Log.info "Categories: #{@cat_const_to_name.values.sort.join(',')}"
+    Log.info "Plugin folder: #{actions_folder}"
+
+    plugin_data = []
+    actions_folder.children.each do |entry_path|
+      # skip non-directories
+      next unless entry_path.directory?
+
+      entry = entry_path.basename.to_s
+      # init plugin data
+      one_plugin = {
+        folder: entry_path,
+        long_name: entry.gsub(/s$/, '')
+      }
+
+      # check source code
+      one_plugin[:source_path] = one_plugin[:folder] / "#{one_plugin[:long_name]}.rb"
+      next unless one_plugin[:source_path].exist?
+
+      one_plugin[:ShortName] = one_plugin[:long_name].split('_').map(&:capitalize).join('')
+      # Log.log.info "plugin: #{one_plugin}"
+
+      set_metadata(one_plugin)
+
+      set_plugin_category(one_plugin)
+
+      icon_filename = one_plugin[:ShortName] + EXTENSION_ICON
+      icon_src_file = one_plugin[:folder] / icon_filename
+      one_plugin[:html_icon_path] = Pathname.new(DIRNAME_ICONS) / icon_filename
+      if icon_src_file.exist?
+        FileUtils.cp(icon_src_file.to_s, icons_folder.to_s)
+      else
+        Log.warn "no icon for #{icon_filename}"
+        # patch a la mano
+        if icon_filename.eql?('FfprobeInfo.png')
+          FileUtils.cp((actions_folder / 'ffmpg_transcodings' / 'FfmpgTranscoding.png').to_s,
+                       (icons_folder / icon_filename).to_s)
+        end
+      end
+      one_plugin[:doc] = +''
+      one_plugin[:doc] << "<div class=\"plugin-section\"><h2>#{one_plugin[:meta][:display_name]}</h2></div>\n"
+      one_plugin[:doc] << "<div class=\"plugin-header\"><img src=\"#{one_plugin[:html_icon_path]}\" alt=\"#{one_plugin[:meta][:display_name]} icon\" class=\"plugin-icon\"/><p class=\"plugin-description\">#{one_plugin[:meta][:description]}</p></div>\n"
+
+      if one_plugin[:meta].has_key?(:revision_history)
+        one_plugin[:doc] << '<table class="revision-history"><tr><th>Version</th><th>Comment</th></tr>'
+        one_plugin[:meta][:revision_history].reverse_each do |v|
+          one_plugin[:doc] << "<tr><td>#{v[:version]}</td><td>#{v[:change_description]}</td></tr>"
+        end
+        one_plugin[:doc] << '</table>'
+      end
+
+      one_plugin[:doc] << erb_to_html(one_plugin[:folder] / FILENAME_HELP)
+      plugin_data.push(one_plugin)
+    end
+    # sort list of plugins by name
+    plugin_data.sort! { |a, b| a[:ShortName] <=> b[:ShortName] }
+    plugin_data
+  end
+
+  # Convert HTML file to PDF using wkhtmltopdf
+  # @param html_file [String, Pathname] Path to input HTML file
+  # @param pdf_file [String, Pathname] Path to output PDF file
+  # @param options [Hash] Additional wkhtmltopdf options
+  # @option options [String] :orientation Page orientation ('Portrait' or 'Landscape')
+  # @option options [Boolean] :enable_local_file_access Enable local file access (default: true)
+  def html_to_pdf(html_file:, pdf_file:, options: {})
+    html_file = Pathname.new(html_file).expand_path
+    pdf_file = Pathname.new(pdf_file).expand_path
+
+    raise "HTML file not found: #{html_file}" unless html_file.exist?
+
+    # Ensure output directory exists
+    pdf_file.dirname.mkpath
+
+    # Build wkhtmltopdf command
+    cmd = ['wkhtmltopdf']
+
+    # Add enable-local-file-access by default
+    cmd << '--enable-local-file-access' if options.fetch(:enable_local_file_access, true)
+
+    # Add orientation if specified
+    cmd << '-O' << options[:orientation] if options[:orientation]
+
+    # Add any additional options
+    options.each do |key, value|
+      next if %i[enable_local_file_access orientation].include?(key)
+
+      cmd << "--#{key.to_s.tr('_', '-')}"
+      cmd << value.to_s unless value == true
+    end
+
+    # Add input and output files
+    cmd << "file://#{html_file}"
+    cmd << pdf_file.to_s
+
+    Log.info("Generating PDF: #{pdf_file}")
+    system(*cmd) || raise("Failed to generate PDF: #{pdf_file}")
+  end
+
+  # Generate Markdown from HTML using Pandoc and clean it up
+  # @param html_path [String, Pathname] Path to input HTML file
+  # @param md_path [String, Pathname] Path to output Markdown file
+  # @param temp_md_path [String, Pathname] Path to temporary Markdown file
+  def generate_markdown_from_html(html_path:, md_path:, temp_md_path:)
+    run(
+      'pandoc',
+      '--from=html',
+      '--to=gfm',
+      '--wrap=none',
+      '--shift-heading-level-by=1',
+      "--output=#{temp_md_path}",
+      html_path
+    )
+    # Clean up the generated Markdown
+    content = File.read(temp_md_path)
+    cleaned_content = clean_markdown_content(content)
+    File.write(temp_md_path, cleaned_content)
+    FileUtils.cp(temp_md_path, md_path)
+  end
+
+  private
+
   # Finds the category of plugin
   # NOTE: category is returned by method category() in the main plugin ruby file (plugin_name.rb)
   # the category in metadata.yml is not always good.
@@ -143,102 +302,6 @@ class AsperaOrchestratorDocGenerator
     ERB.new(template_content).result(binding_context)
   end
 
-  # Render a template and write it to a file
-  # @param output_path [Pathname] The path where to write the rendered template
-  # @param template_name [String] The name of the template file (e.g., 'doc.html.erb')
-  # @param template_vars [Hash] Hash of variables to make available in the template (as keyword arguments)
-  def render_and_write_template(output_path, template_name, **template_vars)
-    # Create a binding with the template variables
-    template_binding = binding
-    template_vars.each do |key, value|
-      template_binding.local_variable_set(key, value)
-    end
-
-    output_path.open('w') do |file|
-      Log.info("Generating: #{file.path}")
-      html_content = render_template(template_name, template_binding)
-      file.write(html_content)
-    end
-  end
-
-  # Load and parse plugin data from source folder
-  # @param source_folder [Pathname] Source folder containing actions
-  # @param out_folder [Pathname] Output folder for icons
-  # @return [Array<Hash>] Array of plugin data hashes
-  def load_plugin_data(source_folder, out_folder)
-    source_folder = Pathname.new(source_folder)
-    out_folder = Pathname.new(out_folder)
-    raise 'source folder must exist' unless source_folder.exist?
-    raise 'dest folder must exist' unless out_folder.exist?
-
-    actions_folder = source_folder / DIRNAME_ACTIONS
-    icons_folder = out_folder / DIRNAME_ICONS
-    icons_folder.mkpath
-
-    # read category names
-    (source_folder / ACTION_TOOLS).read
-      .scan(/\bCATEGORY_(\S+) = ["']([^"']+)["']/) do |alias_name, value|
-      @cat_const_to_name[alias_name] = value
-    end
-    Log.info "Categories: #{@cat_const_to_name.values.sort.join(',')}"
-    Log.info "Plugin folder: #{actions_folder}"
-
-    plugin_data = []
-    actions_folder.children.each do |entry_path|
-      # skip non-directories
-      next unless entry_path.directory?
-
-      entry = entry_path.basename.to_s
-      # init plugin data
-      one_plugin = {
-        folder: entry_path,
-        long_name: entry.gsub(/s$/, '')
-      }
-
-      # check source code
-      one_plugin[:source_path] = one_plugin[:folder] / "#{one_plugin[:long_name]}.rb"
-      next unless one_plugin[:source_path].exist?
-
-      one_plugin[:ShortName] = one_plugin[:long_name].split('_').map(&:capitalize).join('')
-      # Log.log.info "plugin: #{one_plugin}"
-
-      set_metadata(one_plugin)
-
-      set_plugin_category(one_plugin)
-
-      icon_filename = one_plugin[:ShortName] + EXTENSION_ICON
-      icon_src_file = one_plugin[:folder] / icon_filename
-      one_plugin[:html_icon_path] = Pathname.new(DIRNAME_ICONS) / icon_filename
-      if icon_src_file.exist?
-        FileUtils.cp(icon_src_file.to_s, icons_folder.to_s)
-      else
-        Log.warn "no icon for #{icon_filename}"
-        # patch a la mano
-        if icon_filename.eql?('FfprobeInfo.png')
-          FileUtils.cp((actions_folder / 'ffmpg_transcodings' / 'FfmpgTranscoding.png').to_s,
-                       (icons_folder / icon_filename).to_s)
-        end
-      end
-      one_plugin[:doc] = +''
-      one_plugin[:doc] << "<div class=\"plugin-section\"><h2>#{one_plugin[:meta][:display_name]}</h2></div>\n"
-      one_plugin[:doc] << "<div class=\"plugin-header\"><img src=\"#{one_plugin[:html_icon_path]}\" alt=\"#{one_plugin[:meta][:display_name]} icon\" class=\"plugin-icon\"/><p class=\"plugin-description\">#{one_plugin[:meta][:description]}</p></div>\n"
-
-      if one_plugin[:meta].has_key?(:revision_history)
-        one_plugin[:doc] << '<table class="revision-history"><tr><th>Version</th><th>Comment</th></tr>'
-        one_plugin[:meta][:revision_history].reverse_each do |v|
-          one_plugin[:doc] << "<tr><td>#{v[:version]}</td><td>#{v[:change_description]}</td></tr>"
-        end
-        one_plugin[:doc] << '</table>'
-      end
-
-      one_plugin[:doc] << erb_to_html(one_plugin[:folder] / FILENAME_HELP)
-      plugin_data.push(one_plugin)
-    end
-    # sort list of plugins by name
-    plugin_data.sort! { |a, b| a[:ShortName] <=> b[:ShortName] }
-    plugin_data
-  end
-
   # Create enriched context for template rendering
   # @param orch_version [String] Orchestrator version
   # @param plugin_data [Array<Hash>] Array of plugin data
@@ -299,46 +362,6 @@ class AsperaOrchestratorDocGenerator
     )
   end
 
-  # Convert HTML file to PDF using wkhtmltopdf
-  # @param html_file [String, Pathname] Path to input HTML file
-  # @param pdf_file [String, Pathname] Path to output PDF file
-  # @param options [Hash] Additional wkhtmltopdf options
-  # @option options [String] :orientation Page orientation ('Portrait' or 'Landscape')
-  # @option options [Boolean] :enable_local_file_access Enable local file access (default: true)
-  def html_to_pdf(html_file:, pdf_file:, options: {})
-    html_file = Pathname.new(html_file).expand_path
-    pdf_file = Pathname.new(pdf_file).expand_path
-
-    raise "HTML file not found: #{html_file}" unless html_file.exist?
-
-    # Ensure output directory exists
-    pdf_file.dirname.mkpath
-
-    # Build wkhtmltopdf command
-    cmd = ['wkhtmltopdf']
-
-    # Add enable-local-file-access by default
-    cmd << '--enable-local-file-access' if options.fetch(:enable_local_file_access, true)
-
-    # Add orientation if specified
-    cmd << '-O' << options[:orientation] if options[:orientation]
-
-    # Add any additional options
-    options.each do |key, value|
-      next if %i[enable_local_file_access orientation].include?(key)
-
-      cmd << "--#{key.to_s.tr('_', '-')}"
-      cmd << value.to_s unless value == true
-    end
-
-    # Add input and output files
-    cmd << "file://#{html_file}"
-    cmd << pdf_file.to_s
-
-    Log.info("Generating PDF: #{pdf_file}")
-    system(*cmd) || raise("Failed to generate PDF: #{pdf_file}")
-  end
-
   # Clean up Markdown content generated by Pandoc
   # @param content [String] Raw Markdown content
   # @return [String] Cleaned Markdown content
@@ -357,27 +380,6 @@ class AsperaOrchestratorDocGenerator
       lines[0] = "# #{lines[0]}" # Make document title H1
     end
     lines.join("\n")
-  end
-
-  # Generate Markdown from HTML using Pandoc and clean it up
-  # @param html_path [String, Pathname] Path to input HTML file
-  # @param md_path [String, Pathname] Path to output Markdown file
-  # @param temp_md_path [String, Pathname] Path to temporary Markdown file
-  def generate_markdown_from_html(html_path:, md_path:, temp_md_path:)
-    run(
-      'pandoc',
-      '--from=html',
-      '--to=gfm',
-      '--wrap=none',
-      '--shift-heading-level-by=1',
-      "--output=#{temp_md_path}",
-      html_path
-    )
-    # Clean up the generated Markdown
-    content = File.read(temp_md_path)
-    cleaned_content = clean_markdown_content(content)
-    File.write(temp_md_path, cleaned_content)
-    FileUtils.cp(temp_md_path, md_path)
   end
 
   # Legacy method for backward compatibility - loads plugin data and generates all HTML files
