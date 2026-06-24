@@ -11,8 +11,8 @@ ENV_VAR_PANDOC = 'DIR_PANDOC'
 # DIR_PANDOC is <aspera-cli>/build/doc/pandoc
 raise "Missing environment variable #{ENV_VAR_PANDOC}" unless ENV[ENV_VAR_PANDOC]
 
-aspera_cli_gem_path = Pathname.new(ENV[ENV_VAR_PANDOC]).parent.parent / 'lib'
-$LOAD_PATH.unshift(aspera_cli_gem_path)
+aspera_cli_build_lib = Pathname.new(ENV[ENV_VAR_PANDOC]).parent.parent.parent / 'build' / 'lib'
+$LOAD_PATH.unshift(aspera_cli_build_lib)
 
 require 'pandoc'
 require 'build_tools'
@@ -20,8 +20,9 @@ include BuildTools
 
 raise 'Set env var VERSION' unless ENV.key?('VERSION')
 
-TOP = Pathname.new(__dir__)
 BUILD_VERSION = ENV['VERSION']
+
+TOP = Pathname.new(__dir__)
 PATH_DOCS = TOP / 'docs'
 PATH_MANUAL_MD = PATH_DOCS / 'Orchestrator_Plugin_Manual.md'
 PATH_MANUAL_PDF = PATH_DOCS / 'Orchestrator_Plugin_Manual.pdf'
@@ -168,13 +169,15 @@ task :extract_rpm do
   # sh %(rpm2cpio #{rpm} | (cd #{PATH_RPM_OUT} && cpio -idv "*/actions/*" "*/lib/action_tools.rb" "*/app/helpers/action_helper.rb"))
   sh %(rpm2cpio #{rpm} | (cd #{PATH_RPM_OUT} && cpio -idv))
 
-  # Move actions directory
-  FileUtils.mv(PATH_RPM_OUT / 'opt/aspera/orchestrator/actions', PATH_BUILD_SRC)
+  path_orchestrator = PATH_RPM_OUT / 'opt/aspera/orchestrator'
 
-  # Move action_tools.rb file
+  # Move actions directory
+  FileUtils.mv(path_orchestrator / 'actions', PATH_BUILD_SRC)
+
+  # Move used lib files
   PATH_BUILD_LIB.mkpath
-  FileUtils.mv(PATH_RPM_OUT / 'opt/aspera/orchestrator/lib/action_tools.rb', PATH_BUILD_LIB)
-  FileUtils.mv(PATH_RPM_OUT / 'opt/aspera/orchestrator/app/helpers/actions_helper.rb', PATH_BUILD_LIB)
+  FileUtils.mv(path_orchestrator / 'lib/action_tools.rb', PATH_BUILD_LIB)
+  FileUtils.mv(path_orchestrator / 'app/helpers/actions_helper.rb', PATH_BUILD_LIB)
 
   # FileUtils.rm_rf(PATH_RPM_OUT)
 end

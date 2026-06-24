@@ -14,9 +14,10 @@ require 'date'
 require 'erb'
 require 'logger'
 require 'set'
-require 'aspera/log'
 
-include Aspera
+# Global logger instance
+Log = Logger.new($stdout)
+Log.level = Logger::INFO
 
 Encoding.default_internal = Encoding::UTF_8
 Encoding.default_external = Encoding::UTF_8
@@ -63,16 +64,16 @@ class AsperaOrchestratorDocGenerator
     raise 'no category found' if one_plugin[:meta][:category].nil?
     return if category_meta.eql?(one_plugin[:meta][:category])
 
-    Log.log.warn "category mismatch: #{one_plugin[:long_name]}: src=#{one_plugin[:meta][:category]},meta=#{category_meta}"
+    Log.warn "category mismatch: #{one_plugin[:long_name]}: src=#{one_plugin[:meta][:category]},meta=#{category_meta}"
   end
 
   # loads plugin metadata
   def set_metadata(one_plugin)
     filepath_metadata = one_plugin[:folder] / FILENAME_METADATA
     if filepath_metadata.exist?
-      Log.log.info(filepath_metadata.to_s)
+      Log.info(filepath_metadata.to_s)
       one_plugin[:meta] = YAML.load_file(filepath_metadata.to_s, permitted_classes: [Date, Symbol])
-      Log.dump(:plugin, one_plugin)
+      Log.debug("plugin: #{one_plugin.inspect}")
       one_plugin[:meta][:category] = 'No Category' if one_plugin[:meta][:category].empty?
     else
       one_plugin[:meta] = {
@@ -154,7 +155,7 @@ class AsperaOrchestratorDocGenerator
     end
 
     output_path.open('w') do |file|
-      Log.log.info("Generating: #{file.path}")
+      Log.info("Generating: #{file.path}")
       html_content = render_template(template_name, template_binding)
       file.write(html_content)
     end
@@ -179,8 +180,8 @@ class AsperaOrchestratorDocGenerator
       .scan(/\bCATEGORY_(\S+) = ["']([^"']+)["']/) do |alias_name, value|
       @cat_const_to_name[alias_name] = value
     end
-    Log.log.info "Categories: #{@cat_const_to_name.values.sort.join(',')}"
-    Log.log.info "Plugin folder: #{actions_folder}"
+    Log.info "Categories: #{@cat_const_to_name.values.sort.join(',')}"
+    Log.info "Plugin folder: #{actions_folder}"
 
     plugin_data = []
     actions_folder.children.each do |entry_path|
@@ -211,7 +212,7 @@ class AsperaOrchestratorDocGenerator
       if icon_src_file.exist?
         FileUtils.cp(icon_src_file.to_s, icons_folder.to_s)
       else
-        Log.log.warn "no icon for #{icon_filename}"
+        Log.warn "no icon for #{icon_filename}"
         # patch a la mano
         if icon_filename.eql?('FfprobeInfo.png')
           FileUtils.cp((actions_folder / 'ffmpg_transcodings' / 'FfmpgTranscoding.png').to_s,
@@ -334,7 +335,7 @@ class AsperaOrchestratorDocGenerator
     cmd << "file://#{html_file}"
     cmd << pdf_file.to_s
 
-    Log.log.info("Generating PDF: #{pdf_file}")
+    Log.info("Generating PDF: #{pdf_file}")
     system(*cmd) || raise("Failed to generate PDF: #{pdf_file}")
   end
 
