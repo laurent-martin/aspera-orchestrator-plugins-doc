@@ -2,19 +2,11 @@
 
 This tool generates Plugin documentation for IBM Aspera Orchestrator.
 
-It uses the `actions` folder where plugins live.
-
-The orchestrator RPM can be provided, or a copy of the `actions` folder.
-
-To generate the documentation:
-
-```bash
-rake
-```
+It extracts relevant files from the RPM, and generate the Markdown and PDF documentation.
 
 ## Prerequisites
 
-The Rakefile uses the tool: [wkhtmltopd](https://wkhtmltopdf.org/)
+The `Rakefile` uses the tool: [`wkhtmltopdf`](https://wkhtmltopdf.org/)
 
 on macOS, get it from `brew`:
 
@@ -22,21 +14,15 @@ on macOS, get it from `brew`:
 brew install wkhtmltopdf
 ```
 
-## With Orchestrator RPM
+It also uses tools from the `aspera-cli` repository: <https://github.com/IBM/aspera-CLI>
+
+## Usage
 
 ```bash
-export RPM=private/aspera-orchestrator-4.0.1.2b9681-0.x86_64.rpm
-export VERSION=$(echo $RPM|sed -n -Ee 's/.*orchestrator-([0-9]*\.[0-9]*\.[0-9]*)\..*/\1/p')
+export DIR_ASPERA_CLI=<path to aspera-cli repo>
+export DIR_PANDOC=$DIR_ASPERA_CLI/build/doc/pandoc/
+export RPM=private/ibm-aspera-orchestrator-4.1.5.1917-1df786b.x86_64.rpm
+export VERSION=4.1.5
 rake extract_rpm
-rake
-```
-
-## With remote Orchestrator install with HSTS
-
-It uses `ssh` and `ascp` to list and retrieve files.
-Requires `~/.ssh/id_rsa` to be allowed on the remote node.
-
-```bash
-REMOTE_USER=laurent REMOTE_HOST=testchris5.aspera.cloud ASCP=ascp KEYS="-i $HOME/.ssh/id_rsa" rake extract_remote
 rake
 ```
