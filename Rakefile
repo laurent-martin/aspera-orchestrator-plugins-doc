@@ -5,11 +5,13 @@ require 'rake/clean'
 require 'pathname'
 require_relative 'lib/aspera_orchestrator_doc_generator'
 
+ENV_VAR_PANDOC = 'DIR_PANDOC'
+
 # Use the build system of aspera-cli
 # DIR_PANDOC is <aspera-cli>/build/doc/pandoc
-raise 'Missing environment variable DIR_PANDOC' unless ENV['DIR_PANDOC']
+raise "Missing environment variable #{ENV_VAR_PANDOC}" unless ENV[ENV_VAR_PANDOC]
 
-aspera_cli_gem_path = Pathname.new(ENV['DIR_PANDOC']).parent.parent / 'lib'
+aspera_cli_gem_path = Pathname.new(ENV[ENV_VAR_PANDOC]).parent.parent / 'lib'
 $LOAD_PATH.unshift(aspera_cli_gem_path)
 
 require 'pandoc'
@@ -35,56 +37,16 @@ PATH_RPM_OUT = (PATH_BUILD_MAIN / 'rpmout').mkpath
 $LOAD_PATH.unshift(PATH_BUILD_LIB)
 
 # Output file paths
-HTML_DOC_PATH = PATH_BUILD_OUT / 'doc.html'
-HTML_SUMMARY_PATH = PATH_BUILD_OUT / 'summary.html'
+PATH_HTML_DOC = PATH_BUILD_OUT / 'doc.html'
+PATH_HTML_SUMMARY = PATH_BUILD_OUT / 'summary.html'
 HTML_BANNER_PATH = PATH_BUILD_OUT / 'banner.html'
-PLUGIN_DATA_PATH = PATH_BUILD_OUT / 'plugin_data.marshal'
-
-# Convert HTML file to PDF using wkhtmltopdf
-# @param html_file [String, Pathname] Path to input HTML file
-# @param pdf_file [String, Pathname] Path to output PDF file
-# @param options [Hash] Additional wkhtmltopdf options
-# @option options [String] :orientation Page orientation ('Portrait' or 'Landscape')
-# @option options [Boolean] :enable_local_file_access Enable local file access (default: true)
-def html_to_pdf(html_file:, pdf_file:, options: {})
-  html_file = Pathname.new(html_file).expand_path
-  pdf_file = Pathname.new(pdf_file).expand_path
-
-  raise "HTML file not found: #{html_file}" unless html_file.exist?
-
-  # Ensure output directory exists
-  pdf_file.dirname.mkpath
-
-  # Build wkhtmltopdf command
-  cmd = ['wkhtmltopdf']
-
-  # Add enable-local-file-access by default
-  cmd << '--enable-local-file-access' if options.fetch(:enable_local_file_access, true)
-
-  # Add orientation if specified
-  cmd << '-O' << options[:orientation] if options[:orientation]
-
-  # Add any additional options
-  options.each do |key, value|
-    next if %i[enable_local_file_access orientation].include?(key)
-
-    cmd << "--#{key.to_s.tr('_', '-')}"
-    cmd << value.to_s unless value == true
-  end
-
-  # Add input and output files
-  cmd << "file://#{html_file}"
-  cmd << pdf_file.to_s
-
-  puts "Generating PDF: #{pdf_file}"
-  system(*cmd) || raise("Failed to generate PDF: #{pdf_file}")
-end
+PATH_PLUGIN_DATA = PATH_BUILD_OUT / 'plugin_data.marshal'
 
 desc 'Build all documentation (HTML + PDF)'
 task default: :pdf
 
 desc 'Generate HTML documentation'
-task html: HTML_DOC_PATH
+task html: PATH_HTML_DOC
 
 desc 'Generate all PDF documentation'
 task pdf: %i[pdf_manual pdf_list pdf_banner]
@@ -102,35 +64,13 @@ desc 'Generate Plugin Banner PDF'
 task pdf_banner: PATH_BANNER_PDF
 
 # Generate Plugin Manual Markdown from HTML
-file PATH_MANUAL_MD => HTML_DOC_PATH do
-  run(
-    'pandoc',
-    '--from=html',
-    '--to=gfm',
-    '--wrap=none',
-    '--shift-heading-level-by=1',
-    "--output=#{PATH_MANUAL_MD_TMP}",
-    HTML_DOC_PATH
+file PATH_MANUAL_MD => PATH_HTML_DOC do
+  generator = AsperaOrchestratorDocGenerator.new
+  generator.generate_markdown_from_html(
+    html_path: PATH_HTML_DOC,
+    md_path: PATH_MANUAL_MD,
+    temp_md_path: PATH_MANUAL_MD_TMP
   )
-  # Clean up the generated Markdown
-  content = File.read(PATH_MANUAL_MD_TMP)
-  # Remove lines starting with ::: (Pandoc div markers)
-  content.gsub!(/^:::.*$\n?/, '')
-  # Remove HTML div tags
-  content.gsub!(%r{</?div[^>]*>\n?}, '')
-  # Convert HTML img tags to Markdown syntax: <img src="path" class="..." alt="text" /> -> ![text](path)
-  content.gsub!(%r{<img\s+src="([^"]+)"[^>]*alt="([^"]*)"[^>]*/?>}, '![\\2](\\1)')
-  content.gsub!("\n|----|----|\n",
-                "\n|-------|---------------------------------------------------|\n")
-
-  # Fix heading levels: document title should be H1, categories H2, plugin names H3
-  lines = content.split("\n")
-  if lines.first && !lines.first.start_with?('#')
-    lines[0] = "# #{lines[0]}" # Make document title H1
-  end
-  content = lines.join("\n")
-  File.write(PATH_MANUAL_MD_TMP, content)
-  FileUtils.cp(PATH_MANUAL_MD_TMP, PATH_MANUAL_MD)
 end
 
 # Generate Plugin Manual PDF from Markdown using pandoc
@@ -142,16 +82,18 @@ file PATH_MANUAL_PDF => PATH_MANUAL_MD do
 end
 
 # Generate Plugin List PDF (portrait)
-file PATH_LIST_PDF => HTML_SUMMARY_PATH do
-  html_to_pdf(
-    html_file: HTML_SUMMARY_PATH,
+file PATH_LIST_PDF => PATH_HTML_SUMMARY do
+  generator = AsperaOrchestratorDocGenerator.new
+  generator.html_to_pdf(
+    html_file: PATH_HTML_SUMMARY,
     pdf_file: PATH_LIST_PDF
   )
 end
 
 # Generate Plugin Banner PDF (landscape)
 file PATH_BANNER_PDF => HTML_BANNER_PATH do
-  html_to_pdf(
+  generator = AsperaOrchestratorDocGenerator.new
+  generator.html_to_pdf(
     html_file: HTML_BANNER_PATH,
     pdf_file: PATH_BANNER_PDF,
     options: { orientation: 'landscape' }
@@ -159,18 +101,18 @@ file PATH_BANNER_PDF => HTML_BANNER_PATH do
 end
 
 # Load plugin data (step 1-2: parse plugins and metadata)
-file PLUGIN_DATA_PATH => PATH_BUILD_MAIN do
+file PATH_PLUGIN_DATA => PATH_BUILD_MAIN do
   generator = AsperaOrchestratorDocGenerator.new
   plugin_data = generator.load_plugin_data(PATH_BUILD_SRC, PATH_BUILD_OUT)
-  File.open(PLUGIN_DATA_PATH, 'wb') { |f| Marshal.dump(plugin_data, f) }
+  File.open(PATH_PLUGIN_DATA, 'wb') { |f| Marshal.dump(plugin_data, f) }
 end
 
 # Generate doc.html (step 3)
-file HTML_DOC_PATH => PLUGIN_DATA_PATH do
+file PATH_HTML_DOC => PATH_PLUGIN_DATA do
   generator = AsperaOrchestratorDocGenerator.new
-  plugin_data = Marshal.load(File.read(PLUGIN_DATA_PATH))
+  plugin_data = Marshal.load(File.read(PATH_PLUGIN_DATA))
   generator.render_and_write_template(
-    HTML_DOC_PATH,
+    PATH_HTML_DOC,
     'doc.html.erb',
     sections: plugin_data.map { |p| p[:meta][:category] }.sort.uniq,
     doctitle: "Aspera Orchestrator v#{BUILD_VERSION} Plugins Manuals",
@@ -179,11 +121,11 @@ file HTML_DOC_PATH => PLUGIN_DATA_PATH do
 end
 
 # Generate summary.html (step 4)
-file HTML_SUMMARY_PATH => PLUGIN_DATA_PATH do
+file PATH_HTML_SUMMARY => PATH_PLUGIN_DATA do
   generator = AsperaOrchestratorDocGenerator.new
-  plugin_data = Marshal.load(File.read(PLUGIN_DATA_PATH))
+  plugin_data = Marshal.load(File.read(PATH_PLUGIN_DATA))
   generator.render_and_write_template(
-    HTML_SUMMARY_PATH,
+    PATH_HTML_SUMMARY,
     'summary.html.erb',
     sections: plugin_data.map { |p| p[:meta][:category] }.sort.uniq,
     doctitle: "Aspera Orchestrator v#{BUILD_VERSION} Plugin Summary",
@@ -193,9 +135,9 @@ file HTML_SUMMARY_PATH => PLUGIN_DATA_PATH do
 end
 
 # Generate banner.html (step 5)
-file HTML_BANNER_PATH => PLUGIN_DATA_PATH do
+file HTML_BANNER_PATH => PATH_PLUGIN_DATA do
   generator = AsperaOrchestratorDocGenerator.new
-  plugin_data = Marshal.load(File.read(PLUGIN_DATA_PATH))
+  plugin_data = Marshal.load(File.read(PATH_PLUGIN_DATA))
 
   generator.render_and_write_template(
     HTML_BANNER_PATH,

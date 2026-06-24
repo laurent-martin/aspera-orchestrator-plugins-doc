@@ -676,9 +676,9 @@ This is a minimum setup configuration for the plugin.
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *Archive_root \** | The base path for the files to archive. Supports GLOB syntax. |
+| *Archive_root <span style="color: red;">\*</span>* | The base path for the files to archive. Supports GLOB syntax. |
 | *Compressed_name* | The name to use for the archive file (if specified). Default is the name of the directory if the entity being compressed is a directory or archive otherwise. |
-| *Kept_duration \** | Allows you to specify after how long a file is moved to the archive. |
+| *Kept_duration <span style="color: red;">\*</span>* | Allows you to specify after how long a file is moved to the archive. |
 | *Kept_duration_unit* | Defines the time unit for Kept duration, such as seconds, minutes, or hours. |
 | *Manifest_directory* | Allows specification of the directory to place the manifest |
 | *Purge_file_pattern* | Allows to specify if the selection has to descend into sub folders. |
@@ -1793,7 +1793,7 @@ Extracts multiple information about a local file, given its full path.
 2.  Fill out the following fields:
     - **Name**: The name of this template or configuration.
     - **Comments**: Comments associated with this template or configuration.
-    - **File path**\*: The full path of the file to retrieve information for.
+    - **File path**<span style="color: red;">\*</span>: The full path of the file to retrieve information for.
     - **Fail if file does not exist**: By default, the action supports non-existent paths and computes available path information, setting all other values to -1. When this option is enabled, the action will fail if the specified file does not exist.
     - **Accept array of files**: When enabled, allows the action to receive an array of file paths instead of a single file path. Each file path in the array will be processed independently, and the outputs will contain a corresponding list of results.
 
@@ -3069,8 +3069,8 @@ The list of inputs depends on the configuration of the SymantecPgp action templa
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *source_file_path \** | The source file(s) for the PGP operation. Supports multiple files, comma-separated. |
-| *passphrase \** | The passphrase to use for the PGP operation. |
+| *source_file_path <span style="color: red;">\*</span>* | The source file(s) for the PGP operation. Supports multiple files, comma-separated. |
+| *passphrase <span style="color: red;">\*</span>* | The passphrase to use for the PGP operation. |
 | *options* | Any optional parameters supported by the Symantec PGP binary. These options will be passed as they are. |
 | *target_file_path* | The destination file(s) for the PGP operation. Supports multiple files, comma-separated. |
 
@@ -5994,7 +5994,7 @@ Required inputs depend on how the FxpTransfer template is configured. If dynamic
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *Origin_file_path \** | The directory path on the origin server used for the transfer. |
+| *Origin_file_path <span style="color: red;">\*</span>* | The directory path on the origin server used for the transfer. |
 | *FXP_debug_flag* | Enable debug logging for the FXP transfer. |
 | *Origin_password* | The password for the FTP user account on the origin server. |
 | *Origin_server* | The origin server IP address. |
@@ -6527,10 +6527,10 @@ Input folder path, Output folder path, Execution node, and Robocopy binary path 
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *Execution_node \** | The remote Windows node identifier. Must be a configured Remote Node with SSH access to a Windows system. |
-| *Robocopy_Binary_path \** | The full path to the Robocopy executable on the remote node. Default location: C:/Windows/System32/Robocopy.exe |
-| *Input_folder_path \** | The source directory path from which files will be copied. |
-| *Output_folder_path \** | The destination directory path where files will be copied. Created automatically if it doesn't exist. |
+| *Execution_node <span style="color: red;">\*</span>* | The remote Windows node identifier. Must be a configured Remote Node with SSH access to a Windows system. |
+| *Robocopy_Binary_path <span style="color: red;">\*</span>* | The full path to the Robocopy executable on the remote node. Default location: C:/Windows/System32/Robocopy.exe |
+| *Input_folder_path <span style="color: red;">\*</span>* | The source directory path from which files will be copied. |
+| *Output_folder_path <span style="color: red;">\*</span>* | The destination directory path where files will be copied. Created automatically if it doesn't exist. |
 | *Input_Files* | Space-separated list of file names or patterns to copy (e.g., 'file1.txt file2.doc' or '\*.xml \*.json'). If empty, all files (\*.\*) are copied. |
 | *Copy_Sub_Directories* | Boolean flag to include subdirectories in the copy operation (excludes empty directories). |
 | *Copy_Empty_Directories* | Boolean flag to include empty directories along with subdirectories in the copy operation. |
@@ -7149,9 +7149,9 @@ Required inputs depend on how the WebdavTransfer template is configured. If dyna
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *Remote Node or Remote Address \** | Either select a remote node or enter a remote address and its port. |
-| *Source path \** | The source path is mandatory for Upload, Download, Copy, and Move operations. Use this input to specify the source for the operation. |
-| *Target path \** | The target path is mandatory for all operations. Use this input to specify the target for the operation. |
+| *Remote Node or Remote Address <span style="color: red;">\*</span>* | Either select a remote node or enter a remote address and its port. |
+| *Source path <span style="color: red;">\*</span>* | The source path is mandatory for Upload, Download, Copy, and Move operations. Use this input to specify the source for the operation. |
+| *Target path <span style="color: red;">\*</span>* | The target path is mandatory for all operations. Use this input to specify the target for the operation. |
 | *Remote password* | If the remote server requires authentication, enter the password here. |
 | *Remote port* | The port of the remote server. |
 | *Remote user* | If the remote server requires authentication, enter the username here. |
@@ -8008,8 +8008,8 @@ Required inputs depend on how the XsltTransformation template is configured. If 
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *XML_content_or_path \** | Required only when both 'XML body' and 'XML file path' are left blank. Provide raw XML text or a local file path. |
-| *XSLT_content_or_path \** | Required only when both 'XSLT body' and 'XSLT file path' are left blank. Provide XSLT text or a local file path. |
+| *XML_content_or_path <span style="color: red;">\*</span>* | Required only when both 'XML body' and 'XML file path' are left blank. Provide raw XML text or a local file path. |
+| *XSLT_content_or_path <span style="color: red;">\*</span>* | Required only when both 'XSLT body' and 'XSLT file path' are left blank. Provide XSLT text or a local file path. |
 | *Target_file_path* | Optional. Only required if the target path was not specified in the configuration. |
 
 #### Outputs Description
@@ -9186,8 +9186,8 @@ Required inputs depend on how the AmazonSqsOperation template is configured. If 
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| Aws_key \* | The AWS access key ID. |
-| Aws_secret \* | The AWS secret access key. |
+| Aws_key <span style="color: red;">\*</span> | The AWS access key ID. |
+| Aws_secret <span style="color: red;">\*</span> | The AWS secret access key. |
 | Aws_session_token | The AWS session token (optional). |
 | Aws_region | The AWS region. |
 | External_id | The external ID used when assuming an IAM role (optional). |
@@ -9603,8 +9603,8 @@ The list of inputs depends on the configuration of the **AmqpMessage** action te
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *AMQP_Queue_name \** | Mandatory if not provided at design time — the name of the queue into which the message will be inserted. |
-| *Message \** | Mandatory if not provided at design time — the message to insert into the specified queue. |
+| *AMQP_Queue_name <span style="color: red;">\*</span>* | Mandatory if not provided at design time — the name of the queue into which the message will be inserted. |
+| *Message <span style="color: red;">\*</span>* | Mandatory if not provided at design time — the message to insert into the specified queue. |
 | *Exchange_name* | Optional - if provided, Orchestrator will attempt to send the message to a queue. |
 | *Queue_host* | Optional - the address of the node where the queue is hosted. |
 | *Queue_node* | Optional - the node where the queue is hosted. |
@@ -10348,13 +10348,13 @@ This is a minimal configuration example for the AzureServiceBusOperation plug-in
 
 Required inputs depend on how the AzureServiceBusOperation template is configured. If dynamic attributes are used, each attribute becomes a runtime input.
 
-| Parameter                | Description                            |
-|--------------------------|----------------------------------------|
-| *Azure_namespace \**     | The Azure Service Bus namespace.       |
-| *Azure_key_name \**      | The Azure Service Bus access key name. |
-| *Azure_key \**           | The Azure Service Bus access key.      |
-| *Queue or Topic name \** | The queue or topic name.               |
-| *Proxy_url*              | The proxy URL (optional).              |
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| *Azure_namespace <span style="color: red;">\*</span>* | The Azure Service Bus namespace. |
+| *Azure_key_name <span style="color: red;">\*</span>* | The Azure Service Bus access key name. |
+| *Azure_key <span style="color: red;">\*</span>* | The Azure Service Bus access key. |
+| *Queue or Topic name <span style="color: red;">\*</span>* | The queue or topic name. |
+| *Proxy_url* | The proxy URL (optional). |
 
 #### Outputs Description
 
@@ -10828,7 +10828,7 @@ This plugin provides the ability to intercept progress notifications from a step
 | **Action template** | File Watcher Template |
 | **Additional required inputs** | log_file_path |
 | **Additional optional inputs** | notification_email |
-| **Report progress code** | File.open(@inputs\['log_file_path'\], 'a') { \|f\| f.puts "2026-06-23T19:53:32+02:00: -- --" } |
+| **Report progress code** | File.open(@inputs\['log_file_path'\], 'a') { \|f\| f.puts "2026-08-07T09:39:54+02:00: -- --" } |
 | **Keep alive code** | (not used in current version) |
 | **By-pass standard notifications?** | unchecked |
 
@@ -11194,9 +11194,9 @@ Below is a minimal configuration example for the FrameioOperation plug-in.
 
 Required inputs depend on how the FrameioOperation template is configured. If dynamic attributes are used, each attribute becomes a runtime input.
 
-| Parameter  | Description            |
-|------------|------------------------|
-| *Token \** | Frame.io access token. |
+| Parameter                                   | Description            |
+|---------------------------------------------|------------------------|
+| *Token <span style="color: red;">\*</span>* | Frame.io access token. |
 
 #### Outputs Description
 
@@ -12523,7 +12523,7 @@ Required inputs depend on how the LocalExecution template is configured. If dyna
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *Command line inputs \** | All variables referenced in the command line are mandatory and must be of type String. |
+| *Command line inputs <span style="color: red;">\*</span>* | All variables referenced in the command line are mandatory and must be of type String. |
 | *Environment variable inputs* | Variables listed in the Mandatory or Optional Inputs fields may be typed, but are converted to strings before being passed as environment variables. |
 
 #### Outputs Description
@@ -13852,7 +13852,7 @@ The list of inputs depends on the configuration of the **SoftlayerApi** action t
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *Softlayer_method \** | A method applicable for Softlayer service selected. |
+| *Softlayer_method <span style="color: red;">\*</span>* | A method applicable for Softlayer service selected. |
 | *Softlayer_initparam* | Softlayer initialisation parameter, which usually refers to a specific object ID. |
 | *Object_filter* | A Json string containing a Softlayer objectFilter. |
 | *Object_mask* | A list of attributes to pass as objectMask to Softlayer API. |
@@ -14963,10 +14963,10 @@ This is a minimal setup configuration for the RegexMatcher plugin.
 
 Required inputs depend on the action template configuration. If dynamic attributes are used, each attribute becomes a runtime input.
 
-| Parameter          | Description                                        |
-|--------------------|----------------------------------------------------|
-| *Expression \**    | The expression to be evaluated by the regex.       |
-| *Regex_pattern \** | The regex pattern used to evaluate the expression. |
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| *Expression <span style="color: red;">\*</span>* | The expression to be evaluated by the regex. |
+| *Regex_pattern <span style="color: red;">\*</span>* | The regex pattern used to evaluate the expression. |
 
 You can build the expression from multiple runtime inputs using dynamic variables. For example: `"<%= root_folder %>/ingest/<%= File.basename(file_path) %>"` - in that case, 'root_folder' and 'file_path' become inputs.
 
@@ -15140,14 +15140,14 @@ The list of inputs depends on the configuration of the **SharedStateOperation** 
 </thead>
 <tbody>
 <tr>
-<td><em>entry <span>*</span></em></td>
+<td><em>entry <span style="color: red;">*</span></em></td>
 <td>State info of any type (Hash, Int, Array, String...etc) that would be stored as a BLOB in the database.
 <ul>
 <li><strong>NOTE</strong>: String entries should be within quotes.</li>
 </ul></td>
 </tr>
 <tr>
-<td><em>full_path <span>*</span></em></td>
+<td><em>full_path <span style="color: red;">*</span></em></td>
 <td>The full path of the state info.</td>
 </tr>
 <tr>
@@ -15571,9 +15571,9 @@ This is a minimal setup configuration for the TimecodeManager plugin.
 
 Required inputs depend on how the TimecodeManager template is configured. Dynamic attributes used in the message definition will become required runtime inputs.
 
-| Parameter            | Description                                        |
-|----------------------|----------------------------------------------------|
-| *Start_value \**     | The initial time value used by the operation.      |
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| *Start_value <span style="color: red;">\*</span>* | The initial time value used by the operation. |
 | *First_frame_offset* | The frame value treated as time zero (default: 0). |
 
 #### Outputs Description
@@ -15744,7 +15744,7 @@ The file_name input is mandatory. If not provided or if the file does not exist 
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *File_name \** | The full path to the file to monitor. This can be a local filesystem path or a path on a mounted network share. The file must exist when the action starts, or the action will fail immediately. |
+| *File_name <span style="color: red;">\*</span>* | The full path to the file to monitor. This can be a local filesystem path or a path on a mounted network share. The file must exist when the action starts, or the action will fail immediately. |
 | *Polling_frequency* | The interval in seconds between file existence checks. Default is 10 seconds. Lower values provide faster detection but increase system overhead. Expressed as an integer. |
 
 #### Outputs Description
@@ -15907,7 +15907,7 @@ The list of inputs depends on the configuration of the Adi3Parser action templat
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *Adi_file_path \** | Either a remote node must be selected or a remote IP address must be provided. |
+| *Adi_file_path <span style="color: red;">\*</span>* | Either a remote node must be selected or a remote IP address must be provided. |
 | *Adi_package_dir* | Default directory is the ADI.XML's directory. Another value can be provided. |
 | *Check_Filemd5s* | Default value is false, but validating the MD5 can be chosen. |
 | *Check_Filesizes* | Default value is false, but validating the file sizes can be chosen. |
@@ -16070,7 +16070,7 @@ The list of inputs depends on the configuration of the AdiParser action template
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *Adi_file_path \** | Either a remote node must be selected or a remote IP address must be provided. |
+| *Adi_file_path <span style="color: red;">\*</span>* | Either a remote node must be selected or a remote IP address must be provided. |
 | *Adi_package_dir* | Default directory is the ADI.XML's directory. Another value can be provided. |
 | *Check_Dtd_File* | If checked, Orchestrator looks for the DTD file in the ADI.XML directory and uses it to validate ADI.XML. |
 | *Check_Filemd5s* | Default value is false, but validating the MD5 can be chosen. |
@@ -16334,9 +16334,9 @@ All parameters are available as inputs at runtime if not specified by the templa
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *Baton_Server_Node \** | Remote node name for Baton server (required if Baton Server address not provided). |
-| *Baton_Server_address \** | Hostname or IP address of Baton server (required if Baton Server Node not provided). |
-| *baton_task_id \** | Task ID from Baton UI for the correction task to execute. |
+| *Baton_Server_Node <span style="color: red;">\*</span>* | Remote node name for Baton server (required if Baton Server address not provided). |
+| *Baton_Server_address <span style="color: red;">\*</span>* | Hostname or IP address of Baton server (required if Baton Server Node not provided). |
+| *baton_task_id <span style="color: red;">\*</span>* | Task ID from Baton UI for the correction task to execute. |
 | *Baton_user* | Username for Baton API authentication. |
 | *Baton_password* | Password for Baton API authentication (required for all versions). |
 | *Baton_API_Token* | API token for Baton version \>= 9 (required for v9+). |
@@ -16611,9 +16611,9 @@ Required inputs depend on how the BatonFileVerification template is configured. 
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *Baton_server_address \** | The remote host name or IP address of the Baton server. |
-| *File_name \** | The full UNC path as seen by Baton. The UNC path must be registered in Baton. |
-| *Test_plan \** | The test plan name as defined on the Baton server. |
+| *Baton_server_address <span style="color: red;">\*</span>* | The remote host name or IP address of the Baton server. |
+| *File_name <span style="color: red;">\*</span>* | The full UNC path as seen by Baton. The UNC path must be registered in Baton. |
+| *Test_plan <span style="color: red;">\*</span>* | The test plan name as defined on the Baton server. |
 | *Baton_port* | The port number of the Baton server. |
 | *Baton_server_password* | The password of the user configured on the Baton server for API access. |
 | *Baton_server_user* | The user configured on the Baton server for API access. |
@@ -17394,9 +17394,9 @@ Required inputs depend on how the VidcheckerVerification template is configured.
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *File_path \** | The full path to the media file to be verified. |
-| *Service_node_or_address \** | The remote node or IP address of the VidChecker server. |
-| *Template_id \** | The identifier of the VidChecker template to execute. |
+| *File_path <span style="color: red;">\*</span>* | The full path to the media file to be verified. |
+| *Service_node_or_address <span style="color: red;">\*</span>* | The remote node or IP address of the VidChecker server. |
+| *Template_id <span style="color: red;">\*</span>* | The identifier of the VidChecker template to execute. |
 | *Polling_frequency* | The polling interval in seconds used to check verification progress. |
 | *Report_file_path* | If report generation is enabled, the directory where the report file is stored. |
 | *Server_port* | The port used by the VidChecker server for API requests. |
@@ -17621,11 +17621,11 @@ The required inputs depend on the authentication mode selected. API key or usern
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *file_path \** | The path to the source audio file. Supported formats include WAV, MP3, FLAC, OGG, OPUS, WebM, and more. The file must be accessible by the Orchestrator. |
-| *url \** | The URL of IBM Watson Speech to Text service endpoint (e.g., https://api.us-south.speech-to-text.watson.cloud.ibm.com). |
-| *api_key \** | The API key of IBM Watson Speech to Text service. Required if 'Use api key' is selected in configuration. |
-| *username \** | The username of IBM Watson Speech to Text service. Required if 'Use api key' is not selected in configuration. |
-| *password \** | The password of IBM Watson Speech to Text service. Required if 'Use api key' is not selected in configuration. |
+| *file_path <span style="color: red;">\*</span>* | The path to the source audio file. Supported formats include WAV, MP3, FLAC, OGG, OPUS, WebM, and more. The file must be accessible by the Orchestrator. |
+| *url <span style="color: red;">\*</span>* | The URL of IBM Watson Speech to Text service endpoint (e.g., https://api.us-south.speech-to-text.watson.cloud.ibm.com). |
+| *api_key <span style="color: red;">\*</span>* | The API key of IBM Watson Speech to Text service. Required if 'Use api key' is selected in configuration. |
+| *username <span style="color: red;">\*</span>* | The username of IBM Watson Speech to Text service. Required if 'Use api key' is not selected in configuration. |
+| *password <span style="color: red;">\*</span>* | The password of IBM Watson Speech to Text service. Required if 'Use api key' is not selected in configuration. |
 | *model* | The identifier of the model to be used for the recognition request. Default is 'en-US_BroadbandModel'. Choose based on audio quality (broadband vs narrowband) and language. |
 | *keywords* | Comma-separated list of keywords to spot in the audio (e.g., 'urgent, complaint, refund'). Watson identifies these words with confidence scores. |
 | *keywords_threshold* | The confidence value (0.0 to 1.0) for spotting a keyword. Default is '0.5'. Only keywords meeting or exceeding this threshold are reported. |
@@ -19032,9 +19032,9 @@ Required inputs depend on how the FederatedWorkflow template is configured. If d
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| Remote_address \* | The IP address or hostname of the remote Orchestrator instance. |
-| Remote_workflow_id \* | The ID of the workflow to launch on the remote Orchestrator instance. |
-| Work_order_parameters \* | A hash of input parameters passed to the remote workflow when creating the work order. |
+| Remote_address <span style="color: red;">\*</span> | The IP address or hostname of the remote Orchestrator instance. |
+| Remote_workflow_id <span style="color: red;">\*</span> | The ID of the workflow to launch on the remote Orchestrator instance. |
+| Work_order_parameters <span style="color: red;">\*</span> | A hash of input parameters passed to the remote workflow when creating the work order. |
 | Remote_port | The port used to connect to the remote Orchestrator instance (optional). |
 | Web_root | The web-root path of the remote Orchestrator instance (optional). |
 | Work_order_name | An optional custom name for the remote work order. |
@@ -22184,13 +22184,13 @@ Mandatory and optional inputs depend on the selected configuration mode.
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *address \** | IP address or hostname of the Flics server. |
-| *username \** | Username to log in to the Flics server. |
-| *password \** | Password to log in to the Flics server. |
-| *custom_task \** | JSON body defining a custom transcoding task when advanced mode is enabled. |
-| *source_file_name \** | Path to the source file inside a Flics source storage. |
-| *source_storage_id_or_name \** | ID or name of the Flics source storage (must be an input storage). |
-| *template_id_or_name \** | ID or name of the Flics template. |
+| *address <span style="color: red;">\*</span>* | IP address or hostname of the Flics server. |
+| *username <span style="color: red;">\*</span>* | Username to log in to the Flics server. |
+| *password <span style="color: red;">\*</span>* | Password to log in to the Flics server. |
+| *custom_task <span style="color: red;">\*</span>* | JSON body defining a custom transcoding task when advanced mode is enabled. |
+| *source_file_name <span style="color: red;">\*</span>* | Path to the source file inside a Flics source storage. |
+| *source_storage_id_or_name <span style="color: red;">\*</span>* | ID or name of the Flics source storage (must be an input storage). |
+| *template_id_or_name <span style="color: red;">\*</span>* | ID or name of the Flics template. |
 | port | Port number of the Flics server. Defaults to 80 (non-SSL) or 443 (SSL). |
 | title | Title of the transcoding task. |
 | tags | Tags associated with the transcoding task. Default is 'local'. Comma-separated values are supported. |
@@ -23436,10 +23436,10 @@ The list of inputs depends on the configuration of the AmazonSqsTrigger action t
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *Aws_key \** | The access key ID credential provided by Amazon. |
-| *Aws_secret \** | The secret access key credential provided by Amazon. |
-| *Aws_region \** | The region where SQS is hosted (e.g., us-east-2 for US East Ohio). |
-| *Queue_url \** | The queue URL (e.g., https://sqs.us-east-2.amazonaws.com/921583127875/orders). |
+| *Aws_key <span style="color: red;">\*</span>* | The access key ID credential provided by Amazon. |
+| *Aws_secret <span style="color: red;">\*</span>* | The secret access key credential provided by Amazon. |
+| *Aws_region <span style="color: red;">\*</span>* | The region where SQS is hosted (e.g., us-east-2 for US East Ohio). |
+| *Queue_url <span style="color: red;">\*</span>* | The queue URL (e.g., https://sqs.us-east-2.amazonaws.com/921583127875/orders). |
 | *Aws_session_token* | The access session token credential provided by Amazon. |
 | *External_id* | External ID when assuming a role (optional). |
 | *Max_number_of_messages* | The maximum number of messages to fetch from the queue (default is 1). |
@@ -23661,8 +23661,8 @@ The list of inputs depends on the configuration of the **AmqpTrigger** action te
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *Queue_name \** | Mandatory - the name of the queue into which the message will be inserted. |
-| *Message \** | Mandatory - the message to insert into the specified queue. |
+| *Queue_name <span style="color: red;">\*</span>* | Mandatory - the name of the queue into which the message will be inserted. |
+| *Message <span style="color: red;">\*</span>* | Mandatory - the message to insert into the specified queue. |
 | *Exchange_name* | Optional - Orchestrator will attempt to send the message to a queue. |
 | *Queue_host* | Optional - the address of the node where the queue is hosted. |
 | *Queue_node* | Optional - the node where the queue is hosted. |
@@ -24586,10 +24586,10 @@ Required inputs depend on how the AzureServiceBusTrigger template is configured.
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *Azure_namespace \** | The Azure Service Bus namespace. |
-| *Azure_key_name \** | The Azure Service Bus access key name. |
-| *Azure_key \** | The Azure Service Bus access key. |
-| *Queue or Topic name \** | The queue or topic name. |
+| *Azure_namespace <span style="color: red;">\*</span>* | The Azure Service Bus namespace. |
+| *Azure_key_name <span style="color: red;">\*</span>* | The Azure Service Bus access key name. |
+| *Azure_key <span style="color: red;">\*</span>* | The Azure Service Bus access key. |
+| *Queue or Topic name <span style="color: red;">\*</span>* | The queue or topic name. |
 | *Proxy_url* | The proxy URL (optional). |
 | *Polling_frequency* | The polling frequency in seconds (default is 10 seconds). |
 
@@ -25063,7 +25063,7 @@ The list of inputs depends on the configuration of the EmailInboxWatcher action 
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *Email_server_address \** | The hostname or IP address of the IMAP server |
+| *Email_server_address <span style="color: red;">\*</span>* | The hostname or IP address of the IMAP server |
 | *Email_server_port* | The port on the IMAP server. |
 | *Filters_override* | Conditions executed at runtime to specify which emails to trigger on. |
 | *Polling_frequency* | The time interval (in seconds) for how often the IMAP server will be polled. |
@@ -26830,7 +26830,7 @@ The list of inputs depends on the configuration of the ScheduleTrigger action te
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *schedule_rules \** | Specifies the trigger rules. Trigger will run based on the rules provided. E.g. 30 Second(s) from now will have the Workflow execution to move to next step after 30 seconds. Use the 'add rule' button to specify a scheduling rule. |
+| *schedule_rules <span style="color: red;">\*</span>* | Specifies the trigger rules. Trigger will run based on the rules provided. E.g. 30 Second(s) from now will have the Workflow execution to move to next step after 30 seconds. Use the 'add rule' button to specify a scheduling rule. |
 | *Continue Monitoring* | States whether the trigger is ran once only, or every time the rule(s) conditions are satisfied. |
 | *Trigger start* | Start time of the trigger. |
 | *Trigger end* | End time of the trigger. |
@@ -26962,11 +26962,11 @@ Enables hot folder functionality on a remote server using SFTP for automated fil
 2.  Fill out the following fields:
     - **Name**: The name used to identify a saved SftpTrigger configuration instance.
     - **Comments**: Comments related to the SftpTrigger template.
-    - **Remote Node**\*: The remote node to connect to.
-    - **Remote Address**\*: IP address or hostname of the SFTP server (e.g., lala.com or 10.0.200.202).
-    - **Remote Port**\*: The port on which the SFTP server listens for requests.
-    - **Remote User**\*: The login ID required for authentication on the SFTP server.
-    - **Remote Password**\*: The password associated with the user for authentication.
+    - **Remote Node**<span style="color: red;">\*</span>: The remote node to connect to.
+    - **Remote Address**<span style="color: red;">\*</span>: IP address or hostname of the SFTP server (e.g., lala.com or 10.0.200.202).
+    - **Remote Port**<span style="color: red;">\*</span>: The port on which the SFTP server listens for requests.
+    - **Remote User**<span style="color: red;">\*</span>: The login ID required for authentication on the SFTP server.
+    - **Remote Password**<span style="color: red;">\*</span>: The password associated with the user for authentication.
     - **Watch Folder**: Directory to monitor for files.
     - **File Pattern**: Pattern used to identify files to monitor.
     - **Recursion Depth**: Specifies how deep to search if the watch folder contains subdirectories.
@@ -27170,7 +27170,7 @@ Inputs depend on the selected callback identification strategy. If dynamic attri
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *Run-time call back ID \** | Required when Callback ID mode is set to 'runtime'. Used to match incoming SOAP calls. |
+| *Run-time call back ID <span style="color: red;">\*</span>* | Required when Callback ID mode is set to 'runtime'. Used to match incoming SOAP calls. |
 
 #### Outputs Description
 
@@ -27745,7 +27745,7 @@ Required inputs depend on how the RssFeedReader template is configured. If dynam
 
 | Parameter | Description |
 |-------|---------------------------------------------------|
-| *rss_url \** | The HTTP URL of the RSS feed to poll. |
+| *rss_url <span style="color: red;">\*</span>* | The HTTP URL of the RSS feed to poll. |
 | *post_id_field* | Optional field used to uniquely identify posts; if omitted the entire post is used. |
 
 #### Outputs Description

@@ -3,13 +3,44 @@
 # Stub classes and modules for missing dependencies
 # These are used during documentation generation to avoid loading actual gems
 
+# ==============================================================================
+# Global Constants
+# ==============================================================================
+
 FTPFXPTLS = nil
 FTPFXP = nil
+
+# ==============================================================================
+# Rails Framework & ActiveRecord
+# ==============================================================================
+
 module ActiveRecord
   class Base
     def self.has_many(*); end
   end
 end
+
+module Rails
+  def self.logger
+    @logger ||= Logger.new(STDOUT)
+  end
+
+  def self.root
+    @root ||= Pathname.new('.')
+  end
+end
+
+module ActionView; module Helpers; module FormHelper; end; end; end
+
+class String
+  def html_safe
+    self
+  end
+end
+
+# ==============================================================================
+# Application Base Classes
+# ==============================================================================
 
 class ApplicationRecord
 end
@@ -17,13 +48,12 @@ end
 module ProgressObserver
 end
 
-module AsperaFiles
-  AUTHORIZATION_SCOPES = []
+module Config
 end
 
-module ActiveAssignment
-  INPUT_PROVIDER_VAR = 'input_provider'
-end
+# ==============================================================================
+# Orchestrator Core Modules & Classes
+# ==============================================================================
 
 module Action
   TRIG_ABSOLULE = 'absolute'
@@ -45,25 +75,8 @@ module Action
   TYPE_ATTACHMENT = 'attachment'
 end
 
-module ActionsHelper
-  MANDATORY = '(mandatory)'
-  ORDERED_LIST = 'ordered_list'
-end
-
-class String
-  def html_safe
-    self
-  end
-end
-
-module Rails
-  def self.logger
-    @logger ||= Logger.new(STDOUT)
-  end
-
-  def self.root
-    @root ||= Pathname.new('.')
-  end
+module ActiveAssignment
+  INPUT_PROVIDER_VAR = 'input_provider'
 end
 
 class WorkInput
@@ -74,16 +87,14 @@ class WorkInput
   end
 end
 
-module Config
-end
+module Engine
+  def self.release
+    '1.0.0'
+  end
 
-module VcmqAnalyzer
-  OUT_TARGET_FILE = 'out_target_file'
-  OUT_REPORT = 'out_report'
-end
-
-class Database < ApplicationRecord
-  DATABASE_MYSQL = 'Mysql'
+  def self.exec_dir
+    '/tmp'
+  end
 end
 
 class OrchConfig
@@ -108,6 +119,22 @@ class OrchConfig
   end
 end
 
+# ==============================================================================
+# Action Tools & Helpers
+# ==============================================================================
+
+class ActionTools
+  STATUS_FAILED = 'failed'
+  def self.runtime_basedir(a)
+    '.'
+  end
+end
+
+module ActionsHelper
+  MANDATORY = '(mandatory)'
+  ORDERED_LIST = 'ordered_list'
+end
+
 module ModuleSSHTools
 end
 
@@ -117,14 +144,27 @@ end
 module ModuleSoapTools
 end
 
-class ActionTools
-  STATUS_FAILED = 'failed'
-  def self.runtime_basedir(a)
-    '.'
+# ==============================================================================
+# Aspera-Specific Modules
+# ==============================================================================
+
+module AsperaFiles
+  AUTHORIZATION_SCOPES = []
+end
+
+module VcmqAnalyzer
+  OUT_TARGET_FILE = 'out_target_file'
+  OUT_REPORT = 'out_report'
+end
+
+class AssetLayer
+  class XSD
   end
 end
 
-module ActionView; module Helpers; module FormHelper; end; end; end
+# ==============================================================================
+# Resource Management Classes
+# ==============================================================================
 
 class ManagedQueue
   DEFAULT_PRIORITY = 0
@@ -134,6 +174,14 @@ end
 class ManagedResource
 end
 
+class Database < ApplicationRecord
+  DATABASE_MYSQL = 'Mysql'
+end
+
+# ==============================================================================
+# External Dependencies & Libraries
+# ==============================================================================
+
 module Net
   module SSH
     module Transport
@@ -142,9 +190,6 @@ module Net
         end
       end
     end
-  end
-
-  class FTPFXPTLS
   end
 end
 
@@ -157,20 +202,9 @@ end
 class Carrot
 end
 
-module Engine
-  def self.release
-    '1.0.0'
-  end
-
-  def self.exec_dir
-    '/tmp'
-  end
-end
-
-class AssetLayer
-  class XSD
-  end
-end
+# ==============================================================================
+# Global Utility Methods
+# ==============================================================================
 
 # Stub method for silence_warnings
 def silence_warnings
