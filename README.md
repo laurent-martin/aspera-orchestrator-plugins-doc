@@ -21,6 +21,7 @@ It also uses tools from the `aspera-cli` repository: <https://github.com/IBM/asp
 ```bash
 export DIR_ASPERA_CLI=<path to aspera-cli repo>
 export DIR_PANDOC=$DIR_ASPERA_CLI/build/doc/pandoc/
+export RUBYLIB=$DIR_ASPERA_CLI/lib
 export RPM=private/ibm-aspera-orchestrator-4.1.5.1917-1df786b.x86_64.rpm
 export VERSION=4.1.5
 rake extract_rpm

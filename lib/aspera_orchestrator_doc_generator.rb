@@ -12,12 +12,10 @@ require 'net/http/request'
 require 'fileutils'
 require 'date'
 require 'erb'
-require 'logger'
+require 'aspera/log'
 require 'set'
 
-# Global logger instance
-Log = Logger.new($stdout)
-Log.level = Logger::INFO
+Log = Aspera::Log.log
 
 Encoding.default_internal = Encoding::UTF_8
 Encoding.default_external = Encoding::UTF_8
@@ -100,7 +98,7 @@ class AsperaOrchestratorDocGenerator
       next unless one_plugin[:source_path].exist?
 
       one_plugin[:ShortName] = one_plugin[:long_name].split('_').map(&:capitalize).join('')
-      # Log.log.info "plugin: #{one_plugin}"
+      # Log.info "plugin: #{one_plugin}"
 
       set_metadata(one_plugin)
 
@@ -139,7 +137,12 @@ class AsperaOrchestratorDocGenerator
     plugin_data
   end
 
-  # Convert HTML file to PDF using wkhtmltopdf
+  # Fixed creation date used for reproducible PDF output.
+  # Using a fixed date ensures that PDFs generated from identical HTML are byte-for-byte identical.
+  PDF_FIXED_DATE = '2000:01:01 00:00:00+00:00'
+
+  # Convert HTML file to PDF using wkhtmltopdf, then normalize metadata for reproducibility.
+  # Two runs on identical HTML produce a byte-for-byte identical PDF.
   # @param html_file [String, Pathname] Path to input HTML file
   # @param pdf_file [String, Pathname] Path to output PDF file
   # @param options [Hash] Additional wkhtmltopdf options
@@ -177,6 +180,18 @@ class AsperaOrchestratorDocGenerator
 
     Log.info("Generating PDF: #{pdf_file}")
     system(*cmd) || raise("Failed to generate PDF: #{pdf_file}")
+
+    # Normalize variable metadata so that identical HTML always produces an identical PDF.
+    # 1. Rewrite with a deterministic document ID (derived from content, not timestamp).
+    system('qpdf', '--deterministic-id', '--replace-input', pdf_file.to_s) ||
+      raise("Failed to normalize PDF ID: #{pdf_file}")
+    # 2. Overwrite the creation/modification dates with a fixed value.
+    system(
+      'exiftool', '-overwrite_original', '-q',
+      "-CreateDate=#{PDF_FIXED_DATE}",
+      "-ModifyDate=#{PDF_FIXED_DATE}",
+      pdf_file.to_s
+    ) || raise("Failed to normalize PDF dates: #{pdf_file}")
   end
 
   # Generate Markdown from HTML using Pandoc and clean it up
@@ -232,7 +247,7 @@ class AsperaOrchestratorDocGenerator
     if filepath_metadata.exist?
       Log.info(filepath_metadata.to_s)
       one_plugin[:meta] = YAML.load_file(filepath_metadata.to_s, permitted_classes: [Date, Symbol])
-      Log.debug("plugin: #{one_plugin.inspect}")
+      Aspera::Log.dump(:plugin, one_plugin)
       one_plugin[:meta][:category] = 'No Category' if one_plugin[:meta][:category].empty?
     else
       one_plugin[:meta] = {
@@ -380,16 +395,5 @@ class AsperaOrchestratorDocGenerator
       lines[0] = "# #{lines[0]}" # Make document title H1
     end
     lines.join("\n")
-  end
-
-  # Legacy method for backward compatibility - loads plugin data and generates all HTML files
-  # @deprecated Use load_plugin_data and individual generate_*_html methods instead
-  def build_doc(orch_version, source_folder, out_folder)
-    raise 'version must not be empty' if orch_version.empty?
-
-    plugin_data = load_plugin_data(source_folder, out_folder)
-    generate_doc_html(orch_version, plugin_data, out_folder)
-    generate_summary_html(orch_version, plugin_data, out_folder)
-    generate_banner_html(orch_version, plugin_data, out_folder)
   end
 end
