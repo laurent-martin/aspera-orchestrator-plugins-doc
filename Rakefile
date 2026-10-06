@@ -29,10 +29,12 @@ PATH_MANUAL_PDF = PATH_DOCS / 'Orchestrator_Plugin_Manual.pdf'
 PATH_LIST_PDF = PATH_DOCS / 'Orchestrator_Plugin_List.pdf'
 PATH_BANNER_PDF = PATH_DOCS / 'Orchestrator_Plugin_Banner.pdf'
 PATH_BUILD_MAIN = TOP / 'build' / BUILD_VERSION
-PATH_BUILD_SRC = (PATH_BUILD_MAIN / 'src').mkpath
+# Created by task extract_rpm
+PATH_BUILD_SRC = PATH_BUILD_MAIN / 'src'
+PATH_BUILD_ACTIONS = PATH_BUILD_SRC / 'actions'
 PATH_BUILD_OUT = (PATH_BUILD_MAIN / 'out').mkpath
 PATH_MANUAL_MD_TMP = PATH_BUILD_OUT / 'Orchestrator_Plugin_Manual.md'
-PATH_BUILD_LIB = (PATH_BUILD_SRC / 'lib').mkpath
+PATH_BUILD_LIB = PATH_BUILD_SRC / 'lib'
 PATH_RPM_OUT = (PATH_BUILD_MAIN / 'rpmout').mkpath
 
 $LOAD_PATH.unshift(PATH_BUILD_LIB)
@@ -102,7 +104,7 @@ file PATH_BANNER_PDF => HTML_BANNER_PATH do
 end
 
 # Load plugin data (step 1-2: parse plugins and metadata)
-file PATH_PLUGIN_DATA => PATH_BUILD_MAIN do
+file PATH_PLUGIN_DATA => PATH_BUILD_ACTIONS do
   generator = AsperaOrchestratorDocGenerator.new
   plugin_data = generator.load_plugin_data(PATH_BUILD_SRC, PATH_BUILD_OUT)
   File.open(PATH_PLUGIN_DATA, 'wb') { |f| Marshal.dump(plugin_data, f) }
@@ -150,9 +152,8 @@ file HTML_BANNER_PATH => PATH_PLUGIN_DATA do
   )
 end
 
-directory PATH_BUILD_MAIN do
-  puts 'do: VERSION=xxx RPM=/path/to/rpm rake extract_rpm  or  rake extract_remote'
-  exit 1
+file PATH_BUILD_ACTIONS do
+  raise "Not found: #{PATH_BUILD_ACTIONS}, do first: RPM=/path/to/rpm rake extract_rpm"
 end
 
 desc 'Extract RPM package'
@@ -203,10 +204,9 @@ namespace :doc do
   desc 'Generate action template reference (Markdown) from actions folder (env var ACTIONS_DIR overrides the RPM extract)'
   task :template_reference do
     require_relative 'lib/action_template_reference'
-    actions_dir = ENV['ACTIONS_DIR'] || (PATH_BUILD_SRC / 'actions').to_s
+    actions_dir = ENV['ACTIONS_DIR'] || PATH_BUILD_ACTIONS.to_s
     File.write(PATH_DOCS / 'action-template-reference.md', ActionTemplateReference.new(actions_dir).markdown(BUILD_VERSION))
   end
 end
 
 CLEAN.include(PATH_BUILD_OUT)
-raise "Dir not found: #{src}" unless PATH_BUILD_SRC.exist?
