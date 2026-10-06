@@ -191,6 +191,21 @@ namespace :doc do
       pdf: PATH_DOCS / 'plugin-development-guide.pdf'
     )
   end
+
+  desc 'Generate PDF from workflow authoring guide'
+  task :authoring do
+    markdown_to_pdf(
+      md: PATH_DOCS / 'workflow-authoring-guide.md',
+      pdf: PATH_DOCS / 'workflow-authoring-guide.pdf'
+    )
+  end
+
+  desc 'Generate action template reference (Markdown) from actions folder (env var ACTIONS_DIR overrides the RPM extract)'
+  task :template_reference do
+    require_relative 'lib/action_template_reference'
+    actions_dir = ENV['ACTIONS_DIR'] || (PATH_BUILD_SRC / 'actions').to_s
+    File.write(PATH_DOCS / 'action-template-reference.md', ActionTemplateReference.new(actions_dir).markdown(BUILD_VERSION))
+  end
 end
 
 CLEAN.include(PATH_BUILD_OUT)
