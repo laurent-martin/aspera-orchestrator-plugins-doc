@@ -110,6 +110,7 @@ Rules:
 - To add a revision to an existing workflow instead, use `import_with_constraints` with `add as revision`.
   See [Update an existing workflow](#update-an-existing-workflow).
 - The API has no operation to delete a workflow: delete it in the user interface.
+- **Web UI & Draft vs Revision caveat**: Importing via the API/CLI creates a published revision (`revision_id = 1`). When opening the workflow in the Web UI editor, the UI might initialize a new, empty *Draft* revision. **Never click "Publish" on an empty draft in the Web UI**, as this overwrites the workflow with an empty graph. To edit or view the imported graph in the Web UI, always open the imported revision explicitly under the **Revisions** tab and use *Rollback / Edit revision*, or manage publishing via `ascli`.
 
 ## Workflow file
 
@@ -335,7 +336,7 @@ A `Prerequisite` element links a previous node to the current one:
 |-----------|---------|
 | `id` | `id` of the previous node. |
 | `status` | Status of the previous node that activates the link. `true` for a link from `Start`. Otherwise the final status of the previous step: `Complete`, `Failed` or `Error` (compared case-insensitively). |
-| `router` | Line style in the designer, for example `draw2d.ManhattanConnectionRouter`. Ignored by execution. |
+| `router` | Line style in the designer. Use `draw2d.ManhattanConnectionRouter` for step prerequisites and `draw2d.BezierConnectionRouter` for parameter links. Ignored by execution engine, but required by the Web UI canvas to render connector lines. |
 
 `Synch_factor` sets how many prerequisites must be met:
 
@@ -353,7 +354,12 @@ To branch on a condition, make a step end with `Complete` or `Failed`, and conne
 The `Filter` plugin does exactly that with a Ruby expression; a `CustomRuby` step can set `@status`.
 See [Recipe: branch on a status](#recipe-branch-on-a-status).
 
-When alternative branches join, set `Synch_factor` of the join node (often `End`) to `1`: with `0`, it waits for all branches, and only one runs.
+### Synchronization rules (AND vs OR)
+
+Choosing the correct `Synch_factor` on a join node depends on the execution pattern of incoming branches:
+
+- **Parallel nominal execution (`Synch_factor = 0` / AND)**: When two or more nominal branches execute simultaneously in parallel (e.g., a fan-out where several tasks run at the same time), set `Synch_factor` to `0` on the convergence step. The join node waits until **all** parallel branches have completed before proceeding.
+- **Mutually exclusive / Alternative branches (`Synch_factor = 1` / OR)**: When branches originate from mutually exclusive outcomes (e.g., an `if/else` condition, a route decision between alternative lanes, or a nominal branch vs an error/failure branch), only one branch runs per execution. Setting `0` deadlocks the workflow because it waits forever for the branches that were not executed. In this case, set `Synch_factor` to `1` on the join step (or `End`/`Fail`) so that it proceeds as soon as **any one** of the incoming branches completes.
 
 ### Inputs
 
@@ -428,7 +434,7 @@ Definition (`Parameter` with attributes `id`, `x`, `y`):
 | `Runtime_optional` | `true`: a runtime value is optional, and `Value` is used when absent. Default `false`. |
 | `Comments` | Description. |
 
-Link (`Parameter` with attributes `id`, and `router` for the designer) in `Start/Parameters` or `Step/Parameters`.
+Link (`Parameter` with attribute `id`, and `router="draw2d.BezierConnectionRouter"` for the designer) in `Start/Parameters` or `Step/Parameters`.
 
 Rules:
 
@@ -806,7 +812,8 @@ Graph:
 - Each `Map_to` of type `parameter` refers to a defined parameter, linked to `Start` or a step.
 - Each required input of each template is mapped.
 - Each parameter has a `Name` and a `Value_type`; a parameter that is not a runtime parameter, or that is an optional runtime parameter, has a `Value`.
-- Join nodes after alternative branches have `Synch_factor` 1.
+- Join nodes after mutually exclusive / alternative branches have `Synch_factor` 1; join nodes after concurrent parallel nominal branches have `Synch_factor` 0.
+- For optimal Web UI rendering, use `router="draw2d.ManhattanConnectionRouter"` on step prerequisites and `router="draw2d.BezierConnectionRouter"` on parameter links.
 - Retry settings (`Error_*`, `Failed_*`) only on steps that have an outgoing branch with that status.
 
 ## REST API
