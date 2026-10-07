@@ -929,6 +929,7 @@ Query parameters:
 | Import | `ascli orchestrator workflows import <file>` |
 | Import with constraints, or as a revision | `ascli orchestrator workflows import_with_constraints @json:'{"filename":"<path on server>","add_as_revision":<id>}'` |
 | Export | `ascli orchestrator workflows export <id> --out.file=<file>` |
+| Export with dependencies (`.wkf`) | `ascli orchestrator workflows export <id> @json:'{"dependencies":true}' --to-folder=<folder>` |
 | Publish | `ascli orchestrator workflows publish <id>` |
 | Inputs, outputs | `ascli orchestrator workflows inputs <id>`, `ascli orchestrator workflows outputs <id>` |
 | Start | `ascli orchestrator workflows start <id> [<parameters>] [<execution>]`, where execution is `{"synchronous":true}` or `{"step":"<step name>","variable":"<output name>"}` |
@@ -942,5 +943,6 @@ Observed in Orchestrator 4.1.6:
 - `find_constraints` returns empty constraints for a file that does not exist.
 - `export_workflow` exports dependencies for any non-empty value of `export_with_dependencies`, including `false`.
 - `export_workflow` has no route without the workflow id in the path, although its source comment documents `?id=`.
+- The `.wkf` package produced by `export_workflow` with dependencies contains an empty copy of itself (the archive is built in the folder it packs).
 - API errors return the exception stack trace, and often status 404 or 500 regardless of the cause.
 - The example files of the product (`docs/workflow_examples`) contain `<Failed_retry_for_unit>`, while the parser reads `<Failed_retryForUnit>`: that setting is ignored.
