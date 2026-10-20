@@ -5374,7 +5374,7 @@ This example describes a Job Order (in this case a pull operation) in XML format
     <Agent>aspera.sdk.sample</Agent>
     <ApplicationData>
         <Cookie>Sample-Appl-jZUVvgLruAbKKebM4cJb_Ff6CSGqcW</Cookie>
-        <Token><ACCESS_TOKEN></Token>
+        <Token>${ACCESS_TOKEN}</Token>
     </ApplicationData>
     <Operation>Pull</Operation>
     <!-- other options: Push -->
@@ -5383,7 +5383,7 @@ This example describes a Job Order (in this case a pull operation) in XML format
             <Address>10.20.13.102</Address>
             <Port>22</Port>
             <UserName>user</UserName>
-            <Password><YOUR_PASSWORD></Password>
+            <Password>${PASSWORD}</Password>
         </System>
         <Authentication>
             <Methods>
@@ -5391,7 +5391,7 @@ This example describes a Job Order (in this case a pull operation) in XML format
                 <Method>Public Key</Method>
             </Methods>
             <KeyPath>/home/userhome/.ssh/key</KeyPath>
-            <KeyPassphrase><YOUR_PASSWORD></KeyPassphrase>
+            <KeyPassphrase>${PASSWORD}</KeyPassphrase>
         </Authentication>
         <Files>
             <Path>/home/user/file</Path>
@@ -5400,13 +5400,13 @@ This example describes a Job Order (in this case a pull operation) in XML format
             <Url>dnat://proxyaddr</Url>
             <!-- or dnat://proxyUser:<YOUR_PASSWORD>@proxyaddr -->
             <User>proxyUser</User>
-            <Password><YOUR_PASSWORD></Password>
+            <Password>${PASSWORD}</Password>
         </Proxy>
     </RemoteLocation>
     <LocalLocation>
         <System>
             <UserName>localUser</UserName>
-            <Password><YOUR_PASSWORD></Password>
+            <Password>${PASSWORD}</Password>
         </System>
         <Files>
             <Path>/opt/localfiles/file</Path>
@@ -5420,7 +5420,7 @@ This example describes a Job Order (in this case a pull operation) in XML format
         <ManifestPath>/opt/tmp/manifests</ManifestPath>
         <Protection>Encrypt</Protection>
         <!-- other options: None, Decrypt -->
-        <Passphrase><YOUR_PASSWORD></Passphrase>
+        <Passphrase>${PASSWORD}</Passphrase>
         <PreCalculateJobSize>Yes</PreCalculateJobSize>
         <!-- other options: No -->
         <RemoveAfterTransfer>No</RemoveAfterTransfer>
