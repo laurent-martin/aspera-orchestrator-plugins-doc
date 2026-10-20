@@ -37,6 +37,8 @@ class AsperaOrchestratorDocGenerator
   RE_STRING_BODY = /.+?/
   RE_STRING_ARGUMENT = /['"](#{RE_STRING_BODY})['"]\s*/
 
+  # A value that is a generic word, not an example password (scanners do not flag it)
+  RE_PASSWORD_WORD = /(?:password|passwd|pwd|pass)\b/i
   # Example values in plugin help that secret scanners (Vault Radar) flag: [regex, placeholder]
   # Placeholders must contain "_": a tag name cannot, so Markdown shows <A_B> as text, but would take <AB> as an HTML tag
   # Words may be separated by non-breaking spaces, hence [[:space:]]
@@ -49,7 +51,15 @@ class AsperaOrchestratorDocGenerator
     [/\bxox[abposr]-[0-9A-Za-z-]{10,}/, '<SLACK_TOKEN>'],
     # HTTP Authorization value: token has a digit or base64 padding, unlike words such as "Bearer token"
     [%r{\bBearer([[:space:]]+)(?=[^[:space:]"]*[0-9=])[A-Za-z0-9._~+/=-]{8,}}, 'Bearer\1<ACCESS_TOKEN>'],
-    [%r{\bBasic([[:space:]]+)(?=[^[:space:]"]*[0-9=])[A-Za-z0-9+/=]{8,}}, 'Basic\1<BASE64_CREDENTIALS>']
+    [%r{\bBasic([[:space:]]+)(?=[^[:space:]"]*[0-9=])[A-Za-z0-9+/=]{8,}}, 'Basic\1<BASE64_CREDENTIALS>'],
+    # XML element with a secret value (an example payload)
+    [%r{<(Token|AccessToken|Secret)>(?!<)[^<]+</\1>}, '<\1><ACCESS_TOKEN></\1>'],
+    [%r{<(Password|Passphrase|KeyPassphrase)>(?!<)[^<]+</\1>}, '<\1><YOUR_PASSWORD></\1>'],
+    # Password in a URL: user information, or query parameter (not a word that already says "password")
+    [%r{\b([a-z][a-z0-9+.-]*://[^:/[:space:]@]+:)(?!<|#{RE_PASSWORD_WORD})[^@[:space:]/]+@}, '\1<YOUR_PASSWORD>@'],
+    [/([?&](?:password|passwd|pwd)=)(?!<|#{RE_PASSWORD_WORD})[^&[:space:]`'")]+/i, '\1<YOUR_PASSWORD>'],
+    # Password in a connection string: Pwd=...;
+    [/\b((?:Pwd|Password)=)(?!<)[^;[:space:]]+(?=;)/i, '\1<YOUR_PASSWORD>']
   ].freeze
 
   def initialize

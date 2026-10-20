@@ -522,7 +522,7 @@ Attributes (besides `name` and `comments`, common to all templates):
 | `code_default` | Value used by the plugin when the attribute is blank. |
 | `hint` | Placeholder text in the template editor. |
 | `format` | Language of the value (code editor). |
-| `placeholders` | `true`: each `<%= variable %>` in the value creates a required input `variable`. Also true for every text attribute named by the `if_blank` of an input. |
+| `placeholders` | `true`: each `<%= variable %>` in the value creates a required input `variable`. Not set: placeholders in the value are not scanned, even if the attribute gives an input when blank. |
 | `declares` | The value declares inputs or outputs of the step (`required_inputs`, `optional_inputs`, `outputs`), as a type map or a list. |
 
 Inputs and outputs (a name in angle brackets is the value of that template attribute):

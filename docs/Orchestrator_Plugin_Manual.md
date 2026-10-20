@@ -3904,7 +3904,7 @@ This action plugin provides the ability to initiate and monitor server-to-server
 | **EAR operation** | Encryption at rest operation: none, encrypt, decrypt, or --Runtime--. |
 | **EAR passphrase** | Passphrase for encryption at rest operations. |
 | **Payload** | Custom JSON payload when 'submit transfer using payload' operation is chosen. |
-| **FASP Proxy** | FASP Forward Proxy setting (format: dnats://node_user:node_password@proxy_addr:9092/). |
+| **FASP Proxy** | FASP Forward Proxy setting (format: dnats://node_user:<YOUR_PASSWORD>@proxy_addr:9092/). |
 | **HTTP Proxy** | HTTP proxy for Node API server calls (format: https://proxy:port/). |
 | **Verbose logging?** | Enable detailed request/response logging to Node API (use only for debugging). |
 | **Polling frequency** | Frequency in seconds for polling job status during monitoring. |
@@ -5374,7 +5374,7 @@ This example describes a Job Order (in this case a pull operation) in XML format
     <Agent>aspera.sdk.sample</Agent>
     <ApplicationData>
         <Cookie>Sample-Appl-jZUVvgLruAbKKebM4cJb_Ff6CSGqcW</Cookie>
-        <Token>ATV7_jZUVvgLruAbKKebM4cJb_Ff6CSGqcW_lNtHDDytOSak_7VTA</Token>
+        <Token><ACCESS_TOKEN></Token>
     </ApplicationData>
     <Operation>Pull</Operation>
     <!-- other options: Push -->
@@ -5383,7 +5383,7 @@ This example describes a Job Order (in this case a pull operation) in XML format
             <Address>10.20.13.102</Address>
             <Port>22</Port>
             <UserName>user</UserName>
-            <Password>password</Password>
+            <Password><YOUR_PASSWORD></Password>
         </System>
         <Authentication>
             <Methods>
@@ -5391,22 +5391,22 @@ This example describes a Job Order (in this case a pull operation) in XML format
                 <Method>Public Key</Method>
             </Methods>
             <KeyPath>/home/userhome/.ssh/key</KeyPath>
-            <KeyPassphrase>keypassphraseifany</KeyPassphrase>
+            <KeyPassphrase><YOUR_PASSWORD></KeyPassphrase>
         </Authentication>
         <Files>
             <Path>/home/user/file</Path>
         </Files>
         <Proxy>
             <Url>dnat://proxyaddr</Url>
-            <!-- or dnat://proxyUser:proxyUserPass@proxyaddr -->
+            <!-- or dnat://proxyUser:<YOUR_PASSWORD>@proxyaddr -->
             <User>proxyUser</User>
-            <Password>proxyUserPass</Password>
+            <Password><YOUR_PASSWORD></Password>
         </Proxy>
     </RemoteLocation>
     <LocalLocation>
         <System>
             <UserName>localUser</UserName>
-            <Password>localPassword</Password>
+            <Password><YOUR_PASSWORD></Password>
         </System>
         <Files>
             <Path>/opt/localfiles/file</Path>
@@ -5420,7 +5420,7 @@ This example describes a Job Order (in this case a pull operation) in XML format
         <ManifestPath>/opt/tmp/manifests</ManifestPath>
         <Protection>Encrypt</Protection>
         <!-- other options: None, Decrypt -->
-        <Passphrase>earpassphrase</Passphrase>
+        <Passphrase><YOUR_PASSWORD></Passphrase>
         <PreCalculateJobSize>Yes</PreCalculateJobSize>
         <!-- other options: No -->
         <RemoveAfterTransfer>No</RemoveAfterTransfer>
@@ -13254,7 +13254,7 @@ This action plugin enables interaction with MongoDB databases, supporting docume
 
 | Parameter            | Example Value                               |
 |----------------------|---------------------------------------------|
-| **Connection uri**   | mongodb://dbuser:dbpass@203.0.113.100:27017 |
+| **Connection uri**   | mongodb://dbuser:<YOUR_PASSWORD>@203.0.113.100:27017 |
 | **Database name**    | inventory_demo                              |
 | **Operation**        | Document_find                               |
 | **Collection name**  | products                                    |
@@ -13393,7 +13393,7 @@ Input parameters are not mandatory. URI defaults to 'mongodb://localhost:27017' 
 
 - **Basic Format:** `mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]`
 - **Simple Connection:** `mongodb://203.0.113.100:27017`
-- **With Authentication:** `mongodb://dbuser:dbpass@203.0.113.100:27017/inventory_demo`
+- **With Authentication:** `mongodb://dbuser:<YOUR_PASSWORD>@203.0.113.100:27017/inventory_demo`
 - **Replica Set:** `mongodb://203.0.113.100:27017,203.0.113.101:27017/inventory_demo?replicaSet=myReplSet`
 - **With Options:** `mongodb://203.0.113.100:27017/inventory_demo?ssl=true&connectTimeoutMS=30000`
 - **Character Escaping:** The characters ':' and '@' in a username or password must be escaped (RFC 2396).
@@ -20760,7 +20760,7 @@ The launched workflow's ID (work_order_id) can be tracked in multiple ways:
 
 #### Via API
 
-`http://orchestrator_url/api/work_order_status/<work_order_id>?login=admin&password=aspera`
+`http://orchestrator_url/api/work_order_status/<work_order_id>?login=admin&password=<YOUR_PASSWORD>`
 
 The result will be presented in an XML file detailing step-by-step status for that work order.
 
@@ -25782,11 +25782,11 @@ hostname:1521/ORCLPDB1
 
 **ODBC-Style Example (Canonical):**
 
-Driver={ODBC Driver 17 for SQL Server};Server=10.10.1.10,1433;Database=mydb;Uid=user;Pwd=password;
+Driver={ODBC Driver 17 for SQL Server};Server=10.10.1.10,1433;Database=mydb;Uid=user;Pwd=<YOUR_PASSWORD>;
 
 **TinyTDS Alternative Syntax:**
 
-server=10.10.1.10;port=1433;database=mydb;username=user;password=password;
+server=10.10.1.10;port=1433;database=mydb;username=user;password=<YOUR_PASSWORD>;
 
 #### Connection Precedence
 

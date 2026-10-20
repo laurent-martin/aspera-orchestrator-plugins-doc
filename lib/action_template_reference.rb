@@ -33,6 +33,8 @@ class ActionTemplateReference
   DEFAULT_WIDGETS = {'string' => 'text', 'text' => 'text', 'mediumtext' => 'text', 'boolean' => 'boolean', 'integer' => 'text', 'bigint' => 'text', 'float' => 'text'}.freeze
   # Columns of every template, not written in the YAML file
   COMMON_COLUMNS = %w[name comments].freeze
+  # Name of an attribute, input or output written in block style in the YAML file (see flow_style)
+  SECRET_NAME = /pass|pwd/i
   # Notes made useless by the evaluation of the plugin
   PROBED_NOTES = /has conditions|No `inputs_spec`|No `outputs_spec`/
 
@@ -225,9 +227,14 @@ class ActionTemplateReference
   def humanize(name) = name.tr('_', ' ').downcase.sub(/\A\w/, &:upcase)
 
   # Flow style (one line) for each attribute, input and output: plugin > attributes|inputs|outputs > name
+  # Not for a name that looks like a password: secret scanners (Vault Radar) take `password: {type: ...}` for a value
   def flow_style(node, path)
     if path.size == 3 && %w[attributes inputs outputs].include?(path[1])
-      all_flow(node)
+      if path[2].match?(SECRET_NAME)
+        node.children.each_slice(2) { |_key, value| all_flow(value) }
+      else
+        all_flow(node)
+      end
     elsif node.is_a?(Psych::Nodes::Mapping)
       node.children.each_slice(2) { |key, value| flow_style(value, path + [key.value]) }
     end
