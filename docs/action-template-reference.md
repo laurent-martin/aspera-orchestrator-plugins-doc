@@ -82,7 +82,7 @@ For each action plugin, this reference lists:
 | [CustomPython](#custompython) | Custom Python | Other Utilities | 0.1.3 |
 | [CustomRuby](#customruby) | Custom Ruby | Other Utilities | 0.7.3 |
 | [CustomTrigger](#customtrigger) | Custom trigger | Triggers | 0.4.2 |
-| [DaletAssetManagement](#daletassetmanagement) | Dalet Asset Management Plugin | Asset Management | 0.2.1 |
+| [DaletAssetManagement](#daletassetmanagement) | Dalet Asset Management Plugin | Asset Management | 0.2.0 |
 | [DatabaseQuery](#databasequery) | Database query | Integration | 0.3.4 |
 | [DatabaseTrigger](#databasetrigger) | Database trigger | Triggers | 1.1.6 |
 | [DependencyChecker](#dependencychecker) | Dependency checker | Other Utilities | 0.1.1 |
@@ -104,7 +104,7 @@ For each action plugin, this reference lists:
 | [ExitStatus](#exitstatus) | Exit status | System | 0.1.2 |
 | [FacebookUploadOperation](#facebookuploadoperation) | Facebook Video Upload Operation | Integration | 0.3.0 |
 | [FaspControl](#faspcontrol) | FASP controller | File Transfer | 0.7.1 |
-| [FaspTransfer](#fasptransfer) | FASP transfer | File Transfer | 4.3.6 |
+| [FaspTransfer](#fasptransfer) | FASP transfer | File Transfer | 4.3.5 |
 | [Faspex5Delivery](#faspex5delivery) | Faspex5 delivery | File Transfer | 0.2.2 |
 | [Faspex5FileProcessing](#faspex5fileprocessing) | Faspex5 file processing | File Transfer | 0.0.6 |
 | [Faspex5InboxWatcher](#faspex5inboxwatcher) | Faspex5 inbox watcher | Triggers | 0.8.6 |
@@ -153,17 +153,16 @@ For each action plugin, this reference lists:
 | [LocalFolderWatcher](#localfolderwatcher) | Local folder watcher | Triggers | 1.6.3 |
 | [MacCaptionOperation](#maccaptionoperation) | MacCaption Operation | File Transformations | 0.2.0 |
 | [MarquisMewsOperation](#marquismewsoperation) | Marquis Mews Operation | Transcoding | 0.1.0 |
-| [MassParameterSetter](#massparametersetter) | Stored parameter set | Other Utilities | 0.6.6 |
+| [MassParameterSetter](#massparametersetter) | Stored parameter set | Other Utilities | 0.6.5 |
 | [McAfeeVirusCheck](#mcafeeviruscheck) | McAfee virus check | Virus Scan | 0.2.0 |
 | [Md5Checksum](#md5checksum) | MD5 checksum | File Operations | 0.3.1 |
 | [MediaInfo](#mediainfo) | Media info | File Operations | 0.7.1 |
 | [MediaMateOperation](#mediamateoperation) | Media Mate Operation | Integration | 0.3.2 |
 | [MediabinAssetManagement](#mediabinassetmanagement) | Mediabin asset management | File Operations | 0.1.0 |
 | [MergePoint](#mergepoint) | Merge point | System | 0.5.2 |
-| [MimirOperation](#mimiroperation) | Mimir Operation | Integration | 1.0.0 |
 | [MinnetonkaAudiotoolserver](#minnetonkaaudiotoolserver) | Minnetonka AudioTools Server | Transcoding | 0.3.0 |
-| [MogMxfSpeedrail](#mogmxfspeedrail) | MOG MXF Speedrail | Transcoding | 0.2.0 |
-| [MongodbOperation](#mongodboperation) | Mongodb operation | Integration | 1.3.3 |
+| [MogMxfspeedrail](#mogmxfspeedrail) | MOG MXF Speedrail | Transcoding | 0.2.0 |
+| [MongodbOperation](#mongodboperation) | Mongodb operation | Integration | 1.3.2 |
 | [MxFixer](#mxfixer) | Mx fixer | Quality Control | 0.2.0 |
 | [MxfLegalizer](#mxflegalizer) | MXF Legalizer | File Transformations | 0.2.0 |
 | [OpswatMetadefender](#opswatmetadefender) | Opswat metadefender | Virus Scan | 0.1.0 |
@@ -183,7 +182,7 @@ For each action plugin, this reference lists:
 | [RestRequest](#restrequest) | REST request | Integration | 1.2.4 |
 | [RobocopyOperation](#robocopyoperation) | Robocopy | File Transfer | 0.1.1 |
 | [RssFeedReader](#rssfeedreader) | RSS Feed Reader | User Interactions | 0.5.2 |
-| [ScheduleTrigger](#scheduletrigger) | Schedule trigger | Triggers | 1.2.3 |
+| [ScheduleTrigger](#scheduletrigger) | Schedule trigger | Triggers | 1.2.2 |
 | [ScomNotification](#scomnotification) | SCOM notification | User Interactions | 1.2.0 |
 | [ScpTransfer](#scptransfer) | SCP transfer | File Transfer | 0.2.1 |
 | [SftpTransfer](#sftptransfer) | SFTP transfer | File Transfer | 0.7.1 |
@@ -195,13 +194,13 @@ For each action plugin, this reference lists:
 | [SimpleParameterLookup](#simpleparameterlookup) | Look-up table | Other Utilities | 0.8.8 |
 | [SlackNotification](#slacknotification) | Slack notification | User Interactions | 0.2.2 |
 | [SnapshotPlugin](#snapshotplugin) | Snapshot | System | 0.2.1 |
-| [SoapRequest](#soaprequest) | Soap request | Integration | 2.1.7 |
+| [SoapRequest](#soaprequest) | Soap request | Integration | 2.1.6 |
 | [SoapRequestListener](#soaprequestlistener) | Soap request listener | Triggers | 0.2.4 |
 | [SoftlayerApi](#softlayerapi) | Softlayer API | Integration | 0.2.3 |
 | [SonyCi](#sonyci) | Sony Ci | Asset Management | 0.2.2 |
 | [SonyCiFileWatcher](#sonycifilewatcher) | SonyCi file watcher | Triggers | 0.1.3 |
 | [SpreadsheetParser](#spreadsheetparser) | Spreadsheet parser | File Operations | 0.2.1 |
-| [SubWorkflow](#subworkflow) | Sub-workflow | System | 1.5.4 |
+| [SubWorkflow](#subworkflow) | Sub-workflow | System | 1.5.3 |
 | [SublerOperation](#subleroperation) | Subler Operation | File Transformations | 0.1.0 |
 | [SymantecIcapDlpOperation](#symantecicapdlpoperation) | Symantec Icap DLP Operations | Virus Scan | 0.1.0 |
 | [SymantecIcapVirusScanOperation](#symantecicapvirusscanoperation) | Symantec Icap Virus Scan Operations | Virus Scan | 0.4.0 |
@@ -3576,7 +3575,7 @@ For each action plugin, this reference lists:
 
 - **Display name**: Dalet Asset Management Plugin
 - **Category**: Asset Management
-- **Version**: 0.2.1 (requires Orchestrator 4.1.6 or later)
+- **Version**: 0.2.0 (requires Orchestrator 4.1.0 or later)
 - **Description**: This plug-in provides the ability to interact with Dalet Asset Management System.
 
 ### Template attributes
@@ -4093,7 +4092,7 @@ For each action plugin, this reference lists:
 | `polling_frequency` | integer |  |  |
 | `archive_folder` | string |  |  |
 | `download_attachments` | boolean | `false` (code) |  |
-| `attachments_target_folder` | string | `"` (code) |  |
+| `attachments_target_folder` | string | `#{EMAIL_WATCHER_DIR}/attachments` (code) |  |
 | `encoding` | string |  |  |
 
 ### Inputs
@@ -4635,7 +4634,7 @@ For each action plugin, this reference lists:
 
 - **Display name**: FASP transfer
 - **Category**: File Transfer
-- **Version**: 4.3.6 (requires Orchestrator 4.1.6 or later)
+- **Version**: 4.3.5 (requires Orchestrator 4.1.6 or later)
 - **Description**: This plugin provides the ability to initiate server-to-server transfers using Aspera's FASP protocol.
 
 ### Template attributes
@@ -4699,85 +4698,69 @@ For each action plugin, this reference lists:
 
 | Attribute | Type | Default | Input if blank |
 |-----------|------|---------|----------------|
-| `name` | string |  | `Name` |
+| `name` | string |  |  |
 | `title` | string |  | `Title` |
-| `comments` | string |  | `Comments` |
+| `comments` | string |  |  |
 | `faspex_sender_user` | string |  | `Faspex_sender_user` |
-| `faspex_hostname` | string |  | `Faspex_hostname` |
-| `faspex_node` | string |  | `Faspex_node` |
-| `notified_on_upload` | string |  | `Notified_on_upload` |
-| `notified_on_download` | string |  | `Notified_on_download` |
-| `notified_on_receipt` | string |  | `Notified_on_receipt` |
-| `expiration_policy` | string |  | `Expiration_policy` |
-| `release_policy` | string |  | `Release_policy` |
-| `release_at` | string |  | `Release_at` |
-| `content_protection_passphrase` | string |  | `Content_protection_passphrase` |
-| `payload` | text |  | `Payload` |
-| `note` | text |  | `Note` |
-| `metadata` | text |  | `Metadata` |
+| `faspex_hostname` | string |  | `Faspex_server_address` |
+| `faspex_node` | string |  |  |
+| `notified_on_upload` | string | `` (code) | `Notified_on_upload` |
+| `notified_on_download` | string | `` (code) | `Notified_on_download` |
+| `notified_on_receipt` | string | `` (code) | `Notified_on_receipt` |
+| `expiration_policy` | string | `none` (code) |  |
+| `release_policy` | string | `now` (code) |  |
+| `release_at` | string |  |  |
+| `content_protection_passphrase` | string | `` (code) | `Content_protection_passphrase` |
+| `payload` | text |  |  |
+| `note` | text | `` (code) | `Note` |
+| `metadata` | text | `` (code) |  |
 | `recipients` | text |  | `Recipients` |
-| `private_recipients` | text |  | `Private_recipients` |
-| `paths` | text |  | `Paths` |
-| `private_key` | text |  | `Private_key` |
-| `client_id` | text |  | `Client_id` |
-| `download_limit` | integer |  | `Download_limit` |
-| `remote_source_id` | integer |  | `Remote_source_id` |
-| `use_remote_source` | boolean | `false` | `Use_remote_source` |
-| `ear_enabled` | boolean | `false` | `Ear_enabled` |
-| `notify_on_upload` | boolean | `false` | `Notify_on_upload` |
-| `notify_on_download` | boolean | `false` | `Notify_on_download` |
-| `notify_on_receipt` | boolean | `false` | `Notify_on_receipt` |
-| `obfuscation_enabled` | boolean | `false` | `Obfuscation_enabled` |
-| `prevent_http_download` | boolean | `false` | `Prevent_http_download` |
-| `skip_metadata_validation` | boolean | `false` | `Skip_metadata_validation` |
-| `get_package_status_link` | boolean | `false` | `Get_package_status_link` |
-| `public_download` | string |  | `Public_download` |
+| `private_recipients` | text | `` (code) | `Private_recipients` |
+| `paths` | text |  | `File_paths` |
+| `private_key` | text |  | `Ssh_private_key` |
+| `client_id` | text |  | `Faspex_api_client_id` |
+| `download_limit` | integer |  |  |
+| `remote_source_id` | integer |  | `Shared_folder_id` |
+| `use_remote_source` | boolean | `false` |  |
+| `ear_enabled` | boolean | `false` |  |
+| `notify_on_upload` | boolean | `false` |  |
+| `notify_on_download` | boolean | `false` |  |
+| `notify_on_receipt` | boolean | `false` |  |
+| `obfuscation_enabled` | boolean | `false` |  |
+| `prevent_http_download` | boolean | `false` |  |
+| `skip_metadata_validation` | boolean | `false` |  |
+| `get_package_status_link` | boolean | `false` |  |
+| `public_download` | string | `false` (code) |  |
 
 ### Inputs
 
-- `Name` (`string`, required)
 - `Title` (`string`, required)
-- `Comments` (`string`, required)
-- `Faspex_sender_user` (`string`, required)
-- `Faspex_hostname` (`string`, required)
-- `Faspex_node` (`string`, required)
-- `Notified_on_upload` (`string`, required)
-- `Notified_on_download` (`string`, required)
-- `Notified_on_receipt` (`string`, required)
-- `Expiration_policy` (`string`, required)
-- `Release_policy` (`string`, required)
-- `Release_at` (`string`, required)
-- `Content_protection_passphrase` (`string`, required)
-- `Payload` (`string`, required)
-- `Note` (`string`, required)
-- `Metadata` (`string`, required)
+- `Note` (`string`, optional)
+- `Notified_on_upload` (`string`, optional)
+- `Notified_on_download` (`string`, optional)
+- `Notified_on_receipt` (`string`, optional)
+- `Content_protection_passphrase` (`string`, optional)
+- `Faspex_server_address` (`string`, required)
 - `Recipients` (`string`, required)
-- `Private_recipients` (`string`, required)
-- `Paths` (`string`, required)
-- `Private_key` (`string`, required)
-- `Client_id` (`string`, required)
-- `Download_limit` (`int`, required)
-- `Remote_source_id` (`int`, required)
-- `Use_remote_source` (`flag`, required)
-- `Ear_enabled` (`flag`, required)
-- `Notify_on_upload` (`flag`, required)
-- `Notify_on_download` (`flag`, required)
-- `Notify_on_receipt` (`flag`, required)
-- `Obfuscation_enabled` (`flag`, required)
-- `Prevent_http_download` (`flag`, required)
-- `Skip_metadata_validation` (`flag`, required)
-- `Get_package_status_link` (`flag`, required)
-- `Public_download` (`string`, required)
+- `Private_recipients` (`string`, optional)
+- `Faspex_sender_user` (`string`, required)
+- `Faspex_api_client_id` (`string`, required)
+- `Ssh_private_key` (`string`, required)
+- `File_paths` (`string`, required)
+- `Shared_folder_id` (`int` or `string`, optional)
+- `Release_date` (`date`)
 
 ### Outputs
 
-- None found in source.
+- `Id` (`string`)
+- `Transfer_spec` (`string`)
+- `Status_link` (`string`)
 - `Step_information` (`hash`)
 
 ### Notes
 
-- No `inputs_spec` in plugin class: every template field left blank becomes an input (default behavior).
-- No `outputs_spec` in plugin class.
+- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
+- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## Faspex5FileProcessing
 
@@ -4836,77 +4819,84 @@ For each action plugin, this reference lists:
 
 | Attribute | Type | Default | Input if blank |
 |-----------|------|---------|----------------|
-| `name` | string |  | `Name` |
-| `comments` | text |  | `Comments` |
-| `server` | string |  | `Server` |
-| `user` | string |  | `User` |
-| `client_id` | string |  | `Client_id` |
-| `keep_ongoing` | boolean |  | `Keep_ongoing` |
-| `polling_frequency` | integer |  | `Polling_frequency` |
-| `early_trigger` | boolean |  | `Early_trigger` |
-| `new_only` | boolean |  | `New_only` |
-| `run_synchronous` | boolean |  | `Run_synchronous` |
-| `mailbox` | string |  | `Mailbox` |
-| `query` | string |  | `Query` |
-| `faspex_node` | string |  | `Faspex_node` |
-| `trigger_type` | string |  | `Trigger_type` |
+| `name` | string |  |  |
+| `comments` | text |  |  |
+| `server` | string |  | `Faspex_server_address` |
+| `user` | string |  | `Faspex_user` |
+| `client_id` | string |  | `Faspex_client_id` |
+| `keep_ongoing` | boolean |  |  |
+| `polling_frequency` | integer |  |  |
+| `early_trigger` | boolean |  |  |
+| `new_only` | boolean |  |  |
+| `run_synchronous` | boolean |  |  |
+| `mailbox` | string |  |  |
+| `query` | string |  |  |
+| `faspex_node` | string |  |  |
+| `trigger_type` | string |  |  |
 | `packages_root` | string |  | `Packages_root` |
-| `faspex_version` | string |  | `Faspex_version` |
+| `faspex_version` | string |  |  |
 | `ignore_faspex_failures` | boolean | `true` | `Ignore_faspex_failures` |
 | `ignore_empty_metadata` | boolean | `false` | `Ignore_empty_metadata` |
-| `limit` | integer | `10` | `Limit` |
-| `ssl_client_key_path` | text |  | `Ssl_client_key_path` |
-| `client_key_passphrase` | text |  | `Client_key_passphrase` |
-| `shared_inbox_name` | string |  | `Shared_inbox_name` |
-| `private_key` | text |  | `Private_key` |
-| `filters` | text |  | `Filters` |
+| `limit` | integer | `10` |  |
+| `ssl_client_key_path` | text |  |  |
+| `client_key_passphrase` | text |  |  |
+| `shared_inbox_name` | string |  |  |
+| `private_key` | text |  |  |
+| `filters` | text | `` (code) | `Filters_override` |
 | `destination_root` | text |  | `Destination_root` |
-| `get_package_download_link` | text |  | `Get_package_download_link` |
-| `package_id` | text |  | `Package_id` |
-| `get_transfer_spec` | boolean | `true` | `Get_transfer_spec` |
-| `transfer_type` | string | `connect` | `Transfer_type` |
+| `get_package_download_link` | text |  |  |
+| `package_id` | text |  |  |
+| `get_transfer_spec` | boolean | `true` |  |
+| `transfer_type` | string | `connect` |  |
 
 ### Inputs
 
-- `Name` (`string`, required)
-- `Comments` (`string`, required)
-- `Server` (`string`, required)
-- `User` (`string`, required)
-- `Client_id` (`string`, required)
-- `Keep_ongoing` (`flag`, required)
-- `Polling_frequency` (`int`, required)
-- `Early_trigger` (`flag`, required)
-- `New_only` (`flag`, required)
-- `Run_synchronous` (`flag`, required)
-- `Mailbox` (`string`, required)
-- `Query` (`string`, required)
-- `Faspex_node` (`string`, required)
-- `Trigger_type` (`string`, required)
-- `Packages_root` (`string`, required)
-- `Faspex_version` (`string`, required)
-- `Ignore_faspex_failures` (`flag`, required)
-- `Ignore_empty_metadata` (`flag`, required)
-- `Limit` (`int`, required)
-- `Ssl_client_key_path` (`string`, required)
-- `Client_key_passphrase` (`string`, required)
-- `Shared_inbox_name` (`string`, required)
-- `Private_key` (`string`, required)
-- `Filters` (`string`, required)
-- `Destination_root` (`string`, required)
-- `Get_package_download_link` (`string`, required)
-- `Package_id` (`string`, required)
-- `Get_transfer_spec` (`flag`, required)
-- `Transfer_type` (`string`, required)
+- `Packages_root` (`string`, optional)
+- `Ignore_faspex_failures` (`flag`, optional)
+- `Ignore_empty_metadata` (`flag`, optional)
+- `Faspex_client_id` (`string`, required)
+- `Faspex_user` (`string`, required)
+- `Filters_override` (`string`, optional)
+- `Destination_root` (`string`, optional)
+- `Faspex_server_address` (`string`, required)
+- `Polling_frequency` (`int`)
+- `Shared_inbox_name` (`string`)
+- `Ssh_private_key` (`string`)
+- `Persistence_scope` (`string`)
+- `Package Id` (`string`)
 
 ### Outputs
 
-- None found in source.
+- `Title` (`string`)
+- `Id` (`string`)
+- `Completed` (`date`)
+- `Released` (`date`)
+- `Updated` (`date`)
+- `Status` (`string`)
+- `State` (`string`)
+- `Author_name` (`string`)
+- `Author_email` (`string`)
+- `Recipient_name` (`string`)
+- `Recipient_email` (`string`)
+- `Meta_data` (`hash`)
+- `Recipient_list` (`hash`)
+- `File_list` (`array`)
+- `Transfer_spec` (`string`)
+- `Package_location` (`string`)
+- `Message` (`string`)
+- `EAR Enabled` (`flag`)
+- `Package UUID` (`string`)
+- `Completed download count` (`int`)
+- `Partial download count` (`int`)
+- `Active download count` (`int`)
+- `Expiration policy` (`string`)
+- `Package Download Link` (`string`)
 - `Step_information` (`hash`)
 
 ### Notes
 
-- No `inputs_spec` in plugin class: every template field left blank becomes an input (default behavior).
-- No `outputs_spec` in plugin class.
+- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
+- Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
 
 ## Faspex5PackageMonitor
 
@@ -5389,7 +5379,7 @@ For each action plugin, this reference lists:
 | `new_package` | boolean | `false` (code) | `New_package` |
 | `milestone` | integer | `0` (code) | `Milestone` |
 | `journal_to_file` | boolean | `false` (code) |  |
-| `journal_file_path` | string | `"` (code) |  |
+| `journal_file_path` | string | `#{Rails.root}/log/journal.log` (code) |  |
 | `file_entry_format` | string | `event[time],event[package],event[file],event[status],event[event]` (code) |  |
 | `max_file_count` | integer | `5` (code) |  |
 | `max_file_size_in_mb` | integer | `5` (code) |  |
@@ -5506,7 +5496,7 @@ For each action plugin, this reference lists:
 |-----------|------|---------|----------------|
 | `name` | string |  |  |
 | `comments` | text |  |  |
-| `message` | text | `"<?xml version='1.0' encoding='UTF-8'?><message uuid=''><envelope subject='FlipFactory default message'><to> <account username='<%=` (code) |  |
+| `message` | text | `<?xml version='1.0' encoding='UTF-8'?><message uuid=''><envelope subject='FlipFactory default message'><to> <account username='<%= #{ VAR_USERNAME} %>' password='<%= #{ VAR_PASSWORD} %>' address='' personal=''><factory name='<%= #{ VAR_FACTORYNAME} %>'/> </account></to></envelope><parcel> <content type='<%= #{ VAR_MEDIA_TYPE} %>'><file version='original' path='<%= #{ VAR_FILEPATH} %>'/> </content></parcel></message>` (code) |  |
 | `saved_inputs` | text |  |  |
 | `server_url` | string |  |  |
 | `server_node` | string |  |  |
@@ -7153,7 +7143,7 @@ For each action plugin, this reference lists:
 
 - **Display name**: Stored parameter set
 - **Category**: Other Utilities
-- **Version**: 0.6.6 (requires Orchestrator 4.1.6 or later)
+- **Version**: 0.6.5 (requires Orchestrator 4.1.6 or later)
 - **Description**: This action plug-in provides the ability to set the values of multiple parameters within a workflow step. It can be used to store default values or apply a predefined set of values for reuse across workflows. This helps reduce duplication and ensures consistency when configuring actions.
 
 ### Template attributes
@@ -7448,107 +7438,6 @@ For each action plugin, this reference lists:
 - Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
 
-## MimirOperation
-
-- **Display name**: Mimir Operation
-- **Category**: Integration
-- **Version**: 1.0.0 (requires Orchestrator 4.1.6 or later)
-- **Description**: Search, create, ingest, and manage assets in Mimir Cloud MAM. Supports metadata updates, transcript management, folder operations, archiving, and direct file upload with automatic multipart handling for large files.
-
-### Template attributes
-
-| Attribute | Type | Default | Input if blank |
-|-----------|------|---------|----------------|
-| `name` | string |  | `Name` |
-| `comments` | text |  | `Comments` |
-| `base_url` | string |  | `Base_url` |
-| `api_key` | text |  | `Api_key` |
-| `operation` | string |  | `Operation` |
-| `item_id` | string |  | `Item_id` |
-| `fields` | string |  | `Fields` |
-| `search_string` | string |  | `Search` |
-| `search_mode` | string |  | `Search_mode` |
-| `search_folder_id` | string |  | `Search_folder_id` |
-| `include_subfolders` | boolean |  | `Include_subfolders` |
-| `include_folders` | boolean |  | `Include_folders` |
-| `page_size` | integer |  | `Page_size` |
-| `metadata_delta_json` | text |  | `Metadata_delta_json` |
-| `required_metadata_version` | string |  | `Required_metadata_version` |
-| `folder_path` | string |  | `Folder_path` |
-| `root_folder_id` | string |  | `Root_folder_id` |
-| `target_folder_id` | string |  | `Target_folder_id` |
-| `config_id` | string |  | `Config_id` |
-| `src_key` | string |  | `Src_key` |
-| `placeholder_id` | string |  | `Placeholder_id` |
-| `timed_metadata_json` | text |  | `Timed_metadata_json` |
-| `transcript_json` | text |  | `Transcript_json` |
-| `archive_type` | string |  | `Archive_type` |
-| `archive_path` | string |  | `Archive_path` |
-| `archive_media_only` | boolean |  | `Archive_media_only` |
-| `file_path` | string |  | `File_path` |
-| `file_name` | string |  | `File_name` |
-| `content_type` | string |  | `Content_type` |
-| `external_id` | string |  | `External_id` |
-| `upload_item_type` | string |  | `Upload_item_type` |
-| `upload_folder_parents` | text |  | `Upload_folder_parents` |
-| `upload_metadata_json` | text |  | `Upload_metadata_json` |
-| `upload_transcription_enabled` | boolean |  | `Upload_transcription_enabled` |
-| `upload_person_detection_enabled` | boolean |  | `Upload_person_detection_enabled` |
-| `upload_label_detection_enabled` | boolean |  | `Upload_label_detection_enabled` |
-| `upload_celebrity_detection_enabled` | boolean |  | `Upload_celebrity_detection_enabled` |
-| `chunk_size_bytes` | integer |  | `Chunk_size_bytes` |
-
-### Inputs
-
-- `Name` (`string`, required)
-- `Comments` (`string`, required)
-- `Base_url` (`string`, required)
-- `Api_key` (`string`, required)
-- `Operation` (`string`, required)
-- `Item_id` (`string`, required)
-- `Fields` (`string`, required)
-- `Search` (`string`, required)
-- `Search_mode` (`string`, required)
-- `Search_folder_id` (`string`, required)
-- `Include_subfolders` (`flag`, required)
-- `Include_folders` (`flag`, required)
-- `Page_size` (`int`, required)
-- `Metadata_delta_json` (`string`, required)
-- `Required_metadata_version` (`string`, required)
-- `Folder_path` (`string`, required)
-- `Root_folder_id` (`string`, required)
-- `Target_folder_id` (`string`, required)
-- `Config_id` (`string`, required)
-- `Src_key` (`string`, required)
-- `Placeholder_id` (`string`, required)
-- `Timed_metadata_json` (`string`, required)
-- `Transcript_json` (`string`, required)
-- `Archive_type` (`string`, required)
-- `Archive_path` (`string`, required)
-- `Archive_media_only` (`flag`, required)
-- `File_path` (`string`, required)
-- `File_name` (`string`, required)
-- `Content_type` (`string`, required)
-- `External_id` (`string`, required)
-- `Upload_item_type` (`string`, required)
-- `Upload_folder_parents` (`string`, required)
-- `Upload_metadata_json` (`string`, required)
-- `Upload_transcription_enabled` (`flag`, required)
-- `Upload_person_detection_enabled` (`flag`, required)
-- `Upload_label_detection_enabled` (`flag`, required)
-- `Upload_celebrity_detection_enabled` (`flag`, required)
-- `Chunk_size_bytes` (`int`, required)
-
-### Outputs
-
-- None found in source.
-- `Step_information` (`hash`)
-
-### Notes
-
-- No `inputs_spec` in plugin class: every template field left blank becomes an input (default behavior).
-- No `outputs_spec` in plugin class.
-
 ## MinnetonkaAudiotoolserver
 
 - **Display name**: Minnetonka AudioTools Server
@@ -7589,7 +7478,7 @@ For each action plugin, this reference lists:
 
 - Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
-## MogMxfSpeedrail
+## MogMxfspeedrail
 
 - **Display name**: MOG MXF Speedrail
 - **Category**: Transcoding
@@ -7629,13 +7518,14 @@ For each action plugin, this reference lists:
 
 ### Notes
 
+- The name in `metadata.yml` is `MogMxfSpeedrail`: use the class name `MogMxfspeedrail`.
 - Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## MongodbOperation
 
 - **Display name**: Mongodb operation
 - **Category**: Integration
-- **Version**: 1.3.3 (requires Orchestrator 4.1.6 or later)
+- **Version**: 1.3.2 (requires Orchestrator 4.1.6 or later)
 - **Description**: This action plugin enables interaction with MongoDB databases, supporting document operations (insert, find, update, remove), advanced queries, aggregation pipelines, map-reduce processing, and database administration commands for comprehensive data management and analysis.
 
 ### Template attributes
@@ -8692,7 +8582,7 @@ For each action plugin, this reference lists:
 
 - **Display name**: Schedule trigger
 - **Category**: Triggers
-- **Version**: 1.2.3 (requires Orchestrator 4.1.6 or later)
+- **Version**: 1.2.2 (requires Orchestrator 4.1.6 or later)
 - **Description**: This action plug-ins provide the ability schedule the triggering of the following steps in a Workflow.
 
 ### Template attributes
@@ -9239,8 +9129,8 @@ For each action plugin, this reference lists:
 | Attribute | Type | Default | Input if blank |
 |-----------|------|---------|----------------|
 | `name` | string |  |  |
-| `comments` | text | `"Snapshot of Orchestrator configuration as of` (code) |  |
-| `snapshot_name` | string | `"Snapshot_` (code) | `Snapshot_name` |
+| `comments` | text | `Snapshot of Orchestrator configuration as of #{DateTime.now.strftime('%Y-%m-%d')} #{DateTime.now.strftime('%H:%M:%S')}` (code) |  |
+| `snapshot_name` | string | `Snapshot_#{Time.now.strftime('%Y%m%d%H%M%S')}` (code) | `Snapshot_name` |
 | `snapshot_directory` | string | `config.archive_dir` (code) | `Snapshot_directory` |
 | `custom_tables` | text | `` (code) |  |
 | `export_full_db` | boolean | `false` |  |
@@ -9267,7 +9157,7 @@ For each action plugin, this reference lists:
 
 - **Display name**: Soap request
 - **Category**: Integration
-- **Version**: 2.1.7 (requires Orchestrator 4.1.6 or later)
+- **Version**: 2.1.6 (requires Orchestrator 4.1.6 or later)
 - **Description**: This plug-in provides the ability to periodically execute a SOAP query on a web service. It can be used for a one-off request or as a polling mechanism.
 
 ### Template attributes
@@ -9574,7 +9464,7 @@ For each action plugin, this reference lists:
 
 - **Display name**: Sub-workflow
 - **Category**: System
-- **Version**: 1.5.4 (requires Orchestrator 4.1.6 or later)
+- **Version**: 1.5.3 (requires Orchestrator 4.1.6 or later)
 - **Description**: This action plug-in allows you to embed an entire, separately defined workflow as a single step within another workflow. This enables you to break down complex processes into manageable sub-workflows, making them easier to build, maintain, and reuse.
 
 ### Template attributes
@@ -10914,7 +10804,7 @@ For each action plugin, this reference lists:
 | `name` | string |  |  |
 | `comments` | text |  |  |
 | `input_uri` | string |  |  |
-| `outputs_payload` | text | `[{ label: 'Default transformation', url: "<%=` (code) |  |
+| `outputs_payload` | text | `[{ label: 'Default transformation', url: "<%= #{VAR_OUTPUT_URI} %>" }].to_s` (code) |  |
 | `saved_inputs` | text |  |  |
 | `api_key` | string |  |  |
 | `status_polling_frequency` | integer | `5` (code) |  |

@@ -145,6 +145,15 @@ class OrchConfig
   def self.respond_to_missing?(*) = true
 end
 
+# Orchestrator lib/safe_yaml.rb, without the classes of the database
+module SafeYaml
+  PERMITTED = [Symbol, Date, Time].freeze
+  def self.load(str, **) = YAML.safe_load(str, permitted_classes: PERMITTED, aliases: true)
+  def self.safe_load(str, **) = YAML.safe_load(str, permitted_classes: PERMITTED, aliases: true)
+  def self.load_file(file, **) = YAML.safe_load_file(file, permitted_classes: PERMITTED, aliases: true)
+  def self.safe_load_file(file, **) = YAML.safe_load_file(file, permitted_classes: PERMITTED, aliases: true)
+end
+
 def silence_warnings = yield
 
 # Modules included by plugins, and not provided by the files loaded
@@ -171,6 +180,11 @@ class PluginProbe
   }.freeze
   CALL_TIMEOUT = 5
   PLACEHOLDER_VAR = 'probe_placeholder_variable'
+  MARKER_PREFIX = 'probe_value_of_'
+  OTHER_MARKER_PREFIX = 'other_probe_value_of_'
+  # Pairs of attributes are tested when each has at most this number of values, up to a total number of templates
+  MAX_PAIR_VALUES = 30
+  MAX_CONTEXTS = 5000
 
   class << self
     attr_accessor :stub_constants
@@ -252,6 +266,8 @@ class PluginProbe
     plugin.columns.keys.each_with_object({}) do |name, defaults|
       constant = "DEFAULT_#{name.upcase}"
       next unless klass.const_defined?(constant)
+      # a value computed at load time (date, random, environment) is not a default: source text is used instead
+      next if plugin.constants[constant].to_s.match?(/Time|Date|rand|Random|ENV|Process/)
       value = klass.const_get(constant)
       value = value.to_s if value.is_a?(Symbol)
       next unless [String, Integer, Float, TrueClass, FalseClass].any? { |type| value.is_a?(type) }
@@ -358,7 +374,7 @@ class PluginProbe
         collector = CallCollector.new
         Prism.parse(code).value.accept(collector)
         collector.calls.each do |call|
-          attr, entry = form_call(call, model, plugin, klass)
+          attr, entry = form_call(call, model, plugin)
           if attr == :label
             labels << entry
           elsif attr
@@ -389,7 +405,7 @@ class PluginProbe
   end
 
   # @return [Array] [attribute, info] for a field, [:label, text] for a label not bound to a field, or nil
-  def form_call(call, model, plugin, klass)
+  def form_call(call, model, plugin)
     args = call.arguments&.arguments || []
     receiver_local = call.receiver.is_a?(Prism::LocalVariableReadNode) || call.receiver.is_a?(Prism::CallNode) && call.receiver.receiver.nil? && call.receiver.arguments.nil?
     case call.name
@@ -499,7 +515,10 @@ class PluginProbe
     hash.to_h { |name, type| [name.to_s, type.to_s] }
   end
 
-  def filled_value(col, form_info)
+  # Text set in an attribute to find names and types given by its value
+  def marker(attr) = "#{MARKER_PREFIX}#{attr}"
+
+  def filled_value(name, col, form_info)
     values = form_info&.dig('values')
     return values.first if values&.any?
     case col[:type]
@@ -507,53 +526,76 @@ class PluginProbe
     when 'integer', 'bigint' then 1
     when 'float', 'decimal' then 1.0
     when 'datetime' then Time.at(0)
-    else 'x'
+    else marker(name)
     end
   end
 
-  # Template settings to test: the default template, and one attribute changed among its allowed values
-  def contexts(plugin, form, baseline)
-    list = [[nil, nil, baseline]]
-    plugin.columns.each do |name, col|
-      values = form.dig(name, 'values') || (col[:type] == 'boolean' ? [true, false] : nil)
-      next if values.nil?
-      values.each do |value|
-        next if value == baseline[name]
-        list << [name, value, baseline.merge(name => value)]
-      end
+  # Values tested for each attribute, besides its default: allowed values, booleans, remote node or run time,
+  # else a value for an attribute not set by default
+  # @return [Hash] attribute => [values, choice?]
+  def variations(plugin, form, baseline)
+    plugin.columns.except('name', 'comments').each_with_object({}) do |(name, col), result|
+      info = form[name] || {}
+      values =
+        if info['widget'] == 'remote_node' then [info['run_time_value'], 'probe_remote_node'].compact
+        elsif info['values'] then info['values']
+        elsif col[:type] == 'boolean' then [true, false]
+        end
+      choice = !values.nil?
+      values ||= [filled_value(name, col, info)] if baseline[name].nil?
+      values = values&.reject { |value| value == baseline[name] }
+      result[name] = [values, choice] unless values.nil? || values.empty?
     end
-    list
+  end
+
+  # Template settings to test: the default template, with one or two attributes changed
+  # Pairs of attributes with allowed values come first, as the number of templates is limited
+  def contexts(variations, baseline)
+    list = [{}]
+    variations.each { |attr, (values, _)| values.each { |value| list << {attr => value} } }
+    pairs = variations.select { |_, (values, _)| values.size <= MAX_PAIR_VALUES }.keys.combination(2).sort_by do |pair|
+      -pair.count { |attr| variations[attr][1] }
+    end
+    pairs.each do |attr1, attr2|
+      variations[attr1][0].product(variations[attr2][0]).each { |value1, value2| list << {attr1 => value1, attr2 => value2} }
+      break if list.size > MAX_CONTEXTS
+    end
+    list.map { |changed| {changed: changed, attributes: baseline.merge(changed)} }
   end
 
   def probe_specs(plugin, klass, form, errors)
     baseline = plugin.columns.to_h { |name, col| [name, typed(col[:default], col[:type])] }
+    variations = variations(plugin, form, baseline)
     call_errors = []
-    contexts = contexts(plugin, form, baseline).filter_map do |attr, value, attributes|
-      spec = call_specs(klass, attributes, call_errors)
-      spec && {attr: attr, value: value, attributes: attributes, spec: spec}
+    contexts = contexts(variations, baseline).filter_map do |ctx|
+      ctx[:spec] = call_specs(klass, ctx[:attributes], call_errors)
+      ctx[:named] = {inputs: {}, outputs: {}}
+      ctx if ctx[:spec]
     end
     errors.concat(call_errors.uniq.first(3))
     return {} if contexts.empty?
+    contexts.each { |ctx| ctx[:derived] = derived_names(klass, ctx) }
+    singles = contexts.select { |ctx| ctx[:changed].size <= 1 }
+    text_columns = plugin.columns.select { |_, col| %w[string text mediumtext].include?(col[:type]) }.keys
     # name of the input given by an attribute left blank (ActionTools#implied_field_spec)
     implied = plugin.columns.keys.to_h { |name| [name, implied_input(klass, baseline, name)] }.compact
-    text_columns = plugin.columns.select { |_, col| %w[string text mediumtext].include?(col[:type]) }.keys
+    if_blank = {}
     placeholders = []
+    implied.each do |name, input|
+      # a template where the attribute is processed: its input is present while the attribute is blank
+      ctx = contexts.find { |c| c[:attributes][name].nil? && inputs_of(c[:spec]).key?(input) }
+      next if ctx.nil?
+      filled = call_specs(klass, ctx[:attributes].merge(name => filled_value(name, plugin.columns[name], form[name])), [])
+      if_blank[input] = name if filled && !inputs_of(filled).key?(input)
+      placeholders << name if text_columns.include?(name) && placeholder?(klass, ctx[:attributes], name)
+    end
     declares = {}
-    contexts.each do |ctx|
-      ctx[:if_blank] = {}
-      ctx[:named] = {inputs: {}, outputs: {}}
-      present = ctx[:spec][:required].merge(ctx[:spec][:optional])
-      # input that disappears when its attribute is set
-      implied.each do |name, input|
-        next unless present.key?(input) && ctx[:attributes][name].nil?
-        filled = call_specs(klass, ctx[:attributes].merge(name => filled_value(plugin.columns[name], form[name])), [])
-        ctx[:if_blank][input] = name if filled && !filled[:required].key?(input) && !filled[:optional].key?(input)
-      end
+    singles.each do |ctx|
       # input or output whose name or type is the value of an attribute
-      markers = text_columns.to_h { |name| ["probe_value_of_#{name}", "<#{name}>"] }
+      markers = text_columns.to_h { |name| [marker(name), "<#{name}>"] }
       filled = call_specs(klass, ctx[:attributes].merge(markers.to_h { |marker, attr| [attr[1..-2], marker] }), [])
       if filled
-        {inputs: filled[:required].merge(filled[:optional]), outputs: filled[:outputs]}.each do |kind, found|
+        {inputs: inputs_of(filled), outputs: filled[:outputs]}.each do |kind, found|
           found.each do |name, type|
             next unless markers.key?(name)
             ctx[:named][kind][markers[name]] = markers.fetch(type, type)
@@ -567,27 +609,33 @@ class PluginProbe
           ["{'#{PLACEHOLDER_VAR}'=>'int'}", "['#{PLACEHOLDER_VAR}']"].each do |value|
             found = call_specs(klass, ctx[:attributes].merge(name => value), [])
             next if found.nil?
-            kinds = []
-            kinds << 'required_inputs' if found[:required].key?(PLACEHOLDER_VAR)
-            kinds << 'optional_inputs' if found[:optional].key?(PLACEHOLDER_VAR)
-            kinds << 'outputs' if found[:outputs].key?(PLACEHOLDER_VAR)
-            next if kinds.empty?
-            declares[name] = kinds.first
+            kind = if found[:required].key?(PLACEHOLDER_VAR) then 'required_inputs'
+                   elsif found[:optional].key?(PLACEHOLDER_VAR) then 'optional_inputs'
+                   elsif found[:outputs].key?(PLACEHOLDER_VAR) then 'outputs'
+                   end
+            next if kind.nil?
+            declares[name] = kind
             break
           end
         end
-        # attribute whose `<%= variable %>` placeholders become inputs
-        next if placeholders.include?(name)
-        filled = call_specs(klass, ctx[:attributes].merge(name => "<%= #{PLACEHOLDER_VAR} %>"), [])
-        placeholders << name if filled && (filled[:required].key?(PLACEHOLDER_VAR) || filled[:optional].key?(PLACEHOLDER_VAR))
+        next if placeholders.include?(name) || implied.key?(name) && if_blank.value?(name)
+        placeholders << name if placeholder?(klass, ctx[:attributes], name)
       end
     end
+    tested = variations.to_h { |attr, (values, _)| [attr, [baseline[attr]] + values] }
+    choices = variations.select { |_, (_, choice)| choice }.keys
     {
-      'inputs' => aggregate(contexts, form, baseline, :inputs),
-      'outputs' => aggregate(contexts, form, baseline, :outputs),
+      'inputs' => aggregate(contexts, singles, tested, choices, if_blank, :inputs),
+      'outputs' => aggregate(contexts, singles, tested, choices, if_blank, :outputs),
       'placeholders' => placeholders,
       'declares' => declares
     }
+  end
+
+  # true if `<%= variable %>` in the attribute creates an input `variable`
+  def placeholder?(klass, attributes, name)
+    filled = call_specs(klass, attributes.merge(name => "<%= #{PLACEHOLDER_VAR} %>"), [])
+    !filled.nil? && inputs_of(filled).key?(PLACEHOLDER_VAR)
   end
 
   def implied_input(klass, attributes, name)
@@ -596,46 +644,131 @@ class PluginProbe
     nil
   end
 
+  def inputs_of(spec) = spec[:required].merge(spec[:optional])
+
   # Merge results of all contexts: type, required, condition on template settings
-  def aggregate(contexts, form, baseline, kind)
+  # A value of an attribute is excluded when the item is present in a template, and absent in the same template with only this attribute changed to the value.
+  def aggregate(contexts, singles, tested, choices, if_blank, kind)
     names = contexts.flat_map { |ctx| items(ctx, kind).keys }.uniq
-    tested = contexts.group_by { |ctx| ctx[:attr] }.except(nil).transform_values { |list| [baseline[list.first[:attr]]] + list.map { |ctx| ctx[:value] } }
+    indexes = {contexts: contexts.to_h { |ctx| [ctx[:changed], ctx] }, singles: singles.to_h { |ctx| [ctx[:changed], ctx] }}
     names.to_h do |name|
-      present = contexts.select { |ctx| items(ctx, kind).key?(name) }
+      # names given by attribute values are tested with one attribute changed only
+      pool = name.start_with?('<') ? singles : contexts
+      index = indexes[name.start_with?('<') ? :singles : :contexts]
+      present = pool.select { |ctx| items(ctx, kind).key?(name) }
       info = {'types' => present.map { |ctx| items(ctx, kind)[name] }.uniq.reject(&:empty?)}
       if kind == :inputs
-        flags = present.map { |ctx| ctx[:spec][:required].key?(name) || ctx[:required_named].to_a.include?(name) }.uniq
-        info['required'] = flags.size == 1 ? flags.first : 'depends'
-        blank = present.filter_map { |ctx| ctx[:if_blank][name] }.uniq
-        info['if_blank'] = blank.first if blank.size == 1
-      end
-      unless present.size == contexts.size
-        condition = {}
-        tested.each do |attr, values|
-          ok = values.select { |value| present.any? { |ctx| ctx[:attributes][attr] == value && (ctx[:attr] == attr || ctx[:attr].nil?) } }
-          next if ok.empty? || ok.size == values.size
-          # nil is the value of an attribute not set: present only then means "if blank"
-          if ok == [nil]
-            info['if_blank'] ||= attr if kind == :inputs
-            info['when_blank'] = attr if kind == :outputs
-            next
+        required = ->(ctx) { ctx[:spec][:required].key?(name) || ctx[:required_named].to_a.include?(name) }
+        flags = present.map(&required).uniq
+        info['required'] =
+          if flags.size == 1 then flags.first
+          else
+            # templates where the input does not exist tell nothing on whether it is required
+            condition = describe(present, index, tested, choices, domain: ->(ctx) { items(ctx, kind).key?(name) }, &required)
+            condition['other_conditions'] ? 'depends' : condition
           end
-          set_values = values.compact
-          ok = ok.compact
-          next if ok.size == set_values.size
-          condition[attr] = ok.size <= set_values.size - ok.size ? {'in' => ok} : {'not_in' => set_values - ok}
+      end
+      # attributes that must all be blank, or all set
+      lists = {'if_blank' => [if_blank[name]].compact, 'if_set' => []}
+      if present.size != pool.size
+        condition = describe(present, index, tested, choices) { |ctx| items(ctx, kind).key?(name) }
+        lists.each_key { |key| lists[key] |= condition[key] if condition[key] }
+        # a name given by an attribute exists only when the attribute is set
+        lists['if_set'] -= [name[1..-2]] if name.start_with?('<')
+        # a condition on values of an attribute tells when it may be blank
+        lists['if_blank'] -= condition['when'].keys if condition['when']
+        info['when'] = condition['when'] if condition['when']
+        info['other_conditions'] = true if condition['other_conditions']
+      end
+      lists.each { |key, list| info[key] = list.size == 1 ? list.first : list unless list.empty? }
+      if info['required'].is_a?(Hash)
+        # conditions of existence are not repeated
+        lists.each do |key, list|
+          next unless info['required'][key]
+          remaining = info['required'][key] - list
+          if remaining.empty?
+            info['required'].delete(key)
+          else
+            info['required'][key] = remaining.size == 1 ? remaining.first : remaining
+          end
         end
-        info['when'] = condition unless condition.empty?
+        info['required'] = true if info['required'].empty?
       end
       [name, info]
     end
   end
 
-  def items(ctx, kind)
-    found = kind == :inputs ? ctx[:spec][:required].merge(ctx[:spec][:optional]) : ctx[:spec][:outputs]
-    # a name given by an attribute left blank is empty
-    found.except('').merge(ctx[:named][kind])
+  # Condition on template attributes for which the predicate is true, from contexts where it is true
+  # @param choices [Array] attributes with allowed values (always set)
+  # @return [Hash] 'when' => {attribute => {'in' => values} | {'not_in' => values}}, 'if_blank' => [attributes], 'if_set' => [attributes], or 'other_conditions' => true
+  def describe(matching, index, tested, choices, domain: nil, &predicate)
+    matching = matching.select(&predicate)
+    result = {}
+    condition = {}
+    explained = false
+    tested.each do |attr, values|
+      allowed = []
+      excluded = []
+      matching.each do |ctx|
+        allowed << ctx[:attributes][attr]
+        others = ctx[:changed].except(attr)
+        values.each do |value|
+          # the same template with only this attribute changed
+          neighbour = index[value == values.first ? others : others.merge(attr => value)]
+          next if neighbour.nil? || domain && !domain.call(neighbour)
+          (predicate.call(neighbour) ? allowed : excluded) << value
+        end
+      end
+      excluded = excluded.uniq - allowed
+      next if excluded.empty?
+      explained = true
+      ok = values - excluded
+      # nil is the value of an attribute not set: true only then means "if blank"
+      if ok == [nil]
+        (result['if_blank'] ||= []) << attr
+        next
+      end
+      set_values = values.compact
+      blank_ok = ok.include?(nil) && allowed.include?(nil)
+      ok = ok.compact
+      if ok.size == set_values.size
+        # false only when the attribute is not set: a condition for an attribute without allowed values
+        (result['if_set'] ||= []) << attr unless choices.include?(attr)
+        next
+      end
+      # nil in list `in`: also when the attribute is blank; `not_in`: set to another value
+      condition[attr] =
+        if blank_ok then {'in' => [nil] + ok}
+        elsif ok.size <= set_values.size - ok.size then {'in' => ok}
+        else {'not_in' => set_values - ok}
+        end
+    end
+    result['when'] = condition unless condition.empty?
+    result['other_conditions'] = true unless explained
+    result
   end
+
+  def items(ctx, kind)
+    found = kind == :inputs ? inputs_of(ctx[:spec]) : ctx[:spec][:outputs]
+    # a name given by an attribute is empty when the attribute is blank, and the marker when it is filled
+    found.except('').to_h { |name, type| [ctx.dig(:derived, kind, name) || unmark(name), unmark(type)] }.merge(ctx[:named][kind])
+  end
+
+  # Names that change with the value of a filled attribute are given by this value: name => <attribute>
+  def derived_names(klass, ctx)
+    derived = {inputs: {}, outputs: {}}
+    ctx[:changed].each do |attr, value|
+      next unless value.is_a?(String) && value.start_with?(MARKER_PREFIX)
+      other = call_specs(klass, ctx[:attributes].merge(attr => value.sub(MARKER_PREFIX, OTHER_MARKER_PREFIX)), [])
+      next if other.nil?
+      {inputs: [inputs_of(ctx[:spec]), inputs_of(other)], outputs: [ctx[:spec][:outputs], other[:outputs]]}.each do |kind, (found, other_found)|
+        (found.keys - other_found.keys).each { |name| derived[kind][name] = "<#{attr}>" unless name.start_with?(MARKER_PREFIX) }
+      end
+    end
+    derived
+  end
+
+  def unmark(text) = text.start_with?(MARKER_PREFIX) ? "<#{text.delete_prefix(MARKER_PREFIX)}>" : text
 end
 
 if $PROGRAM_NAME == __FILE__

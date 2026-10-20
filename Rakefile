@@ -48,6 +48,14 @@ PATH_HTML_DOC = PATH_BUILD_OUT / 'doc.html'
 PATH_HTML_SUMMARY = PATH_BUILD_OUT / 'summary.html'
 HTML_BANNER_PATH = PATH_BUILD_OUT / 'banner.html'
 PATH_PLUGIN_DATA = PATH_BUILD_OUT / 'plugin_data.marshal'
+PATH_PROBE_JSON = PATH_BUILD_OUT / 'plugin_probe.json'
+PATH_PLUGINS_YML = PATH_DOCS / 'plugins.yml'
+
+# Orchestrator files needed to evaluate plugin code, moved to PATH_BUILD_LIB (see PluginProbe::CORE_FILES)
+PROBE_CORE_FILES = %w[
+  lib/action.rb lib/multi_type.rb lib/payload.rb
+  app/models/abstract.rb app/models/module_trigger_tools.rb app/models/module_ssh_tools.rb app/models/module_soap_tools.rb
+].freeze
 
 desc 'Build all documentation (HTML + PDF)'
 task default: :pdf
@@ -160,6 +168,14 @@ file PATH_BUILD_ACTIONS do
   raise "Not found: #{PATH_BUILD_ACTIONS}, do first: RPM=/path/to/rpm rake extract_rpm"
 end
 
+# Evaluate plugin code: in its own process, as it loads plugin code and changes core classes
+file PATH_PROBE_JSON => [PATH_BUILD_ACTIONS, TOP / 'lib/plugin_probe.rb', TOP / 'lib/action_template_reference.rb'] do
+  require 'open3'
+  json, status = Open3.capture2(RbConfig.ruby, (TOP / 'lib/plugin_probe.rb').to_s, PATH_BUILD_ACTIONS.to_s, PATH_BUILD_LIB.to_s)
+  raise "Plugin probe failed: #{status}" unless status.success?
+  File.write(PATH_PROBE_JSON, json)
+end
+
 desc 'Extract RPM package'
 task :extract_rpm do
   rpm = ENV['RPM']
@@ -187,6 +203,7 @@ task :extract_rpm do
   PATH_BUILD_LIB.mkpath
   FileUtils.mv(path_orchestrator / 'lib/action_tools.rb', PATH_BUILD_LIB)
   FileUtils.mv(path_orchestrator / 'app/helpers/actions_helper.rb', PATH_BUILD_LIB)
+  PROBE_CORE_FILES.each { |file| FileUtils.mv(path_orchestrator / file, PATH_BUILD_LIB) }
 
   # FileUtils.rm_rf(PATH_RPM_OUT)
 end
@@ -214,6 +231,13 @@ namespace :doc do
     require_relative 'lib/action_template_reference'
     actions_dir = ENV['ACTIONS_DIR'] || PATH_BUILD_ACTIONS.to_s
     File.write(PATH_DOCS / 'action-template-reference.md', ActionTemplateReference.new(actions_dir).markdown(BUILD_VERSION))
+  end
+
+  desc 'Generate plugin specifications (YAML): template attributes, inputs and outputs, found by evaluating plugin code'
+  task plugin_specs: PATH_PROBE_JSON do
+    require_relative 'lib/action_template_reference'
+    probe = JSON.parse(File.read(PATH_PROBE_JSON))
+    File.write(PATH_PLUGINS_YML, ActionTemplateReference.new(PATH_BUILD_ACTIONS.to_s, probe).yaml(BUILD_VERSION))
   end
 end
 

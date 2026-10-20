@@ -70,12 +70,20 @@ class ActionTemplateReference
     #   inputs, outputs:
     #     <name>:             a name in angle brackets is the value of that template attribute
     #       type:             value type: string, int, float, flag, date, array, hash, object, pwd, attachment
-    #       required:         inputs: the input must be mapped (false: optional)
-    #       if_blank:         exists only when this template attribute is blank (inputs: it replaces the attribute)
-    #       when:             exists only for some values of a template attribute: {<attribute>: {in: [...]}} or {not_in: [...]}
+    #       required:         inputs: true: the input must be mapped, false: optional,
+    #                         {if_blank: ...}, {if_set: ...} or {when: ...}: required only then, depends: on other template settings
+    #       if_blank:         exists only when this template attribute is blank (inputs: it replaces the attribute),
+    #                         or when all attributes of the list are blank
+    #       if_set:           exists only when this template attribute (or all of the list) is not blank
+    #       when:             exists only for some values of template attributes (all must match):
+    #                         {<attribute>: {in: [...]}} (null: attribute blank) or {<attribute>: {not_in: [...]}} (set to another value)
+    #       conditional:      true: exists only for some template settings, not described by `when`
+    #                         if_blank, if_set and when of an input or output must all match
     #   notes:                limits of the information above
     #
-    # Inputs and outputs were found by calling the plugin with each attribute changed in turn from the default template.
+    # Inputs and outputs were found by calling methods inputs_spec and outputs_spec of the plugin on templates
+    # where one or two attributes are changed from the default template: to allowed values, true or false,
+    # or to a value for an attribute not set by default.
   HEADER
 
   def yaml(version)
@@ -155,7 +163,7 @@ class ActionTemplateReference
       # input that replaces a blank attribute, found in source text
       plugin.columns.each { |name, col| inputs[col[:input]]['if_blank'] = name if col[:input] && inputs[col[:input]] }
     end
-    blank_inputs = inputs.filter_map { |_, info| info['if_blank'] }
+    blank_inputs = inputs.flat_map { |_, info| Array(info['if_blank']) }
     spec['attributes'] = plugin.columns.except(*COMMON_COLUMNS).to_h do |name, col|
       info = form[name] || {}
       attribute = {'type' => col[:type]}
@@ -204,8 +212,10 @@ class ActionTemplateReference
       entry = {}
       entry['type'] = types.size == 1 ? types.first : types unless types.empty?
       entry['required'] = info['required'] if inputs && !info['required'].nil?
-      entry['if_blank'] = info['if_blank'] || info['when_blank'] if info['if_blank'] || info['when_blank']
+      entry['if_blank'] = info['if_blank'] if info['if_blank']
+      entry['if_set'] = info['if_set'] if info['if_set']
       entry['when'] = info['when'] if info['when']
+      entry['conditional'] = true if info['other_conditions']
       [name, entry]
     end
   end
@@ -227,8 +237,13 @@ class ActionTemplateReference
     when Psych::Nodes::Sequence then node.style = Psych::Nodes::Sequence::FLOW
     when Psych::Nodes::Mapping then node.style = Psych::Nodes::Mapping::FLOW
     when Psych::Nodes::Scalar
-      # a string that cannot be plain in flow style (for example with a comma) is quoted, without tag `!`
-      node.quoted = true
+      if node.value.empty? && node.plain && !node.quoted
+        # nil: explicit in flow style
+        node.value = 'null'
+      else
+        # a string that cannot be plain in flow style (for example with a comma) is quoted, without tag `!`
+        node.quoted = true
+      end
       return
     else return
     end
@@ -326,9 +341,9 @@ class ActionTemplateReference
 
   private
 
-  # Constants defined at class level: NAME = value
+  # Constants defined at class level: NAME = value (a comment starts with ` #`, not `#{`)
   def parse_constants(source)
-    source.scan(/^\s{2}([A-Z][A-Z0-9_]*)\s*=\s*(.+?)\s*(?:#.*)?$/).to_h
+    source.scan(/^\s{2}([A-Z][A-Z0-9_]*)\s*=\s*(.+?)\s*(?:\s#(?!\{).*)?$/).to_h
   end
 
   def unquote(value)

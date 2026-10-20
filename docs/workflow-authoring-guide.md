@@ -21,6 +21,9 @@ The examples in [Recipes](#recipes) were imported, published and executed on Orc
 Related documents:
 
 - [Action Template Reference](action-template-reference.md): attributes, inputs and outputs of every action plugin (generated from the plugin source).
+- [Plugin specifications](plugins.yml): the same as data (YAML), with the allowed values of attributes and the template settings each input and output depends on.
+  Its header describes its fields.
+  Read one plugin with [`yq`](https://github.com/mikefarah/yq): `yq '.AmazonS3Operation' plugins.yml`.
 - [Plugin Manual](Orchestrator_Plugin_Manual.md): functional description of each action plugin.
 - [Plugin Development Guide](plugin-development-guide.md): how to write an action plugin.
 

@@ -2,7 +2,7 @@
 
 This repository generates the plugin (action) documentation for IBM Aspera Orchestrator, and holds the guides for plugin developers and workflow authors.
 
-The plugin documentation is generated from the Orchestrator RPM: the `actions` folder and two library files are extracted from it, then the metadata, source and help page of each plugin are rendered to HTML, Markdown and PDF.
+The plugin documentation is generated from the Orchestrator RPM: the `actions` folder and some library files are extracted from it, then the metadata, source and help page of each plugin are rendered to HTML, Markdown and PDF.
 
 ## Documents
 
@@ -14,6 +14,7 @@ Generated documents and guides are in folder `docs`:
 | [`Orchestrator_Plugin_List.pdf`](docs/Orchestrator_Plugin_List.pdf)                            | Table of plugins: icon, name, version, description            | `pdf_list`                    |
 | [`Orchestrator_Plugin_Banner.pdf`](docs/Orchestrator_Plugin_Banner.pdf)                        | Icons and names of plugins, by category (landscape)           | `pdf_banner`                  |
 | [`action-template-reference.md`](docs/action-template-reference.md)                            | Template attributes, inputs and outputs of each action plugin | `doc:template_reference`      |
+| [`plugins.yml`](docs/plugins.yml)                                                              | Same, as data, with allowed values and conditions             | `doc:plugin_specs`            |
 | [`plugin-development-guide.md`](docs/plugin-development-guide.md) and `.pdf`                   | How to develop a plugin                                       | `doc:guide` (PDF only)        |
 | [`workflow-authoring-guide.md`](docs/workflow-authoring-guide.md) and `.pdf`                   | How to write workflows                                        | `doc:authoring` (PDF only)    |
 
@@ -74,9 +75,15 @@ Other documents:
 
 ```bash
 rake doc:template_reference
+rake doc:plugin_specs
 rake doc:guide
 rake doc:authoring
 ```
+
+`doc:plugin_specs` generates `plugins.yml`, for tools and AI assistants: for each plugin, the template attributes (label, allowed values, defaults) and the inputs and outputs, with the template settings they depend on.
+It reads the edit form of each plugin, and calls methods `inputs_spec` and `outputs_spec` of the plugin on templates with different settings (`lib/plugin_probe.rb`, run in its own process: about 2 minutes).
+It needs the library files extracted by `extract_rpm`: re-run `extract_rpm` if `build/<VERSION>/src/lib` contains only `action_tools.rb` and `actions_helper.rb`.
+Its intermediate result is `build/<VERSION>/out/plugin_probe.json`, generated again when the `actions` folder or the generator changes.
 
 `doc:template_reference` reads the extracted `actions` folder, or the folder given in env var `ACTIONS_DIR` (for example an Orchestrator source tree).
 `VERSION` must match that folder: it is the version shown in the title.
