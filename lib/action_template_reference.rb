@@ -63,8 +63,9 @@ class ActionTemplateReference
     #       code_default:     value used by the plugin when the attribute is blank
     #       hint:             placeholder text in the template editor
     #       format:           language of the value (code editor)
-    #       placeholders:     true: each <%%= variable %%> in the value creates a required input `variable`;
-    #                         also true for every text attribute named by the if_blank of an input
+    #       placeholders:     true: placeholders in the value create inputs: <%%= variable %%>, <%%= function(variable, ...) %%>,
+    #                         or var(variable) in an expression, create input `variable` (see Placeholders in workflow-authoring-guide.md);
+    #                         not set: placeholders are not scanned, even if the attribute gives an input when blank
     #       declares:         the value declares inputs or outputs of the step (required_inputs, optional_inputs, outputs),
     #                         as {'name'=>'type'} (type_map) or ['name'] (list)
     #   inputs, outputs:
@@ -77,8 +78,9 @@ class ActionTemplateReference
     #       if_set:           exists only when this template attribute (or all of the list) is not blank
     #       when:             exists only for some values of template attributes (all must match):
     #                         {<attribute>: {in: [...]}} (null: attribute blank) or {<attribute>: {not_in: [...]}} (set to another value)
-    #       conditional:      true: exists only for some template settings, not described by `when`
-    #                         if_blank, if_set and when of an input or output must all match
+    #       conditional:      true: other template settings also decide whether it exists: the conditions given are not complete
+    #                         (for example: exists when an attribute is blank, or when another one is set)
+    #                         otherwise, if_blank, if_set and when of an input or output must all match
     #   notes:                limits of the information above
     #
     # Inputs and outputs were found by calling methods inputs_spec and outputs_spec of the plugin on templates
@@ -163,7 +165,6 @@ class ActionTemplateReference
       # input that replaces a blank attribute, found in source text
       plugin.columns.each { |name, col| inputs[col[:input]]['if_blank'] = name if col[:input] && inputs[col[:input]] }
     end
-    blank_inputs = inputs.flat_map { |_, info| Array(info['if_blank']) }
     spec['attributes'] = plugin.columns.except(*COMMON_COLUMNS).to_h do |name, col|
       info = form[name] || {}
       attribute = {'type' => col[:type]}
@@ -178,8 +179,8 @@ class ActionTemplateReference
         code_default = probe['code_defaults']&.key?(name) ? probe['code_defaults'][name] : col[:code_default] && typed_default(col[:code_default], col[:type])
         attribute['code_default'] = code_default unless code_default.nil? || code_default == ''
       end
-      # a text attribute that gives an input when blank always accepts placeholders
-      attribute['placeholders'] = true if probe['placeholders']&.include?(name) && !blank_inputs.include?(name)
+      # a text attribute that gives an input when blank does not always accept placeholders: only the probe tells
+      attribute['placeholders'] = true if probe['placeholders']&.include?(name)
       attribute['declares'] = probe['declares'][name] if probe['declares']&.key?(name)
       [name, attribute]
     end

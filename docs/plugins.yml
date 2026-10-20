@@ -30,8 +30,9 @@
 #       if_set:           exists only when this template attribute (or all of the list) is not blank
 #       when:             exists only for some values of template attributes (all must match):
 #                         {<attribute>: {in: [...]}} (null: attribute blank) or {<attribute>: {not_in: [...]}} (set to another value)
-#       conditional:      true: exists only for some template settings, not described by `when`
-#                         if_blank, if_set and when of an input or output must all match
+#       conditional:      true: other template settings also decide whether it exists: the conditions given are not complete
+#                         (for example: exists when an attribute is blank, or when another one is set)
+#                         otherwise, if_blank, if_set and when of an input or output must all match
 #   notes:                limits of the information above
 #
 # Inputs and outputs were found by calling methods inputs_spec and outputs_spec of the plugin on templates

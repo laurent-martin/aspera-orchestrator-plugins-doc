@@ -488,6 +488,56 @@ Plugins that let the template declare its inputs and outputs explicitly (for exa
 
 Before calling the action, Orchestrator adds these inputs: `OUTPUTS` (names and types of the outputs), `WORKORDER_ID` (the work step id), `ATTEMPT`, `RUNNING_AS`.
 
+### Plugin specifications
+
+The file [plugins.yml](plugins.yml) gives, for each plugin, its template attributes and the inputs and outputs of its steps, with the template settings they depend on.
+They were found by calling methods `inputs_spec` and `outputs_spec` of the plugin on templates with one or two attributes changed.
+Read one plugin with `ascli orchestrator plugins spec <PluginClass>`, or with `yq '.<PluginClass>' plugins.yml`.
+
+Each plugin is a key, its class name: the `Step_type` of a step, and the class of its template (key `<PluginClass>__<N>`).
+
+```yaml
+AmazonS3Operation:
+  attributes:
+    operation: {type: string, label: File Operation, widget: select, values: [upload, delete, list, ...]}
+    aws_key: {type: string, hint: Enter AWS access key ID}
+  inputs:
+    Aws_key: {type: string, required: true, if_blank: aws_key}
+    Local_file_path: {type: string, required: true, if_blank: local_file_path, when: {operation: {in: [upload, download]}}}
+  outputs:
+    ETag: {type: string, when: {operation: {in: [upload, copy object]}}}
+```
+
+Attributes (besides `name` and `comments`, common to all templates):
+
+| Field | Content |
+|-------|---------|
+| `type` | Database column type. In plain format, write a boolean as `1` or `0`. |
+| `label` | Label in the template editor, when it is not the attribute name (`aws_key`: `Aws key`). |
+| `widget` | When not text or boolean: `select`, `multiline_text`, `password`, `number`, `remote_node` (name of a remote node), `type_map` (`{'name'=>'type'}`), `list`, `hash`, `file`, `action_template` (name of a template). |
+| `values` | Allowed values. |
+| `dynamic_values` | `true`: allowed values come from the server or an external system. |
+| `run_time_value` | For a `remote_node`: value that makes the node an input of the step. |
+| `default` | Database default. |
+| `code_default` | Value used by the plugin when the attribute is blank. |
+| `hint` | Placeholder text in the template editor. |
+| `format` | Language of the value (code editor). |
+| `placeholders` | `true`: each `<%= variable %>` in the value creates a required input `variable`. Also true for every text attribute named by the `if_blank` of an input. |
+| `declares` | The value declares inputs or outputs of the step (`required_inputs`, `optional_inputs`, `outputs`), as a type map or a list. |
+
+Inputs and outputs (a name in angle brackets is the value of that template attribute):
+
+| Field | Content |
+|-------|---------|
+| `type` | [Value type](#value-types). |
+| `required` | Inputs: `true`, `false`, or the condition for which the input is required (`{if_blank: ...}`, `{if_set: ...}`, `{when: ...}`). |
+| `if_blank` | Exists only when this attribute is blank (for an input: it replaces the attribute), or when all attributes of the list are blank. |
+| `if_set` | Exists only when this attribute (or all of the list) is not blank. |
+| `when` | Exists only for some values of attributes: `{<attribute>: {in: [...]}}` (`null`: attribute blank) or `{<attribute>: {not_in: [...]}}` (set to another value). |
+| `conditional` | `true`: other template settings also decide whether it exists, the conditions given are not complete. |
+
+`if_blank`, `if_set` and `when` must all match, unless `conditional` is `true`.
+
 ## Execution
 
 ### Statuses
