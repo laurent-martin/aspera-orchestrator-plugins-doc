@@ -3,20 +3,24 @@
 
 require 'rake/clean'
 require 'pathname'
+
+ENV_VAR_ASPERA_CLI = 'ASPERA_CLI_HOME'
+ENV_VAR_DOC_TOOL   = 'GFM2PDF_HOME'
+
+# aspera-cli library (aspera/log, ...)
+raise "Missing environment variable #{ENV_VAR_ASPERA_CLI}" unless ENV[ENV_VAR_ASPERA_CLI]
+
+$LOAD_PATH.unshift(Pathname.new(ENV[ENV_VAR_ASPERA_CLI]) / 'lib')
+
 require_relative 'lib/aspera_orchestrator_doc_generator'
 
-ENV_VAR_PANDOC = 'DIR_PANDOC'
+# gfm2pdf-toolchain library (pandoc/PDF generation)
+raise "Missing environment variable #{ENV_VAR_DOC_TOOL}" unless ENV[ENV_VAR_DOC_TOOL]
 
-# Use the build system of aspera-cli
-# DIR_PANDOC is <aspera-cli>/build/doc/pandoc
-raise "Missing environment variable #{ENV_VAR_PANDOC}" unless ENV[ENV_VAR_PANDOC]
-
-aspera_cli_build_lib = Pathname.new(ENV[ENV_VAR_PANDOC]).parent.parent.parent / 'build' / 'lib'
-$LOAD_PATH.unshift(aspera_cli_build_lib)
+$LOAD_PATH.unshift(Pathname.new(ENV[ENV_VAR_DOC_TOOL]) / 'lib')
 
 require 'pandoc'
-require 'build_tools'
-include BuildTools
+include Gfm2Pdf
 
 raise 'Set env var VERSION' unless ENV.key?('VERSION')
 
@@ -166,11 +170,15 @@ task :extract_rpm do
   PATH_BUILD_MAIN.mkpath
   PATH_BUILD_SRC.rmtree
   PATH_BUILD_SRC.mkpath
+  # Clean rpmout fully so no stale symlinks block extraction
+  PATH_RPM_OUT.rmtree
+  PATH_RPM_OUT.mkpath
 
-  # sh %(rpm2cpio #{rpm} | (cd #{PATH_RPM_OUT} && cpio -idv "*/actions/*" "*/lib/action_tools.rb" "*/app/helpers/action_helper.rb"))
-  sh %(rpm2cpio #{rpm} | (cd #{PATH_RPM_OUT} && cpio -idv))
+  # bsdtar reads RPM directly; rpmout must be empty so symlinks are created before their targets are needed
+  sh %(bsdtar -C #{PATH_RPM_OUT} -xf #{rpm})
 
-  path_orchestrator = PATH_RPM_OUT / 'opt/aspera/orchestrator'
+  # orchestrator may be a symlink (e.g. orchestrator -> orchestrator-4.x.y) — resolve to real path
+  path_orchestrator = (PATH_RPM_OUT / 'opt/aspera/orchestrator').realpath
 
   # Move actions directory
   FileUtils.mv(path_orchestrator / 'actions', PATH_BUILD_SRC)

@@ -25,7 +25,9 @@ Intermediate HTML files (`rake html`) are in `build/<VERSION>/out`.
 
 - Ruby
 - A clone of the `aspera-cli` repository, <https://github.com/IBM/aspera-cli>, with its gems installed (`bundle install` in that folder).
-  Its build library is used: logging, PDF generation from Markdown with `pandoc`.
+  Its library is used for logging (`aspera/log`).
+- A clone of the `gfm2pdf-toolchain` repository, <https://github.com/laurent-martin/gfm2pdf-toolchain>.
+  Its library is used for PDF generation from Markdown with `pandoc`.
 - Tools:
 
 | Tool          | Used for                                          |
@@ -51,10 +53,9 @@ brew install --cask wkhtmltopdf font-ibm-plex-sans font-ibm-plex-mono
 The `Rakefile` requires these environment variables for any task (including `rake -T`):
 
 ```bash
-export DIR_ASPERA_CLI=<path to aspera-cli repo>
-export DIR_PANDOC=$DIR_ASPERA_CLI/build/doc/pandoc/
-export RUBYLIB=$DIR_ASPERA_CLI/lib
-export VERSION=4.1.5
+export ASPERA_CLI_HOME=<path to aspera-cli repo>
+export GFM2PDF_HOME=<path to gfm2pdf-toolchain repo>
+export VERSION=4.1.6
 ```
 
 `VERSION` is the Orchestrator version: it selects the build folder `build/<VERSION>` and appears in document titles.

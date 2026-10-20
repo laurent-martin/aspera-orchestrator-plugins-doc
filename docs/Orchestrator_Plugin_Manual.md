@@ -1,4 +1,4 @@
-# Aspera Orchestrator v4.1.5 Plugins Manuals
+# Aspera Orchestrator v4.1.6 Plugins Manuals
 
 ## Asset Management
 
@@ -60,14 +60,134 @@ This plugin is compatible with Dalet version 4.0 or greater.
 This plugin provides ability to interact with a Evertz Mediator system.
 
 
-| Version | Comment                                             |
-|---------|-----------------------------------------------------|
-| 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
-| 0.0.4   | Fix for ruby 2.3 compatibility                      |
-| 0.0.3   | Fix submission                                      |
-| 0.0.1   | First version                                       |
+| Version | Comment |
+|-------|---------------------------------------------------|
+| 0.1.2 | Enhanced action template UI |
+| 0.1.1 | Fix mediator status, add SSL support and help page, and clean up code |
+| 0.1.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
+| 0.0.4 | Fix for ruby 2.3 compatibility |
+| 0.0.3 | Fix submission |
+| 0.0.1 | First version |
 
-No Documentation.
+#### How It Works
+
+- Connects to an Evertz Mediator web service endpoint using either a configured Mediator address or a selected Remote Node.
+- Authenticates with the provided Mediator credentials and starts a Mediator session.
+- Submits a workflow transition request to update the status of the specified placing.
+- Supports credentials saved directly in the action, supplied at runtime, or resolved from Remote Node parameters.
+- Supports SSL/TLS connections to Mediator when the Use SSL option is enabled.
+- Returns the Mediator session key as an output and logs out after the status update attempt.
+
+#### Configuration Instructions
+
+1.  Create a new action step using the **EvertzMediatorOperation** plugin.
+2.  The plugin logs in to Evertz Mediator and performs a workflow status transition for a placing.
+3.  Fill out the following fields:
+    - **Name**: The name used to identify a saved EvertzMediatorOperation configured instance.
+    - **Comments**: Some comments about this saved EvertzMediatorOperation configured instance.
+    - **Mediator Node**: Optional Remote Node used to resolve the Mediator connection address and, if configured, the credentials.
+    - **Mediator Address**: The Mediator hostname, base URL, or service URL. If only a host is provided, the plugin automatically appends /mediator/main/ws.
+    - **Operation**: The Mediator action to perform. This plugin currently supports updating workflow status.
+    - **Placing ID**: The Mediator placing identifier to update.
+    - **Mediator User**: The Mediator username used to log in. This can also come from runtime inputs or the selected Remote Node parameter mediator_user.
+    - **Mediator Password**: The Mediator password used to log in. This can also come from runtime inputs or the selected Remote Node parameter mediator_password.
+    - **Mediator Status**: The target Mediator workflow status or requirement name that should be applied to the placing.
+    - **Use SSL?**: Check this box to connect to the Mediator service using HTTPS instead of HTTP.
+
+#### Example Configuration
+
+**Example plugin configuration using a direct Mediator address.**
+
+This configuration connects directly to a Mediator server over HTTPS and updates the placing status.
+
+| Parameter         | Value                                                |
+|-------------------|------------------------------------------------------|
+| Name              | Direct Mediator Status Update                        |
+| Comments          | Sample configuration using a direct Mediator address |
+| Mediator Address  | mediator.example.com                                 |
+| Operation         | Update status                                        |
+| Placing ID        | 123456                                               |
+| Mediator User     | api_user                                             |
+| Mediator Password | password                                             |
+| Mediator Status   | Approved                                             |
+| Use SSL?          | Selected                                             |
+
+**Example plugin configuration using a Remote Node.**
+
+This configuration uses a saved Remote Node for connectivity and updates the placing status in Mediator.
+
+| Parameter       | Value                                    |
+|-----------------|------------------------------------------|
+| Name            | Node-based Mediator Status Update        |
+| Comments        | Sample configuration using a Remote Node |
+| Mediator Node   | Mediator Node A                          |
+| Operation       | Update status                            |
+| Placing ID      | ABC-10025                                |
+| Mediator Status | Ready for TX                             |
+| Use SSL?        | Selected                                 |
+
+#### Saved Parameters Description
+
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| **Name** | The name used to identify a saved EvertzMediatorOperation configured instance. |
+| **Comments** | Some comments about this saved EvertzMediatorOperation configured instance. |
+| **Mediator Node** | Optional Remote Node used to resolve the Mediator connection address and, if configured, the credentials. |
+| **Mediator Address** | The Mediator hostname, base URL, or service URL. If only a host is provided, the plugin automatically appends /mediator/main/ws. |
+| **Operation** | The Mediator action to perform. This plugin currently supports updating workflow status. |
+| **Placing ID** | The Mediator placing identifier to update. |
+| **Mediator User** | The Mediator username used to log in. This can also come from runtime inputs or the selected Remote Node parameter mediator_user. |
+| **Mediator Password** | The Mediator password used to log in. This can also come from runtime inputs or the selected Remote Node parameter mediator_password. |
+| **Mediator Status** | The target Mediator workflow status or requirement name that should be applied to the placing. |
+| **Use SSL?** | Check this box to connect to the Mediator service using HTTPS instead of HTTP. |
+
+#### Inputs Description
+
+The list of inputs depends on the configuration of the EvertzMediatorOperation action template. Some values can be saved in the action, supplied at runtime, or resolved from the selected Remote Node.
+
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| *Placing_id <span style="color: red;">\*</span>* | The Mediator placing identifier to update. |
+| *Mediator_status <span style="color: red;">\*</span>* | The target Mediator workflow status or requirement name. |
+| *Mediator_user* | Required at runtime if no saved value exists and the selected Remote Node does not provide mediator_user. |
+| *Mediator_password* | Required at runtime if no saved value exists and the selected Remote Node does not provide mediator_password. |
+| *Mediator_node* | Required at runtime if the action is configured to use the runtime node option. |
+| *Mediator_address* | Required at runtime if no Mediator Node or saved Mediator Address is configured. |
+
+#### Outputs Description
+
+| Parameter  | Description                                             |
+|------------|---------------------------------------------------------|
+| Session_ID | The session key returned by the Mediator login request. |
+
+#### Supported Actions
+
+Update status
+
+#### Dependencies
+
+Network connectivity to the Evertz Mediator web service and valid credentials with permission to perform workflow transitions.
+
+#### Operating Instructions
+
+**How to Configure an Evertz Mediator operation?**
+
+To update a placing status in Mediator, the following is required:
+
+- Provide either a Mediator Address or a Mediator Node.
+- If using a Remote Node, ensure it resolves to the correct Mediator host and any required node parameters are configured.
+- Use valid Mediator credentials with permission to perform workflow transitions.
+- Enable Use SSL when the Mediator endpoint requires HTTPS.
+
+**Connection Behavior**
+
+The plugin logs in to Mediator, performs the requested status transition, and then logs out. The returned session key is also exposed as an output.
+
+**Troubleshooting Tips**
+
+- If only a hostname is provided for Mediator Address, the plugin automatically appends /mediator/main/ws.
+- If login fails, verify the username, password, endpoint address, and SSL setting.
+- If the status change fails, verify that the placing ID exists and that the target Mediator status is valid for the workflow.
 
 
 ### ShowMgr
@@ -170,6 +290,7 @@ This plugin enables management of media assets within Sony Ci cloud platform thr
 
 | Version | Comment                                                         |
 |---------|-----------------------------------------------------------------|
+| 0.2.2   | Enhanced action template UI                                     |
 | 0.2.1   | Fix issues when storing certain string characters (Like colons) |
 | 0.2.0   | Updating to be compatible with Ruby 3.4 and Rails 8             |
 | 0.1.0   | add operations upload, get metadata, set metadata               |
@@ -607,6 +728,7 @@ This action plug-in can be used to manage a file archive, by deleting or compres
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.4.1 | Enhanced action template UI |
 | 0.4.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.3.0 | 2015-04-22 ADM - Added do not delete flag |
 | 0.2.5 | 2015-03-02 ML - New icon |
@@ -720,6 +842,7 @@ This action plug-in provides the ability to perform file system operations such 
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.2.1 | Enhanced action template UI |
 | 0.2.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.1.3 | Returns failure if rename operation is unsuccessful |
 | 0.1.2 | Support the form hostname:port in node address |
@@ -848,32 +971,35 @@ Note: All paths are relative to the transfer user’s docroot defined in `/opt/a
 
 Example excerpt from `aspera.conf`:
 
-      <user>
-        <name>xfer</name>
-        <file_system>
-          <access>
-            <paths>
-              <path>
-                <absolute>/home/xfer/data</absolute>
-              </path>
-            </paths>
-          </access>
-        </file_system>
-      </user>
+\
+  \<user\>\
+    \<name\>xfer\</name\>\
+    \<file_system\>\
+      \<access\>\
+        \<paths\>\
+          \<path\>\
+            \<absolute\>/home/xfer/data\</absolute\>\
+          \</path\>\
+        \</paths\>\
+      \</access\>\
+    \</file_system\>\
+  \</user\>\
 
 To enable both HTTP (port 9091) and HTTPS (port 9092), ensure `aspera.conf` contains:
 
-      <server>
-        <server_name>example.aspera.com</server_name>
-        <http_port>9091</http_port>
-        <https_port>9092</https_port>
-        <enable_http>true</enable_http>
-        <enable_https>true</enable_https>
-      </server>
+\
+  \<server\>\
+    \<server_name\>example.aspera.com\</server_name\>\
+    \<http_port\>9091\</http_port\>\
+    \<https_port\>9092\</https_port\>\
+    \<enable_http\>true\</enable_http\>\
+    \<enable_https\>true\</enable_https\>\
+  \</server\>\
 
 Restart the `asperanoded` service as root after changes:
 
-      service asperanoded restart
+\
+  service asperanoded restart\
 
 For more detailed API documentation, see the <a href="https://developer.ibm.com/api/view/aspera-prod:ibm-aspera:title-IBM_Aspera#Overview" target="_blank">Aspera Developer Network</a>.
 
@@ -889,6 +1015,7 @@ Converts an absolute file path from one mount point to another based on configur
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.2.1 | Enhanced action template UI |
 | 0.2.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.1.2 | 2015-02-17 ML - New icon |
 | 0.1.1 | Adds file path breakdown in outputs, changed error status to error |
@@ -988,6 +1115,7 @@ The DependencyChecker plug-in monitors the presence of specific files in a defin
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.1.1 | Enhanced action template UI |
 | 0.1.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.0.6 | Allow to cancel step |
 | 0.0.5 | Fixes stability period |
@@ -1087,6 +1215,8 @@ This action plug-in provides the ability to archive or restore files to/from the
 
 | Version | Comment                                                   |
 |---------|-----------------------------------------------------------|
+| 0.4.2   | Enhanced action template UI                               |
+| 0.4.1   | Improve error handling and code maintainability           |
 | 0.4.0   | Updating to be compatible with Ruby 3.4 and Rails 8       |
 | 0.3.2   | Adding support for dynamic parameters in Object Category. |
 | 0.3.1   | Set default priority to -1                                |
@@ -1104,81 +1234,122 @@ This action plug-in provides the ability to archive or restore files to/from the
 | 0.0.2   | added handling of avid mobid                              |
 | 0.0.1   | initial release                                           |
 
+#### How It Works
+
+- Provides integration with **DIVArchive** media asset management system via REST/SOAP web services.
+- Supports five operations: **archiveObject, restoreObject, partialRestore, deleteObject, and getObjectInfo**.
+- Supports **DIVArchive API versions 1.0, 2.1, and 2.2** with version-specific authentication.
+- Communicates via **HTTP REST/SOAP** on default port 9763.
+- Registers a client session before each operation to obtain a **session code**.
+- Monitors operation progress **asynchronously** via polling with configurable frequency.
+- Extracts **AVID mob IDs** from response additional info when present.
+- Version 2.2 requires **HTTP Basic authentication** for all operations.
+- Returns **XML, hash, status messages, and AVID mob ID** as outputs.
+
+#### Configuration Instructions
+
+1.  Create a new action step using the **DivaArchive** plugin.
+2.  Fill out the following fields:
+    - **Name**: The name used to identify a saved DivaArchive configured instance.
+    - **Comments**: Comments about this DivaArchive configured instance.
+    - **Diva Node**: The Diva node name from configured Remote Nodes. Use this OR Diva server IP address.
+    - **Diva server IP address**: The Diva node IP address or domain name. Use this OR Diva Node.
+    - **Diva WEB service port**: Override the default Diva WEB service port (default: 9763).
+    - **Basic auth login**: HTTP Basic authentication login. Required for API version 2.2 only.
+    - **Basic auth password**: HTTP Basic authentication password. Required for API version 2.2 only.
+    - **Diva version**: The DIVArchive WEB services API version: 1.0 (DIVArchive 6.5), 2.1 or 2.2 (Upto DIVArchive 8.2).
+    - **Operation**: The operation to execute: archiveObject, restoreObject, partialRestore, deleteObject, or getObjectInfo.
+    - **Object name**: Name of the object in DIVArchive.
+    - **Object category**: Category of the object. Required for archive and partialRestore. Optional for restore, delete, and getObjectInfo.
+    - **Source/Dest**: Source for archive or destination for restore (e.g. disk, video server). Must be defined in DIVA configuration.
+    - **Media name**: Group of Tapes or Array of Disks defined in DIVA where the instance is created (e.g. STORAGE-ON-DISK). Archive operation only.
+    - **File path root**: Root folder for files to archive/restore. Required for archive, optional for restore.
+    - **Filename list**: Comma-separated list of filenames to archive. Archive operation only.
+    - **Quality of service**: Quality of service value (0-6). Controls restore method (cache, direct, nearline). See QoS table.
+    - **Priority**: Priority level for the operation (0-100, 0 = lowest, 100 = highest, default -1).
+    - **Options**: Additional options for archive/restore operations.
+    - **Polling frequency**: Interval in seconds to poll for job completion (default: 10).
+    - **Instance ID**: (partialRestore only) ID of a non-spanned Tape Instance, or -1 for DIVA_ANY_INSTANCE.
+    - **Format**: (partialRestore only) Video format value (0-13). See Format table.
+    - **Parameters**: (partialRestore only) List of source/destination file names and offset data.
+
+#### Example Configuration
+
+This is an example configuration for the DivaArchive plugin archiving a media object using API version 2.2.
+
+| Parameter              | Value                |
+|------------------------|----------------------|
+| Name                   | Archive Media Object |
+| Diva server IP address | diva.example.com     |
+| Diva WEB service port  | 9763                 |
+| Diva version           | 2.2                  |
+| Basic auth login       | orchestrator         |
+| Basic auth password    | \*\*\*\*\*\*\*\*     |
+| Operation              | archiveObject        |
+| Object name            | my_media_object      |
+| Object category        | VIDEO                |
+| Source/Dest            | DISK_SOURCE          |
+| Media name             | STORAGE-ON-DISK      |
+| File path root         | /media/incoming      |
+| Filename list          | video.mxf, audio.wav |
+| Priority               | 50                   |
+| Polling frequency      | 10                   |
+
 #### Saved Parameters Description
 
-**Name**: The name used to identify a saved DivaArchive configured instance.
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| **Name** | The name used to identify a saved DivaArchive configured instance. |
+| **Comments** | Comments about this DivaArchive configured instance. |
+| **Diva Node** | The Diva node name from configured Remote Nodes. Use this OR Diva server IP address. |
+| **Diva server IP address** | The Diva node IP address or domain name. Use this OR Diva Node. |
+| **Diva WEB service port** | Override the default Diva WEB service port (default: 9763). |
+| **Basic auth login** | HTTP Basic authentication login. Required for API version 2.2 only. |
+| **Basic auth password** | HTTP Basic authentication password. Required for API version 2.2 only. |
+| **Diva version** | The DIVArchive WEB services API version: 1.0 (DIVArchive 6.5), 2.1 or 2.2 (Upto DIVArchive 8.2). |
+| **Operation** | The operation to execute: archiveObject, restoreObject, partialRestore, deleteObject, or getObjectInfo. |
+| **Object name** | Name of the object in DIVArchive. |
+| **Object category** | Category of the object. Required for archive and partialRestore. Optional for restore, delete, and getObjectInfo. |
+| **Source/Dest** | Source for archive or destination for restore (e.g. disk, video server). Must be defined in DIVA configuration. |
+| **Media name** | Group of Tapes or Array of Disks defined in DIVA where the instance is created (e.g. STORAGE-ON-DISK). Archive operation only. |
+| **File path root** | Root folder for files to archive/restore. Required for archive, optional for restore. |
+| **Filename list** | Comma-separated list of filenames to archive. Archive operation only. |
+| **Quality of service** | Quality of service value (0-6). Controls restore method (cache, direct, nearline). See QoS table. |
+| **Priority** | Priority level for the operation (0-100, 0 = lowest, 100 = highest, default -1). |
+| **Options** | Additional options for archive/restore operations. |
+| **Polling frequency** | Interval in seconds to poll for job completion (default: 10). |
+| **Instance ID** | (partialRestore only) ID of a non-spanned Tape Instance, or -1 for DIVA_ANY_INSTANCE. |
+| **Format** | (partialRestore only) Video format value (0-13). See Format table. |
+| **Parameters** | (partialRestore only) List of source/destination file names and offset data. |
 
-**Comments**: Some comments about this saved DivaArchive configured instance.
-
-**Diva Node**: The Diva node name from defined Remote Nodes.
-
-**Diva server IP address**: The Diva node IP address or domain name.
-
-**Diva WEB service port**: To change the default Diva WEB service port.
-
-**Basic auth login**: HTTP basic authentication login. Only for the 2.2 API.
-
-**Basic auth password**: HTTP basic authentication password. Only for the 2.2 API.
-
-**Diva version**: The Diva WEB services API version.
-
-**Operation**: The operation to execute.
-
-**Object name**: Name of the object.
-
-**Object category**: Category of the object.
-
-**Source/Dest**: Source for an archive or destination for a restore (e.g. disk, video server, browsing server). It must be defined in DIVA configuration.
-
-**Media name**: Designate a Group of Tapes or an Array of Disks defined in the DIVA configuration where the instance has to be created. (e.g. STORAGE-ON-DISK). Only for the archive operation.
-
-**File path root**: Root folder for the files to archive/restore. Required for the archive operation, optional for restore
-
-**Filename list**: List of filenames to archive (string with filenames separated by commas if several of them - see examples below). Only for the archive operation.
-
-**Quality of service**: Quality of service (value between 0 and 6, see below).
-
-**Priority**: Level of priority for the operation. (value between 0 and 100, 0 is the lowest priority and 100 the highest, default -1).
-
-**Options**: Additional options for archive/restore.
-
-**Polling frequency**: Interval in seconds to search for matching files in the watch directory.
-
-partialRestore specific parameters
-
-**Instance ID**: The ID of a non-spanned Tape Instance, or -1 = DIVA_ANY_INSTANCE.
-
-**Format**: Value of the video format. See below for the values.
-
-**Parameters**: List of source file name, destination file name, offset
-
-**offset**: byte begin, byte end, time code begin, time code end (between 00:00:00:00 and 99:99:99:99), type of offset (0=OFFSET_FORMAT_BYTE, 1=OFFSET_FORMAT_TIMECODE). Use format 0 for offset type 0.
-
-#### Inputs description
-
-The list of inputs depends on the configuration of the DivaArchive action template.
+#### Inputs Description
 
 Changes in this list of inputs will override any values set in the action template.
 
-- *server address*: Remote node name or remote server IP address or remote server domain name
-- *Basic auth login*: HTTP basic authentication login. Only for the 2.2 API.
-- *Basic auth password*: HTTP basic authentication password. Only for the 2.2 API.
-- *object name*: Name of the object to archive/restore
-- *object category*: Category of the object. Optional for the restore, delete and getObjectInfo operations.
-- *source / dest*: Source for an archive or destination for a restore. It must be defined in DIVA configuration.
-- *media name*: Designate a Group of Tapes or an Array of Disks defined in the DIVA configuration where the instance has to be created. Only for the archive operation.
-- *filepath root*: Root folder for the files to archive/restore. Required for the archive operation, optional for restore.
-- *filename list*: List of files to archive expressed as a string with filenames separated by commas such as JTM-140803-195.mxf, IMI_SONY test.MXF or 'JTM-140803-195.mxf', "IMI_SONY test.MXF" Only for the archive operation.
-- *format*: Value of the video format. Only for the partial restore operation.
-- *partial restore parameters*: List of source file name, destination file name, offset expressed as a string with content such as \[\["IMI_SONY test.MXF", "\_IMI_SONY test.MXF", "", "", "00:00:00:00", "99:99:99:99", "1"\], \["JTM-140803-195.mxf", "\_JTM-140803-195.mxf", "", "", "00:00:00:00", "99:99:99:99", "1"\]\]. Use double-quotes, not single-quotes.
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| *server address <span style="color: red;">\*</span>* | Remote node name or remote server IP address or domain name. Required if Diva Node not configured. |
+| *object name <span style="color: red;">\*</span>* | Name of the object to archive/restore/delete. |
+| *Basic auth login* | HTTP Basic authentication login. Required for API version 2.2 only. |
+| *Basic auth password* | HTTP Basic authentication password. Required for API version 2.2 only. |
+| *object category* | Category of the object. Optional for restore, delete and getObjectInfo operations. |
+| *source / dest* | Source for archive or destination for restore. Must be defined in DIVA configuration. |
+| *media name* | Group of Tapes or Array of Disks in DIVA where instance is created. Archive operation only. |
+| *filepath root* | Root folder for files to archive/restore. Required for archive, optional for restore. |
+| *filename list* | Comma-separated list of filenames to archive. Example: `JTM-140803.mxf, 'IMI_SONY test.MXF'`. Archive operation only. |
+| *format* | Video format value (0-13). Partial restore operation only. |
+| *partial restore parameters* | Array of source/destination file and offset data. Partial restore only. Use double-quotes. Example: `[["file.MXF", "_file.MXF", "", "", "00:00:00:00", "99:99:99:99", "1"]]` |
+| *polling_frequency* | Polling interval in seconds (default: 10). |
 
-#### Outputs description
+#### Outputs Description
 
-- *XML_result*: The Diva output in XML format
-- *HASH_result*: The Diva output in Ruby hash format
-- *Diva_status_message*: The Diva status message
-- *Diva_request_status_message*: The Diva request status message. It comes from getRequestInfo() and is checked to make sure the request is successful.
-- *Avid mob id*: AVID MOB ID if returned by the getRequestInfo operation within the additionalInfo section.
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| XML_result | The DIVA output in XML format |
+| HASH_result | The DIVA output in Ruby hash format |
+| Diva_status_message | The DIVA status message (e.g. DIVA_OK, DIVA_ERR_OBJECT_DOESNT_EXIST) |
+| Diva_request_status_message | The DIVA request status message from getRequestInfo (e.g. DIVA_COMPLETED, DIVA_ABORTED) |
+| Avid mob id | AVID MOB ID if returned by getRequestInfo within the additionalInfo section |
 
 #### Supported Actions
 
@@ -1190,83 +1361,192 @@ None
 
 #### Operating Instructions
 
-Specify the Diva WEB services API version. The supported versions are 1.0 for DIVArchive 6.5, 2.1 for DIVArchive 7.1 and 2.2 for for DIVArchive 7.5.
+This plugin integrates with DIVArchive via REST/SOAP web services to perform media asset archive, restore, partial restore, delete, and object info operations.
 
-Only the object name is required for the delete and getObjectInfo operations.
+**API Version Differences**
 
-Basic authentication is required for all operations in the 2.2 version.
+- **Version 1.0** - DIVArchive 6.5:
+  - SOAP/XML envelope format
+  - No HTTP Basic authentication required
+  - API path: `services/DIVArchiveWS_REST_1.0`
+- **Version 2.1** - Upto DIVArchive 8.2:
+  - SOAP/XML envelope format
+  - No HTTP Basic authentication required
+  - API path: `services/DIVArchiveWS_REST_2.1`
+- **Version 2.2** - Upto DIVArchive 8.2:
+  - REST/XML format (no SOAP envelope)
+  - **HTTP Basic authentication required** for all operations
+  - Provide 'Basic auth login' and 'Basic auth password'
+  - API path: `diva/service/rest/2.2/DIVArchiveWS_REST`
 
-The available values for the quality of service are:
+**Supported Operations**
 
-0 DIVA_QOS_DEFAULT Restoring is performed according to the default Quality Of Service (currently: direct and cache for restore operations).
+- **archiveObject:**
+  - Archives files from source media into DIVArchive
+  - Required inputs: object name, object category, source/dest, media name, filepath root, filename list
+  - Filename list: comma-separated string (e.g. `file1.mxf, file2.mxf`)
+  - Monitors request state via polling until DIVA_COMPLETED
+- **restoreObject:**
+  - Restores a full object from DIVArchive to destination media
+  - Required inputs: object name, source/dest
+  - Optional inputs: object category, filepath root
+  - Quality of service controls restore method (direct, cache, nearline)
+- **partialRestore:**
+  - Restores specific files or time ranges from a DIVArchive object
+  - Required inputs: object name, object category, source/dest, parameters, format
+  - Parameters define per-file source, destination, byte/timecode offsets
+  - Parameters format: `[[source, dest, byte_begin, byte_end, tc_begin, tc_end, offset_type]]`
+  - Use double-quotes in parameters, not single-quotes
+- **deleteObject:**
+  - Removes an object from DIVArchive
+  - Required inputs: object name
+  - Optional inputs: object category
+  - Monitors request state via polling until DIVA_COMPLETED
+- **getObjectInfo:**
+  - Retrieves metadata and status information for an object
+  - Required inputs: object name
+  - Optional inputs: object category
+  - Synchronous - does not poll (returns result directly)
 
-1 DIVA_QOS_CACHE_ONLY Use Cache Restore only.
+**Quality of Service (QoS) Values**
 
-2 DIVA_QOS_DIRECT_ONLY Use Direct Restore only.
+| Value | Constant | Description |
+|----|----|----|
+| 0 | DIVA_QOS_DEFAULT | Default QoS (direct and cache for restore) |
+| 1 | DIVA_QOS_CACHE_ONLY | Use Cache Restore only |
+| 2 | DIVA_QOS_DIRECT_ONLY | Use Direct Restore only |
+| 3 | DIVA_QOS_DIRECT_AND_CACHE | Direct Restore if available, else Cache Restore |
+| 4 | DIVA_QOS_CACHE_AND_DIRECT | Cache Restore if available, else Direct Restore |
+| 5 | DIVA_QOS_NEARLINE_ONLY | Use Nearline only |
+| 6 | DIVA_QOS_NEARLINE_AND_DIRECT | Nearline if available, else Direct |
 
-3 DIVA_QOS_DIRECT_AND_CACHE Use Direct Restore if available or Cache Restore if Direct Restore is not available.
+**Video Format Values (partialRestore)**
 
-4 DIVA_QOS_CACHE_AND_DIRECT Use Cache Restore if available or Direct Restore if Cache Restore is not available.
+| Value | Constant                     | Description                            |
+|-------|------------------------------|----------------------------------------|
+| 0     | DIVA_FORMAT_BYTES            | Raw byte partial restore               |
+| 1     | DIVA_FORMAT_BYTES_HEADER     | Deprecated feature                     |
+| 2     | DIVA_FORMAT_VIDEO_GXF        | GXF video format (PDR video servers)   |
+| 3     | DIVA_FORMAT_VIDEO_SEA        | Seachange video format                 |
+| 4     | DIVA_FORMAT_VIDEO_AVI_MATROX | Matrox-specific AVI format + WAV files |
+| 5     | DIVA_FORMAT_VIDEO_MPEG2_TS   | MPEG2 Transport Stream                 |
+| 6     | DIVA_FORMAT_VIDEO_MXF        | MXF video format                       |
+| 7     | DIVA_FORMAT_VIDEO_PINNACLE   | Pinnacle video format                  |
+| 8     | DIVA_FORMAT_VIDEO_OMNEON     | Omneon video format                    |
+| 9     | DIVA_FORMAT_VIDEO_LEITCH     | Leitch video format                    |
+| 10    | DIVA_FORMAT_VIDEO_QUANTEL    | Quantel QCP video format               |
+| 11    | DIVA_FORMAT_AUTODETECT       | Automatic detection of input format    |
+| 12    | DIVA_FORMAT_FOLDER_BASED     | Fully restore specified folders        |
+| 13    | DIVA_FORMAT_DPX              | DPX video format                       |
 
-5 DIVA_QOS_NEARLINE_ONLY Use Nearline only.
+**DIVA Status Codes**
 
-6 DIVA_QOS_NEARLINE_AND_DIRECT Use Nearline if available or Direct if Nearline is not available.
+| Code | Constant | Description |
+|----|----|----|
+| 1000 | DIVA_OK | Success |
+| 1001 | DIVA_ERR_UNKNOWN | Unknown error |
+| 1002 | DIVA_ERR_INTERNAL | Internal error |
+| 1004 | DIVA_ERR_BROKEN_CONNECTION | Connection broken |
+| 1008 | DIVA_ERR_INVALID_PARAMETER | Invalid parameter |
+| 1009 | DIVA_ERR_OBJECT_DOESNT_EXIST | Object does not exist |
+| 1010 | DIVA_ERR_SEVERAL_OBJECTS | Multiple matching objects |
+| 1016 | DIVA_ERR_OBJECT_ALREADY_EXISTS | Object already exists |
+| 1018 | DIVA_ERR_SOURCE_OR_DESTINATION_DOESN'T_EXIST | Source or destination not found |
+| 1023 | DIVA_ERR_OBJECT_OFFLINE | Object is offline |
+| 1024 | DIVA_ERR_TIMEOUT | Request timed out |
+| 1031 | DIVA_ERR_OBJECT_IN_USE | Object currently in use |
+| 1032 | DIVA_ERR_CANNOT_ACCEPT_MORE_REQUESTS | Server at capacity |
+| 1039 | DIVA_ERR_OBJECT_IS_LOCKED | Object is locked |
 
-The available values for the video format are:
+**Abort Reason Codes (when Diva_request_status_message = DIVA_ABORTED)**
 
-0 DIVA_FORMAT_BYTES Raw byte partial restore
+| Code | Constant            | Description                    |
+|------|---------------------|--------------------------------|
+| 0    | DIVA_AR_NONE        | Request not aborted            |
+| 1    | DIVA_AR_DRIVE       | Drive troubles                 |
+| 2    | DIVA_AR_TAPE        | Tape troubles                  |
+| 3    | DIVA_AR_ACTOR       | Actor troubles                 |
+| 4    | DIVA_AR_DISK        | Disk troubles                  |
+| 5    | DIVA_AR_DISK_FULL   | Disk is full                   |
+| 6    | DIVA_AR_SOURCE_DEST | Source/destination troubles    |
+| 7    | DIVA_AR_RESOURCES   | Resources attribution troubles |
+| 8    | DIVA_AR_LIBRARY     | Library troubles               |
+| 9    | DIVA_AR_PARAMETERS  | Wrong request parameters       |
+| 10   | DIVA_AR_UNKNOWN     | Unknown code                   |
+| 11   | DIVA_AR_INTERNAL    | Internal DIVArchive WS error   |
 
-1 DIVA_FORMAT_BYTES_HEADER Deprecated feature
+**Partial Restore Parameters**
 
-2 DIVA_FORMAT_VIDEO_GXF GXF video format of PDR video servers
+- The parameters field defines a list of files to partially restore, each with source, destination, and offset information.
 
-3 DIVA_FORMAT_VIDEO_SEA Seachange video format
+- **Parameter format per file:** `[source_file, dest_file, byte_begin, byte_end, tc_begin, tc_end, offset_type]`
 
-4 DIVA_FORMAT_VIDEO_AVI_MATROX Matrox-specific AVI format (+ WAV files). Restrictions apply, see documentation.
+- **Field descriptions:**
+  - `source_file`: Filename as stored in DIVArchive
+  - `dest_file`: Output filename at destination
+  - `byte_begin / byte_end`: Byte range (leave empty for timecode mode)
+  - `tc_begin / tc_end`: Timecode range (format: 00:00:00:00 to 99:99:99:99)
+  - `offset_type`: 0 = OFFSET_FORMAT_BYTE, 1 = OFFSET_FORMAT_TIMECODE
 
-5 DIVA_FORMAT_VIDEO_MPEG2_TS MPEG2 Transport Stream.
+- **Single file example:**
 
-6 DIVA_FORMAT_VIDEO_MXF MXF video format
+  `[["video.MXF", "_video.MXF", "", "", "00:00:00:00", "99:99:99:99", "1"]]`
 
-7 DIVA_FORMAT_VIDEO_PINNACLE Pinnacle video format
+- **Multi-file example:**
 
-8 DIVA_FORMAT_VIDEO_OMNEON Omneon video format
+  `[["file1.mxf", "_file1.mxf", "", "", "00:01:00:00", "00:02:00:00", "1"], ["file2.mxf", "_file2.mxf", "", "", "00:00:00:00", "99:99:99:99", "1"]]`
 
-9 DIVA_FORMAT_VIDEO_LEITCH Leitch video format
+- **Important:** Use **double-quotes**, not single-quotes, in parameters.
 
-10 DIVA_FORMAT_VIDEO_QUANTEL Quantel QCP video format
+**Common Use Cases**
 
-11 DIVA_FORMAT_AUTODETECT Automatic detection of input format
+- **Media archiving:** Archive ingested video and audio files from disk into DIVArchive storage.
+- **Media restoration:** Restore archived content to production servers for editing or broadcast.
+- **Clip extraction:** Use partialRestore to retrieve specific timecode ranges from archived objects.
+- **Asset management:** Query object metadata via getObjectInfo in automated workflows.
+- **Storage cleanup:** Delete obsolete objects from DIVArchive after content expiry.
+- **AVID integration:** Retrieve MOB IDs from restored content for AVID Media Composer workflows.
+- **Nearline retrieval:** Use QoS settings to control restoration from nearline tape storage.
 
-12 DIVA_FORMAT_FOLDER_BASED Fully restore the specified folders
+**Best Practices**
 
-13 DIVA_FORMAT_DPX DPX video format
+- Select the correct **API version** matching your DIVArchive installation (1.0, 2.1, or 2.2).
+- For version 2.2, always provide **Basic auth login and password**.
+- Use **Remote Node configuration** for server credentials and reusability.
+- Set **appropriate polling frequency** - large archive/restore jobs may take minutes (30-60s recommended).
+- Use **priority levels** to manage concurrent operations (0-100 range).
+- For partialRestore, use **double-quotes** in parameters, never single-quotes.
+- Use **getObjectInfo** to verify object existence before archive or restore operations.
+- Monitor **Diva_request_status_message** output for detailed operation state.
+- Check **DIVA status codes** in workflow error handling for precise failure diagnosis.
+- For high-priority workflows, use **QoS direct-only** to avoid tape nearline latency.
 
-If the request is aborted (Diva_request_status_message = DIVA_ABORTED), the reason could be:
+**Troubleshooting**
 
-0 DIVA_AR_NONE Request not aborted
+- **Connection refused:** Verify Diva server address and port 9763 is accessible from Orchestrator.
+- **Authentication failed (v2.2):** Verify Basic auth login and password are correct.
+- **DIVA_ERR_OBJECT_DOESNT_EXIST (1009):** Object name doesn't exist in DIVArchive. Verify exact name.
+- **DIVA_ERR_OBJECT_ALREADY_EXISTS (1016):** Object already archived. Use deleteObject first or use a different name.
+- **DIVA_ERR_OBJECT_IN_USE (1031):** Another operation is already running on this object. Wait and retry.
+- **DIVA_ERR_CANNOT_ACCEPT_MORE_REQUESTS (1032):** DIVA server at capacity. Reduce concurrent requests.
+- **DIVA_ABORTED:** Check abort reason code in response. Common causes: disk full, tape errors, wrong parameters.
+- **registerClient returns no session code:** DIVA server connectivity issue. Check server status and network.
+- **partialRestore parameter errors:** Verify double-quotes used in parameters array. Check source file names match DIVArchive exactly.
+- **Source/Dest not found (1018):** Verify the source/destination name is defined in DIVA configuration.
 
-1 DIVA_AR_DRIVE Drive troubles
+**Important Notes**
 
-2 DIVA_AR_TAPE Tape troubles
-
-3 DIVA_AR_ACTOR Actor troubles
-
-4 DIVA_AR_DISK Disk troubles
-
-5 DIVA_AR_DISK_FULL Disk is full
-
-6 DIVA_AR_SOURCE_DEST Source/destination troubles
-
-7 DIVA_AR_RESOURCES Resources attribution troubles
-
-8 DIVA_AR_LIBRARY Library troubles
-
-9 DIVA_AR_PARAMETERS Wrong request parameters
-
-10 DIVA_AR_UNKNOWN Unknown code
-
-11 DIVA_AR_INTERNAL Internal DIVArchive WS error
+- Use **Diva Node OR Diva server IP address** - not both.
+- API version **2.2 requires HTTP Basic authentication**. Versions 1.0 and 2.1 do not.
+- For **delete and getObjectInfo**, only the object name is required.
+- The **filename list** is comma-separated. Filenames with spaces can be wrapped in single or double quotes.
+- **partialRestore parameters** must use double-quotes, not single-quotes.
+- Default port is **9763**. Only override if DIVA is configured on a different port.
+- Default polling frequency is **10 seconds**.
+- Default priority is **-1** (system default).
+- **getObjectInfo** is synchronous and does not poll.
+- All other operations are **asynchronous** and poll via getRequestInfo until complete.
+- The **AVID mob ID** is parsed from the additionalInfo section of getRequestInfo when present.
 
 
 ### Exiftool xmp tagger
@@ -1345,6 +1625,7 @@ This action plug-in provides the ability to submit a file to FFProbe to grab med
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.1.1   | Enhanced action template UI                         |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.0.3   | Correcting the plugin_name in metadata.yml          |
 | 0.0.2   | -\> Adding Remote Node Dependency                   |
@@ -1518,6 +1799,7 @@ This plugin provides the ability to execute file archiving operations on both Or
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.4.1 | Enhanced action template UI |
 | 0.4.0 | Removing Windows support code, Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.3.1 | Plugin includes remote node dependency on workflow export |
 | 0.3.0 | Allow plugin to perform operations on remote nodes. |
@@ -1629,6 +1911,7 @@ This action plug-in is used to create a file using dynamic content provided from
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.5.1 | Enhanced action template UI |
 | 0.5.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.4.0 | body template to longtext |
 | 0.3.0 | Adds support for append mode |
@@ -1678,37 +1961,41 @@ This action plug-in is used to create a file using dynamic content provided from
 
 If an input `recipients` contains *bob@ac.com; bill@ac.com; doug@ac.com*, the following template:
 
-    <destinations>
-      <% destinations = recipients.split(/[ ; ]+/) %>
-      <% destinations.each do |destination| %>
-        <to><%= destination %></to>
-      <% end %>
-    </destinations>
+\
+\<destinations\>\
+  \<% destinations = recipients.split(/\[ ; \]+/) %\>\
+  \<% destinations.each do \|destination\| %\>\
+    \<to\>\<%= destination %\>\</to\>\
+  \<% end %\>\
+\</destinations\>\
 
 Will be rendered as:
 
-    <destinations>
-      <to>bob@ac.com</to>
-      <to>bill@ac.com</to>
-      <to>doug@ac.com</to>
-    </destinations>
+\
+\<destinations\>\
+  \<to\>bob@ac.com\</to\>\
+  \<to\>bill@ac.com\</to\>\
+  \<to\>doug@ac.com\</to\>\
+\</destinations\>\
 
 #### *Same example with suppression marked linefeeds*
 
-    <destinations>
-    <% destinations = recipients.split(/[ ; ]+/) %>\
-    <% destinations.each do |destination| %>\
-      <to><%= destination %></to>
-    <% end %>\
-    </destinations>
+\
+\<destinations\>\
+\<% destinations = recipients.split(/\[ ; \]+/) %\>\\\
+\<% destinations.each do \|destination\| %\>\\\
+  \<to\>\<%= destination %\>\</to\>\
+\<% end %\>\\\
+\</destinations\>\
 
 Will be rendered without extra blank lines:
 
-    <destinations>
-      <to>bob@ac.com</to>
-      <to>bill@ac.com</to>
-      <to>doug@ac.com</to>
-    </destinations>
+\
+\<destinations\>\
+  \<to\>bob@ac.com\</to\>\
+  \<to\>bill@ac.com\</to\>\
+  \<to\>doug@ac.com\</to\>\
+\</destinations\>\
 
 **Behavior:** With this configuration, the workflow generates the file using the provided template, required/optional inputs, and target file path. Outputs are available if enabled.
 
@@ -1773,6 +2060,7 @@ Extracts multiple information about a local file, given its full path.
 
 | Version | Comment                                                        |
 |---------|----------------------------------------------------------------|
+| 0.2.1   | Enhanced action template UI                                    |
 | 0.2.0   | Updating to be compatible with Ruby 3.4 and Rails 8            |
 | 0.1.1   | Fix compatibility issue with array mode (when set to nil)      |
 | 0.1.0   | Accept an array of files                                       |
@@ -1927,6 +2215,7 @@ This action plug‑in executes local file operations on Orchestrator‑mounted f
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 1.2.1 | Enhanced action template UI |
 | 1.2.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 1.1.0 | Adds no glob on sources for delete |
 | 1.0.3 | Updating help page |
@@ -2090,8 +2379,8 @@ This action plug‑in executes local file operations on Orchestrator‑mounted f
 #### Troubleshooting
 
 - In Windows, if the 'move' operation is failing between two mapped drives, check that the source and target paths are configured properly in the plugin. UNC paths are always preferred.
-- In Windows, the 'move' operation usually works between mapped drives if the paths are configured with backslashes. Example: "\\10.0.154.185\sharefororch\\
-- Sometimes Windows struggles with backslashes in paths. Using double backslashes like "\\share\\folder\\" may resolve issues.
+- In Windows, the 'move' operation usually works between mapped drives if the paths are configured with backslashes. Example: "\\\10.0.154.185\sharefororch\\"
+- Sometimes Windows struggles with backslashes in paths. Using double backslashes like "\\\share\\\folder\\\\" may resolve issues.
 - If 'Preserve timestamp?' does not retain the original time, confirm filesystem and user permission capabilities.
 - Hardlinks require both source and target to be on the same filesystem/partition. Verify this if hardlink operations fail.
 - Ensure your OS and filesystem support symlinks/hardlinks, as not all filesystems (e.g., FAT32) allow them.
@@ -2108,6 +2397,7 @@ This action plug-in provides the ability to do the chmod and chown file operatio
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.1.2 | Enhanced action template UI |
 | 0.1.1 | Updating to allow aspweb user to perform file operations |
 | 0.1.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.0.5 | Added styling to parameter help text. |
@@ -2207,6 +2497,7 @@ This action plug-in calculates MD5 checksums for specified files and optionally 
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.3.1   | Enhanced action template UI                         |
 | 0.3.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.2.2   | Added styling to parameter help text.               |
 | 0.2.1   | 2015-02-16 ML - New icon                            |
@@ -2306,6 +2597,7 @@ This plugin extracts comprehensive technical and tag metadata from video and aud
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.7.1 | Enhanced action template UI |
 | 0.7.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.6.0 | Add XML output option |
 | 0.5.0 | Add options to skip cover data from generic result |
@@ -2432,10 +2724,16 @@ For example, in default mode in the Video hash, a pair 'Bit rate'=\>'638 Kbps' w
 
 **Example passwd file configuration:**
 
-    Administrator:unused_by_nt/2000/xp:500:513:U-EXPERIEN-F1FAFA\ 
-       Administrator,S-1-5-21-1801674531-1202660629-2067101283-500:/home/Administrator:/bin/switch 
-    orchestrator:unused_by_nt/2000/xp:1003:513:orchestrator,U-EXPERIEN-F1FAFA\ 
-       orchestrator,S-1-5-21-1801674531-1202660629-2067101283-1003:/:/bin/sh
+Administrator:unused_by_nt/2000/xp:500:513:U-EXPERIEN-F1FAFA\\ 
+
+\
+   Administrator,S-1-5-21-1801674531-1202660629-2067101283-500:/home/Administrator:/bin/switch 
+
+\
+orchestrator:unused_by_nt/2000/xp:1003:513:orchestrator,U-EXPERIEN-F1FAFA\\ 
+
+\
+   orchestrator,S-1-5-21-1801674531-1202660629-2067101283-1003:/:/bin/sh
 
 #### Dependencies
 
@@ -2540,6 +2838,8 @@ This action plug-in provides the ability to execute file operations (copy, move,
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.3.2 | Enhanced action template UI |
+| 0.3.1 | Prevent input/output pre-processing code from being overwritten |
 | 0.3.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.2.8 | Mask password field. |
 | 0.2.7 | Added styling to help text. |
@@ -2643,18 +2943,43 @@ Changes to the inputs listed below will override any values set in the action te
 
 This plugin uses the Aspera ascmd executable to browse files on remote nodes with Aspera transfer servers. The remote user must be defined in `/opt/aspera/etc/aspera.conf` with appropriate docroot configuration:
 
-    <user> 
-      <name>xfer</name> 
-      <file_system> 
-          <access> 
-              <paths> 
-                  <path> 
-                      <absolute>/home/xfer/data</absolute> 
-                  </path> 
-              </paths> 
-          </access> 
-      </file_system> 
-    </user> 
+\
+\<user\> 
+
+\
+  \<name\>xfer\</name\> 
+
+\
+  \<file_system\> 
+
+\
+      \<access\> 
+
+\
+          \<paths\> 
+
+\
+              \<path\> 
+
+\
+                  \<absolute\>/home/xfer/data\</absolute\> 
+
+\
+              \</path\> 
+
+\
+          \</paths\> 
+
+\
+      \</access\> 
+
+\
+  \</file_system\> 
+
+\
+\</user\> 
+
+\
 
 **Path Resolution:** A target directory like "/foo" refers to "/home/xfer/data/foo" on the remote server.
 
@@ -2778,6 +3103,7 @@ This plug-in allows workflows to read and process data from spreadsheet files su
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.2.1 | Enhanced action template UI |
 | 0.2.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.1.5 | Fix Input validation would fail with no real reason |
 | 0.1.4 | Fix spreadsheet rows missing cells |
@@ -2873,110 +3199,120 @@ Indexing also depends on the chosen **Index By** option.
 
 Given the following spreadsheet:
 
-    Date        Time    Time cost   Expenses   Total
-    11/01/2012  4       1200        450        1650
-    11/02/2012  3       900         0          900
-    11/03/2012  4.5     1350        550        1900
-    TOTAL       11.5    3450        1000       4450
+\
+Date        Time    Time cost   Expenses   Total\
+11/01/2012  4       1200        450        1650\
+11/02/2012  3       900         0          900\
+11/03/2012  4.5     1350        550        1900\
+TOTAL       11.5    3450        1000       4450\
 
 **Organize by rows - index by rows and columns**
 
-    "Sheets" => {
-      "Example" => {
-        5 => {"A" => "TOTAL", "B" => 11.5, "C" => 3450, "D" => 1000, "E" => 4450 },
-        1 => {"A" => "Date", "B" => "Time", "C" => "Time cost", "D" => "Expense", "E" => "Total" },
-        2 => {"A" => Thu, 01 Nov 2012, "B" => 4, "C" => 1200, "D" => 450, "E" => 1650 },
-        3 => {"A" => Fri, 02 Nov 2012, "B" => 3, "C" => 900, "D" => 0, "E" => 900 },
-        4 => {"A" => Sat, 03 Nov 2012, "B" => 4.5, "C" => 1350, "D" => 550, "E" => 1900 }
-      }
-    }
-      
+\
+"Sheets" =\> {\
+  "Example" =\> {\
+    5 =\> {"A" =\> "TOTAL", "B" =\> 11.5, "C" =\> 3450, "D" =\> 1000, "E" =\> 4450 },\
+    1 =\> {"A" =\> "Date", "B" =\> "Time", "C" =\> "Time cost", "D" =\> "Expense", "E" =\> "Total" },\
+    2 =\> {"A" =\> Thu, 01 Nov 2012, "B" =\> 4, "C" =\> 1200, "D" =\> 450, "E" =\> 1650 },\
+    3 =\> {"A" =\> Fri, 02 Nov 2012, "B" =\> 3, "C" =\> 900, "D" =\> 0, "E" =\> 900 },\
+    4 =\> {"A" =\> Sat, 03 Nov 2012, "B" =\> 4.5, "C" =\> 1350, "D" =\> 550, "E" =\> 1900 }\
+  }\
+}\
+  
 
 **Organize by rows - index by header-row columns name**
 
-    "Sheets" => {
-      "Example" => {
-        5 => { "Expense" => 1000, "Time cost" => 3450, "Time" => 11.5, "Date" => "TOTAL", "Total" => 4450 },
-        1 => { "Expense" => "Expense", "Time cost" => "Time cost", "Time" => "Time", "Date" => "Date", "Total" => "Total" },
-        2 => { "Expense" => 450, "Time cost" => 1200, "Time" => 4, "Date" => Thu, 01 Nov 2012, "Total" => 1650 },
-        3 => { "Expense" => 0, "Time cost" => 900, "Time" => 3, "Date" => Fri, 02 Nov 2012, "Total" => 900 },
-        4 => { "Expense" => 550, "Time cost" => 1350, "Time" => 4.5, "Date" => Sat, 03 Nov 2012, "Total" => 1900 }
-      }
-    }
-      
+\
+"Sheets" =\> {\
+  "Example" =\> {\
+    5 =\> { "Expense" =\> 1000, "Time cost" =\> 3450, "Time" =\> 11.5, "Date" =\> "TOTAL", "Total" =\> 4450 },\
+    1 =\> { "Expense" =\> "Expense", "Time cost" =\> "Time cost", "Time" =\> "Time", "Date" =\> "Date", "Total" =\> "Total" },\
+    2 =\> { "Expense" =\> 450, "Time cost" =\> 1200, "Time" =\> 4, "Date" =\> Thu, 01 Nov 2012, "Total" =\> 1650 },\
+    3 =\> { "Expense" =\> 0, "Time cost" =\> 900, "Time" =\> 3, "Date" =\> Fri, 02 Nov 2012, "Total" =\> 900 },\
+    4 =\> { "Expense" =\> 550, "Time cost" =\> 1350, "Time" =\> 4.5, "Date" =\> Sat, 03 Nov 2012, "Total" =\> 1900 }\
+  }\
+}\
+  
 
 **Organize by rows - index by header-column rows name**
 
-    "Sheets" => {
-      "Example" => {
-        "Date" => {...},
-        "Thu, 01 Nov 2012" => {...},
-        "Fri, 02 Nov 2012" => {...},
-        "Sat, 03 Nov 2012" => {...},
-        "TOTAL" => {...}
-      }
-    }
-      
+\
+"Sheets" =\> {\
+  "Example" =\> {\
+    "Date" =\> {...},\
+    "Thu, 01 Nov 2012" =\> {...},\
+    "Fri, 02 Nov 2012" =\> {...},\
+    "Sat, 03 Nov 2012" =\> {...},\
+    "TOTAL" =\> {...}\
+  }\
+}\
+  
 
 **Organize by rows - index by headers**
 
-    "Sheets" => {
-      "Example" => {
-        "Thu, 01 Nov 2012" => {...},
-        "Fri, 02 Nov 2012" => {...},
-        ...
-      }
-    }
-      
+\
+"Sheets" =\> {\
+  "Example" =\> {\
+    "Thu, 01 Nov 2012" =\> {...},\
+    "Fri, 02 Nov 2012" =\> {...},\
+    ...\
+  }\
+}\
+  
 
 **Organize by cells - index by rows and columns**
 
-    "Sheets" => {
-      "Example" => {
-        "A1" => "Date", "B1" => "Time", "C1" => "Time cost", ...
-      }
-    }
-      
+\
+"Sheets" =\> {\
+  "Example" =\> {\
+    "A1" =\> "Date", "B1" =\> "Time", "C1" =\> "Time cost", ...\
+  }\
+}\
+  
 
 **Organize by columns - index by rows and columns**
 
-    "Sheets" => {
-      "Example" => {
-        "A" => {1 => "Date", 2 => ..., ...},
-        "B" => {...}, ...
-      }
-    }
-      
+\
+"Sheets" =\> {\
+  "Example" =\> {\
+    "A" =\> {1 =\> "Date", 2 =\> ..., ...},\
+    "B" =\> {...}, ...\
+  }\
+}\
+  
 
 **Organize by columns - index by header-row columns name**
 
-    "Sheets" => {
-      "Example" => {
-        "Date" => {...},
-        "Time" => {...}, ...
-      }
-    }
-      
+\
+"Sheets" =\> {\
+  "Example" =\> {\
+    "Date" =\> {...},\
+    "Time" =\> {...}, ...\
+  }\
+}\
+  
 
 **Organize by columns - index by header-column rows name**
 
-    "Sheets" => {
-      "Example" => {
-        "A" => {...},
-        "B" => {...}, ...
-      }
-    }
-      
+\
+"Sheets" =\> {\
+  "Example" =\> {\
+    "A" =\> {...},\
+    "B" =\> {...}, ...\
+  }\
+}\
+  
 
 **Organize by columns - index by headers**
 
-    "Sheets" => {
-      "Example" => {
-        "Date" => {...},
-        "Expense" => {...}, ...
-      }
-    }
-      
+\
+"Sheets" =\> {\
+  "Example" =\> {\
+    "Date" =\> {...},\
+    "Expense" =\> {...}, ...\
+  }\
+}\
+  
 
 
 ### PGP encryption
@@ -2990,6 +3326,7 @@ This action plug-in can be used to encyrpt/decrypt programatically a file using 
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.1.2 | Enhanced action template UI |
 | 0.4.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.3.2 | Added Remote Node Dependency |
 | 0.3.1 | Adds support for temporary licenses when in Symantec mode |
@@ -3105,6 +3442,7 @@ This action plug-in extracts data from XML documents using XPath expressions. It
 
 | Version | Comment                                                         |
 |---------|-----------------------------------------------------------------|
+| 0.1.3   | Enhanced action template UI                                     |
 | 0.1.2   | Fix issues when storing xpaths (Eg://root/node/subnode)         |
 | 0.1.1   | Fix issues when storing certain string characters (Like colons) |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8             |
@@ -3194,45 +3532,47 @@ This action provides parsed outputs from XML using XPath. There is no limit to t
 
 #### Basic Example
 
-    <?xml version="1.0" encoding="UTF-8"?>
-    <Employees>
-      <Employee id="3">
-        <age>40</age>
-        <name>Tom</name>
-        <gender>Male</gender>
-        <role>Manager</role>
-      </Employee>
-      <Employee id="4">
-        <age>25</age>
-        <name>Meghna</name>
-        <gender>Female</gender>
-        <role>Manager</role>
-      </Employee>
-    </Employees>
+\
+\<?xml version="1.0" encoding="UTF-8"?\>\
+\<Employees\>\
+  \<Employee id="3"\>\
+    \<age\>40\</age\>\
+    \<name\>Tom\</name\>\
+    \<gender\>Male\</gender\>\
+    \<role\>Manager\</role\>\
+  \</Employee\>\
+  \<Employee id="4"\>\
+    \<age\>25\</age\>\
+    \<name\>Meghna\</name\>\
+    \<gender\>Female\</gender\>\
+    \<role\>Manager\</role\>\
+  \</Employee\>\
+\</Employees\>\
 
 To retrieve the age of all employees in an Array from the above XML, add a Parameter with Type as Array and XPath as:
 
-    //age
+//age
 
 To retrieve the details of Employee with an attribute of id = 4 in a String from the above XML, add a Parameter with Type as String and XPath as:
 
-    //Employee[@id = '4']
+//Employee\[@id = '4'\]
 
 #### Example with Namespaces
 
-    <feed xmlns="http://www.w3.org/2005/Atom">
-      <title>Example Feed</title>
-      <link href="http://example.org/"/>
-      <updated>2003-12-13T18:30:02Z</updated>
-      <author>
-        <name>John Doe</name>
-      </author>
-      <id>urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6</id>
-    </feed>
+\
+\<feed xmlns="http://www.w3.org/2005/Atom"\>\
+  \<title\>Example Feed\</title\>\
+  \<link href="http://example.org/"/\>\
+  \<updated\>2003-12-13T18:30:02Z\</updated\>\
+  \<author\>\
+    \<name\>John Doe\</name\>\
+  \</author\>\
+  \<id\>urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6\</id\>\
+\</feed\>\
 
 To retrieve the name of the author from the above XML, add a Parameter with Type String and XPath as:
 
-    //xmlns:author/xmlns:name
+//xmlns:author/xmlns:name
 
 #### Additional Resources
 
@@ -3258,6 +3598,7 @@ This action plugin performs a file transfer upload or download operation to/from
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 1.6.2 | Enhanced action template UI |
 | 1.6.1 | Removing legacy support |
 | 1.6.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 1.5.2 | Removing windows support code |
@@ -3438,6 +3779,7 @@ This action plugin provides the ability to initiate and monitor server-to-server
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 1.3.2 | Enhanced action template UI |
 | 1.3.1 | Add retry logic for Node API connection failures and timeouts |
 | 1.3.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 1.2.7 | Allows to cancel a transfer |
@@ -3610,65 +3952,68 @@ This action plugin provides the ability to initiate and monitor server-to-server
 
 #### Node-to-Node Transfer with SSH Key
 
-    {
-      "direction":"send",
-      "remote_user":"root",
-      "remote_host":"testchris5.aspera.cloud",
-      "ssh_private_key":"-----BEGIN DSA PRIVATE KEY-----\r\nMIIBugIBAAKBgQ5ypo9iLqM=\r\n-----END DSA PRIVATE KEY-----",
-      "destination_root":"/",
-      "fasp_port":33001,
-      "ssh_port":33001,
-      "target_rate_kbps":"",
-      "multi_session":1,
-      "create_dir":true,
-      "delete_source":false,
-      "rate_policy":"high",
-      "paths":[{ "source": "/home/aspera_files/tutu.txt" }]
-    }
+\
+{\
+  "direction":"send",\
+  "remote_user":"root",\
+  "remote_host":"testchris5.aspera.cloud",\
+  "ssh_private_key":"-----BEGIN DSA PRIVATE KEY-----\r\nMIIBugIBAAKBgQ5ypo9iLqM=\r\n-----END DSA PRIVATE KEY-----",\
+  "destination_root":"/",\
+  "fasp_port":33001,\
+  "ssh_port":33001,\
+  "target_rate_kbps":"",\
+  "multi_session":1,\
+  "create_dir":true,\
+  "delete_source":false,\
+  "rate_policy":"high",\
+  "paths":\[{ "source": "/home/aspera_files/tutu.txt" }\]\
+}\
 
 #### ATS Upload with Basic Token
 
-    {
-      "direction": "send",
-      "remote_host": "w.demo.aspera.org",
-      "remote_access_key": "ABCDEFGH",
-      "token": "Basic XXXXYYYYYZZZZZ=",
-      "target_rate_kbps": "",
-      "create_dir": false,
-      "ssh_port": "33001",
-      "fasp_port": "33001",
-      "destination_root" : "/",
-      "remote_user": "xfer",
-      "multi_session": "1",
-      "delete_source": "false",
-      "paths": [ { "source": "/temp.mpg" } ]
-    }
+\
+{\
+  "direction": "send",\
+  "remote_host": "w.demo.aspera.org",\
+  "remote_access_key": "ABCDEFGH",\
+  "token": "Basic XXXXYYYYYZZZZZ=",\
+  "target_rate_kbps": "",\
+  "create_dir": false,\
+  "ssh_port": "33001",\
+  "fasp_port": "33001",\
+  "destination_root" : "/",\
+  "remote_user": "xfer",\
+  "multi_session": "1",\
+  "delete_source": "false",\
+  "paths": \[ { "source": "/temp.mpg" } \]\
+}\
 
 #### Aspera On Cloud Package Upload with Bearer Token
 
-    {
-      "direction": "send",
-      "remote_host": "testchris5.aspera.cloud",
-      "token": "Bearer eJwlkEmzmkAAhO/8DK7EvGHYr",
-      "target_rate_kbps": 1000000,
-      "create_dir": true,
-      "ssh_port": "33001",
-      "fasp_port": "33001",
-      "delete_source": "false",
-      "paths": [{ "source": "/data_to_files/small.xml" }, { "source": "/data_to_files/small.mp4" }],
-      "tags": {
-        "aspera": {
-          "node": {
-            "file_id": "72",
-            "access_key": "jjgawSlKQfISWpdRnWFOuxArb_QoE4qDX_yXKEmy05k"
-          },
-          "files": {
-            "package_id": "BnfkYxtl8Q",
-            "package_operation": "upload"
-          }
-        }
-      }
-    }
+\
+{\
+  "direction": "send",\
+  "remote_host": "testchris5.aspera.cloud",\
+  "token": "Bearer eJwlkEmzmkAAhO/8DK7EvGHYr",\
+  "target_rate_kbps": 1000000,\
+  "create_dir": true,\
+  "ssh_port": "33001",\
+  "fasp_port": "33001",\
+  "delete_source": "false",\
+  "paths": \[{ "source": "/data_to_files/small.xml" }, { "source": "/data_to_files/small.mp4" }\],\
+  "tags": {\
+    "aspera": {\
+      "node": {\
+        "file_id": "72",\
+        "access_key": "jjgawSlKQfISWpdRnWFOuxArb_QoE4qDX_yXKEmy05k"\
+      },\
+      "files": {\
+        "package_id": "BnfkYxtl8Q",\
+        "package_operation": "upload"\
+      }\
+    }\
+  }\
+}\
 
 #### Authentication Methods
 
@@ -3696,6 +4041,7 @@ This plugin provides the ability to retrieve the list of files to validate and u
 
 | Version | Comment                                                    |
 |---------|------------------------------------------------------------|
+| 0.1.2   | Enhanced action template UI                                |
 | 0.1.1   | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8        |
 | 0.0.1   | Initial implementation                                     |
@@ -3829,6 +4175,7 @@ This action plugin provides the ability to initiate Smart Transfer templates in 
 
 | Version | Comment                                                  |
 |---------|----------------------------------------------------------|
+| 0.2.1   | Enhanced action template UI                              |
 | 0.2.0   | Updating to be compatible with Ruby 3.4 and Rails 8      |
 | 0.1.5   | Verify SSL set to false on polling                       |
 | 0.1.4   | Verify SSL set to false                                  |
@@ -3948,6 +4295,7 @@ This action plug-in provides the ability to control and modify the parameters of
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.7.1 | Enhanced action template UI |
 | 0.7.0 | No longer support ruby 1.8, Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.6.1 | Fix for queryParams variables type as array |
 | 0.6.0 | Adding new columns for max transfer and to get only failed files. Fixing bug when central address is given at runtime |
@@ -4079,11 +4427,12 @@ Works with Enterprise Server, Connect Server, Faspex Server, and Point to Point 
 
 **Required Configuration:** Enable reliable API on the Aspera Server with IP address polling:
 
-    <central_server>
-        <address>0.0.0.0</address>
-        <port>40001</port>
-        <persistent_store>enable</persistent_store>
-    </central_server>
+\
+\<central_server\>\
+    \<address\>0.0.0.0\</address\>\
+    \<port\>40001\</port\>\
+    \<persistent_store\>enable\</persistent_store\>\
+\</central_server\>\
 
 #### Node API Setup
 
@@ -4093,44 +4442,48 @@ Remote nodes must run Aspera Enterprise Server, Connect Server, or Point to Poin
 
 Node username is a Node API account (not an OS account). Find the associated transfer user:
 
-    # /opt/aspera/bin/asnodeadmin -l
-    List of node user(s):
-                user       system/transfer user                    acls
-    ====================    =======================    ====================
-            node_user                       xfer       []
+\
+\# /opt/aspera/bin/asnodeadmin -l\
+List of node user(s):\
+            user       system/transfer user                    acls\
+====================    =======================    ====================\
+        node_user                       xfer       \[\]\
 
 #### Transfer User Configuration
 
 The transfer user docroot is defined in `/opt/aspera/etc/aspera.conf`:
 
-    <user>
-        <name>xfer</name>
-        <file_system>
-            <access>
-                <paths>
-                    <path>
-                        <absolute>/home/xfer/data</absolute>
-                    </path>
-                </paths>
-            </access>
-        </file_system>
-    </user>
+\
+\<user\>\
+    \<name\>xfer\</name\>\
+    \<file_system\>\
+        \<access\>\
+            \<paths\>\
+                \<path\>\
+                    \<absolute\>/home/xfer/data\</absolute\>\
+                \</path\>\
+            \</paths\>\
+        \</access\>\
+    \</file_system\>\
+\</user\>\
 
 #### Port Configuration
 
 Enable both HTTP and HTTPS for Node API in `/opt/aspera/etc/aspera.conf`:
 
-    <server>
-        <server_name>test.sl.dev.asperacloud.net</server_name>
-        <http_port>9091</http_port>
-        <https_port>9092</https_port>
-        <enable_http>true</enable_http>
-        <enable_https>true</enable_https>
-    </server>
+\
+\<server\>\
+    \<server_name\>test.sl.dev.asperacloud.net\</server_name\>\
+    \<http_port\>9091\</http_port\>\
+    \<https_port\>9092\</https_port\>\
+    \<enable_http\>true\</enable_http\>\
+    \<enable_https\>true\</enable_https\>\
+\</server\>\
 
 Restart asperanoded service to apply the configuration changes:
 
-    service asperanoded restart
+\
+service asperanoded restart\
 
 #### Command Operations
 
@@ -4161,6 +4514,8 @@ This plugin provides the ability to initiate server-to-server transfers using As
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 4.3.5 | Enhanced action template UI |
+| 4.3.4 | Fix bug when passing no node credentials |
 | 4.3.3 | Fix decryption bug when setting node password |
 | 4.3.2 | Fix problem when checking transfer status |
 | 4.3.1 | Parse faspex links before requesting the token to faspex |
@@ -5013,7 +5368,7 @@ This example describes a Job Order (in this case a pull operation) in XML format
 
 [XML Format](https://developer.asperasoft.com/web/soap/job-submissions/182-job-definitions#)
 
-``` markup
+```
 <Order>
     <Version>2</Version>
     <Agent>aspera.sdk.sample</Agent>
@@ -5160,6 +5515,7 @@ This plugin integrates with Faspex5 servers to manage file processing workflows 
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.0.6 | Enhanced action template UI |
 | 0.0.5 | Improved error handling during reauthentication and API operations |
 | 0.0.4 | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.0.3 | Updated the label from Keep ongoing to Continue Monitoring |
@@ -5262,7 +5618,7 @@ This plugin integrates with Faspex5 servers to manage file processing workflows 
 
 - Generate a new SSH key exclusively for Faspex interaction in PEM format:
 
-  `ssh-keygen -m pem -b 4096 -C "your_email@example.com"` (save as key_for_faspex.pub)
+  `ssh-keygen -t rsa -b 4096 -m PEM -C "your_email@example.com"` (save as key_for_faspex.pub)
 
 - Convert to PEM format:
 
@@ -5271,6 +5627,10 @@ This plugin integrates with Faspex5 servers to manage file processing workflows 
 - In HA environments, share the new private key among all Orchestrator instances.
 
 - For Faspex 5.0.4 and later, enable the parameter 'allow_global_key': 'true' or 'Allow signing with global key'.
+
+
+**Note:** Newer versions of OpenSSH default to generating ED25519 keys rather than RSA. If you encounter the error *do_convert_to_pem: unsupported key type ED25519* when exporting the public key to PEM format, it means an ED25519 key was generated, which is not supported for PEM conversion. Make sure to use the `-t rsa` flag as shown above to explicitly generate an RSA key.
+
 
 #### Faspex Server Configuration
 
@@ -5326,6 +5686,7 @@ This action plug-in provides the ability to start, monitor and cancel a stream t
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.1.1 | Enhanced action template UI |
 | 0.1.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.0.2 | Add @ssh_args = nil and @remote_node = nil to avoid an execution error |
 | 0.0.1 | initial release |
@@ -5540,6 +5901,7 @@ This plugin provides a configurable interface to a remote FTP server. It support
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 1.3.1 | Enhanced action template UI |
 | 1.3.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 1.2.0 | Enable binary and passive modes by default |
 | 1.1.4 | Make upload folder recursively an optional input |
@@ -5710,6 +6072,7 @@ This action plugin can be used to perform secure file transfer operations on FTP
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.1.1   | Enhanced action template UI                         |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.0.1   | Initial implementation                              |
 
@@ -5911,6 +6274,7 @@ This action provides the ability to move files using the FXP protocol.
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.3.1 | Enhanced action template UI |
 | 0.3.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.2.0 | Added timeout hard coded value of 84600 (24 hours) to read_timeout |
 | 0.1.9 | Adding Remote Node Dependency |
@@ -6049,6 +6413,7 @@ This action provides the ability to upload, download and delete files from a rem
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.2.2 | Enhanced action template UI |
 | 0.2.1 | Add SSL/HTTPS support, redirect following, and response validation |
 | 0.2.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.1.4 | Add some elements in the help |
@@ -6304,6 +6669,7 @@ This action plugin provides the ability to deliver audio and video content, in a
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.2.2 | Enhanced action template UI |
 | 0.2.1 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.2.0 | Remove hardcoded aspera directory reference |
 | 0.1.3 | Fix for autofill username/password |
@@ -6455,6 +6821,7 @@ This action plugin provides file copy operation on a Windows OS
 
 | Version | Comment                                                         |
 |---------|-----------------------------------------------------------------|
+| 0.1.1   | Enhanced action template UI                                     |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8             |
 | 0.0.3   | Adding Remote Node Dependency                                   |
 | 0.0.2   | \- 2015/02/09 - JG -\> Parse Code Commented since its not used. |
@@ -6649,6 +7016,7 @@ This action enables uploading or downloading files and directories to or from a 
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.2.1 | Enhanced action template UI |
 | 0.2.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.1.1 | Adding Remote Node Dependency |
 | 0.1.0 | 2016-02-17 - Added help file |
@@ -6774,6 +7142,7 @@ This plugin provides secure file transfer functionality to SFTP servers, support
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.7.1 | Enhanced action template UI |
 | 0.7.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.6.0 | Add keepalive option |
 | 0.5.7 | Fix Remote Node log info |
@@ -6949,6 +7318,7 @@ This plugin returns the transfer specification to be used for Node API-based tra
 
 | Version | Comment                                              |
 |---------|------------------------------------------------------|
+| 0.1.1   | Enhanced action template UI                          |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8  |
 | 0.0.2   | Correctly detect transfer errors in some edge cases. |
 | 0.0.1   | Initial implementation                               |
@@ -7064,6 +7434,7 @@ This action provides the ability to upload, download, post commands, make direct
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.3.1 | Enhanced action template UI |
 | 0.3.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.2.0 | Adding Verify SSL option |
 | 0.1.1 | Adding Remote Node Dependency |
@@ -7277,6 +7648,8 @@ This action plug-in can be used to retrieve media information about an image or 
 
 | Version | Comment                                                        |
 |---------|----------------------------------------------------------------|
+| 0.1.3   | Enhanced action template UI                                    |
+| 0.1.2   | Cleanup and remove unused code                                 |
 | 0.1.1   | Updating to be compatible with Ruby 3.4 and Rails 8            |
 | 0.1.0   | Remove hardcoded aspera directory reference                    |
 | 0.0.9   | Adding Remote Node Dependency                                  |
@@ -7289,37 +7662,78 @@ This action plug-in can be used to retrieve media information about an image or 
 | 0.0.2   | adds functionality to mask password                            |
 | 0.0.1   | initial release, only supports convert and identify            |
 
+#### How It Works
+
+- Executes **ImageMagick command line operations** on a remote node where ImageMagick is installed, connecting via SSH.
+- Supports the **identify** command for extracting image metadata, the **convert** command for image manipulation and conversion, and the **composite** command for overlaying images.
+- Accepts a **media file path** as the source file for analysis or conversion, with support for **dynamic runtime inputs** via ERB-style template variables.
+- Accepts **command options** passed before the file name and **command line arguments** passed after, giving full control over the ImageMagick command line.
+- Defaults to **-verbose** for command options if none are specified.
+- Supports an optional **path to the ImageMagick binaries** for environments where the binary folder is not in the system path.
+- Supports optional **execution credentials** (login and password) for connecting to the remote node, falling back to the node's default account if not specified.
+- Returns a **hash of metadata or conversion result information** extracted from the ImageMagick output.
+
+#### Configuration Instructions
+
+1.  Create a new action step using the **Imagemagick** plugin.
+2.  Fill out the following fields:
+    - **Name**: The name used to identify a saved Imagemagick configured instance.
+    - **Comments**: Comments about this saved Imagemagick configured instance.
+    - **Media file path**: The source file for the analysis or conversion operation. Supports dynamic ERB-style template variables.
+    - **Execution Node**: The remote node where ImageMagick is installed and where the operation will be executed.
+    - **Execution Login**: The user account used to connect to the remote node. Defaults to the node's default account if not specified.
+    - **Execution Password**: The password for the remote node login. Defaults to the node's default password if not specified.
+    - **Path to the folder containing the binaries**: Path to the ImageMagick binary folder on the remote node. Not required if the binary folder is already in the system path for the remote account.
+    - **Command options**: Optional parameters passed to the ImageMagick binary before the media file name. Defaults to '-verbose' if left blank.
+    - **Command line arguments**: Optional parameters passed after the media file name. Used with 'convert' to specify a target file path, or with 'composite' to specify overlay and output images.
+
+#### Example Configuration
+
+This is an example configuration for the Imagemagick plugin extracting metadata from an image file using the identify command.
+
+| Parameter | Value |
+|-------|---------------------------------------------------|
+| Name | Identify Image Metadata |
+| Comments | Extract metadata from source image using ImageMagick identify |
+| Media file path | /data/ingest/\<%= Image_name %\>.jpg |
+| Execution Node | imagemagick-server |
+| Execution Login | (blank - use node default) |
+| Execution Password | (blank - use node default) |
+| Path to the folder containing the binaries | /opt/local/bin |
+| Command options | -verbose |
+| Command line arguments | (blank) |
+
 #### Saved Parameters Description
 
-- **Name**: The name used to identify a saved Imagemagick configured instance.
-- **Comments**: Some comments about this saved Imagemagick configured instance.
-- **Media file path**: The source file for the analysis or conversion operation.
-- **Execution Node**: The node where the Imagemagick analysis or conversion operation must be executed (i.e. the node where the Imagemagick application is installed).
-- **Execution Login**: The user account used to execute the Imagemagick operation. If not specified the default user accound for the node will be used.
-- **Execution Password**: The password used to log in into the remote node. If not specified the default password for the node will be used.
-- **Path to the folder containing the binaries**: The path to locate Imagemagick's convert and identify binary on the remote node. Not needed if the binary folder for Imagemagick is in the sytem path for the account use to remote connect on the specified server.
-- **Command options**: Any optional parameters supported by the Imagemagick binary. Those options will be passed on the command line as they are, before the manipulated file name. Note: if left blank, '-verbose' is used.
-- **Command line arguments**: Any optional parameters supported by the mediainfo binary and typically in the case of convert a target file path. Those options will be passed on the command line as they are, after the manipulated file name.
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| **Name** | The name used to identify a saved Imagemagick configured instance. |
+| **Comments** | Comments about this saved Imagemagick configured instance. |
+| **Media file path** | The source file for the analysis or conversion operation. Supports dynamic ERB-style template variables. |
+| **Execution Node** | The remote node where ImageMagick is installed and where the operation will be executed. |
+| **Execution Login** | The user account used to connect to the remote node. Defaults to the node's default account if not specified. |
+| **Execution Password** | The password for the remote node login. Defaults to the node's default password if not specified. |
+| **Path to the folder containing the binaries** | Path to the ImageMagick binary folder on the remote node. Not required if the binary folder is already in the system path for the remote account. |
+| **Command options** | Optional parameters passed to the ImageMagick binary before the media file name. Defaults to '-verbose' if left blank. |
+| **Command line arguments** | Optional parameters passed after the media file name. Used with 'convert' to specify a target file path, or with 'composite' to specify overlay and output images. |
 
-#### Inputs description
+#### Inputs Description
 
-The list of inputs depends on the configuration of the Imagemagick action template.
+The available inputs depend on the template configuration. Fields that use dynamic ERB-style variables expose those variables as mandatory runtime inputs of type string.
 
-The list of inputs depends on the configuration of the Imagemagick action template as the fields for the paths and options all support dynamic inputs.
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| *Media file path* | By default, a file name must be provided as an input for identify, convert, and composite commands. If the 'Media file path' field is populated in the template, all dynamic variables referenced in it become mandatory runtime inputs of type string. |
+| *Options* | If 'Command options' is left blank in the template, an optional Options input is available at runtime. If the field is populated, all dynamic variables referenced in it are mandatory runtime inputs of type string. |
+| *Command arguments* | Follows the same pattern as Options but applies to the 'Command line arguments' template parameter. Dynamic variables referenced in it are mandatory runtime inputs of type string. |
 
-- *Media file path*: By default, a file name must be provided as an input for both the identify and convert commands. However, if the 'Media file path' field is populated, then instead all the dynamic variables listed in it are mandatory and must be of type string.
-- *Options*: If 'Command options' is left blank, an optional 'Options' input is provided. However, if it populated, all the dynamic variables listed in the 'Command options' optional parameters to pass to the Imagemagick process are mandatory and must be of type string.
-- *Command arguments*: Same as 'Options' but depends on the 'Command line arguments' template parameter.
+#### Outputs Description
 
-#### Outputs description
+The output is a hash of information returned by ImageMagick. The structure varies by command and options used. Sample output hashes are provided below.
 
-- *Image_info*: A hash containing some meta-data information that Imagemagick returns. The fields in that hash depends on which command is used and which options are used.
-
-Some sample results are provided after the instructions
-
-Note: Imagemagick provides the ability to format its output using different options. If such options is used, then parsing the resulting screen will be the responsibility of the next step as this action will just provide the output as it comes out of Imagemagick.
-
-For example, in default mode in the Video hash, a pair 'Bit rate'=\>'638 Kbps' whereas in full mode (-f), the pair is 'Bit rate'=\>\['637520', '638 Kbps'\]
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| Image_info | A hash containing metadata or conversion result information returned by ImageMagick. The fields in the hash depend on which command and options are used. If a custom output format option is used, the output is returned as-is and parsing is the responsibility of the next workflow step. |
 
 #### Supported Actions
 
@@ -7327,267 +7741,148 @@ None
 
 #### Dependencies
 
-None
+Requires ImageMagick to be installed on the remote Execution Node. The remote node must have SSH enabled. For Windows nodes, OpenSSH must be installed.
 
 #### Operating Instructions
 
-This action executes the specified file Imagemagick operation on a remote node where Imagemagick is available. The connection to the remote server is done over SSH, so make sure that the target server has SSH enabled to it. If the server is a Windows machine, OpenSSH can be installed.
-
-This action use the Imagemagick command line tools.
-
-The 'identify' action command line is formatted as follow:
-
-- **\[Path to the folder containing the binaries\]/identify \[options\] \[command arguments (typically left blank)\]"**
-
-For example: **/opt/local/bin/identify -verbose /data/ingest/bozo.jpg**
-
-Path to the folder containing the binaries: '/opt/local/bin'
-
-options: '-verbose' (or left blank as '-verbose' is the default)
-
-Media file path: '' (left blank, but mapped as an input to a string '/data/ingest/bozo.jpg' command arguments: '' (left blank)
-
-The 'convert' action command line is formatted as follow:
-
-- **\[Path to the folder containing the binaries\]/convert \[options\] \[command arguments (typically contains a target path)\]"**
-
-For example: **/opt/local/bin/convert -verbose /data/ingest/bozo.jpg -resize 50% /data/ingest/bozo_small.png**
-
-Path to the folder containing the binaries: '/opt/local/bin'
-
-options: '-verbose' (or left blank as '-verbose' is the default)
-
-Media file path: '/data/ingest/\<%=Image_name%\>.jpg' command arguments: '-resize 50% /data/ingest/\<%=Image_name%\>\_small.png'
-
-with the dynamic input 'Image_name' mapped as an input to a string 'bozo'
-
-Other 'convert' example: **/opt/local/bin/convert -background lightblue -fill blue -font Candice -size 165x70 -pointsize 24 label:Maurice /data/labels/Maurice.gif**
-
-Path to the folder containing the binaries: '/opt/local/bin'
-
-options: ' -background lightblue -fill \<%=Color%\> -font Candice -size 165x70 -pointsize 24 label:\<%=Label_name%\>'
-
-Media file path: '/data/label/\<%=Label_name%\>.gif' command arguments: ''
-
-with the dynamic inputs 'Color' and 'Label_name' mapped as inputs to the strings 'blue' and 'Maurice'
-
-It is typically a good idea to provide the explicit path to the Imagemagick binaries to avoid configuration issues. On a Unix-flavored machine, running '**which convert**' or '**which identify**' should provide the path information.
-
-Important Note: this action plugins does not do any file movement. Hence, for it to run a file analysis, the specified file has to be accessible. Either the file is transferred to that server or it must be accessible from that server either on some type of network share.
-
-For the 'convert' command, here is a sample result hash:
-
-*{ "Converted_Image"=\>"./Boots_small.png",*
-
-  "Image"=\>"./Boots.jpg",   "Properties"=\>"JPEG 3072x2304=\>1536x1152 1536x1152+0+0 8-bit DirectClass 3.637MB 1.740u 0:01.720"}
-
-For the 'identify' command, here is a sample result hash:
-
-*{ 'Image'=\>'public/images/success.png',*
-
-  'Format'=\>'PNG (Portable Network Graphics)',
-
-  'Class'=\>'DirectClass',
-
-  'Geometry'=\>'48x48+0+0',
-
-  'Resolution'=\>'28.35x28.35',
-
-  'Print size'=\>'1.69312x1.69312',
-
-  'Units'=\>'PixelsPerCentimeter',
-
-  'Type'=\>'TrueColorMatte',
-
-  'Endianess'=\>'Undefined',
-
-  'Colorspace'=\>'sRGB',
-
-  'Depth'=\>'8-bit',
-
-  'Channel depth'=\>{
-
-    'red'=\>'8-bit',
-
-    'green'=\>'8-bit',
-
-    'blue'=\>'8-bit',
-
-    'alpha'=\>'8-bit'},
-
-  'Channel statistics'=\>{
-
-    'Red'=\>{
-
-      'min'=\>'0 (0)',
-
-      'max'=\>'255 (1)',
-
-      'mean'=\>'142.447 (0.558618)',
-
-      'standard deviation'=\>'114.972 (0.450871)',
-
-      'kurtosis'=\>'-1.89177',
-
-      'skewness'=\>'-0.204789'},
-
-    'Green'=\>{
-
-      'min'=\>'0 (0)',
-
-      'max'=\>'255 (1)',
-
-      'mean'=\>'191.891 (0.752516)',
-
-      'standard deviation'=\>'74.0432 (0.290365)',
-
-      'kurtosis'=\>'0.715435',
-
-      'skewness'=\>'-1.20533'},
-
-    'Blue'=\>{
-
-      'min'=\>'0 (0)',
-
-      'max'=\>'255 (1)',
-
-      'mean'=\>'140.556 (0.5512)',
-
-      'standard deviation'=\>'117.118 (0.459284)',
-
-      'kurtosis'=\>'-1.88585',
-
-      'skewness'=\>'-0.209334'},
-
-    'Alpha'=\>{
-
-      'min'=\>'0 (0)',
-
-      'max'=\>'255 (1)',
-
-      'mean'=\>'143.957 (0.564539)',
-
-      'standard deviation'=\>'122.454 (0.480214)',
-
-      'kurtosis'=\>'-1.90476',
-
-      'skewness'=\>'0.239299'} },
-
-  'Image statistics'=\>{
-
-    'Overall'=\>{
-
-      'min'=\>'0 (0)',
-
-      'max'=\>'255 (1)',
-
-      'mean'=\>'146.484 (0.574449)',
-
-      'standard deviation'=\>'108.872 (0.42695)',
-
-      'kurtosis'=\>'-1.55176',
-
-      'skewness'=\>'-0.368109'} },
-
-  'Alpha'=\>'srgba(255,255,255,0) \#FFFFFF00',
-
-  'Colors'=\>'631',
-
-  'Rendering intent'=\>'Perceptual',
-
-  'Gamma'=\>'0.45455',
-
-  'Chromaticity'=\>{
-
-    'red primary'=\>'(0.64,0.33)',
-
-    'green primary'=\>'(0.3,0.6)',
-
-    'blue primary'=\>'(0.15,0.06)',
-
-    'white point'=\>'(0.3127,0.329)'},
-
-  'Interlace'=\>'None',
-
-  'Background color'=\>'white',
-
-  'Border color'=\>'srgba(223,223,223,1)',
-
-  'Matte color'=\>'grey74',
-
-  'Transparent color'=\>'none',
-
-  'Compose'=\>'Over',
-
-  'Page geometry'=\>'48x48+0+0',
-
-  'Dispose'=\>'Undefined',
-
-  'Iterations'=\>'0',
-
-  'Compression'=\>'Zip',
-
-  'Orientation'=\>'Undefined',
-
-  'Properties'=\>{
-
-    'date:create'=\>'2011-12-22T15:32:51-08:00',
-
-    'date:modify'=\>'2011-12-22T15:32:51-08:00',
-
-    'png:cHRM '=\>'chunk was found (see Chromaticity, above)',
-
-    'png:gAMA '=\>'gamma=0.45455 (See Gamma, above)',
-
-    'png:iCCP '=\>'chunk was found',
-
-    'png:IHDR.bit_depth '=\>'8',
-
-    'png:IHDR.color_type '=\>'6',
-
-    'png:IHDR.interlace_method'=\>'0',
-
-    'png:IHDR.width,height '=\>'48, 48',
-
-    'png:pHYs '=\>'x_res=2835, y_res=2835, units=1',
-
-    'png:sRGB '=\>'intent=32767 (See Rendering intent)',
-
-    'signature'=\>'33f7a9e4cd2a4c0357436747705f4cca1a2fb2e55becdbdf0fc289ba22f304f9'},
-
-  'Profiles'=\>{
-
-    'Profile-icc'=\>'3144 bytes',
-
-      'Description'=\>'sRGB IEC61966-2.1',
-
-      'Manufacturer'=\>'IEC http://www.iec.ch',
-
-      'Model'=\>'IEC 61966-2.1 Default RGB colour space - sRGB',
-
-      'Copyright'=\>'Copyright (c) 1998 Hewlett-Packard Company'},
-
-  'Artifacts'=\>{
-
-    'filename'=\>'public/images/success.png',
-
-    'verbose'=\>'true'},
-
-  'Tainted'=\>'False',
-
-  'Filesize'=\>'6.25KB',
-
-  'Number pixels'=\>'2.3K',
-
-  'Pixels per second'=\>'115KB',
-
-  'User time'=\>'0.000u',
-
-  'Elapsed time'=\>'0:01.019',
-
-  'Version'=\>'ImageMagick 6.7.6-7 2012-05-01 Q16 http://www.imagemagick.org',
-
-}
+This action executes an ImageMagick operation on a remote node over SSH. The identify, convert, and composite commands are supported, with full control over options and arguments via template fields and dynamic runtime inputs.
+
+**Using the identify Command**
+
+- The identify command line is structured as: `[binary path]/identify [options] <Media file path> [command arguments]`
+- Example: `/opt/local/bin/identify -verbose /data/ingest/bozo.jpg`
+- Command options default to `-verbose` if left blank. Command arguments are typically left blank for identify.
+- Run `which identify` on the remote server to find the binary path if not known.
+
+**Using the convert Command**
+
+- The convert command line is structured as: `[binary path]/convert [options] <Media file path> [command arguments]`
+- Example — resize: `/opt/local/bin/convert -verbose /data/ingest/bozo.jpg -resize 50% /data/ingest/bozo_small.png`
+  - Path to binaries: `/opt/local/bin`
+  - Command options: `-verbose`
+  - Media file path: `/data/ingest/<%= Image_name %>.jpg`
+  - Command arguments: `-resize 50% /data/ingest/<%= Image_name %>_small.png`
+  - Dynamic input `Image_name` mapped to the string `bozo`
+- Example — label generation: `/opt/local/bin/convert -background lightblue -fill blue -font Candice -size 165x70 -pointsize 24 label:Maurice /data/labels/Maurice.gif`
+  - Command options: `-background lightblue -fill <%= Color %> -font Candice -size 165x70 -pointsize 24 label:<%= Label_name %>`
+  - Media file path: `/data/label/<%= Label_name %>.gif`
+  - Dynamic inputs `Color` and `Label_name` mapped to `blue` and `Maurice`
+
+**Using the composite Command**
+
+- The composite command line is structured as: `[binary path]/composite [options] <Media file path> [command arguments]`
+- The **Media file path** field specifies the **overlay (foreground) image** — the image to be composited on top of another.
+- The **Command line arguments** field specifies the **base (background) image and the output file path**.
+- Example — watermark overlay: `/opt/local/bin/composite -dissolve 50% /data/watermarks/logo.png /data/ingest/photo.jpg /data/output/photo_watermarked.jpg`
+  - Path to binaries: `/opt/local/bin`
+  - Command options: `-dissolve 50%`
+  - Media file path (overlay): `/data/watermarks/logo.png`
+  - Command arguments (base image + output): `/data/ingest/photo.jpg /data/output/photo_watermarked.jpg`
+- Run `which composite` on the remote server to find the binary path if not known.
+
+**Best Practices**
+
+- Always provide the **explicit path to the ImageMagick binaries** to avoid configuration issues caused by differences in the system path between accounts. Use `which convert`, `which identify`, or `which composite` on the remote server to find the path.
+- Ensure the **source file is accessible from the remote node** before the workflow runs — either transferred to the server or accessible via a network share. This plugin does not perform file movement.
+- Use **dynamic ERB-style template variables** in the Media file path, Command options, and Command line arguments fields to build flexible, reusable workflow steps.
+- For **convert and composite operations**, always specify the target output file path in the Command line arguments field to define where the output file will be written.
+- For **composite operations**, ensure both the overlay image (Media file path) and the base image (Command line arguments) are accessible on the remote node.
+- Ensure the **remote node has SSH enabled**. For Windows nodes, install OpenSSH to enable SSH connectivity.
+- Test ImageMagick commands **directly on the remote server** before configuring them in the workflow to validate syntax and options.
+- If using **custom output format options** (e.g., `-format`), be aware that the Results output will be returned as raw text — implement parsing logic in a subsequent workflow step.
+
+**Troubleshooting**
+
+- **Binary not found:** Verify the path to the ImageMagick binary folder is correct on the remote node. Run `which convert`, `which identify`, or `which composite` on the remote server to confirm the path.
+- **SSH connection failure:** Ensure the remote node has SSH enabled and is accessible from the Orchestrator server. Verify the Execution Login and Password are correct.
+- **File not found:** Confirm the media file path is correct and the file is accessible from the remote node. This plugin does not transfer files. For composite, verify both the overlay and base image paths are accessible.
+- **Permission denied:** Ensure the Execution Login account has read access to all source files and write access to the target output directory.
+- **Empty or unexpected Results output:** Check that the Command options and Command line arguments are correctly formatted. Test the full command directly on the remote server.
+- **Dynamic variable not resolved:** Ensure all ERB-style variables referenced in the template fields are provided as runtime inputs of type string.
+- **Windows node issues:** Ensure OpenSSH is installed and running on the Windows node if using a Windows remote server.
+
+**Important Notes**
+
+- This plugin **does not perform file movement** — all source files must already be accessible from the remote node before the workflow step runs.
+- The connection to the remote node is made **over SSH**. Ensure SSH is enabled on the target server. For Windows, OpenSSH must be installed.
+- Supported commands are **identify, convert, and composite**.
+- Command options default to **-verbose** if left blank.
+- For the **convert** command, verbose output is written to stderr and is parsed automatically by the plugin.
+- If a **custom output format option** is used, the Results output is returned as raw text and must be parsed by a subsequent workflow step.
+- All dynamic variables referenced in template fields are **mandatory runtime inputs of type string** when those fields are populated.
+- The **Results hash structure varies** depending on the command used (identify, convert, or composite) and the options applied.
+
+**Sample Results — convert Command**
+
+The following is a sample Results hash returned by a convert operation:
+
+\
+{\
+  "Converted_Image" =\> "/rails_root/Boots_small.png",\
+  "Image"           =\> "/rails_root/Boots.jpg",\
+  "Properties"      =\> "JPEG 3072x2304=\>1536x1152 1536x1152+0+0 8-bit DirectClass 3.637MB 1.740u 0:01.720"\
+}\
+
+**Sample Results — identify Command**
+
+The following is a sample Results hash returned by an identify -verbose operation:
+
+\
+{\
+  'Image'              =\> 'public/images/success.png',\
+  'Format'             =\> 'PNG (Portable Network Graphics)',\
+  'Class'              =\> 'DirectClass',\
+  'Geometry'           =\> '48x48+0+0',\
+  'Resolution'         =\> '28.35x28.35',\
+  'Print size'         =\> '1.69312x1.69312',\
+  'Units'              =\> 'PixelsPerCentimeter',\
+  'Type'               =\> 'TrueColorMatte',\
+  'Colorspace'         =\> 'sRGB',\
+  'Depth'              =\> '8-bit',\
+  'Channel depth'      =\> { 'red' =\> '8-bit', 'green' =\> '8-bit', 'blue' =\> '8-bit', 'alpha' =\> '8-bit' },\
+  'Channel statistics' =\> {\
+    'Red'   =\> { 'min' =\> '0 (0)', 'max' =\> '255 (1)', 'mean' =\> '142.447 (0.558618)',\
+                 'standard deviation' =\> '114.972 (0.450871)', 'kurtosis' =\> '-1.89177', 'skewness' =\> '-0.204789' },\
+    'Green' =\> { 'min' =\> '0 (0)', 'max' =\> '255 (1)', 'mean' =\> '191.891 (0.752516)',\
+                 'standard deviation' =\> '74.0432 (0.290365)', 'kurtosis' =\> '0.715435', 'skewness' =\> '-1.20533' },\
+    'Blue'  =\> { 'min' =\> '0 (0)', 'max' =\> '255 (1)', 'mean' =\> '140.556 (0.5512)',\
+                 'standard deviation' =\> '117.118 (0.459284)', 'kurtosis' =\> '-1.88585', 'skewness' =\> '-0.209334' },\
+    'Alpha' =\> { 'min' =\> '0 (0)', 'max' =\> '255 (1)', 'mean' =\> '143.957 (0.564539)',\
+                 'standard deviation' =\> '122.454 (0.480214)', 'kurtosis' =\> '-1.90476', 'skewness' =\> '0.239299' }\
+  },\
+  'Image statistics'   =\> {\
+    'Overall' =\> { 'min' =\> '0 (0)', 'max' =\> '255 (1)', 'mean' =\> '146.484 (0.574449)',\
+                   'standard deviation' =\> '108.872 (0.42695)', 'kurtosis' =\> '-1.55176', 'skewness' =\> '-0.368109' }\
+  },\
+  'Colors'             =\> '631',\
+  'Rendering intent'   =\> 'Perceptual',\
+  'Gamma'              =\> '0.45455',\
+  'Chromaticity'       =\> {\
+    'red primary'   =\> '(0.64,0.33)',\
+    'green primary' =\> '(0.3,0.6)',\
+    'blue primary'  =\> '(0.15,0.06)',\
+    'white point'   =\> '(0.3127,0.329)'\
+  },\
+  'Interlace'          =\> 'None',\
+  'Background color'   =\> 'white',\
+  'Compression'        =\> 'Zip',\
+  'Properties'         =\> {\
+    'date:create' =\> '2011-12-22T15:32:51-08:00',\
+    'date:modify' =\> '2011-12-22T15:32:51-08:00',\
+    'signature'   =\> '33f7a9e4cd2a4c0357436747705f4cca1a2fb2e55becdbdf0fc289ba22f304f9'\
+  },\
+  'Profiles'           =\> {\
+    'Profile-icc'  =\> '3144 bytes',\
+    'Description'  =\> 'sRGB IEC61966-2.1',\
+    'Manufacturer' =\> 'IEC http://www.iec.ch',\
+    'Model'        =\> 'IEC 61966-2.1 Default RGB colour space - sRGB',\
+    'Copyright'    =\> 'Copyright (c) 1998 Hewlett-Packard Company'\
+  },\
+  'Artifacts'          =\> { 'filename' =\> 'public/images/success.png', 'verbose' =\> 'true' },\
+  'Filesize'           =\> '6.25KB',\
+  'Number pixels'      =\> '2.3K',\
+  'Version'            =\> 'ImageMagick 6.7.6-7 2012-05-01 Q16 http://www.imagemagick.org'\
+}\
 
 
 ### MacCaption Operation
@@ -7901,6 +8196,7 @@ This action plug-in is used to transform XML file using XSLT.
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.1.1 | Enhanced action template UI |
 | 0.1.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.0.5 | saving to target file bug fix |
 | 0.0.4 | Implemented by xslt transformation using nokogiri - removing xslt4r |
@@ -7948,18 +8244,18 @@ This provides a minimal configuration example for the XsltTransformation plugin.
 <tbody>
 <tr>
 <td>XML body</td>
-<td><pre><code>&lt;book&gt;
- &lt;title&gt;The Well-Grounded Rubyist&lt;/title&gt;
- &lt;author&gt;David A. Black&lt;/author&gt;
-&lt;/book&gt;
-&lt;book&gt;
- &lt;title&gt;Programming Ruby: The Pragmatic Programmer&#39;s Guide&lt;/title&gt;
- &lt;author&gt;Dave Thomas, Chad Fowler, Andy Hunt&lt;/author&gt;
-&lt;/book&gt;
-&lt;book&gt;
- &lt;title&gt;Learn to Program&lt;/title&gt;
- &lt;author&gt;Chris Pine&lt;/author&gt;
-&lt;/book&gt;</code></pre></td>
+<td>&lt;book&gt;<br />
+ &lt;title&gt;The Well-Grounded Rubyist&lt;/title&gt;<br />
+ &lt;author&gt;David A. Black&lt;/author&gt;<br />
+&lt;/book&gt;<br />
+&lt;book&gt;<br />
+ &lt;title&gt;Programming Ruby: The Pragmatic Programmer's Guide&lt;/title&gt;<br />
+ &lt;author&gt;Dave Thomas, Chad Fowler, Andy Hunt&lt;/author&gt;<br />
+&lt;/book&gt;<br />
+&lt;book&gt;<br />
+ &lt;title&gt;Learn to Program&lt;/title&gt;<br />
+ &lt;author&gt;Chris Pine&lt;/author&gt;<br />
+&lt;/book&gt;</td>
 </tr>
 <tr>
 <td>XML file path</td>
@@ -7967,20 +8263,20 @@ This provides a minimal configuration example for the XsltTransformation plugin.
 </tr>
 <tr>
 <td>XSLT body</td>
-<td><pre><code>&lt;books&gt;
- &lt;book&gt;
-  &lt;title&gt;The Well-Grounded Rubyist&lt;/title&gt;
-  &lt;author&gt;David A. Black&lt;/author&gt;
- &lt;/book&gt;
- &lt;book&gt;
-  &lt;title&gt;Programming Ruby: The Pragmatic Programmer&#39;s Guide&lt;/title&gt;
-  &lt;author&gt;Dave Thomas, Chad Fowler, Andy Hunt&lt;/author&gt;
- &lt;/book&gt;
- &lt;book&gt;
-  &lt;title&gt;Learn to Program&lt;/title&gt;
-  &lt;author&gt;Chris Pine&lt;/author&gt;
- &lt;/book&gt;
-&lt;/books&gt;</code></pre></td>
+<td>&lt;books&gt;<br />
+ &lt;book&gt;<br />
+  &lt;title&gt;The Well-Grounded Rubyist&lt;/title&gt;<br />
+  &lt;author&gt;David A. Black&lt;/author&gt;<br />
+ &lt;/book&gt;<br />
+ &lt;book&gt;<br />
+  &lt;title&gt;Programming Ruby: The Pragmatic Programmer's Guide&lt;/title&gt;<br />
+  &lt;author&gt;Dave Thomas, Chad Fowler, Andy Hunt&lt;/author&gt;<br />
+ &lt;/book&gt;<br />
+ &lt;book&gt;<br />
+  &lt;title&gt;Learn to Program&lt;/title&gt;<br />
+  &lt;author&gt;Chris Pine&lt;/author&gt;<br />
+ &lt;/book&gt;<br />
+&lt;/books&gt;</td>
 </tr>
 <tr>
 <td>XSLT file path</td>
@@ -8049,6 +8345,7 @@ This action plug-ins can be used to interact with Amazon DynamoDB.
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.4.1   | Enhanced action template UI                         |
 | 0.4.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.3.0   | Add assume role                                     |
 | 0.2.0   | Add http proxy support                              |
@@ -8236,6 +8533,7 @@ This action plug-in provides the ability to integrate with Amazon Glacier Servic
 
 | Version | Comment                                                   |
 |---------|-----------------------------------------------------------|
+| 0.7.1   | Enhanced action template UI                               |
 | 0.7.0   | Updating to be compatible with Ruby 3.4 and Rails 8       |
 | 0.6.0   | Add assume role                                           |
 | 0.5.1   | Fix for secret masking                                    |
@@ -8429,6 +8727,8 @@ This action plug-in provides the ability to integrate with Amazon Media Convert 
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.2.2   | Enhanced action template UI                         |
+| 0.2.1   | Cleanup code & remove beta flag                     |
 | 0.2.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.1.3   | Add session token                                   |
 | 0.1.2   | Add icon                                            |
@@ -8437,39 +8737,94 @@ This action plug-in provides the ability to integrate with Amazon Media Convert 
 | 0.0.2   | Avoid autofill of key and secret                    |
 | 0.0.1   | Initial release.                                    |
 
+#### How It Works
+
+- Integrates with **AWS Elemental MediaConvert**, a file-based video transcoding service with broadcast-grade features for creating video-on-demand (VOD) content at scale.
+- Supports **Start Job** operations to submit a new transcoding job using a JSON settings file, and **Cancel Job** operations to stop an in-progress job by ID.
+- Accepts a **JSON settings file path** defining the full video and audio transcoding configuration for the job.
+- Supports **accelerated transcoding mode** to significantly speed up jobs with long or visually complex content.
+- Uses a configurable **IAM role** to define the permissions under which the MediaConvert job is created and executed.
+- Accepts a **unique API endpoint** associated with the AWS account, as required by the MediaConvert service.
+- Supports an optional **polling frequency** to control how often the plugin checks job status during execution.
+- Supports **proxy configuration** for environments requiring indirect AWS access.
+
+#### Configuration Instructions
+
+1.  Create a new action step using the **AmazonMediaConvertOperation** plugin.
+2.  Fill out the following fields:
+    - **Name**: The name used to identify a saved AmazonMediaConvertOperation configured instance.
+    - **Comments**: Comments about this saved AmazonMediaConvertOperation configured instance.
+    - **Aws key**: The access key credentials provided by Amazon.
+    - **Aws secret**: The secret key credentials provided by Amazon.
+    - **Aws region**: The AWS region under which the MediaConvert service is hosted.
+    - **API Endpoint**: The unique MediaConvert endpoint associated with the current AWS account.
+    - **Proxy URL**: The URL of the proxy server through which AWS will be accessed. Leave blank if not using a proxy.
+    - **Operation**: The operation to perform. Supported values: Start Job, Cancel Job.
+    - **Role**: The IAM role used for creating the MediaConvert job.
+    - **Mode**: Whether accelerated transcoding is enabled or disabled. Accelerated mode can significantly speed up jobs with long or visually complex content.
+    - **Settings Path**: Path to the JSON file containing the video settings for the job. Must be correctly formatted for the MediaConvert API.
+    - **Polling Frequency**: How often (in seconds) the plugin polls the MediaConvert API for job status updates (optional).
+    - **Job ID**: The ID of the job to be cancelled. Required for Cancel Job operations.
+
+#### Example Configuration
+
+This is an example configuration for the AmazonMediaConvertOperation plugin submitting a new MediaConvert transcoding job.
+
+| Parameter | Value |
+|-------|---------------------------------------------------|
+| Name | Transcode VOD Asset |
+| Comments | Start a MediaConvert transcoding job for a new VOD asset |
+| Aws key | AKIAIOSFODNN7EXAMPLE |
+| Aws secret | (stored securely) |
+| Aws region | us-east-1 |
+| API Endpoint | https://abc123.mediaconvert.us-east-1.amazonaws.com |
+| Proxy URL | (blank) |
+| Operation | Start Job |
+| Role | arn:aws:iam::123456789012:role/MediaConvertRole |
+| Mode | Enabled |
+| Settings Path | /data/jobs/transcode_settings.json |
+| Polling Frequency | 30 |
+| Job ID | (blank - not cancelling) |
+
 #### Saved Parameters Description
 
-- **Name**: The name used to identify a saved AmazonMediaConvertOperation configured instance.
-- **Comments**: Some comments about this saved AmazonMediaConvertOperation configured instance.
-- **Aws key**: The access key credentials provided by Amazon.
-- **Aws secret**: The secret key credentials provided by Amazon.
-- **Aws region**: The region under which the service is hosted.
-- **API Endpoint**: The unique endpoint associated with current AWS account.
-- **Proxy URL**: The URL of the proxy server through which AWS will be accessed. Leave this field blank if you do not wish to use a proxy server.
-- **Operation**: The operation to be performed. Currently supported are Start Job and Cancel Job.
-- **Role**: The IAM role you use for creating this job.
-- **Mode**: Whether accelerated transcoding is enabled or disabled. This feature can significantly speed up jobs with long, visually complex content.
-- **Settings Path**: The path to JSON file containing the video settings for this job, formatted properly.
-- **Polling Frequency**: Polling frequency of the API call (optional).
-- **Job ID**: The ID of job to be cancelled.
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| **Name** | The name used to identify a saved AmazonMediaConvertOperation configured instance. |
+| **Comments** | Comments about this saved AmazonMediaConvertOperation configured instance. |
+| **Aws key** | The access key credentials provided by Amazon. |
+| **Aws secret** | The secret key credentials provided by Amazon. |
+| **Aws region** | The AWS region under which the MediaConvert service is hosted. |
+| **API Endpoint** | The unique MediaConvert endpoint associated with the current AWS account. |
+| **Proxy URL** | The URL of the proxy server through which AWS will be accessed. Leave blank if not using a proxy. |
+| **Operation** | The operation to perform. Supported values: Start Job, Cancel Job. |
+| **Role** | The IAM role used for creating the MediaConvert job. |
+| **Mode** | Whether accelerated transcoding is enabled or disabled. Accelerated mode can significantly speed up jobs with long or visually complex content. |
+| **Settings Path** | Path to the JSON file containing the video settings for the job. Must be correctly formatted for the MediaConvert API. |
+| **Polling Frequency** | How often (in seconds) the plugin polls the MediaConvert API for job status updates (optional). |
+| **Job ID** | The ID of the job to be cancelled. Required for Cancel Job operations. |
 
-#### Inputs description
+#### Inputs Description
 
-The list of inputs depends on the configuration of the AmazonMediaConvertOperation action template.
+Runtime inputs override any values set in the action template. Credentials and settings path can be specified at runtime for dynamic workflows.
 
-Changes in this list of inputs will override any values set in the action template.
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| *Aws_key* | The Amazon access key ID used for authentication. |
+| *Aws_secret* | The Amazon secret access key used for authentication. |
+| *Aws_region* | The AWS region where the MediaConvert service is hosted. |
+| *Role* | The IAM role ARN used for creating the MediaConvert job. |
+| *Settings_path* | Path to the JSON file containing the video settings for the job. Must be accessible from the Orchestrator server. |
+| *Proxy_url* | The HTTPS proxy URL. Leave blank if not using a proxy (optional). |
+| *Aws_session_token* | The Amazon session token. Used with temporary credentials (optional). |
 
-- *Aws_key*: The Amazon access key id.
-- *Aws_secret*: The Amazon secret access key.
-- *Aws_region*: The Amazon region.
-- *Role*: The IAM role.
-- *Settings_patn*: The path to JSON file containing the video settings for this job.
-- *Proxy_url*: The HTTPS Proxy URL (optional).
-- *Aws_session_token*: The Amazon session token (optional).
+#### Outputs Description
 
-#### Outputs description
+The output contains error details if the operation fails. Check this output in error handling workflows to diagnose and respond to failures.
 
-- *Error Message*: If there is an error, this variable shows the errors
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| Error_Message | Contains error details if the operation fails. Empty on success. |
 
 #### Supported Actions
 
@@ -8477,13 +8832,69 @@ None
 
 #### Dependencies
 
-None
+Requires valid AWS credentials with appropriate MediaConvert and IAM permissions. The IAM role must have a trust relationship permitting MediaConvert to assume it. The Settings Path JSON file must be accessible from the Orchestrator server.
 
 #### Operating Instructions
 
-This action plugin is used to perform actions with the Amazon Media Convert Service.
+This action integrates with AWS Elemental MediaConvert to submit or cancel video transcoding jobs. MediaConvert is a broadcast-grade, file-based transcoding service for creating VOD content at scale, combining advanced video and audio processing capabilities.
 
-AWS Elemental MediaConvert is a file-based video transcoding service with broadcast-grade features. It allows you to easily create video-on-demand (VOD) content for broadcast and multiscreen delivery at scale. The service combines advanced video and audio capabilities.
+**Supported Operations**
+
+- **Start Job:** Submits a new transcoding job to MediaConvert using the IAM role, settings JSON file, and accelerated transcoding mode specified in the configuration. The plugin polls for job completion at the configured polling frequency.
+- **Cancel Job:** Cancels an in-progress MediaConvert job using the provided Job ID. Use the Job ID returned by a previous Start Job operation or retrieved from the AWS Console.
+
+**Accelerated Transcoding Mode**
+
+- When **Mode** is set to Enabled, MediaConvert uses accelerated transcoding to process jobs faster by parallelising the workload.
+- Accelerated transcoding is most effective for **long-duration or visually complex content** such as high-bitrate, high-resolution video.
+- Accelerated transcoding **incurs additional AWS costs**, evaluate the trade-off between speed and cost for your use case.
+- Not all output configurations support accelerated transcoding. Refer to the [AWS MediaConvert documentation](https://docs.aws.amazon.com/mediaconvert/latest/ug/accelerated-transcoding.html) for supported configurations.
+
+**Job Settings JSON File**
+
+- The **Settings Path** must point to a valid JSON file formatted according to the [MediaConvert Job Settings API schema](https://docs.aws.amazon.com/mediaconvert/latest/apireference/jobs.html).
+- The JSON file defines all aspects of the transcoding job including **input files, output groups, video codec settings, audio settings, and captions**.
+- The settings file must be **accessible from the Orchestrator server** at the time the workflow step executes.
+- Use the **AWS MediaConvert Console** to build and export a valid settings JSON file before referencing it in the plugin.
+
+**Finding Your API Endpoint**
+
+- AWS Elemental MediaConvert uses a **per-account unique API endpoint** rather than a shared regional endpoint.
+- To find your endpoint, run the following AWS CLI command: `aws mediaconvert describe-endpoints --region <your-region>`
+- Alternatively, the endpoint is visible in the **AWS MediaConvert Console** under Account \> API endpoint.
+- The endpoint format is: `https://<account-id>.mediaconvert.<region>.amazonaws.com`
+
+**Best Practices**
+
+- Store **AWS credentials securely** using Orchestrator's credential management rather than plaintext configuration.
+- Use an **IAM role with least-privilege permissions** scoped to only the MediaConvert actions and S3 buckets required for the job.
+- Validate the **settings JSON file** against the MediaConvert API schema before using it in a workflow, invalid settings will cause the job to fail at submission.
+- Use the **AWS MediaConvert Console** to test job settings manually before automating them via this plugin.
+- Store the **Job ID** from a Start Job step as a workflow variable so it can be used in a subsequent Cancel Job step if needed.
+- Set an appropriate **Polling Frequency** - too frequent polling may increase API call costs; too infrequent may delay downstream workflow steps.
+- Implement **error handling** workflows that check the Error_Message output to manage job submission failures or cancellation errors.
+- Use **accelerated transcoding selectively** for long or complex content where the speed benefit justifies the additional cost.
+
+**Troubleshooting**
+
+- **Authentication failure:** Verify the AWS key and secret are correct and the IAM user or role has the required MediaConvert permissions (e.g., `mediaconvert:CreateJob`, `mediaconvert:CancelJob`).
+- **Invalid API endpoint:** Confirm the API endpoint is the account-specific MediaConvert endpoint, not a generic regional endpoint. Retrieve it via the AWS CLI or Console.
+- **Settings file not found:** Verify the Settings Path is correct and the file is accessible from the Orchestrator server at runtime.
+- **Invalid settings JSON:** Validate the JSON file structure against the MediaConvert Job Settings API schema. Use the AWS Console to test the settings manually.
+- **Job not found for cancellation:** Confirm the Job ID is correct and the job is still in a cancellable state (SUBMITTED or PROGRESSING).
+- **Accelerated transcoding failure:** Verify the output configuration supports accelerated transcoding. Not all codecs and output groups are compatible, refer to the AWS documentation.
+- **IAM role error:** Ensure the specified IAM role exists, has a trust relationship allowing MediaConvert to assume it, and has the required permissions for S3 input/output buckets.
+- **Proxy connection issues:** Verify the proxy URL is reachable from the Orchestrator server and correctly formatted.
+
+**Important Notes**
+
+- The **API Endpoint** is account-specific and must be retrieved from the AWS MediaConvert Console or via the AWS CLI before configuring this plugin.
+- The **Settings Path** must reference a valid, correctly formatted MediaConvert Job Settings JSON file accessible from the Orchestrator server.
+- The **Job ID** field is only required for Cancel Job operations.
+- Runtime inputs **override values set in the template** when provided.
+- Accelerated transcoding **incurs additional AWS costs** and is not supported by all output configurations.
+- The **IAM role** must have a trust relationship permitting MediaConvert to assume it, in addition to the necessary S3 and MediaConvert action permissions.
+- The operation is **synchronous from the workflow perspective**, the plugin polls for job completion before the workflow step returns, using the configured polling frequency.
 
 
 ### Amazon S3 Operation
@@ -8497,6 +8908,7 @@ This action plug-in provides the ability to execute file and bucket operations (
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 1.3.1 | Enhanced action template UI |
 | 1.3.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 1.2.1 | Add support for copy_object acl |
 | 1.2.0 | Add support for session token |
@@ -8812,6 +9224,7 @@ This action plug-in provides the ability to use Amazon SNS service.
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.4.1   | Enhanced action template UI                         |
 | 0.4.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.3.0   | Add assume role                                     |
 | 0.2.1   | Fix for secret masking                              |
@@ -9018,6 +9431,7 @@ This action plug-in provides the ability to perform an action onto an Amazon SQS
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.5.1   | Enhanced action template UI                         |
 | 0.5.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.4.0   | Add assume role                                     |
 | 0.3.2   | Adding support for session token                    |
@@ -9464,6 +9878,7 @@ This action plug-in provides the ability to insert messages into an AMQP queue.
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.9.1 | Enhanced action template UI |
 | 0.9.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.8.3 | Fixed problem when specifing optional parameters at runtime |
 | 0.8.2 | Fixed problem when specifying header options |
@@ -9666,6 +10081,7 @@ A plugin to perform Aspera On Cloud management operations including shared inbox
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.3.1 | Enhanced action template UI |
 | 0.3.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.2.1 | Add get user operation |
 | 0.2.0 | Add supports for http proxy |
@@ -9789,25 +10205,28 @@ The shared inbox member list can be specified in two formats:
 
 **Newline-separated email list:**
 
-    john@corp.com
-    alex@corp.com
+\
+john@corp.com\
+alex@corp.com\
 
 For runtime input with newlines, use \n format:
 
-    john@corp.com\nalex@corp.com
+\
+john@corp.com\nalex@corp.com\
 
 **JSON structure with permissions:**
 
-    [
-      {
-        "email_address": "john@corp.com",
-        "permissions": "send,receive"
-      },
-      {
-        "email_address": "alex@corp.com", 
-        "permissions": "send"
-      }
-    ]
+\
+\[\
+  {\
+    "email_address": "john@corp.com",\
+    "permissions": "send,receive"\
+  },\
+  {\
+    "email_address": "alex@corp.com", \
+    "permissions": "send"\
+  }\
+\]\
 
 - Members with newline format are assigned send and receive permissions automatically.
 - All members must be registered users in Aspera On Cloud.
@@ -9819,19 +10238,20 @@ For runtime input with newlines, use \n format:
 
 JSON metadata structure example:
 
-    [
-      {
-        "default_values": ["john"],
-        "input_type": "single-text",
-        "name": "first name",
-        "required": true
-      },
-      {
-        "default_values": [],
-        "input_type": "single-text", 
-        "name": "last name"
-      }
-    ]
+\
+\[\
+  {\
+    "default_values": \["john"\],\
+    "input_type": "single-text",\
+    "name": "first name",\
+    "required": true\
+  },\
+  {\
+    "default_values": \[\],\
+    "input_type": "single-text", \
+    "name": "last name"\
+  }\
+\]\
 
 #### User Management Operations
 
@@ -9852,6 +10272,7 @@ This plugin is used to utilize Aspera Shares command line utilities to perform s
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.1.1   | Enhanced action template UI                         |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.0.1   | Initial implementation                              |
 
@@ -9979,6 +10400,7 @@ This plugin executes commands remotely on target servers via SSH with support fo
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.6.4 | Enhanced action template UI |
 | 0.6.3 | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.6.2 | Fixes issues when using tcsh shell |
 | 0.6.1 | Handle cases where processed output, polling stop condition or connection options are empty |
@@ -10292,6 +10714,7 @@ This action plug-in provides the ability to perform an action onto an Azure Serv
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.1.1   | Enhanced action template UI                         |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.0.1   | Initial release.                                    |
 
@@ -10393,6 +10816,7 @@ This plugin provides capability to perform REST operations on CatDV server.
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.1.1   | Enhanced action template UI                         |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.0.2   | Added styling to parameter help text.               |
 | 0.0.1   | Plugin release                                      |
@@ -10524,6 +10948,7 @@ This plugin is used to make a CORBA call to the Arris CMM (Content Management an
 
 | Version | Comment                                                    |
 |---------|------------------------------------------------------------|
+| 0.1.2   | Enhanced action template UI                                |
 | 0.1.1   | Update help docs to specify the Java version compatibility |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8        |
 | 0.0.10  | Removing windows support code                              |
@@ -10639,6 +11064,7 @@ This action plug-in executes curl command operations on remote nodes via SSH, su
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.1.1   | Enhanced action template UI                         |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.0.2   | Adding Remote Node Dependency                       |
 | 0.0.1   | Initial release                                     |
@@ -10789,6 +11215,7 @@ This plugin provides the ability to intercept progress notifications from a step
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.2.2 | Enhanced action template UI |
 | 0.2.1 | Remove explicit require for progress_observer to fix Rails 8 Zeitwerk autoloading |
 | 0.2.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.1.6 | Adding exception handling to check status |
@@ -10877,15 +11304,16 @@ The outputs for the action will be the ones of the chosen proxied action templat
 
 The following shows an example custom log output from a File Watcher being monitored:
 
-    2016-02-26T11:21:19-08:00: In Progress -- File Watcher started --
-    2016-02-26T11:21:19-08:00: In Progress -- Scanning "/tmp" for files matching *.txt... --
-    2016-02-26T11:21:19-08:00: In Progress -- Identified 9 candidate files at Fri Feb 26 11:21:19 PST 2016 --
-    2016-02-26T11:21:22-08:00: In Progress -- Scanning "/tmp" for files matching *.mxf... --
-    2016-02-26T11:21:23-08:00: In Progress -- Scanning "/tmp" for files matching *.txt... --
-    2016-02-26T11:21:23-08:00: Complete -- Triggered by file "/tmp/la1.txt" --
-    2016-02-26T11:21:25-08:00: In Progress -- File Watcher started --
-    2016-02-26T11:21:25-08:00: In Progress -- Identified 8 candidate files at Fri Feb 26 11:21:25 PST 2016 --
-    2016-02-26T11:21:28-08:00: Complete -- Triggered by file "/tmp/la2.txt" --
+\
+2016-02-26T11:21:19-08:00: In Progress -- File Watcher started --\
+2016-02-26T11:21:19-08:00: In Progress -- Scanning "/tmp" for files matching \*.txt... --\
+2016-02-26T11:21:19-08:00: In Progress -- Identified 9 candidate files at Fri Feb 26 11:21:19 PST 2016 --\
+2016-02-26T11:21:22-08:00: In Progress -- Scanning "/tmp" for files matching \*.mxf... --\
+2016-02-26T11:21:23-08:00: In Progress -- Scanning "/tmp" for files matching \*.txt... --\
+2016-02-26T11:21:23-08:00: Complete -- Triggered by file "/tmp/la1.txt" --\
+2016-02-26T11:21:25-08:00: In Progress -- File Watcher started --\
+2016-02-26T11:21:25-08:00: In Progress -- Identified 8 candidate files at Fri Feb 26 11:21:25 PST 2016 --\
+2016-02-26T11:21:28-08:00: Complete -- Triggered by file "/tmp/la2.txt" --\
 
 #### Dependencies
 
@@ -10915,6 +11343,7 @@ This action plugin is used to perform a resumable video upload via Facebook Grap
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.3.0   | Enhanced action template UI                         |
 | 0.2.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.1.0   | Adds reference_only option and video_id output.     |
 | 0.0.3   | Adding to help page.                                |
@@ -11051,6 +11480,9 @@ This action plug-in provides the ability to perform operations on Frame.io.
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.3.2 | Enhanced action template UI |
+| 0.3.1 | Add support for using v4 Enterprise accounts (with developer tokens) |
+| 0.3.0 | Add support for Frame.io v4 API |
 | 0.2.1 | Fix threading logic to prevent workers stopping due to memory issues |
 | 0.2.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.1.4 | Fixes the Upload Failed issue. |
@@ -11065,7 +11497,7 @@ This action plug-in provides the ability to perform operations on Frame.io.
 
 #### How It Works
 
-- This action plug-in enables you to perform various operations on Frame.io.
+- This action plug-in enables you to perform various operations on Frame.io using v2 or v4 API.
 
 #### Configuration Instructions
 
@@ -11073,36 +11505,47 @@ This action plug-in provides the ability to perform operations on Frame.io.
 2.  Complete the following configuration fields:
     - **Name**: The name used to identify a saved FrameioOperation configuration.
     - **Comments**: Optional comments for this saved FrameioOperation configuration.
-    - **Operation**: The operation you want to perform on Frame.io. Available options include:
-      - **Get Account Id** - Retrieve the Account ID of a specific user.
-      - **Get Team List** - Retrieve all teams associated with an account.
-      - **Get Project List** - Retrieve all projects under a specific team.
-      - **Get Assets List** - Retrieve details of child assets within a Version Stack or Folder. For a single asset, this returns an empty list.
-      - **Create Asset** - Create a new asset, which can be either a file or a folder.
-      - **Upload Asset** - Upload an asset to Frame.io.
-      - **Create And Upload Asset** - Create and upload an asset in a single step.
-    - **Token**: Your Frame.io access token.
     - **Verify SSL?**: Select this option to enable SSL verification.
-    - **Account_id**: The unique ID associated with your Frame.io account.
-    - **Team_id**: The ID of a specific team in Frame.io.
-    - **Assets_id**: The ID of a specific asset in Frame.io.
-    - **Asset type**: Optional parameter. Acceptable values: 'file' for a file asset or 'folder' for a folder asset.
-    - **Asset name**: The name of the asset you want to create.
-    - **File type**: Optional parameter. If the asset is a file, specify its MIME type (e.g., video/mp4 or video/quicktime).
-    - **File size**: Optional parameter. If the asset is a file, specify its size in bytes. It is recommended to provide the file path instead of manually entering the size. If the file path is specified, you do not need to enter the file size.
-    - **Upload URLs list**: An array of upload URLs obtained after creating an asset (e.g., \[Url_1, Url_2, ...\]). All URLs should be in string format.
-    - **Local file path**: The local path of the file you want to upload or create as an asset. When creating an asset, this is optional but recommended over manually entering the file size. If the file path is specified, you do not need to enter the file size. Example: /home/123.mov.
-    - **Content_type**: The content type (e.g., video/quicktime).
+    - **API Version**: Select the Frame.io API version to use (v2 or v4). v4 is recommended for new integrations and migrated accounts.
+    - **Authentication Type**: Select the authentication method: 'Developer Token (Legacy)' adds x-frameio-legacy-token-auth header (v4 non-enterprise accounts); 'OAuth (Adobe IMS)' uses a plain Bearer token for Adobe IMS access tokens; 'Enterprise (Service Client)' adds x-frameio-service-client header for Adobe Admin Console Enterprise accounts.
+    - **Client ID**: Required when Authentication Type is 'Enterprise (Service Client)'. The Adobe service client ID provided by your Frame.io administrator. Sent as the x-frameio-service-client header.
+    - **Operation**: The operation to perform on Frame.io. Available options:
+      - **Get Account Id** - Retrieve the Account ID of the authenticated user.
+      - **Get Team List** - Retrieve all teams (v2) or workspaces (v4) associated with an account.
+      - **Get Project List** - Retrieve all projects under a specific team (v2) or workspace (v4).
+      - **Get Assets List** - Retrieve child assets (v2) or folder children (v4) within a folder or version stack. Returns an empty list for single assets.
+      - **Create Asset** - Create a new file or folder asset. Returns upload URLs for file assets.
+      - **Upload Asset** - Upload a file to Frame.io using pre-signed upload URLs obtained from Create Asset.
+      - **Create And Upload Asset** - Create a file or folder asset and upload the file in a single step.
+    - **Token**: Your Frame.io access token. Use a developer token for legacy_token auth, or an Adobe IMS access token for OAuth auth.
+    - **Account ID**: The unique ID of your Frame.io account. Required for all v4 API operations. Can be retrieved using Get Account Id.
+    - **Team ID / Workspace ID**: The ID of a specific team (v2) or workspace (v4). Required for Get Project List.
+    - **Asset ID / Folder ID**: The ID of a specific asset (v2) or folder (v4). Required for Get Assets List, Create Asset, and Create And Upload Asset.
+    - **Asset type**: The type of asset to create. Acceptable values: 'file' or 'folder'.
+    - **Asset name**: The name to give the asset being created.
+    - **File type**: v2 only. The MIME type of the file (e.g., video/mp4). Not used in v4, media type is inferred automatically from the file.
+    - **File size**: Optional. The size of the file in bytes. Only used for Create Asset (v2 and v4). If local file path is provided, file size is resolved automatically and this field can be left blank.
+    - **Upload URLs list**: Array of pre-signed S3 upload URLs obtained from the Create Asset operation output. Used by Upload Asset.
+    - **Local file path**: The server-side path of the file to upload (e.g., /opt/aspera/orchestrator/output.mp4). Used to determine file size automatically and to read file content for upload.
+    - **Content type**: The MIME type of the file being uploaded to S3 (e.g., video/mp4, video/quicktime). Required for Upload Asset and Create And Upload Asset.
 
 #### Example Configuration
 
-Below is a minimal configuration example for the FrameioOperation plug-in.
+Below is an example configuration for uploading a file using the v4 API.
 
-| Parameter   | Value              |
-|-------------|--------------------|
-| Operation   | Get Account Id     |
-| Verify SSL? | Selected           |
-| Token       | \<Frame.io token\> |
+| Parameter            | Value                               |
+|----------------------|-------------------------------------|
+| Verify SSL?          | Selected                            |
+| API Version          | v4                                  |
+| Authentication Type  | OAuth (Adobe IMS)                   |
+| Operation            | Create And Upload Asset             |
+| Token                | \*\*\*\*\*\*\*\*\*\*\*\*\*\*        |
+| Account ID           | account_id from Get Account Id      |
+| Asset ID / Folder ID | folder_id                           |
+| Asset name           | my_video.mp4                        |
+| Asset type           | file                                |
+| Local file path      | /opt/aspera/orchestrator/output.mp4 |
+| Content type         | video/mp4                           |
 
 #### Saved Parameters Description
 
@@ -11127,65 +11570,77 @@ Below is a minimal configuration example for the FrameioOperation plug-in.
 <td>Optional comments for this saved FrameioOperation configuration.</td>
 </tr>
 <tr>
-<td><strong>Operation</strong></td>
-<td>The operation you want to perform on Frame.io. Available options include:
-<ul>
-<li><strong>Get Account Id</strong> - Retrieve the Account ID of a specific user.</li>
-<li><strong>Get Team List</strong> - Retrieve all teams associated with an account.</li>
-<li><strong>Get Project List</strong> - Retrieve all projects under a specific team.</li>
-<li><strong>Get Assets List</strong> - Retrieve details of child assets within a Version Stack or Folder. For a single asset, this returns an empty list.</li>
-<li><strong>Create Asset</strong> - Create a new asset, which can be either a file or a folder.</li>
-<li><strong>Upload Asset</strong> - Upload an asset to Frame.io.</li>
-<li><strong>Create And Upload Asset</strong> - Create and upload an asset in a single step.</li>
-</ul></td>
-</tr>
-<tr>
-<td><strong>Token</strong></td>
-<td>Your Frame.io access token.</td>
-</tr>
-<tr>
 <td><strong>Verify SSL?</strong></td>
 <td>Select this option to enable SSL verification.</td>
 </tr>
 <tr>
-<td><strong>Account_id</strong></td>
-<td>The unique ID associated with your Frame.io account.</td>
+<td><strong>API Version</strong></td>
+<td>Select the Frame.io API version to use (v2 or v4). v4 is recommended for new integrations and migrated accounts.</td>
 </tr>
 <tr>
-<td><strong>Team_id</strong></td>
-<td>The ID of a specific team in Frame.io.</td>
+<td><strong>Authentication Type</strong></td>
+<td>Select the authentication method: 'Developer Token (Legacy)' adds x-frameio-legacy-token-auth header (v4 non-enterprise accounts); 'OAuth (Adobe IMS)' uses a plain Bearer token for Adobe IMS access tokens; 'Enterprise (Service Client)' adds x-frameio-service-client header for Adobe Admin Console Enterprise accounts.</td>
 </tr>
 <tr>
-<td><strong>Assets_id</strong></td>
-<td>The ID of a specific asset in Frame.io.</td>
+<td><strong>Client ID</strong></td>
+<td>Required when Authentication Type is 'Enterprise (Service Client)'. The Adobe service client ID provided by your Frame.io administrator. Sent as the x-frameio-service-client header.</td>
+</tr>
+<tr>
+<td><strong>Operation</strong></td>
+<td>The operation to perform on Frame.io. Available options:
+<ul>
+<li><strong>Get Account Id</strong> - Retrieve the Account ID of the authenticated user.</li>
+<li><strong>Get Team List</strong> - Retrieve all teams (v2) or workspaces (v4) associated with an account.</li>
+<li><strong>Get Project List</strong> - Retrieve all projects under a specific team (v2) or workspace (v4).</li>
+<li><strong>Get Assets List</strong> - Retrieve child assets (v2) or folder children (v4) within a folder or version stack. Returns an empty list for single assets.</li>
+<li><strong>Create Asset</strong> - Create a new file or folder asset. Returns upload URLs for file assets.</li>
+<li><strong>Upload Asset</strong> - Upload a file to Frame.io using pre-signed upload URLs obtained from Create Asset.</li>
+<li><strong>Create And Upload Asset</strong> - Create a file or folder asset and upload the file in a single step.</li>
+</ul></td>
+</tr>
+<tr>
+<td><strong>Token</strong></td>
+<td>Your Frame.io access token. Use a developer token for legacy_token auth, or an Adobe IMS access token for OAuth auth.</td>
+</tr>
+<tr>
+<td><strong>Account ID</strong></td>
+<td>The unique ID of your Frame.io account. Required for all v4 API operations. Can be retrieved using Get Account Id.</td>
+</tr>
+<tr>
+<td><strong>Team ID / Workspace ID</strong></td>
+<td>The ID of a specific team (v2) or workspace (v4). Required for Get Project List.</td>
+</tr>
+<tr>
+<td><strong>Asset ID / Folder ID</strong></td>
+<td>The ID of a specific asset (v2) or folder (v4). Required for Get Assets List, Create Asset, and Create And Upload Asset.</td>
 </tr>
 <tr>
 <td><strong>Asset type</strong></td>
-<td>Optional parameter. Acceptable values: 'file' for a file asset or 'folder' for a folder asset.</td>
+<td>The type of asset to create. Acceptable values: 'file' or 'folder'.</td>
 </tr>
 <tr>
 <td><strong>Asset name</strong></td>
-<td>The name of the asset you want to create.</td>
+<td>The name to give the asset being created.</td>
 </tr>
 <tr>
 <td><strong>File type</strong></td>
-<td>Optional parameter. If the asset is a file, specify its MIME type (e.g., video/mp4 or video/quicktime).</td>
+<td>v2 only. The MIME type of the file (e.g., video/mp4). Not used in v4, media type is inferred automatically from the file.</td>
 </tr>
 <tr>
 <td><strong>File size</strong></td>
-<td>Optional parameter. If the asset is a file, specify its size in bytes. It is recommended to provide the file path instead of manually entering the size. If the file path is specified, you do not need to enter the file size.</td>
+<td>Optional. The size of the file in bytes. Only used for Create Asset (v2 and v4). If local file path is provided, file size is resolved automatically and this field can be left blank.</td>
 </tr>
 <tr>
 <td><strong>Upload URLs list</strong></td>
-<td>An array of upload URLs obtained after creating an asset (e.g., [Url_1, Url_2, ...]). All URLs should be in string format.</td>
+<td>Array of pre-signed S3 upload URLs obtained from the Create Asset operation output. Used by Upload Asset.</td>
 </tr>
 <tr>
 <td><strong>Local file path</strong></td>
-<td>The local path of the file you want to upload or create as an asset. When creating an asset, this is optional but recommended over manually entering the file size. If the file path is specified, you do not need to enter the file size. Example: /home/123.mov.</td>
+<td>The server-side path of the file to upload (e.g., /opt/aspera/orchestrator/output.mp4). Used to determine file size automatically and to read file content for upload.</td>
 </tr>
 <tr>
-<td><strong>Content_type</strong></td>
-<td>The content type (e.g., video/quicktime).</td>
+<td><strong>Content type</strong></td>
+<td>The MIME type of the file being uploaded to S3 (e.g., video/mp4, video/quicktime). Required for Upload Asset and Create And Upload Asset.</td>
 </tr>
 </tbody>
 </table>
@@ -11194,19 +11649,22 @@ Below is a minimal configuration example for the FrameioOperation plug-in.
 
 Required inputs depend on how the FrameioOperation template is configured. If dynamic attributes are used, each attribute becomes a runtime input.
 
-| Parameter                                   | Description            |
-|---------------------------------------------|------------------------|
-| *Token <span style="color: red;">\*</span>* | Frame.io access token. |
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| *Token <span style="color: red;">\*</span>* | Frame.io access token (developer token for legacy auth, or Adobe IMS access token for OAuth). |
 
 #### Outputs Description
 
-| Parameter     | Description                                            |
-|---------------|--------------------------------------------------------|
-| Account_Id    | The unique ID associated with your Frame.io account.   |
-| Error_Message | Any error message generated while performing the step. |
-| Result        | The response retrieved while performing the step.      |
-
-Additional outputs are generated for each configured extraction. Output names are capitalized versions of the extracted fields (e.g., 'pubDate' -\> 'Pubdate').
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| Account_Id | Get Account Id: The unique ID of the Frame.io account. |
+| Team_List | Get Team List: Array of teams (v2) or workspaces (v4) for the account. |
+| Project_List | Get Project List: Array of projects under the specified team or workspace. |
+| Assets_List | Get Assets List: Array of child assets or folder contents. |
+| Upload_Urls | Create Asset / Create And Upload Asset: Array of pre-signed S3 upload URLs. In v4, each entry is a hash with 'url' and 'size' keys. |
+| Number_of_threads_successfully_executed | Upload Asset / Create And Upload Asset: Number of file chunks successfully uploaded to S3. |
+| Result | All operations: The full raw API response. |
+| Error_Message | All operations: Any error message generated during execution. |
 
 #### Supported Actions
 
@@ -11218,15 +11676,20 @@ None
 
 #### Operating Instructions
 
-1.  Use this action plug-in to execute the available operations on Frame.io v2.
-2.  Available operations are:
-    - **Get Account Id** - Retrieve the Account ID of a specific user.
-    - **Get Team List** - Retrieve all teams associated with an account.
-    - **Get Project List** - Retrieve all projects under a specific team.
-    - **Get Assets List** - Retrieve details of child assets within a Version Stack or Folder. For a single asset, this returns an empty list.
-    - **Create Asset** - Create a new asset, which can be either a file or a folder.
-    - **Upload Asset** - Upload an asset to Frame.io.
-    - **Create And Upload Asset** - Create and upload an asset in a single step.
+1.  Use this plug-in to execute Frame.io operations via v2 or v4 API.
+2.  For v4 Enterprise accounts (Adobe Admin Console): use v4 API with 'Enterprise (Service Client)' authentication. Provide the Client ID supplied by your Frame.io admin. The x-frameio-service-client header is added automatically.
+3.  For v4 non-enterprise accounts (Adobe-managed but not Enterprise): use v4 API with 'Developer Token (Legacy)' authentication. The x-frameio-legacy-token-auth header is added automatically.
+4.  For v4 accounts using Adobe IMS OAuth tokens: use v4 API with 'OAuth (Adobe IMS)' authentication. Only the Bearer token is sent.
+5.  v2 API continues to work for unmigrated accounts using Developer Token authentication.
+6.  Typical v4 upload workflow: (1) Get Account Id → (2) Get Team List to find workspace ID → (3) Get Project List to find root folder ID → (4) Get Assets List to browse folders → (5) Create And Upload Asset to upload a file.
+7.  Available operations:
+    - **Get Account Id** - Retrieve the Account ID of the authenticated user.
+    - **Get Team List** - Retrieve all teams (v2) or workspaces (v4) associated with an account.
+    - **Get Project List** - Retrieve all projects under a specific team (v2) or workspace (v4).
+    - **Get Assets List** - Retrieve child assets (v2) or folder children (v4) within a folder or version stack. Returns an empty list for single assets.
+    - **Create Asset** - Create a new file or folder asset. Returns upload URLs for file assets.
+    - **Upload Asset** - Upload a file to Frame.io using pre-signed upload URLs obtained from Create Asset.
+    - **Create And Upload Asset** - Create a file or folder asset and upload the file in a single step.
 
 
 ### Google Cloud Storage Operation
@@ -11431,6 +11894,7 @@ This plugin is used to send/receive MQ messages to/from an IBM MQ system.
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.5.4 | Enhanced action template UI |
 | 0.5.3 | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.5.2 | Updating to be compatible with Orchestrator 4.1, which isn't shipped with a Java App and Tomcat server |
 | 0.5.1 | Updating to be compatible with Ruby 3.4 and Rails 8 |
@@ -11651,6 +12115,7 @@ This plugin is used to send a file via IBM MQ MFT.
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.5.3 | Enhanced action template UI |
 | 0.5.2 | Updating to be compatible with Orchestrator 4.1, which isn't shipped with a Java App and Tomcat server |
 | 0.3.1 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.3.0 | Remove hardcoded aspera directory reference |
@@ -11793,29 +12258,30 @@ This action submits a file transfer request to IBM MQ MFT by placing an XML payl
 
 The following is a sample XML payload for submitting an MFT transfer request (save this to a file and provide the file path):
 
-    <?xml version="1.0" encoding="UTF-8"?>
-    <request version="6.00" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:noNamespaceSchemaLocation="FileTransfer.xsd">
-      <managedTransfer>
-        <originator>
-          <hostName>127.0.0.1</hostName>
-          <userID>mqm</userID>
-        </originator>
-        <sourceAgent QMgr="Aspera_Demo" agent="ASPERA_AGENT"/>
-        <destinationAgent QMgr="Aspera_Demo" agent="ASPERA_AGENT"
-          channel="SYSTEM.DEF.SVRCONN" portNumber="1414"/>
-        <transferSet>
-          <item checksumMethod="MD5" mode="binary">
-            <source disposition="leave" recursive="false" type="file">
-              <file>/tmp/myfile.txt</file>
-            </source>
-            <destination exist="overwrite" type="directory">
-              <file>/tmp/archive/</file>
-            </destination>
-          </item>
-        </transferSet>
-      </managedTransfer>
-    </request>
+\
+\<?xml version="1.0" encoding="UTF-8"?\>\
+\<request version="6.00" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\
+  xsi:noNamespaceSchemaLocation="FileTransfer.xsd"\>\
+  \<managedTransfer\>\
+    \<originator\>\
+      \<hostName\>127.0.0.1\</hostName\>\
+      \<userID\>mqm\</userID\>\
+    \</originator\>\
+    \<sourceAgent QMgr="Aspera_Demo" agent="ASPERA_AGENT"/\>\
+    \<destinationAgent QMgr="Aspera_Demo" agent="ASPERA_AGENT"\
+      channel="SYSTEM.DEF.SVRCONN" portNumber="1414"/\>\
+    \<transferSet\>\
+      \<item checksumMethod="MD5" mode="binary"\>\
+        \<source disposition="leave" recursive="false" type="file"\>\
+          \<file\>/tmp/myfile.txt\</file\>\
+        \</source\>\
+        \<destination exist="overwrite" type="directory"\>\
+          \<file\>/tmp/archive/\</file\>\
+        \</destination\>\
+      \</item\>\
+    \</transferSet\>\
+  \</managedTransfer\>\
+\</request\>\
 
 **MQ Bridge Service Setup**
 
@@ -11897,6 +12363,7 @@ This action plugin provides the ability to interact with InfluxDB
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.1.1   | Enhanced action template UI                         |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.0.3   | Fixes authentication issue                          |
 | 0.0.2   | Adding compatibility for Ruby 1.8.7.                |
@@ -12189,6 +12656,7 @@ This plugin is used to send/receive messages to/from an Apache Kafka system.
 
 | Version | Comment                                                    |
 |---------|------------------------------------------------------------|
+| 0.1.3   | Enhanced action template UI                                |
 | 0.1.2   | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.1.1   | Updating to be compatible with Ruby 3.4 and Rails 8        |
 | 0.1.0   | Remove hardcoded aspera directory reference                |
@@ -12455,6 +12923,7 @@ This action plug-in provides the ability to invoke a third-party application or 
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.4.1 | Enhanced action template UI |
 | 0.4.0 | Removing Windows support code, Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.3.4 | Removed explicit html escaping since not needed with new Ruby |
 | 0.3.3 | Added styling to parameter help text. |
@@ -12484,7 +12953,7 @@ This action plug-in provides the ability to invoke a third-party application or 
 3.  Fill out the following configuration fields:
     - **Name**: The name used to identify a saved LocalExecution configuration.
     - **Comments**: Optional comments about this LocalExecution configuration.
-    - **Command**: The command line to execute. This string may include variables that are replaced with their runtime values during execution. The command is constructed by appending the selected executable to the command arguments defined in the configuration interface. The executable must be located in the /opt/aspera/scripts directory.
+    - **Command**: The command line to execute. This string may include variables that are replaced with their runtime values during execution. The command is constructed by appending the selected executable to the command arguments defined in the configuration interface. The executable must be located in the /tmp directory.
     - **Multiline**: When selected, the standard output (stdio) is returned as an array in the Multi output variable instead of a single string in the stdio output variable.
     - **Mandatory Inputs**: Defines required inputs that are passed to the script or executable as environment variables.
     - **Optional Inputs**: Defines optional inputs that are passed to the script or executable as environment variables.
@@ -12510,7 +12979,7 @@ This is a minimal setup configuration for the LocalExecution plug-in.
 |-------|---------------------------------------------------|
 | **Name** | The name used to identify a saved LocalExecution configuration. |
 | **Comments** | Optional comments about this LocalExecution configuration. |
-| **Command** | The command line to execute. This string may include variables that are replaced with their runtime values during execution. The command is constructed by appending the selected executable to the command arguments defined in the configuration interface. The executable must be located in the /opt/aspera/scripts directory. |
+| **Command** | The command line to execute. This string may include variables that are replaced with their runtime values during execution. The command is constructed by appending the selected executable to the command arguments defined in the configuration interface. The executable must be located in the /tmp directory. |
 | **Multiline** | When selected, the standard output (stdio) is returned as an array in the Multi output variable instead of a single string in the stdio output variable. |
 | **Mandatory Inputs** | Defines required inputs that are passed to the script or executable as environment variables. |
 | **Optional Inputs** | Defines optional inputs that are passed to the script or executable as environment variables. |
@@ -12576,6 +13045,8 @@ This action plugin can be used to interact with the MediaMate subtitling service
 
 | Version | Comment                                                |
 |---------|--------------------------------------------------------|
+| 0.3.2   | Enhanced action template UI                            |
+| 0.3.1   | Fix error handling & cleanup code                      |
 | 0.3.0   | Updating to be compatible with Ruby 3.4 and Rails 8    |
 | 0.2.5   | Fix issue with submit operation timing                 |
 | 0.2.4   | Make Submit call Open rather than Run                  |
@@ -12586,42 +13057,145 @@ This action plugin can be used to interact with the MediaMate subtitling service
 | 0.1.0   | Adding Submit operation and configuration for Open/Run |
 | 0.0.1   | Initial release                                        |
 
+#### How It Works
+
+- Integrates with a **MediaMate server** via REST API calls to control MediaMate workflow model execution.
+- Supports five operations: **Open, Run, Stop, Close, and Submit**, covering the full lifecycle of a MediaMate workflow model.
+- Constructs REST call URLs dynamically from the configured **server, port, and URL path**, automatically appending the operation-specific path segment.
+- The **Submit** operation combines Open, Run, Stop, and Close into a single plugin call, running the model to completion before returning.
+- The **Run and Submit** operations poll the MediaMate server periodically for job status at a configurable polling frequency.
+- The **Open, Stop, and Close** operations execute synchronously and return immediately upon completion.
+- Accepts an **XML configuration** (XMLCFG) for Open and Submit operations, defining component settings as in MediaMate FLOXE.
+- Returns the **full MediaMate response, job state, FLX player state, and any error details** for downstream workflow processing.
+
+#### Configuration Instructions
+
+1.  Create a new action step using the **MediaMateOperation** plugin.
+2.  Fill out the following fields:
+    - **Name**: The name used to identify a saved MediaMateOperation configured instance.
+    - **Comments**: Comments about this saved MediaMateOperation configured instance.
+    - **Server**: The server on which MediaMate is running. Used to build the REST call URL in the format: `http://<server>:<port>/<url_path>/`.
+    - **Port**: The port on which MediaMate is running. Default is 8080. Used to build the REST call URL.
+    - **URL path**: The path component of the REST call URL. The operation segment (e.g. open, run, stop, close) is appended automatically based on the Operation parameter. Use a short name in the URL path to distinguish concurrent job requests (e.g. `mediamate/mm01/interface`).
+    - **Operation**: The operation to perform. Supported values: Open, Run, Stop, Close, Submit.
+    - **Xmlcfg**: The XML configuration for Open and Submit operations, as used in MediaMate FLOXE. Must follow the structure: `<XMLCFG><ComponentList>...</ComponentList></XMLCFG>`.
+    - **Model path**: The FLX file path of the MediaMate workflow model. Required for Open and Submit operations.
+    - **Polling frequency**: The number of seconds Orchestrator waits between polls for job status. Used for Run and Submit operations. Default is 5 seconds.
+
+#### Example Configuration
+
+This is an example configuration for the MediaMateOperation plugin executing a complete MediaMate workflow model using the Submit operation.
+
+| Parameter | Value |
+|-------|---------------------------------------------------|
+| Name | Submit MediaMate Workflow |
+| Comments | Run a complete MediaMate workflow model via Submit operation |
+| Server | mediamate-server.example.com |
+| Port | 8080 |
+| URL path | mediamate/mm01/interface |
+| Operation | Submit |
+| Xmlcfg | ... |
+| Model path | /data/models/workflow.flx |
+| Polling frequency | 5 |
+
 #### Saved Parameters Description
 
-- - **Name**: The name used to identify a saved MediaMateOperation configured instance.
-  - **Comments**: Some comments about this saved MediaMateOperation configured instance.
-  - **Server**: The server on which MediaMate is running. This will be used to build the URL to make REST calls. The URL will be formatted as: http://\<server\>:\<port\>/\<url_path\>/.
-  - **Port**: The port on which MediaMate is running. The default value is 8080. This will be used to build the URL to make REST calls. The URL will be formatted as: http://\<server\>:\<port\>/\<url_path\>/.
-  - **URL path**: The path component of the URL which will be used to make REST calls. The URL will be formatted as: http://\<server\>:\<port\>/\<url_path\>/. The operation portion of the path (e.g. open, run, stop, or close) does not need to be included in this parameter as it will be added automatically based on what is chosen for the *Operation* parameter.
-  - **Operation**: The operation to be performed. Currently supports:
-    - Open - Load the FLX file and create all the required objects
-    - Run - Start running a MediaMate workflow model
-    - Stop - Stop MediaMate workflow model
-    - Close - Closes MediaMate workflow model
-    - Submit - Runs the MediaMate workflow model and closes it once the model is complete
-  - **Xmlcfg**: Used for the Open and Submit operations, this parameter is the XML configuration as in MediaMate FLOXE. Make sure the structure is \<XMLCFG\>\<ComponentList\>...\</XMLCFG\>\</ComponentList\>.
-  - **Model path**: Used for the Open and Submit operation, this parameter is the FLX file path of the MediaMate workflow model.
-  - **Polling frequency**: Used for the Run and Submit operations, this parameter is the number of seconds Orchestrator waits before polling the MediaMate server on the status of the MediaMate workflow model. The default value is five seconds.
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| **Name** | The name used to identify a saved MediaMateOperation configured instance. |
+| **Comments** | Comments about this saved MediaMateOperation configured instance. |
+| **Server** | The server on which MediaMate is running. Used to build the REST call URL in the format: `http://<server>:<port>/<url_path>/`. |
+| **Port** | The port on which MediaMate is running. Default is 8080. Used to build the REST call URL. |
+| **URL path** | The path component of the REST call URL. The operation segment (e.g. open, run, stop, close) is appended automatically based on the Operation parameter. Use a short name in the URL path to distinguish concurrent job requests (e.g. `mediamate/mm01/interface`). |
+| **Operation** | The operation to perform. Supported values: Open, Run, Stop, Close, Submit. |
+| **Xmlcfg** | The XML configuration for Open and Submit operations, as used in MediaMate FLOXE. Must follow the structure: `<XMLCFG><ComponentList>...</ComponentList></XMLCFG>`. |
+| **Model path** | The FLX file path of the MediaMate workflow model. Required for Open and Submit operations. |
+| **Polling frequency** | The number of seconds Orchestrator waits between polls for job status. Used for Run and Submit operations. Default is 5 seconds. |
 
-#### Outputs description
+#### Inputs Description
 
-- *Full Response*: A hash of the entire response received from MediaMate.
-- *Short Name*: The MediaMate short name.
-- *Job State*: The state value of the running model.
-- *Job State Description*: An explanation of the Job State as provided by MediaMate.
-- *MediaMate Error*: An explanation of the error returned by the MediaMate server as provided by MediaMate. If no error is returned, the output will be 'Success'.
-- *FLX Player State Value*: An output for the Run and Submit operations, this output is the state value of the FLX player.
-- *Error Message*: If the plugin encounters an error, this output will be an explanation of that error.
+All parameters are available as runtime inputs. Runtime values override any values set in the action template.
+
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| *Server* | The MediaMate server hostname or IP address. |
+| *Port* | The port on which MediaMate is listening. Default is 8080. |
+| *URL_path* | The path component of the REST call URL. Include a short name to distinguish concurrent requests. |
+| *Operation* | The operation to perform: Open, Run, Stop, Close, or Submit. |
+| *Xmlcfg* | XML configuration for the Open and Submit operations. |
+| *Model_path* | FLX file path of the MediaMate workflow model. Required for Open and Submit. |
+| *Polling_frequency* | Seconds between status polls for Run and Submit operations. Default is 5 seconds. |
+
+#### Outputs Description
+
+Outputs include the full MediaMate server response, job state details, FLX player state (for Run and Submit), and error information from both the MediaMate server and the plugin itself.
+
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| Full_Response | A hash of the entire response received from the MediaMate server. |
+| Short_Name | The MediaMate short name returned in the response. |
+| Job_State | The state value of the running model as reported by MediaMate. |
+| Job_State_Description | An explanation of the Job State as provided by MediaMate. |
+| MediaMate_Error | An explanation of any error returned by the MediaMate server. Returns 'Success' if no error occurred. |
+| FLX_Player_State_Value | The state value of the FLX player. Available for Run and Submit operations. |
+| Error_Message | An explanation of any error encountered by the plugin itself during execution. |
+
+#### Supported Actions
+
+None
+
+#### Dependencies
+
+Requires a running and accessible MediaMate server. The MediaMate REST API must be reachable from the Orchestrator server on the configured port.
 
 #### Operating Instructions
 
-Per current implementation of MediaMate API, Running, Stopping, and Closing operations will always perform action on model with id of 1. This is the same id that the Open operation always returns.
+This action controls MediaMate workflow model execution via REST API calls. The plugin constructs the target URL from the configured server, port, and URL path, then appends the appropriate operation segment automatically.
 
-The Submit operation is actually a combination of the Open + Run + Stop + Close operations.
+**Supported Operations**
 
-Only the Run and Submit operations are polling MediaMate periodically for a job status. The other operations are executing synchronously.
+- **Open:** Loads the FLX file from the specified Model path and creates all required objects in MediaMate. Returns a model ID of 1, which is always used by subsequent Run, Stop, and Close operations. Requires both the Model path and Xmlcfg parameters.
+- **Run:** Starts executing the loaded MediaMate workflow model. Polls the MediaMate server periodically for job status using the configured polling frequency. Always operates on model ID 1.
+- **Stop:** Stops the running MediaMate workflow model. Executes synchronously. Always operates on model ID 1.
+- **Close:** Closes the MediaMate workflow model and releases associated objects. Executes synchronously. Always operates on model ID 1.
+- **Submit:** Combines Open, Run, Stop, and Close into a single operation. Loads the model, runs it to completion, then closes it. Polls for status during execution. Use this for end-to-end workflow execution in a single step.
 
-Use a short name in the URL to distinguish between concurrent job requests (e.g. mm01 in mediamate/mm01/interface/run/).
+**URL Construction**
+
+- The REST call URL is constructed as: `http://<server>:<port>/<url_path>/<operation>/`
+- The operation segment (`open`, `run`, `stop`, `close`) is appended **automatically** based on the Operation parameter, do not include it in the URL path field.
+- Use a **short name in the URL path** to distinguish between concurrent MediaMate job requests. Example: `mediamate/mm01/interface` and `mediamate/mm02/interface` for two concurrent jobs.
+- Example full URL for a Run operation: `http://mediamate-server.example.com:8080/mediamate/mm01/interface/run/`
+
+**Best Practices**
+
+- Use **unique short names in the URL path** for each concurrent MediaMate job to prevent conflicts between simultaneous workflow executions.
+- Prefer the **Submit operation** for straightforward end-to-end model execution rather than chaining Open, Run, Stop, and Close steps individually.
+- Use the **Open + Run + Stop + Close sequence** when you need to perform actions or checks between individual lifecycle stages.
+- Set an appropriate **Polling frequency**, too frequent polling increases load on the MediaMate server; too infrequent delays downstream steps. The default of 5 seconds is suitable for most workflows.
+- Store the **Job State and MediaMate Error** outputs and implement error handling workflows that evaluate these values after Run or Submit operations.
+- Validate the **Xmlcfg structure** before use, it must follow the `<XMLCFG><ComponentList>...</ComponentList></XMLCFG>` format.
+- Verify the **FLX file path** is accessible on the MediaMate server before the workflow runs.
+
+**Troubleshooting**
+
+- **Connection refused:** Verify the server hostname/IP and port are correct and that the MediaMate server is running and reachable from the Orchestrator server.
+- **Operation fails immediately:** Check the Error_Message output for plugin-level errors and the MediaMate_Error output for server-side errors.
+- **Model not found:** Confirm the FLX file path is correct and accessible on the MediaMate server.
+- **Invalid Xmlcfg:** Verify the XML configuration follows the required structure and is well-formed XML. Test it directly in MediaMate FLOXE before using it in the plugin.
+- **Job stuck in running state:** Check the MediaMate server logs and use a Stop operation step to halt the model if needed.
+- **Concurrent job conflicts:** Ensure each concurrent workflow uses a unique short name in the URL path to target separate MediaMate model instances.
+- **Unexpected Job State:** Use the Job_State_Description output to get a human-readable explanation of the state returned by MediaMate.
+
+**Important Notes**
+
+- Run, Stop, and Close operations **always act on model ID 1**, the same ID that the Open operation always returns. Only one model can be active per URL path at a time.
+- The **Submit operation** is equivalent to Open + Run + Stop + Close executed in sequence as a single plugin call.
+- Only **Run and Submit** operations poll for job status. Open, Stop, and Close execute **synchronously**.
+- The **operation path segment** (open, run, stop, close) is appended automatically to the URL, do not include it in the URL path parameter.
+- Use a **unique short name** in the URL path to safely run concurrent MediaMate jobs from the same Orchestrator workflow or across multiple workflows.
+- The **Xmlcfg** must use the exact structure `<XMLCFG><ComponentList>...</ComponentList></XMLCFG>`, deviations may cause the Open or Submit operation to fail.
+- The **MediaMate_Error** output returns 'Success' when no error is present, making it safe to evaluate in downstream conditional logic.
 
 
 ### Mongodb operation
@@ -12635,6 +13209,7 @@ This action plugin enables interaction with MongoDB databases, supporting docume
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 1.3.2 | Enhanced action template UI |
 | 1.3.1 | Update mongo gem, updating to be compatible with Ruby 3.4 and Rails 8 |
 | 1.3.0 | Remove hardcoded aspera directory reference, Updating to standard coding conventions |
 | 1.2.3 | Removing Windows support code |
@@ -12880,6 +13455,7 @@ This action plugin provides the ability to execute scripts or executables on rem
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 1.2.2 | Enhanced action template UI |
 | 1.2.1 | Fix issues when using ERB template tags in command field |
 | 1.2.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 1.1.2 | Avoid to set stdio in the detailed status if report stdio is set |
@@ -13040,23 +13616,26 @@ Extract custom variables from standard output using this format:
 
 Shell script returning error 2, output variable 'size', multiline true:
 
-    md5sum $1 | cut -d' ' -f1
-    echo "-#OUTPUT:size--#--120568#-"
-    echo "hello"
-    exit 2
+\
+md5sum \$1 \| cut -d' ' -f1\
+echo "-#OUTPUT:size--#--120568#-"\
+echo "hello"\
+exit 2\
 
 **Plugin outputs (multiline true):**
 
-    size      120568
-    exit_code 2
-    Multi     ["45c2d08009be4a2307eddd4f0bd10a8f", "hello"]
+\
+size      120568\
+exit_code 2\
+Multi     \["45c2d08009be4a2307eddd4f0bd10a8f", "hello"\]\
 
 **Plugin outputs (multiline false):**
 
-    size      120568
-    exit_code 2
-    stdio     45c2d08009be4a2307eddd4f0bd10a8f
-              hello
+\
+size      120568\
+exit_code 2\
+stdio     45c2d08009be4a2307eddd4f0bd10a8f\
+          hello\
 
 #### Environment Variables
 
@@ -13078,6 +13657,7 @@ This plugin allows you to make REST requests to web services, either as a one-ti
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 1.2.4 | Enhanced action template UI |
 | 1.2.3 | Fix post_parameters_get to convert String to Hash |
 | 1.2.2 | Updated the label from Keep ongoing to Continue Monitoring |
 | 1.2.1 | Updated the label from Keep ongoing to Continue Monitoring |
@@ -13319,15 +13899,17 @@ When calling a public REST API like JSONPlaceholder (https://jsonplaceholder.typ
 
 Given XML response:
 
-    <?xml version="1.0"?>
-    <workflows>
-      <workflow id="1" name="create file"/>
-      <workflow id="2" name="custom ruby"/>
-    </workflows>
+\
+\<?xml version="1.0"?\>\
+\<workflows\>\
+  \<workflow id="1" name="create file"/\>\
+  \<workflow id="2" name="custom ruby"/\>\
+\</workflows\>\
 
 After XML parsing, the `xml_result` variable contains the following hash:
 
-    { 'workflow' => [{ "name" => "create file", "id" => "1" }, { "name" => "custom ruby", "id" => "2" }] }
+\
+{ 'workflow' =\> \[{ "name" =\> "create file", "id" =\> "1" }, { "name" =\> "custom ruby", "id" =\> "2" }\] }\
 
 - **Result records extracting code:** `return xml_result['workflow']`
 - **Record formatting code:** `return { "id" => record["id"], "name" => record["name"] }`
@@ -13345,6 +13927,7 @@ This plug-in provides the ability to periodically execute a SOAP query on a web 
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 2.1.6 | Enhanced action template UI |
 | 2.1.5 | Wrap SOAP response to display service_results like older SOAP4R format |
 | 2.1.4 | Updated the label from Keep ongoing to Continue Monitoring |
 | 2.1.3 | Updated help documentation |
@@ -13557,11 +14140,12 @@ The SoapRequest plugin generates SOAP requests to remote web services and handle
 
 **Example Payload:**
 
-    <fetchRecords>
-      <database><%= database_name %></database>
-      <query><%= search_query %></query>
-      <maxResults>100</maxResults>
-    </fetchRecords>
+\
+\<fetchRecords\>\
+  \<database\>\<%= database_name %\>\</database\>\
+  \<query\>\<%= search_query %\>\</query\>\
+  \<maxResults\>100\</maxResults\>\
+\</fetchRecords\>\
 
 #### Parameter Mode (Alternative)
 
@@ -13585,22 +14169,24 @@ The SoapRequest plugin generates SOAP requests to remote web services and handle
 
 Example response structure:
 
-    {"GetSessionsResponse"=>{"xmlns:ns1"=>"urn:Aspera:XML:FASPSessionNET:2009/11:Types",
-      "SessionKeysResult"=>{"ResultCount"=>"2", "RemainingResultCount"=>"0",
-        "IterationToken"=>"dd549761f97954417d2abf3c47ec877b0000000000001229",
-        "SessionKey"=>[{"UUID"=>"fe77385c-3d17-4613-b839-1fc04bc5d423"},
-                       {"UUID"=>"678357a5-cbf1-490a-8417-3d1f17390ea6"}]}}}
+\
+{"GetSessionsResponse"=\>{"xmlns:ns1"=\>"urn:Aspera:XML:FASPSessionNET:2009/11:Types",\
+  "SessionKeysResult"=\>{"ResultCount"=\>"2", "RemainingResultCount"=\>"0",\
+    "IterationToken"=\>"dd549761f97954417d2abf3c47ec877b0000000000001229",\
+    "SessionKey"=\>\[{"UUID"=\>"fe77385c-3d17-4613-b839-1fc04bc5d423"},\
+                   {"UUID"=\>"678357a5-cbf1-490a-8417-3d1f17390ea6"}\]}}}\
 
 #### Legacy Mode (XmlSimple)
 
 Example response structure:
 
-    {"GetSessionsResponse"=>[{"SessionKeysResult"=>[{"ResultCount"=>["2"],
-      "SessionKey"=>[{"UUID"=>["fe77385c-3d17-4613-b839-1fc04bc5d423"]},
-                     {"UUID"=>["678357a5-cbf1-490a-8417-3d1f17390ea6"]}],
-      "RemainingResultCount"=>["0"],
-      "IterationToken"=>["dd549761f97954417d2abf3c47ec877b0000000000001229"]}],
-      "xmlns:ns1"=>"urn:Aspera:XML:FASPSessionNET:2009/11:Types"}]}
+\
+{"GetSessionsResponse"=\>\[{"SessionKeysResult"=\>\[{"ResultCount"=\>\["2"\],\
+  "SessionKey"=\>\[{"UUID"=\>\["fe77385c-3d17-4613-b839-1fc04bc5d423"\]},\
+                 {"UUID"=\>\["678357a5-cbf1-490a-8417-3d1f17390ea6"\]}\],\
+  "RemainingResultCount"=\>\["0"\],\
+  "IterationToken"=\>\["dd549761f97954417d2abf3c47ec877b0000000000001229"\]}\],\
+  "xmlns:ns1"=\>"urn:Aspera:XML:FASPSessionNET:2009/11:Types"}\]}\
 
 **Note:** The structure differs significantly between modes. Adjust your Ruby code accordingly.
 
@@ -13613,11 +14199,13 @@ Example response structure:
 
 **Example Stop Condition (Modern Mode):**
 
-    xml_result["GetSessionsResponse"]["SessionKeysResult"]["RemainingResultCount"] == '0' rescue nil
+\
+xml_result\["GetSessionsResponse"\]\["SessionKeysResult"\]\["RemainingResultCount"\] == '0' rescue nil\
 
 **Example Stop Condition (Legacy Mode):**
 
-    xml_result["GetSessionsResponse"][0]["SessionKeysResult"][0]["RemainingResultCount"][0] == '0' rescue nil
+\
+xml_result\["GetSessionsResponse"\]\[0\]\["SessionKeysResult"\]\[0\]\["RemainingResultCount"\]\[0\] == '0' rescue nil\
 
 #### Trigger Mode and Record Processing
 
@@ -13636,47 +14224,53 @@ Enable 'Continue Monitoring' to spawn new workorders for each detected record.
 
 #### Example SOAP Response
 
-    <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
-      <soapenv:Body>
-        <ns1:GetSessionsResponse xmlns:ns1="urn:Aspera:XML:FASPSessionNET:2009/11:Types">
-          <SessionKeysResult>
-            <ResultCount>2</ResultCount>
-            <RemainingResultCount>0</RemainingResultCount>
-            <IterationToken>dd549761f97954417d2abf3c47ec877b0000000000001229</IterationToken>
-            <SessionKey>
-              <UUID>fe77385c-3d17-4613-b839-1fc04bc5d423</UUID>
-            </SessionKey>
-            <SessionKey>
-              <UUID>678357a5-cbf1-490a-8417-3d1f17390ea6</UUID>
-            </SessionKey>
-          </SessionKeysResult>
-        </ns1:GetSessionsResponse>
-      </soapenv:Body>
-    </soapenv:Envelope>
+\
+\<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"\>\
+  \<soapenv:Body\>\
+    \<ns1:GetSessionsResponse xmlns:ns1="urn:Aspera:XML:FASPSessionNET:2009/11:Types"\>\
+      \<SessionKeysResult\>\
+        \<ResultCount\>2\</ResultCount\>\
+        \<RemainingResultCount\>0\</RemainingResultCount\>\
+        \<IterationToken\>dd549761f97954417d2abf3c47ec877b0000000000001229\</IterationToken\>\
+        \<SessionKey\>\
+          \<UUID\>fe77385c-3d17-4613-b839-1fc04bc5d423\</UUID\>\
+        \</SessionKey\>\
+        \<SessionKey\>\
+          \<UUID\>678357a5-cbf1-490a-8417-3d1f17390ea6\</UUID\>\
+        \</SessionKey\>\
+      \</SessionKeysResult\>\
+    \</ns1:GetSessionsResponse\>\
+  \</soapenv:Body\>\
+\</soapenv:Envelope\>\
 
 #### Result Records Extracting Code
 
 **Modern Mode:**
 
-    return xml_result["GetSessionsResponse"]["SessionKeysResult"]["SessionKey"]
+\
+return xml_result\["GetSessionsResponse"\]\["SessionKeysResult"\]\["SessionKey"\]\
 
 This extracts:
 
-    [{"UUID"=>"fe77385c-3d17-4613-b839-1fc04bc5d423"},
-     {"UUID"=>"678357a5-cbf1-490a-8417-3d1f17390ea6"}]
+\
+\[{"UUID"=\>"fe77385c-3d17-4613-b839-1fc04bc5d423"},\
+ {"UUID"=\>"678357a5-cbf1-490a-8417-3d1f17390ea6"}\]\
 
 #### Record Formatting Code
 
-    return { "id" => record["UUID"] } rescue nil
+\
+return { "id" =\> record\["UUID"\] } rescue nil\
 
 Service_results output:
 
-    [{"id" => "fe77385c-3d17-4613-b839-1fc04bc5d423"},
-     {"id" => "678357a5-cbf1-490a-8417-3d1f17390ea6"}]
+\
+\[{"id" =\> "fe77385c-3d17-4613-b839-1fc04bc5d423"},\
+ {"id" =\> "678357a5-cbf1-490a-8417-3d1f17390ea6"}\]\
 
 #### Record Identification Code
 
-    return "#{record["id"]}"
+\
+return "#{record\["id"\]}"\
 
 This identifies each record by its UUID for trigger tracking.
 
@@ -13684,12 +14278,14 @@ This identifies each record by its UUID for trigger tracking.
 
 If you only need the UUID values:
 
-    return record["UUID"]
+\
+return record\["UUID"\]\
 
 Service_results output:
 
-    ["fe77385c-3d17-4613-b839-1fc04bc5d423",
-     "678357a5-cbf1-490a-8417-3d1f17390ea6"]
+\
+\["fe77385c-3d17-4613-b839-1fc04bc5d423",\
+ "678357a5-cbf1-490a-8417-3d1f17390ea6"\]\
 
 In this case, 'Record identification code' can be left empty as each record is already a unique identifier.
 
@@ -13697,12 +14293,14 @@ In this case, 'Record identification code' can be left empty as each record is a
 
 For post-processing after extraction and formatting:
 
-    token = xml_result["GetSessionsResponse"]["SessionKeysResult"]["IterationToken"]
-    results = { "iteration_token" => token }
+\
+token = xml_result\["GetSessionsResponse"\]\["SessionKeysResult"\]\["IterationToken"\]\
+results = { "iteration_token" =\> token }\
 
 Change 'Result type' to 'hash'. Service_results output:
 
-    {"iteration_token"=>"91286e2557483993505661edef5435690000000000001234"}
+\
+{"iteration_token"=\>"91286e2557483993505661edef5435690000000000001234"}\
 
 #### Debugging Tips
 
@@ -13744,6 +14342,7 @@ Integration with Softlayer API
 
 | Version | Comment                                                    |
 |---------|------------------------------------------------------------|
+| 0.2.3   | Enhanced action template UI                                |
 | 0.2.2   | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.2.1   | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.2.0   | Updating to be compatible with Ruby 3.4 and Rails 8        |
@@ -14035,6 +14634,7 @@ This action plug-in enables creating a name-value pair collection (Hash) or addi
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.3.2 | Enhanced action template UI |
 | 0.3.1 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.3.0 | Remove hardcoded aspera directory reference |
 | 0.2.2 | Updated path to runtime version of ruby |
@@ -14109,9 +14709,10 @@ None
 
 For Orchestrator versions earlier than 4.0.0, install the following gems for TOML support:
 
-    gem 'citrus', '3.0.2'
-    gem 'toml-rb', '2.0.1'
-    bundle install
+\
+gem 'citrus', '3.0.2'\
+gem 'toml-rb', '2.0.1'\
+bundle install\
 
 #### Operating Instructions
 
@@ -14136,6 +14737,7 @@ This action plug-in can be used to script in python for some customized behaviou
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.1.3 | Enhanced action template UI |
 | 0.1.2 | Log errors to stderr instead of displaying stacktrace in work order output |
 | 0.1.1 | Add Bitbucket integration |
 | 0.1.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
@@ -14166,13 +14768,25 @@ This action plug-in can be used to script in python for some customized behaviou
 | **Required inputs** | file_path | String  |
 | **Outputs**         | file_size | Integer |
 
-    import os
-    file_path = inputs["file_path"]
-    if os.path.isfile(file_path):
-      outputs["file_size"]  = os.path.getsize(file_path)
-      outputs["status"] = "Complete"
-    else:
-      outputs["status"] = "Failed"
+import os
+
+\
+file_path = inputs\["file_path"\]
+
+\
+if os.path.isfile(file_path):
+
+\
+  outputs\["file_size"\]  = os.path.getsize(file_path)
+
+\
+  outputs\["status"\] = "Complete"
+
+\
+else:
+
+\
+  outputs\["status"\] = "Failed"
 
 #### Example 2: Sample code to parse XML data.
 
@@ -14183,32 +14797,58 @@ This action plug-in can be used to script in python for some customized behaviou
 
 The XML file is:
 
-    <Asset>
-      <File>The-Hobbit-VO.mxf</File>
-      <Profile>XDCAM HD422</Profile>
-      <Target>VOD Distrib</Target>
-      <Source>Internal Demo</Source>
-    </Asset>
+\<Asset\>
+
+\
+  \<File\>The-Hobbit-VO.mxf\</File\>
+
+\
+  \<Profile\>XDCAM HD422\</Profile\>
+
+\
+  \<Target\>VOD Distrib\</Target\>
+
+\
+  \<Source\>Internal Demo\</Source\>
+
+\
+\</Asset\>
 
 The Python code is:
 
-    import os
-    import xmltodict
-    xml_file_path = inputs['file_path']
-    with open(xml_file_path) as fd:
-        data = xmltodict.parse(fd.read())
-    try:
-        outputs['media_file_name'] = data['Asset']['File']
-    except:
-        pass
+import os
+
+\
+import xmltodict
+
+\
+xml_file_path = inputs\['file_path'\]
+
+\
+with open(xml_file_path) as fd:
+
+\
+    data = xmltodict.parse(fd.read())
+
+\
+try:
+
+\
+    outputs\['media_file_name'\] = data\['Asset'\]\['File'\]
+
+\
+except:
+
+\
+    pass
 
 Note: inputs\['var_name'\] can also be abbreviated var_name. Example:
 
-    xml_file_path = file_path
+xml_file_path = file_path
 
 To specify a custom status message, you can set the status_details key of the outputs hash with the customized message using this syntax:
 
-    outputs['status_details'] = 'Customized status details message'
+outputs\['status_details'\] = 'Customized status details message'
 
 #### Saved Parameters Description
 
@@ -14293,21 +14933,17 @@ None
 
 **For RHEL 9 and Rocky Linux 9:**
 
-```
-
-yum install pip
-pip install flask
-pip install flask_cors
-```
+\
+yum install pip\
+pip install flask\
+pip install flask_cors
 
 **For RHEL 8 and Rocky Linux 8:**
 
-```
-
-dnf install python3-pip
-pip3 install flask
-pip3 install flask_cors
-```
+\
+dnf install python3-pip\
+pip3 install flask\
+pip3 install flask_cors
 
 
 ### Hello world
@@ -14321,6 +14957,7 @@ This is a reference implementation for a simple Action plugin illustrating the A
 
 | Version | Comment                                                 |
 |---------|---------------------------------------------------------|
+| 1.3.1   | Enhanced action template UI                             |
 | 1.3.0   | Made fixes to ensure that the plugin runs to completion |
 | 1.2.0   | Updating to be compatible with Ruby 3.4 and Rails 8     |
 | 1.1.0   | Initial release                                         |
@@ -14482,6 +15119,7 @@ This action plug-in can be used to manipulate inputs using data operations based
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.1.1   | Enhanced action template UI                         |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.0.2   | Bug fix. Allows array and hash as run time inputs   |
 | 0.0.1   | initial release                                     |
@@ -14639,6 +15277,8 @@ This action plug-in provides the ability to set the values of multiple parameter
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.6.5 | Enhanced action template UI |
+| 0.6.4 | Fix issues when storing strings with single/double quotes |
 | 0.6.3 | Make parameter field columns expandable |
 | 0.6.2 | Add support for password type parameters |
 | 0.6.1 | Fix issues when storing certain string characters (Like colons) |
@@ -14650,7 +15290,7 @@ This action plug-in provides the ability to set the values of multiple parameter
 | 0.5.2 | Ensures that stored YML can be viewed even if escaped characters are present |
 | 0.5.1 | Added backward capability to view external stored YML |
 | 0.5.0 | Added capability to view external stored YML |
-| 0.4.3 | Fixes odd issue for windows path finishing with \\ |
+| 0.4.3 | Fixes odd issue for windows path finishing with \\\\ |
 | 0.4.2 | Enable safe export/import when using external data source |
 | 0.4.1 | Fixes typo in editor, rename JS function to avoid collisions |
 | 0.4.0 | New icon |
@@ -14703,17 +15343,15 @@ This action plug-in provides the ability to set the values of multiple parameter
     - `key2: value2`
 5.  Advanced usage: YAML can be generated using Ruby’s `to_yaml` on objects:
     - `h = { key1: "value1", key2: "value3", key: "value", key4: [1,2,3] }`
-
     - produces:
-
-    -     ---
-          :key1: value1
-          :key2: value3
-          :key: value
-          :key4:
-          - 1
-          - 2
-          - 3
+    - ---\
+      :key1: value1\
+      :key2: value3\
+      :key: value\
+      :key4:\
+      - 1\
+      - 2\
+      - 3
 
 #### Example Configuration
 
@@ -14778,6 +15416,7 @@ This plugin provides the ability to generate random strings that can be used as 
 
 | Version | Comment                                              |
 |---------|------------------------------------------------------|
+| 0.1.1   | Enhanced action template UI                          |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8  |
 | 0.0.7   | Added styling to parameter help text.                |
 | 0.0.6   | Added Help File                                      |
@@ -14917,6 +15556,7 @@ This action plug-in provides the ability to parse a regex expression and extract
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.1.1   | Enhanced action template UI                         |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.0.4   | Exposes RegEx Pattern as runtime input              |
 | 0.0.3   | New icon                                            |
@@ -14945,7 +15585,7 @@ This is a minimal setup configuration for the RegexMatcher plugin.
 | Parameter | Value |
 |-------|---------------------------------------------------|
 | Expression | 123456789/AB1234/expenseReport_1234.txt |
-| Regex Pattern | (\[0-9\]\*)/\[A-Z\]{2}(\[0-9\]\*)/(.\*)\\.\* |
+| Regex Pattern | (\[0-9\]\*)/\[A-Z\]{2}(\[0-9\]\*)/(.\*)\\..\* |
 | Additional outputs - Asset_ID | A\1-\3 |
 | Additional outputs - User_ID | \2 |
 
@@ -15005,6 +15645,7 @@ This action plug-in can be used to create and retrive shared state objects.
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.5.1 | Enhanced action template UI |
 | 0.5.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.4.0 | adding delete operation |
 | 0.3.0 | adding comments field |
@@ -15297,6 +15938,8 @@ This plugin provides a framework to associate miscellaneous values to parameters
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.8.8 | Enhanced action template UI and added default value for return_array_of_rows column |
+| 0.8.7 | Ensure column width is restored on switching tabs |
 | 0.8.6 | Fixes bug where first row with any matching parameter is returned instead of requiring all parameters to match |
 | 0.8.5 | Fixes bug preventing wildcard patterns from matching in glob expressions |
 | 0.8.4 | Make columns expandable |
@@ -15510,6 +16153,7 @@ Allows timecodes manipulations like conversions, sums or differences.
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.3.1 | Enhanced action template UI |
 | 0.3.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.2.2 | No longer supporting ruby 1.8 |
 | 0.2.1 | Adds millisecond count as input and output. |
@@ -15615,6 +16259,7 @@ This action plug-in provides the ability to generate unique ID formatted "39fa4e
 
 | Version | Comment                                                         |
 |---------|-----------------------------------------------------------------|
+| 0.3.1   | Enhanced action template UI                                     |
 | 0.3.0   | Updating to be compatible with Ruby 3.4 and Rails 8             |
 | 0.2.2   | Added to_i to scramble part                                     |
 | 0.2.1   | Added styling to parameter help text.                           |
@@ -15696,6 +16341,7 @@ This action plug-in asynchronously monitors a specified file location and detect
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.1.1   | Enhanced action template UI                         |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.0.1   | Initial implementation                              |
 
@@ -15796,7 +16442,7 @@ This plug-in monitors a specific file and completes when the file is moved or de
 - **File must exist at start:** The action requires the file to exist when it begins execution. To wait for file creation, use a different plugin or implement retry logic.
 - **File permissions:** Ensure the **aspweb** user has appropriate permissions to access the file.
 - **Network paths:** Ensure proper network connectivity and permissions when monitoring files on network shares.
-- **Cross-platform paths:** Be mindful of path separators (/ vs \\ when workflows run on different operating systems.
+- **Cross-platform paths:** Be mindful of path separators (/ vs \\) when workflows run on different operating systems.
 
 **Best Practices**
 
@@ -15822,6 +16468,7 @@ This plugin provides ability to parse and/or validate contents of ADI 3.0 XML
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.2.2 | Enhanced action template UI |
 | 0.2.1 | Fix regex validation issues in compare_or_match method |
 | 0.2.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.1.10 | Don't depend on customized Rails initializers |
@@ -15876,13 +16523,14 @@ This is an ADI Parsing and Validation template configuration example for the Adi
 
 **Example:**
 
-    <Offer uriId="indemand.com/Offer/UNVA2001081701004000" providerVersionNum="1">
-        <offer:Presentation>
-            <offer:CategoryRef uriId="indemand.com/Category/InDemand/Movies A-Z" />
-            <offer:DisplayAsNew>P7D</offer:DisplayAsNew>
-            <offer:DisplayAsLastChance>P7D</offer:DisplayAsLastChance>
-        </offer:Presentation>
-    </Offer>
+\
+\<Offer uriId="indemand.com/Offer/UNVA2001081701004000" providerVersionNum="1"\>\
+    \<offer:Presentation\>\
+        \<offer:CategoryRef uriId="indemand.com/Category/InDemand/Movies A-Z" /\>\
+        \<offer:DisplayAsNew\>P7D\</offer:DisplayAsNew\>\
+        \<offer:DisplayAsLastChance\>P7D\</offer:DisplayAsLastChance\>\
+    \</offer:Presentation\>\
+\</Offer\>\
 
 #### Saved Parameters Description
 
@@ -15976,6 +16624,7 @@ This plugin provides ability to parse and/or validate contents of ADI XML
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.5.2 | Enhanced action template UI |
 | 0.5.1 | Fix regex validation issues in compare_or_match method |
 | 0.5.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.4.8 | Remove dependency on custom rails initializers |
@@ -16244,6 +16893,7 @@ This Action plug-ins enables the submission of a file correction request to an I
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.5.1 | Enhanced action template UI |
 | 0.5.0 | Added support for Baton v9.x REST API |
 | 0.4.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.3.2 | Failing when no job id is returned. Reduced logging |
@@ -16475,6 +17125,7 @@ This Action plug-ins enables the submission of a file verification request to an
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 1.8.2 | Enhanced action template UI |
 | 1.8.1 | Adds needed_cores field when using Baton v9.x |
 | 1.8.0 | Adds support for Baton v9.x REST API |
 | 1.7.1 | Adds option to use SSL for Baton server connections |
@@ -16672,6 +17323,7 @@ This Action plug-ins enables the retrieval of XML Report from Baton
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.3.1   | Enhanced action template UI                         |
 | 0.3.0   | Added support for Baton v9.x REST API               |
 | 0.2.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.1.1   | initial release                                     |
@@ -17312,6 +17964,8 @@ Executes and monitors quality control verifications on a VidChecker server.
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.4.2 | Enhanced action template UI |
+| 0.4.1 | Prevent input/output pre-processing code from being overwritten |
 | 0.4.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.3.0 | Added alternative call for report generation |
 | 0.2.9 | Fixed typo in HTML |
@@ -17548,6 +18202,7 @@ This action plug-in provides the ability to get speech transcriptions with IBM W
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.2.1   | Enhanced action template UI                         |
 | 0.2.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.1.0   | added API key support                               |
 | 0.0.2   | IBM Bluemix is replaced by IBM Cloud in help file   |
@@ -17836,6 +18491,7 @@ This action plug-in is used to validate an XML file against an XSD template.
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.2.1   | Enhanced action template UI                         |
 | 0.2.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.1.2   | Adding rescue on file cleanup                       |
 | 0.1.1   | Invalid migration naming fix                        |
@@ -17982,63 +18638,65 @@ This action validates a given XML against one or more given XSD schemas and retu
 
 **Sample XML (shiporder.xml):**
 
-    <?xml version=\"1.0\" encoding=\"UTF-8\"?>
-    <shiporder orderid=\"889923\"
-    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"
-    xsi:noNamespaceSchemaLocation=\"shiporder.xsd\">
-      <orderperson>John Smith</orderperson>
-      <shipto>
-        <name>Ola Nordmann</name>
-        <address>Langgt 23</address>
-        <city>4000 Stavanger</city>
-        <country>Norway</country>
-      </shipto>
-      <item>
-        <title>Empire Burlesque</title>
-        <note>Special Edition</note>
-        <quantity>1</quantity>
-        <price>10.90</price>
-      </item>
-      <item>
-        <title>Hide your heart</title>
-        <quantity>1</quantity>
-        <price>9.90</price>
-      </item>
-    </shiporder>
+\
+\<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?\>\
+\<shiporder orderid=\\"889923\\"\
+xmlns:xsi=\\"http://www.w3.org/2001/XMLSchema-instance\\"\
+xsi:noNamespaceSchemaLocation=\\"shiporder.xsd\\"\>\
+  \<orderperson\>John Smith\</orderperson\>\
+  \<shipto\>\
+    \<name\>Ola Nordmann\</name\>\
+    \<address\>Langgt 23\</address\>\
+    \<city\>4000 Stavanger\</city\>\
+    \<country\>Norway\</country\>\
+  \</shipto\>\
+  \<item\>\
+    \<title\>Empire Burlesque\</title\>\
+    \<note\>Special Edition\</note\>\
+    \<quantity\>1\</quantity\>\
+    \<price\>10.90\</price\>\
+  \</item\>\
+  \<item\>\
+    \<title\>Hide your heart\</title\>\
+    \<quantity\>1\</quantity\>\
+    \<price\>9.90\</price\>\
+  \</item\>\
+\</shiporder\>\
 
 **Corresponding XSD Schema (shiporder.xsd):**
 
-    <?xml version=\"1.0\" encoding=\"UTF-8\"?>
-    <xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">
-      <xs:element name=\"shiporder\">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:element name=\"orderperson\" type=\"xs:string\"/>
-            <xs:element name=\"shipto\">
-              <xs:complexType>
-                <xs:sequence>
-                  <xs:element name=\"name\" type=\"xs:string\"/>
-                  <xs:element name=\"address\" type=\"xs:string\"/>
-                  <xs:element name=\"city\" type=\"xs:string\"/>
-                  <xs:element name=\"country\" type=\"xs:string\"/>
-                </xs:sequence>
-              </xs:complexType>
-            </xs:element>
-            <xs:element name=\"item\" maxOccurs=\"unbounded\">
-              <xs:complexType>
-                <xs:sequence>
-                  <xs:element name=\"title\" type=\"xs:string\"/>
-                  <xs:element name=\"note\" type=\"xs:string\" minOccurs=\"0\"/>
-                  <xs:element name=\"quantity\" type=\"xs:positiveInteger\"/>
-                  <xs:element name=\"price\" type=\"xs:decimal\"/>
-                </xs:sequence>
-              </xs:complexType>
-            </xs:element>
-          </xs:sequence>
-          <xs:attribute name=\"orderid\" type=\"xs:string\" use=\"required\"/>
-        </xs:complexType>
-      </xs:element>
-    </xs:schema>
+\
+\<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?\>\
+\<xs:schema xmlns:xs=\\"http://www.w3.org/2001/XMLSchema\\"\>\
+  \<xs:element name=\\"shiporder\\"\>\
+    \<xs:complexType\>\
+      \<xs:sequence\>\
+        \<xs:element name=\\"orderperson\\" type=\\"xs:string\\"/\>\
+        \<xs:element name=\\"shipto\\"\>\
+          \<xs:complexType\>\
+            \<xs:sequence\>\
+              \<xs:element name=\\"name\\" type=\\"xs:string\\"/\>\
+              \<xs:element name=\\"address\\" type=\\"xs:string\\"/\>\
+              \<xs:element name=\\"city\\" type=\\"xs:string\\"/\>\
+              \<xs:element name=\\"country\\" type=\\"xs:string\\"/\>\
+            \</xs:sequence\>\
+          \</xs:complexType\>\
+        \</xs:element\>\
+        \<xs:element name=\\"item\\" maxOccurs=\\"unbounded\\"\>\
+          \<xs:complexType\>\
+            \<xs:sequence\>\
+              \<xs:element name=\\"title\\" type=\\"xs:string\\"/\>\
+              \<xs:element name=\\"note\\" type=\\"xs:string\\" minOccurs=\\"0\\"/\>\
+              \<xs:element name=\\"quantity\\" type=\\"xs:positiveInteger\\"/\>\
+              \<xs:element name=\\"price\\" type=\\"xs:decimal\\"/\>\
+            \</xs:sequence\>\
+          \</xs:complexType\>\
+        \</xs:element\>\
+      \</xs:sequence\>\
+      \<xs:attribute name=\\"orderid\\" type=\\"xs:string\\" use=\\"required\\"/\>\
+    \</xs:complexType\>\
+  \</xs:element\>\
+\</xs:schema\>\
 
 **Manual Testing with xmllint**
 
@@ -18089,6 +18747,7 @@ This action plug-in is a tool to manage resource distribution from a pool of res
 
 | Version | Comment                                                      |
 |---------|--------------------------------------------------------------|
+| 0.1.1   | Enhanced action template UI                                  |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8          |
 | 0.0.4   | Leverages DB for round robin tracking instead of file system |
 | 0.0.3   | New category for resource management                         |
@@ -18188,6 +18847,7 @@ This action plugin is a tool to balance requests for a pool of resources with sp
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.5.3 | Enhanced action template UI |
 | 0.5.2 | Supports tags with expected queued item |
 | 0.5.1 | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.5.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
@@ -18371,6 +19031,7 @@ This action plugin is a tool to stage items into a managed queue. It provides a 
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.9.5 | Enhanced action template UI |
 | 0.9.4 | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.9.3 | Fix for adhoc queue generation and item positioning |
 | 0.9.2 | Updating migrations and position generation |
@@ -18555,6 +19216,7 @@ This action plug-in is a tool to manage a limited pool of resources. It provides
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 2.3.3 | Enhanced action template UI |
 | 2.3.2 | Updated the label from Keep ongoing to Continue Monitoring |
 | 2.3.1 | Removing legacy support |
 | 2.3.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
@@ -18795,6 +19457,7 @@ This plugin executes the following workflow step once for each element in an inp
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 1.2.2 | Enhanced action template UI |
 | 1.2.1 | Fix bug on handling error status prerequisites in a serialized array |
 | 1.2.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 1.1.1 | If OR connector after fanout, start next steps in the loop even on failure/error |
@@ -18910,6 +19573,7 @@ This plug-in is used to launch workflows on a remote orchestrator instance and g
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.6.3 | Enhanced action template UI |
 | 0.6.2 | Added optional JWT Implementation for API |
 | 0.6.1 | Remove duplicate declaration of web root |
 | 0.6.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
@@ -19072,6 +19736,7 @@ This action plug-in allows conditional execution of a step by evaluating a custo
 
 | Version | Comment                                                 |
 |---------|---------------------------------------------------------|
+| 0.3.1   | Enhanced action template UI                             |
 | 0.3.0   | Updating to be compatible with Ruby 3.4 and Rails 8     |
 | 0.2.8   | Added styling to parameter help text.                   |
 | 0.2.7   | 2015-02-16 ML - New icon                                |
@@ -19142,31 +19807,35 @@ The command must return a boolean value:
 
 **Validate that a variable `file_size` (Integer) is not null or zero:**
 
-    (inputs['file_size'] > 0)
+\
+(inputs\['file_size'\] \> 0)\
 
 **Alternate multi-line version:**
 
-    if inputs['file_size'] > 0
-      return true
-    else
-      return false
-    end
+\
+if inputs\['file_size'\] \> 0\
+  return true\
+else\
+  return false\
+end\
 
 **Check that file at path input `file_path` (String) exists and is non-empty:**
 
-    filePath = inputs['file_path']
-    return File.exist?(filePath) && (File.size(filePath) > 0)
+\
+filePath = inputs\['file_path'\]\
+return File.exist?(filePath) && (File.size(filePath) \> 0)\
 
 **Same as above, but also output the file size as `file_size` (Integer):**
 
-    filePath = inputs['file_path']
-    if File.exist?(filePath)
-      fileSize = File.size(filePath)
-      outputs['file_size'] = fileSize
-      return (fileSize > 0)
-    else
-      return false
-    end
+\
+filePath = inputs\['file_path'\]\
+if File.exist?(filePath)\
+  fileSize = File.size(filePath)\
+  outputs\['file_size'\] = fileSize\
+  return (fileSize \> 0)\
+else\
+  return false\
+end\
 
 
 ### Funnel-in
@@ -19180,6 +19849,7 @@ This plugin collects and aggregates outputs from parallel executions initiated b
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 1.1.3 | Enhanced action template UI |
 | 1.1.2 | Handle configurations without funneled inputs present |
 | 1.1.1 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 1.0.5 | Added support for step renaming in fan out (ArrayFanout \>= 1.1.0) |
@@ -19285,6 +19955,8 @@ This plugin can be used to reconcile inputs coming from different branches of lo
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.5.2 | Enhanced action template UI |
+| 0.5.1 | Fix issues when passing Array-typed inputs |
 | 0.5.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.4.1 | Fixes problem when using multi inputs without specifying the number. Assuming 2 by default. |
 | 0.4.0 | Add option to consider empty objects (array or hashes) has nil. Fixed escaping problem when using dynamic inputs. |
@@ -19379,6 +20051,7 @@ Takes a snapshot of the Orchestrator configuration.
 
 | Version | Comment                                                          |
 |---------|------------------------------------------------------------------|
+| 0.2.1   | Enhanced action template UI                                      |
 | 0.2.0   | Updating to be compatible with Ruby 3.4 and Rails 8              |
 | 0.1.0   | Correcting the plugin_name in metadata.yml                       |
 | 0.0.6   | Correcting the plugin_name in metadata.yml                       |
@@ -19500,6 +20173,9 @@ This action plug-in allows you to embed an entire, separately defined workflow a
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 1.5.3 | Ensure before_save resolves by portable ID first and falls back to workflow ID |
+| 1.5.2 | Enhanced action template UI |
+| 1.5.1 | Fix migration issues caused by nil references to deleted workflows |
 | 1.5.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 1.4.4 | Fix possible problem when stopping the subworkflow step and the inner steps are not stopped. |
 | 1.4.3 | Fix possible duplication of inputs and outputs definition |
@@ -19630,6 +20306,7 @@ This action plug-in provides the ability to lookup the information about orchest
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.1.1   | Enhanced action template UI                         |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.0.2   | 2015-02-18 ML - New icon                            |
 | 0.0.1   | initial release                                     |
@@ -19763,18 +20440,19 @@ When 'Enable glob pattern search?' is selected (not applicable for ID lookup), y
 
 When 'Return all matches?' is selected, here is an example of the output structure:
 
-    "Orchestrator user ID" => [11, 9, 3]
-    "Phone number" => {11 => "", 3 => "", 9 => ""}
-    "Alternate email addresses" => {11 => [], 3 => [], 9 => []}
-    "Group memberships" => {11 => [], 3 => ["Contributor", "Scheduler"], 9 => ["Contributor"]}
-    "Created" => {11 => Tue, 13 May 2014 00:06:13 UTC +00:00, 3 => Wed, 01 May 2013 00:58:44 UTC +00:00, 9 => Thu, 19 Dec 2013 21:10:02 UTC +00:00}
-    "User type" => {11 => "OrchestratorUser", 3 => "OrchestratorUser", 9 => "OrchestratorUser"}
-    "First name" => {11 => "baba", 3 => "b", 9 => ""}
-    "Orchestrator login" => {11 => "b", 3 => "bob", 9 => "baba"}
-    "Active" => {11 => false, 3 => true, 9 => true}
-    "Last updated" => {11 => Tue, 13 May 2014 00:06:13 UTC +00:00, 3 => Wed, 01 May 2013 17:42:11 UTC +00:00, 9 => Thu, 24 Jul 2014 21:12:45 UTC +00:00}
-    "Last name" => {11 => "", 3 => "ob", 9 => ""}
-    "Email address" => {11 => "", 3 => "", 9 => ""}
+\
+"Orchestrator user ID" =\> \[11, 9, 3\]\
+"Phone number" =\> {11 =\> "", 3 =\> "", 9 =\> ""}\
+"Alternate email addresses" =\> {11 =\> \[\], 3 =\> \[\], 9 =\> \[\]}\
+"Group memberships" =\> {11 =\> \[\], 3 =\> \["Contributor", "Scheduler"\], 9 =\> \["Contributor"\]}\
+"Created" =\> {11 =\> Tue, 13 May 2014 00:06:13 UTC +00:00, 3 =\> Wed, 01 May 2013 00:58:44 UTC +00:00, 9 =\> Thu, 19 Dec 2013 21:10:02 UTC +00:00}\
+"User type" =\> {11 =\> "OrchestratorUser", 3 =\> "OrchestratorUser", 9 =\> "OrchestratorUser"}\
+"First name" =\> {11 =\> "baba", 3 =\> "b", 9 =\> ""}\
+"Orchestrator login" =\> {11 =\> "b", 3 =\> "bob", 9 =\> "baba"}\
+"Active" =\> {11 =\> false, 3 =\> true, 9 =\> true}\
+"Last updated" =\> {11 =\> Tue, 13 May 2014 00:06:13 UTC +00:00, 3 =\> Wed, 01 May 2013 17:42:11 UTC +00:00, 9 =\> Thu, 24 Jul 2014 21:12:45 UTC +00:00}\
+"Last name" =\> {11 =\> "", 3 =\> "ob", 9 =\> ""}\
+"Email address" =\> {11 =\> "", 3 =\> "", 9 =\> ""}\
 
 **Common Use Cases**
 
@@ -19813,6 +20491,7 @@ This action plug-in provides work order information and enables customization of
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.7.1 | Enhanced action template UI |
 | 0.7.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.6.2 | Add workflow name and id in outputs |
 | 0.6.1 | Returns initiated_by value |
@@ -19935,6 +20614,7 @@ This action plug-in is used to launch one workflow from within another. It is si
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 1.6.1 | Enhanced action template UI |
 | 1.6.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 1.5.0 | Adds possibility to use the portable id with run-time selection |
 | 1.4.3 | Fix possible duplication of inputs and outputs definition |
@@ -20207,36 +20887,76 @@ This action plug-in provides the ability to control Alchemist Snell OD systems.
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.2.2 | Enhanced action template UI |
+| 0.2.1 | Fix operation payload issues & cleanup code |
 | 0.2.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.1.0 | added configurable polling frequency |
 | 0.0.3 | removing polling frequency reference from the edit screen |
 | 0.0.2 | set default polling frequency. Polling frequency not defined by the model |
 | 0.0.1 | first tracked version |
 
+#### How It Works
+
+- Integrates with the **Alchemist Snell OD (On-Demand) service** via REST API calls to submit and monitor transcoding or processing jobs.
+- Supports three operations: **Submit Job, Query Job Status by ID, and Query Job Status by Filter**.
+- Accepts a **pre-populated or custom XML/JSON payload** for each operation, giving flexibility to use defaults or supply fully custom request bodies.
+- The **Submit Job** operation is asynchronous. After submitting, the plugin polls the Snell OD service periodically for job status at the configured polling frequency.
+- The **Query Job Status** operations execute synchronously and return the current status of one or more jobs immediately.
+- Returns the **Resource ID** of a submitted job, the **full response hash**, the **submit response XML**, and any **error details** for downstream processing.
+
+#### Configuration Instructions
+
+1.  Create a new action step using the **AlchemistSnellOdOperation** plugin.
+2.  Fill out the following fields:
+    - **Name**: The name used to identify a saved AlchemistSnellOdOperation configured instance.
+    - **Comments**: Comments about this saved AlchemistSnellOdOperation configured instance.
+    - **Url**: The full URL including port and endpoint required to reach the Snell OD service (e.g. `http://snell-server.example.com:8080/api/jobs`).
+    - **Operation**: The operation to perform. Supported values: Submit Job, Query Job Status by Id, Query Job Status by Filter.
+    - **Payload**: The request payload for the selected operation. A default payload is pre-populated for each operation and can be used as-is or replaced with a custom payload.
+    - **Polling Frequency**: The number of seconds between polls when waiting for an asynchronous Submit Job operation to complete.
+
+#### Example Configuration
+
+This is an example configuration for the AlchemistSnellOdOperation plugin submitting a new on-demand processing job to the Snell OD service.
+
+| Parameter | Value |
+|-------|---------------------------------------------------|
+| Name | Submit Alchemist Snell OD Job |
+| Comments | Submit a new on-demand processing job to the Snell OD service |
+| Url | http://snell-server.example.com:8080/api/jobs |
+| Operation | Submit Job |
+| Payload | (pre-populated default payload or custom payload) |
+| Polling Frequency | 10 |
+
 #### Saved Parameters Description
 
-- **Name**: The name used to identify a saved AlchemistSnellOdOperation configured instance.
-  Document all available template parameters using add_parameter_help
-- **Url**: Enter the entire URL along with the Port and the endpoint to reach the snell service.
-- **Operation**: Choose between the three options available. (Submit Job, Query Job Status by Id, Query Job Status by Filter)
-- **Payload**: We have pre-populated each operation with a respective payload. This can be used or modified with a custom payload
-- **Polling Frequency**: For asynchronous operation the frequency at which the server needs to be polled
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| **Name** | The name used to identify a saved AlchemistSnellOdOperation configured instance. |
+| **Comments** | Comments about this saved AlchemistSnellOdOperation configured instance. |
+| **Url** | The full URL including port and endpoint required to reach the Snell OD service (e.g. `http://snell-server.example.com:8080/api/jobs`). |
+| **Operation** | The operation to perform. Supported values: Submit Job, Query Job Status by Id, Query Job Status by Filter. |
+| **Payload** | The request payload for the selected operation. A default payload is pre-populated for each operation and can be used as-is or replaced with a custom payload. |
+| **Polling Frequency** | The number of seconds between polls when waiting for an asynchronous Submit Job operation to complete. |
 
-#### Inputs description
+#### Inputs Description
 
-The list of inputs depends on the configuration of the AlchemistSnellOdOperation action template.
+The Payload parameter is available as a runtime input, allowing the request body to be specified or overridden dynamically within the workflow.
 
---\>
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| *Payload* | The request payload for the selected operation. A corresponding default payload is pre-populated for each operation and can be used as-is or replaced entirely with a custom payload at runtime. |
 
-- *Payload*: We have populated a corresponding payload associated with every operation. This payload can be used or replaced with a custom payload
+#### Outputs Description
 
-#### Outputs description
+Outputs include the submitted job's Resource ID, the full response hash, the raw XML response for Submit Job, and any error details encountered during execution.
 
-- Document all available outputs using add_output_help
-- *ResourceId*: In case of submit job we show the job id of the job
-- *Output Hash*: The entire response received is shown in the form of a hash
-- *Error Message*: In case of an error this field is populated with the error message.
-- *Responce_XML_For_Job_Submit*: For a new job, this variable holds its associated response
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| ResourceId | The Job ID assigned to the submitted job. Returned by the Submit Job operation. Use this ID in subsequent Query Job Status by ID operations to track the job. |
+| Output_Hash | A hash of the entire response received from the Snell OD service for the operation performed. |
+| Responce_XML_For_Job_Submit | The full XML response returned by the Snell OD service for a Submit Job operation. |
+| Error_Message | Contains error details if the operation fails or the service returns an error. Empty on success. |
 
 #### Supported Actions
 
@@ -20244,11 +20964,52 @@ None
 
 #### Dependencies
 
-None
+Requires a running and accessible Alchemist Snell OD service. The service endpoint must be reachable from the Orchestrator server on the configured port.
 
 #### Operating Instructions
 
-For the submit job, asynchronous operation is performed to get the status of the job.
+This action integrates with the Alchemist Snell OD service to submit and monitor on-demand processing jobs via REST API. The Submit Job operation is asynchronous and polls for completion; query operations execute synchronously.
+
+**Supported Operations**
+
+- **Submit Job:** Submits a new on-demand processing job to the Snell OD service using the provided payload. This is an **asynchronous operation**. After submission, the plugin polls the service at the configured polling frequency until the job completes. Returns the Resource ID and full XML response for the submitted job.
+- **Query Job Status by ID:** Retrieves the current status of a specific job using its Resource ID. Executes synchronously and returns immediately with the job status in the Output Hash.
+- **Query Job Status by Filter:** Retrieves the status of one or more jobs matching criteria defined in the payload. Executes synchronously and returns matching job statuses in the Output Hash.
+
+**Working with Payloads**
+
+- Each operation has a **pre-populated default payload** that can be used directly without modification for standard use cases.
+- The payload can be **replaced entirely with a custom payload** at the template level or at runtime via the Payload input to support advanced or non-standard job configurations.
+- For **Submit Job**, the payload typically defines the job specification including source, processing parameters, and output destination.
+- For **Query Job Status by Filter**, the payload defines the filter criteria used to match one or more jobs on the server.
+- Ensure the payload is correctly formatted for the Snell OD API, malformed payloads will result in an error from the service.
+
+**Best Practices**
+
+- Store the **Resource ID** output from a Submit Job step as a workflow variable to use in subsequent Query Job Status by ID steps for tracking.
+- Set an appropriate **Polling Frequency** for Submit Job operations, too frequent polling increases load on the Snell OD server; too infrequent delays downstream workflow steps.
+- Use **Query Job Status by ID** for targeted status checks on a known job, and **Query Job Status by Filter** when monitoring multiple jobs or querying by job attributes.
+- Validate custom payloads **against the Snell OD API specification** before using them in a production workflow to avoid runtime errors.
+- Implement **error handling** workflows that check the Error_Message output to manage submission failures or service unavailability gracefully.
+- Use the **pre-populated default payloads** as a starting point and modify only the fields that need to differ from the defaults to reduce configuration effort and errors.
+
+**Troubleshooting**
+
+- **Connection refused:** Verify the URL is correct and includes the full endpoint with the correct port. Confirm the Snell OD service is running and reachable from the Orchestrator server.
+- **Job submission fails:** Check the Error_Message output for details. Verify the payload is correctly formatted and conforms to the Snell OD API specification.
+- **Resource ID not returned:** Confirm the Submit Job operation completed without errors. Check the Responce_XML_For_Job_Submit output for the raw server response.
+- **Query returns no results:** For Query by ID, confirm the Resource ID is correct. For Query by Filter, verify the filter criteria in the payload match existing jobs on the server.
+- **Job status not updating:** Verify the polling frequency is not too long and that the Snell OD service is actively processing the submitted job.
+- **Malformed payload error:** Validate the custom payload structure against the Snell OD API documentation. Use the pre-populated default payload as a reference.
+
+**Important Notes**
+
+- The **Submit Job operation is asynchronous**, the plugin polls the Snell OD service until the job completes. All other operations execute synchronously.
+- A **default payload is pre-populated** for each operation. It can be used as-is or overridden with a custom payload at the template or runtime level.
+- The **URL must include the full endpoint path and port** required to reach the Snell OD service. No path segments are appended automatically by the plugin.
+- The **Resource ID** returned by Submit Job is required for subsequent Query Job Status by ID operations, store it as a workflow variable when chaining steps.
+- The **Responce_XML_For_Job_Submit** output is only populated for Submit Job operations.
+- The **Error_Message** output is populated on failure. Always evaluate this output in error handling logic to diagnose issues.
 
 
 ### Amazon Elastic Transcoder
@@ -20458,6 +21219,7 @@ This action plugin provides the ability to transcode video files via Ateme Titan
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.1.1   | Enhanced action template UI                         |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.0.2   | Adding RemoteNode Dependency.                       |
 | 0.0.1   | initial release                                     |
@@ -20766,45 +21528,28 @@ This is Action plug-ins provides the ability to submit file transcoding job to a
 #### Saved Parameters Description
 
 - **Name**: The name used to identify a saved Carbon Coder Transcoding configured instance.
-
 - **Name**: The name for the Carbon Coder Transcoding template
-
 - **Comments**: The comments of the Carbon Coder Transcoding template
-
 - **Carbon/WFS Server Node**: The remote node name of the server which hosts the Carbon Coder Transcoding server
-
 - **Carbon/WFS Server IP address (or hostname)**: The remote host name or remote IP of the server which hosts the Carbon Coder Transcoding server
-
 - **Carbon/WFS API port (optional)**: The port number of remote server which hosts the Carbon Coder Transcoding server
-
 - **API version**: Used to identify which version or Carbon coder is deployed on the target server.
-
-      - Carbon API Version 1.2:  This version must be selected when the remote server hosts an Harmonic Carbon Coder server (pre WFS). When users select this API Version, they can connect to a Carbon Coder server on port 1120 and send transcoding jobs and receive updates on the submitted job.
-      - Carbon API Version 1.4.6 legacy: This version must be selected when the remote server hosts on a Rhozet WFS server but the jobs are being submitted using the legacy format. Selecting this option would allow to maintain continuity after an upgrade to WFS by still using plugin configuration that were set-up for the Carbon API 1.2.  What the plugin does is submit the job to Carbon Coder using the legacy API (as on 1.2), as the legacy submit is still supported by WFS, however, polling for status is done using the WFS manager (on port 8731). That complexity however is abstracted from the end-user by Orchestrator and to them the  behavior will be exactly the same as the one offered by the previous version of the plugin for the Carbon API 1.2.
-      - Carbon API Version 1.4.6: This version must be selected when the remote server hosts a Rhozet WFS server and the job sent  use new features only supported by WFS. When users select this API Version, both submission and status polling are done using the new SOAP based Carbon API (on port 8731).
-
+  \
+  - Carbon API Version 1.2:  This version must be selected when the remote server hosts an Harmonic Carbon Coder server (pre WFS). When users select this API Version, they can connect to a Carbon Coder server on port 1120 and send transcoding jobs and receive updates on the submitted job.\
+  - Carbon API Version 1.4.6 legacy: This version must be selected when the remote server hosts on a Rhozet WFS server but the jobs are being submitted using the legacy format. Selecting this option would allow to maintain continuity after an upgrade to WFS by still using plugin configuration that were set-up for the Carbon API 1.2.  What the plugin does is submit the job to Carbon Coder using the legacy API (as on 1.2), as the legacy submit is still supported by WFS, however, polling for status is done using the WFS manager (on port 8731). That complexity however is abstracted from the end-user by Orchestrator and to them the  behavior will be exactly the same as the one offered by the previous version of the plugin for the Carbon API 1.2.\
+  - Carbon API Version 1.4.6: This version must be selected when the remote server hosts a Rhozet WFS server and the job sent  use new features only supported by WFS. When users select this API Version, both submission and status polling are done using the new SOAP based Carbon API (on port 8731).\
 - **Status Polling frequency**: How often progress will be reported. Default is 5 seconds
   Fields for WFS API Version 1.4.6
-
 - **WFS Workflows**: A dropdown of remote WFS workflows
-
 - **WFS Workflows GUID**: GUID of the WFS workflow selected from above dropdown of remote WFS workflows
-
 - **Source**: The absolute path to the file on the server's file system
-
 - **Target**: The absolute path to the file or directory on the server's file system
   Fields for WFS API Version 1.2 and 1.4.6 legacy
-
 - **Preset Payload File**: A dropdown of templates available on Orchestrator server to transcode files
-
 - **File Name**: The absolute path to the file on the server's file system
-
 - **Carbon Job Name**: An optional input when provided identifies
-
 - **Module GUID**: The absolute path to the file on the server's file system
-
 - **Target dir**: The absolute path to the directory on the server's file system
-
 - **Transcoding Payload**: An XML which represents the template selected above in dropdown
 
 #### Inputs description
@@ -21069,9 +21814,9 @@ b\) Click the button "Get Projects and Groups". This provides 2 dropdowns with p
 
 c\) Select a project and a group from the dropdowns
 
-d\) Provide the source file name (Ex: "\\drcuk_colo1\\AsperaShare\\JS_Scary2.mxf")
+d\) Provide the source file name (Ex: "\\\drcuk_colo1\\\AsperaShare\\\JS_Scary2.mxf")
 
-e\) Provide the audio source file path if different from the video file (Ex: "\\drcuk_colo1\\AsperaShare\\JS_Scary2.wav")
+e\) Provide the audio source file path if different from the video file (Ex: "\\\drcuk_colo1\\\AsperaShare\\\JS_Scary2.wav")
 
 f\) The Digital Rapids server takes these inputs and performs the transcode
 
@@ -21087,6 +21832,7 @@ This action plugin provides the ability to invoke Dolby VM600/DP600 API operatio
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.1.1   | Enhanced action template UI                         |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.0.6   | New icon                                            |
 | 0.0.5   | Improving test compatibility                        |
@@ -21221,6 +21967,8 @@ This Action plugin provides the ability to submit a file transcoding job to the 
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.4.2 | Enhanced action template UI |
+| 0.4.1 | Fix issues when fetching job templates & using AWS secrets with certain special characters |
 | 0.4.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.3.0 | Add operations start job and check job status |
 | 0.2.1 | Add endpoint as a configurable parameter |
@@ -21364,6 +22112,7 @@ This action plugin provides the ability to submit file transcoding jobs to an El
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.7.1 | Enhanced action template UI |
 | 0.7.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.6.3 | Show completion percentage in status details |
 | 0.6.2 | Fixes profiles list |
@@ -21508,17 +22257,18 @@ All parameters are available as inputs at runtime if not specified by the templa
 
 A custom XML payload can be sent to Elemental, including for example this information:
 
-    <?xml version="1.0" encoding="UTF-8"?>
-    <job>
-      <input>
-        <file_input>
-          <uri><%=Source%></uri>
-          <username>aspera</username>
-          <password>toto</password>
-        </file_input>
-      </input>
-      <profile><%=Profile_Id%></profile>
-    </job>
+\
+\<?xml version="1.0" encoding="UTF-8"?\>\
+\<job\>\
+  \<input\>\
+    \<file_input\>\
+      \<uri\>\<%=Source%\>\</uri\>\
+      \<username\>aspera\</username\>\
+      \<password\>toto\</password\>\
+    \</file_input\>\
+  \</input\>\
+  \<profile\>\<%=Profile_Id%\>\</profile\>\
+\</job\>\
 
 With such a payload, source, username, password, and profile ID are typically defined as runtime inputs. But if source and profile ID are also defined in the configuration, they take precedence. Actually, no runtime inputs are available for Source and Profile_Id in this case.
 
@@ -21599,9 +22349,9 @@ Note: - The path for triggering job is http://host:port/jobs. We have added code
 
   1. Change the Windows path to Unix Path.
 
-     "C:\\Users\Administrator\Documents\wav-files\audio-file.wav" Should be changed to "C://Users/Administrator/Documents/wav-files/audio-file.wav"
+     "C:\\\Users\Administrator\Documents\wav-files\audio-file.wav" Should be changed to "C://Users/Administrator/Documents/wav-files/audio-file.wav"
 
-  2. Add extra "\\ for every "\\ present to escape it right.      "\\127.0.0.1\tfs\effengine\inputs\abc.mov" should be changed to "\\\\10.20.104.40\\tfs\\effengine\\inputs\\abc.mov"
+  2. Add extra "\\" for every "\\" present to escape it right.      "\\\127.0.0.1\tfs\effengine\inputs\abc.mov" should be changed to "\\\\\\\10.20.104.40\\\tfs\\\effengine\\\inputs\\\abc.mov"
 
 Example:
 
@@ -21990,6 +22740,7 @@ This plugin provides the ability to execute file transcoding operations using th
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.6.1 | Enhanced action template UI |
 | 0.6.0 | Removing Windows support code, Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.5.0 | Add execution on Windows flag |
 | 0.4.3 | Fixes possible timeout when transcoding audio only files |
@@ -22110,6 +22861,7 @@ This action plug-in provides the ability to submit and monitor a file transcodin
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.1.1   | Enhanced action template UI                         |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.0.2   | Returns message in case of failure                  |
 | 0.0.1   | Initial implementation                              |
@@ -22434,58 +23186,199 @@ This Action plug-in provides the ability to submit a transcoding job to the Hybr
 
 | Version | Comment                                             |
 |---------|-----------------------------------------------------|
+| 0.1.2   | Enhanced action template UI                         |
+| 0.1.1   | Remove beta flag, cleanup code                      |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.0.2   | output error message in case of error               |
 | 0.0.1   | initial development                                 |
 
+#### How It Works
+
+- Integrates with **Hybrik cloud transcoding service** via REST API.
+- Authenticates using **API key/secret** or **username/password**.
+- Submits transcode jobs via **JSON payload** matching Hybrik API specifications.
+- Supports **all Hybrik transcode task parameters** and codecs.
+- Monitors transcode job progress through **configurable polling**.
+- Returns **job ID, results, and error messages** as outputs.
+- Results available in both **Ruby structure and JSON format**.
+- Asynchronous job processing with **automatic status polling**.
+
+#### Configuration Instructions
+
+1.  Create a new action step using the **HybrikTranscoder** plugin.
+2.  Fill out the following fields:
+    - **Name**: The name used to identify a saved Hybrik Transcoder configured instance.
+    - **Comments**: Comments about this Hybrik Transcoder template.
+    - **Endpoint**: The URL endpoint for API requests to Hybrik (e.g. https://api-demo.hybrik.com/v1). Must be reachable on port 443.
+    - **Oapi key**: The API key used for authentication.
+    - **Oapi secret**: The API secret used for authentication.
+    - **Username**: The Hybrik account username for authentication.
+    - **Password**: The Hybrik account password for authentication.
+    - **Json payload**: The JSON payload defining the transcode job. Must match Hybrik transcode request body specification.
+    - **Status Polling frequency**: Interval in seconds to check job status (default: 5 seconds).
+
+#### Example Configuration
+
+This is an example configuration for the HybrikTranscoder plugin using API key authentication.
+
+| Parameter                | Value                          |
+|--------------------------|--------------------------------|
+| Name                     | Transcode to ProRes            |
+| Endpoint                 | https://api-demo.hybrik.com/v1 |
+| Oapi key                 | your_api_key_here              |
+| Oapi secret              | your_api_secret_here           |
+| Username                 | your_username                  |
+| Password                 | your_password                  |
+| Status Polling frequency | 10                             |
+| Json payload             | {"transcode_task": {...}}      |
+
 #### Saved Parameters Description
 
-- **Name**: The name used to identify a saved Hybrik Transcoder configured instance.
-- **Comments**: The comments of the Hybrik Transcoder template
-- **Endpoint**: The URL endpoint for the API requests to Hybrik (e.g. https://api-demo.hybrik.com/v1)
-- **Oapi key**: The API key used for authentication
-- **Oapi secret**: The API secret used for authentication
-- **Username**: The Hybrik account username
-- **Password**: The Hybrik account password
-- **Json payload**: The JSON payload defining the transcode job
-- **Status Polling frequency**: How often the job status is checked. Default is 5 seconds
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| **Name** | The name used to identify a saved Hybrik Transcoder configured instance. |
+| **Comments** | Comments about this Hybrik Transcoder template. |
+| **Endpoint** | The URL endpoint for API requests to Hybrik (e.g. https://api-demo.hybrik.com/v1). Must be reachable on port 443. |
+| **Oapi key** | The API key used for authentication. |
+| **Oapi secret** | The API secret used for authentication. |
+| **Username** | The Hybrik account username for authentication. |
+| **Password** | The Hybrik account password for authentication. |
+| **Json payload** | The JSON payload defining the transcode job. Must match Hybrik transcode request body specification. |
+| **Status Polling frequency** | Interval in seconds to check job status (default: 5 seconds). |
 
-#### Inputs description
+#### Inputs Description
 
-- All parameters can be available at runtime if not specified in the plugin configuration.
-- *Endpoint*: The URL endpoint for the API requests to Hybrik.
-- *Oapi_key*: The API key used for authentication.
-- *Oapi_secret*: The API secret used for authentication.
-- *Username*: The Hybrik account username
-- *Password*: The Hybrik account password
-- *Json_payload*: The JSON payload defining the transcode job
+All parameters can be available at runtime if not specified in the plugin configuration. Runtime inputs override configured template values.
 
-#### Outputs description
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| *Endpoint <span style="color: red;">\*</span>* | URL endpoint for Hybrik API (e.g. https://api-demo.hybrik.com/v1). Port 443 must be reachable. |
+| *Oapi_key <span style="color: red;">\*</span>* | API key from Hybrik Account \> Info \> API details. |
+| *Oapi_secret <span style="color: red;">\*</span>* | API secret from Hybrik Account \> Info \> API details. |
+| *Username <span style="color: red;">\*</span>* | Hybrik account username for authentication. |
+| *Password <span style="color: red;">\*</span>* | Hybrik account password for authentication. |
+| *Json_payload <span style="color: red;">\*</span>* | JSON payload defining transcode job. Must match Hybrik API specification. |
+| *Status_Polling_frequency* | Polling interval in seconds (default: 5 seconds). |
 
-- *result*: The result from the transcode operation expressed as a Ruby structure
-- *result_json*: The result from the transcode operation expressed as a Json structure
-- *job_id*: The transcode job id
-- *error_message*: The transcode error message if there is a failure
+#### Outputs Description
+
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| result | The result from the transcode operation expressed as a Ruby structure (hash). |
+| result_json | The result from the transcode operation expressed as a JSON structure (string). |
+| job_id | The unique Hybrik transcode job ID for tracking and status queries. |
+| error_message | The transcode error message if the job fails. |
+
+#### Supported Actions
+
+Transcode operations only (all Hybrik transcode task types supported via JSON payload).
+
+#### Dependencies
+
+Requires network access to Hybrik API endpoint on port 443 (HTTPS). Requires valid Hybrik account with API credentials or username/password.
 
 #### Operating Instructions
 
-Pre-requisites:
+This plugin integrates with the Hybrik cloud transcoding service to submit and monitor transcode jobs via REST API.
 
-The endpoint must be reachable on port 443 from your Orchestrator system.
+**Pre-requisites**
 
-To configure a transcode operation:
+- The Hybrik endpoint must be reachable on port 443 from your Orchestrator system.
+- Requires valid Hybrik account with either API credentials or username/password.
+- API credentials recommended for production use - found in Hybrik GUI: `Account > Info > API details`.
+- HTTPS connectivity required (port 443). HTTP not supported.
 
-a\) Specify the API URL endpoint (e.g. https://api-demo.hybrik.com/v1)
+**Authentication Methods**
 
-b\) Specify the API key and secret key used for authentication. They can be found in the Hybrik WEB GUI under Account + Info + API details.
+- **API Key/Secret Authentication:**
+  - Recommended for production use
+  - More secure than username/password
+  - Found in Hybrik GUI: `Account > Info > API details`
+  - Both Oapi key and Oapi secret must be provided
+- **Username/Password Authentication:**
+  - Account-level authentication
+  - Less secure than API credentials
+  - Provide your Hybrik account username and password
+  - Both fields must be provided
 
-c\) Specify your Hybrik account username + password
+**JSON Payload Specification**
 
-d\) Enter your JSON transcode payload
+- The JSON payload must conform to **Hybrik API v1 specification**.
 
-It must match the transcode request body as defined here:
+- Reference: `https://docs.hybrik.com/api/v1/HybrikAPI.html?#transcode-task`
 
-https://docs.hybrik.com/api/v1/HybrikAPI.html?#transcode-task
+- **Minimum required payload structure:**
+  - `{"transcode_task": {...}}`
+  - Includes source/destination configuration
+  - Specifies video codec and encoding parameters
+  - Defines audio encoding if needed
+
+- **Payload can include:**
+  - Input source (file path, URL, or S3)
+  - Output destination (local path or S3)
+  - Video codec, bitrate, resolution, frame rate
+  - Audio codec, bitrate, sample rate
+  - Container format (MP4, MXF, MOV, etc.)
+  - Watermarking and overlay options
+  - DRM settings if applicable
+
+- **Example minimal payload:**
+
+  `{"transcode_task": {"source": {"path": "/input/video.mov"}, "destination": {"path": "/output/video.mp4"}, "outputs": [{"video_codec": "h264", "bitrate": "5000k"}]}}`
+
+**Common Use Cases**
+
+- **H.264 video transcoding:** Convert video to H.264 codec for web delivery.
+- **Multiple output formats:** Create multiple outputs (proxy, archive, delivery) in single job.
+- **Codec conversion:** Transcode from ProRes to DNxHD or other professional codecs.
+- **Resolution scaling:** Resize video to multiple resolutions (4K, 1080p, 720p, etc.).
+- **Watermarking:** Apply watermarks or graphics overlays during transcoding.
+- **Frame rate conversion:** Convert between 24fps, 25fps, 29.97fps, 50fps, 59.94fps, etc.
+- **Archive creation:** Create long-term archive versions with high bitrate and quality.
+- **Proxy generation:** Generate low-resolution proxies for editing workflows.
+- **Live streaming preparation:** Create HLS/DASH streaming files with multiple bitrate tiers.
+- **DRM protection:** Apply DRM/encryption to output files when supported.
+
+**Best Practices**
+
+- Use **API key/secret authentication** instead of username/password for production.
+- Verify **port 443 accessibility** from Orchestrator to Hybrik endpoint before deployment.
+- Use **valid Hybrik endpoint URL** - include protocol (https://) and API version (e.g. /v1).
+- Test **JSON payload locally** against Hybrik API documentation before using in workflow.
+- Set appropriate **polling frequency** - 5-10 seconds typical (balance responsiveness vs server load).
+- Use **meaningful job names/tags** in payload for tracking and debugging.
+- Enable **detailed logging** to capture API requests/responses for troubleshooting.
+- Monitor **Hybrik account quota** to ensure sufficient transcoding resources.
+- Use **S3 paths** for input/output when possible for better performance and scalability.
+- Handle **error messages** in workflow to retry or notify on transcode failures.
+- Validate **output file existence** after job completion before proceeding downstream.
+- Keep **API credentials secure** - use environment variables or secure storage, never hardcode.
+
+**Troubleshooting**
+
+- **Connection timeout/refused:** Verify Hybrik endpoint URL is correct and port 443 is accessible from Orchestrator.
+- **Authentication failed:** Verify API key/secret or username/password are correct. Check Hybrik GUI for current credentials.
+- **Invalid JSON payload:** Validate JSON syntax and structure against Hybrik API documentation (https://docs.hybrik.com/api/v1).
+- **Job submission fails:** Check payload matches Hybrik transcode task specification. Review error message in output.
+- **Job stuck/timeout:** Monitor Hybrik account for available transcoding resources. Check if job is queued behind other jobs.
+- **Output file not created:** Verify output path in JSON payload is writable and accessible. Check Hybrik job logs.
+- **Codec not supported:** Verify codec specified in payload is supported by Hybrik. Refer to API documentation.
+- **Polling never completes:** Increase polling frequency or check Hybrik service status. Verify job ID is being returned.
+- **Memory/resource errors:** Reduce video resolution, bitrate, or complexity in payload. Use proxy quality for testing.
+- **S3 access denied:** If using S3 paths, verify AWS credentials and bucket permissions in Hybrik configuration.
+
+**Important Notes**
+
+- **All authentication fields required:** Must provide EITHER (API key + API secret) OR (Username + Password).
+- **Endpoint must be HTTPS:** Protocol **https://** is required, not http.
+- **Port 443 required:** Hybrik API only accessible via HTTPS port 443. Not configurable.
+- **JSON payload validation:** Payload must be valid JSON and match Hybrik API specification exactly.
+- **Default polling is 5 seconds:** Can be overridden with Status Polling frequency parameter.
+- **Asynchronous execution:** Plugin returns immediately with job ID, then polls until completion.
+- **Job ID critical:** Job ID is required for status tracking and cancellation. Always capture in output.
+- **Results available in two formats:** Use 'result' for Ruby hash or 'result_json' for JSON string depending on needs.
+- **Error message provided on failure:** Check 'error_message' output for detailed failure reason.
+- **Parameters override template values:** Runtime inputs override configured values for flexibility.
 
 
 ### Marquis Mews Operation
@@ -22781,6 +23674,7 @@ This action plugin provides the ability to submit file transcoding jobs to a Van
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 1.0.1 | Enhanced action template UI |
 | 1.0.0 | Migrated from soap/wsdlDriver to Savon gem for SOAP operations |
 | 0.9.0 | Remove dependency on custom Rails initializers, Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.8.0 | Added option to fail if restart of Vantage job fails. |
@@ -23003,18 +23897,20 @@ All inputs provided at runtime for maximum flexibility.
 
 #### Vantage Variables Example:
 
-    {
-      "Network(String)": "Aspera",
-      "Video Height(Int32)": "480",
-      "Video Width(Int32)": "720"
-    }
+\
+{\
+  "Network(String)": "Aspera",\
+  "Video Height(Int32)": "480",\
+  "Video Width(Int32)": "720"\
+}\
 
 #### Vantage Items Example:
 
-    {
-      "Metadata(Store)": "//server-name/foldername/filename.xml",
-      "Original(Media)": "//server-name/foldername/filename.mov"
-    }
+\
+{\
+  "Metadata(Store)": "//server-name/foldername/filename.xml",\
+  "Original(Media)": "//server-name/foldername/filename.mov"\
+}\
 
 #### Dependencies
 
@@ -23036,14 +23932,9 @@ All inputs provided at runtime for maximum flexibility.
 #### Important Note - Custom Category Override
 
 - In some cases, a Vantage workflow can be used to do something other than just transcoding. If for reporting reasons it is important to reflect what the step truly does, it is possible to instruct the plugin to report itself as being from a different category.
-
 - This is done by adding to the comments field of the action configuration: **"category: \[The custom category\]"**
-
 - For example:
-
-  ```
-  category: Quality Control
-  ```
+  category: Quality Control
 
 
 ### VqmaAnalyzer
@@ -23237,6 +24128,7 @@ This action plugin provides the ability to submit file transformation jobs to th
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.3.2 | Enhanced action template UI |
 | 0.3.1 | Fix issue in saving preset parameters |
 | 0.3.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.2.4 | Added styling to parameter help text. |
@@ -23346,6 +24238,8 @@ This action plug-in provides the ability to watch for messages out of an Amazon 
 
 | Version | Comment                                                    |
 |---------|------------------------------------------------------------|
+| 0.4.4   | Enhanced action template UI                                |
+| 0.4.3   | Fix issue when loading help page                           |
 | 0.4.2   | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.4.1   | Add multi-threaded message retrieval                       |
 | 0.4.0   | Updating to be compatible with Ruby 3.4 and Rails 8        |
@@ -23498,17 +24392,17 @@ This plugin provides the ability to watch messages on a specified Amazon SQS que
 
 - Provide the IAM policy in **JSON format** without backslashes. For example:
 
-      {
-        "Version": "2012-10-17",
-        "Statement": [
-          {
-            "Sid": "Stmt1",
-            "Effect": "Allow",
-            "Action": "SQS:*",
-            "Resource": "*"
-          }
-        ]
-      }
+  {\
+    "Version": "2012-10-17",\
+    "Statement": \[\
+      {\
+        "Sid": "Stmt1",\
+        "Effect": "Allow",\
+        "Action": "SQS:\*",\
+        "Resource": "\*"\
+      }\
+    \]\
+  }
 
   This policy will apply to all operations performed using the generated temporary credentials.
 
@@ -23535,6 +24429,7 @@ This action plug-in provides the ability to wait for messages in an AMQP queue.
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.9.2 | Enhanced action template UI |
 | 0.9.1 | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.9.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.8.7 | Improves new plugin version format. |
@@ -23719,29 +24614,31 @@ When a message is received, its raw content is made available in a variable name
 
 For example, let's assume XML messages are received with a format like:
 
-    <message>
-      <asset>
-        <id>1234H</id>
-        <path>/DAM/HD/tron.mxf</path>
-      </asset>
-      <asset>
-        <id>1234S</id>
-        <path>/DAM/SD/tron.mpg</path>
-      </asset>
-    </message>
+\
+\<message\>\
+  \<asset\>\
+    \<id\>1234H\</id\>\
+    \<path\>/DAM/HD/tron.mxf\</path\>\
+  \</asset\>\
+  \<asset\>\
+    \<id\>1234S\</id\>\
+    \<path\>/DAM/SD/tron.mpg\</path\>\
+  \</asset\>\
+\</message\>\
 
 If an formatted output 'assets' of type 'Hash' is selected (ID-\>path), the code in **Outputs formatting code** will look like:
 
-    <message>
-      <asset>
-        <id>1234H</id>
-        <path>/DAM/HD/tron.mxf</path>
-      </asset>
-      <asset>
-        <id>1234S</id>
-        <path>/DAM/SD/tron.mpg</path>
-      </asset>
-    </message>
+\
+\<message\>\
+  \<asset\>\
+    \<id\>1234H\</id\>\
+    \<path\>/DAM/HD/tron.mxf\</path\>\
+  \</asset\>\
+  \<asset\>\
+    \<id\>1234S\</id\>\
+    \<path\>/DAM/SD/tron.mpg\</path\>\
+  \</asset\>\
+\</message\>\
 
 Here the resulting hash found in the output 'assets' would be:
 
@@ -23761,6 +24658,7 @@ This action plugin provides the ability to sense the initiation or completion of
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 2.8.2 | Enhanced action template UI |
 | 2.8.1 | Updated the label from Keep ongoing to Continue Monitoring |
 | 2.8.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 2.7.3 | Returns files status from a triggered transfer session |
@@ -23968,6 +24866,7 @@ This plugin can be used to trigger workflows on new packages uploaded to Aspera 
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.6.3 | Enhanced action template UI |
 | 0.6.2 | Handle issues when no package has been sent for some time |
 | 0.6.1 | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.6.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
@@ -24151,6 +25050,7 @@ This action plug-in provides the ability to monitor and detect file transfer eve
 
 | Version | Comment                                                         |
 |---------|-----------------------------------------------------------------|
+| 0.3.3   | Enhanced action template UI                                     |
 | 0.3.2   | Removed empty option from trigger persistence scope dropdown    |
 | 0.3.1   | Updated the label name of Keep ongoing to Continuous Monitoring |
 | 0.3.0   | Updating to be compatible with Ruby 3.4 and Rails 8             |
@@ -24290,6 +25190,8 @@ This action plug-in provides the ability to detect and monitor files and folders
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.9.5 | Enhanced action template UI |
+| 0.9.4 | Fix crash when re-scanning with random selection and trigger_on_partial |
 | 0.9.3 | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.9.2 | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.9.1 | Fixed count field UI update issue and changed certain fields from text_field to number_field |
@@ -24457,28 +25359,60 @@ This plugin detects new files or folders matching patterns in watched directorie
 
 Node username is a Node API account (not an OS account). Find the associated transfer user:
 
-    # /opt/aspera/bin/asnodeadmin -l 
-    List of node user(s): 
-                user       system/transfer user                    acls 
-    ====================    =======================    ==================== 
-            node_user                       xfer       []
+\
+\# /opt/aspera/bin/asnodeadmin -l 
+
+\
+List of node user(s): 
+
+\
+            user       system/transfer user                    acls 
+
+\
+====================    =======================    ==================== 
+
+\
+        node_user                       xfer       \[\]\
 
 #### Path Configuration
 
 Watch directory paths are relative to transfer user's docroot in `/opt/aspera/etc/aspera.conf`:
 
-    <user> 
-        <name>xfer</name> 
-        <file_system> 
-            <access> 
-                <paths> 
-                    <path> 
-                        <absolute>/home/xfer/data</absolute> 
-                    </path> 
-                </paths> 
-            </access> 
-        </file_system> 
-    </user>
+\
+\<user\> 
+
+\
+    \<name\>xfer\</name\> 
+
+\
+    \<file_system\> 
+
+\
+        \<access\> 
+
+\
+            \<paths\> 
+
+\
+                \<path\> 
+
+\
+                    \<absolute\>/home/xfer/data\</absolute\> 
+
+\
+                \</path\> 
+
+\
+            \</paths\> 
+
+\
+        \</access\> 
+
+\
+    \</file_system\> 
+
+\
+\</user\>\
 
 **Example:** Watch directory "/root" refers to "/home/xfer/data/root" on the remote server.
 
@@ -24486,17 +25420,31 @@ Watch directory paths are relative to transfer user's docroot in `/opt/aspera/et
 
 Enable both HTTP and HTTPS ports in `/opt/aspera/etc/aspera.conf`:
 
-    <server> 
-        <server_name>node.example.com</server_name> 
-        <http_port>9091</http_port> 
-        <https_port>9092</https_port> 
-        <enable_http>true</enable_http> 
-        <enable_https>true</enable_https> 
-    </server>
+\
+\<server\> 
+
+\
+    \<server_name\>node.example.com\</server_name\> 
+
+\
+    \<http_port\>9091\</http_port\> 
+
+\
+    \<https_port\>9092\</https_port\> 
+
+\
+    \<enable_http\>true\</enable_http\> 
+
+\
+    \<enable_https\>true\</enable_https\> 
+
+\
+\</server\>\
 
 Restart asperanoded service to apply changes:
 
-    systemctl restart asperanoded
+\
+systemctl restart asperanoded\
 
 #### Trigger Persistence Scope Details
 
@@ -24526,6 +25474,8 @@ This action plug-in provides the ability to watch for messages out of an Azure S
 
 | Version | Comment                                                    |
 |---------|------------------------------------------------------------|
+| 0.1.3   | Enhanced action template UI                                |
+| 0.1.2   | Fix issue when loading help page                           |
 | 0.1.1   | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8        |
 | 0.0.1   | Initial release.                                           |
@@ -24610,15 +25560,16 @@ None
 
 #### Operating Instructions
 
-1.  This action plug-in monitors an Azure Service Bus queue or topic for new messages.
-2.  Specify the Azure Service Bus namespace, access key name, and access key.
-3.  Specify the queue or topic name.
-4.  Specify the subscription name only when retrieving messages from a topic.
-5.  Specify a proxy URL (e.g., https://myproxy.com:8443) if direct Internet access is not available. Without a proxy, Orchestrator must be able to reach .servicebus.windows.net on port 443.
-6.  Enter the operation to execute (Message_get_from_queue or Message_get_from_topic). Only one message can be retrieved with either operation.
-7.  Message_get_from_queue and Message_get_from_topic are get-and-delete operations.
+1.  This action plug-in monitors an **Azure Service Bus** queue or topic for new messages.
+2.  Specify the Azure Service Bus **namespace, access key name, and access key**.
+3.  Specify the **queue or topic name**.
+4.  Specify the **subscription name** only when retrieving messages from a topic.
+5.  Specify a **proxy URL** (e.g., https://myproxy.com:8443) if direct Internet access is not available. Without a proxy, Orchestrator must be able to reach .servicebus.windows.net on port 443.
+6.  Enter the operation to execute **(Message_get_from_queue or Message_get_from_topic)**. Only one message can be retrieved with either operation.
+7.  Message_get_from_queue and Message_get_from_topic are **get-and-delete operations**.
 8.  Select **Continue Monitoring** to continue monitoring for new messages indefinitely.
-9.  Specify the polling frequency for monitoring the queue or topic (default is 10 seconds).
+9.  Specify the
+    polling frequency for monitoring the queue or topic (default is 10 seconds).
 
 
 ### Custom trigger
@@ -24632,6 +25583,7 @@ The Custom Trigger Plugin allows workflows to be initiated based on custom Ruby 
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.4.2 | Enhanced action template UI |
 | 0.4.1 | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.4.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.3.0 | Adding cancel option to cancel the underlying process |
@@ -24678,17 +25630,30 @@ The Custom Trigger Plugin allows workflows to be initiated based on custom Ruby 
 
 In the 'Execute code' section:
 
-    @file = inputs["transferred_file"] + ".aspx"
+@file = inputs\["transferred_file"\] + ".aspx"
 
 In the 'Check status code' section:
 
-    if File.exist?(@file)
-       @status_details = "Transfer of file #{inputs["transferred_file"]} on-going at #{DateTime.now}"
-       @status = STATUS_INPROGRESS
-    else
-       @status_details = "Transfer of file #{inputs["transferred_file"]} is complete"
-       @status = STATUS_COMPLETE
-    end
+\
+if File.exist?(@file)
+
+\
+   @status_details = "Transfer of file #{inputs\["transferred_file"\]} on-going at #{DateTime.now}"
+
+\
+   @status = STATUS_INPROGRESS
+
+\
+else
+
+\
+   @status_details = "Transfer of file #{inputs\["transferred_file"\]} is complete"
+
+\
+   @status = STATUS_COMPLETE
+
+\
+end
 
 The status_details variable takes the data to display in the step status when the workflow is executed.
 
@@ -24749,6 +25714,8 @@ This plugin provides the ability to periodically execute SQL queries on external
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 1.1.6 | Enhanced action template UI |
+| 1.1.5 | Handle non-SELECT query results |
 | 1.1.4 | Ensure results with key-value pairs are not reversed |
 | 1.1.3 | Updated the label from Keep ongoing to Continue Monitoring |
 | 1.1.2 | Update help docs with revised steps to use OracleDB and ODBC |
@@ -24811,15 +25778,15 @@ Instead of using configuration files, full connection strings may be provided di
 
 **Oracle EZCONNECT Example:**
 
-    hostname:1521/ORCLPDB1
+hostname:1521/ORCLPDB1
 
 **ODBC-Style Example (Canonical):**
 
-    Driver={ODBC Driver 17 for SQL Server};Server=10.10.1.10,1433;Database=mydb;Uid=user;Pwd=password;
+Driver={ODBC Driver 17 for SQL Server};Server=10.10.1.10,1433;Database=mydb;Uid=user;Pwd=password;
 
 **TinyTDS Alternative Syntax:**
 
-    server=10.10.1.10;port=1433;database=mydb;username=user;password=password;
+server=10.10.1.10;port=1433;database=mydb;username=user;password=password;
 
 #### Connection Precedence
 
@@ -24904,17 +25871,19 @@ None
 
 Run installation commands from:
 
-    cd /opt/aspera/orchestrator
+cd /opt/aspera/orchestrator
 
 **Oracle Database:**
 
-    bundle add ruby-oci8
-    orchestrator restart
+\
+bundle add ruby-oci8\
+orchestrator restart\
 
 **ODBC (TinyTDS) / SQL Server:**
 
-    bundle add tiny_tds
-    orchestrator restart
+\
+bundle add tiny_tds\
+orchestrator restart\
 
 **Note:** `bundle add` modifies the Gemfile and runs `bundle install`.
 
@@ -24947,6 +25916,7 @@ This action plug-in provides a way to trigger workflows based on the arrival of 
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.4.2 | Enhanced action template UI |
 | 0.4.1 | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.4.0 | Remove check on ruby version (only supporting one ruby on machine from now on), Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.3.2 | Fix for occasional wrong hex characters in output |
@@ -25138,6 +26108,7 @@ This plugin monitors Faspex5 server mailboxes for incoming packages matching spe
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.8.6 | Enhanced action template UI |
 | 0.8.5 | Improved error handling during reauthentication and API operations |
 | 0.8.4 | Add configurable transfer_type field to support both 'connect' and 'transfer_client' transfer types |
 | 0.8.3 | Updated the label from Keep ongoing to Continue Monitoring |
@@ -25277,7 +26248,7 @@ This plugin monitors Faspex5 server mailboxes for incoming packages matching spe
 
 - Generate a new SSH key pair in PEM format exclusively for Faspex interaction:
 
-  `ssh-keygen -m pem -b 4096 -C "your_email@example.com"` (save as key_for_faspex.pub)
+  `ssh-keygen -t rsa -b 4096 -m PEM -C "your_email@example.com"` (save as key_for_faspex.pub)
 
 - Generate the PEM format version for the public key:
 
@@ -25286,6 +26257,10 @@ This plugin monitors Faspex5 server mailboxes for incoming packages matching spe
 - In HA environments, share the new private key among all Orchestrator instances.
 
 - For Faspex 5.0.4+ versions, enable the parameter 'allow_global_key': 'true' or 'Allow signing with global key'.
+
+
+**Note:** Newer versions of OpenSSH default to generating ED25519 keys rather than RSA. If you encounter the error *do_convert_to_pem: unsupported key type ED25519* when exporting the public key to PEM format, it means an ED25519 key was generated, which is not supported for PEM conversion. Make sure to use the `-t rsa` flag as shown above to explicitly generate an RSA key.
+
 
 #### Faspex Server Configuration
 
@@ -25344,6 +26319,7 @@ Provides the capability to monitor Faspex 5 package uploads, downloads, and comp
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.2.2 | Enhanced action template UI |
 | 0.2.1 | Improved error handling during reauthentication after access token expiry |
 | 0.2.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.1.1 | Adds Package completed operation. |
@@ -25446,10 +26422,14 @@ Provides the capability to monitor Faspex 5 package uploads, downloads, and comp
 
 Generate a new SSH key pair in PEM format exclusively for Faspex interaction:
 
-- **Create SSH key:** `ssh-keygen -m pem -b 4096 -C "your_email@example.com"` (save as key_for_faspex.pub)
+- **Create SSH key:** `ssh-keygen -t rsa -b 4096 -m PEM -C "your_email@example.com"` (save as key_for_faspex.pub)
 - **Generate PEM format public key:** `ssh-keygen -f key_for_faspex.pub -m 'PEM' -e > key_for_faspex.pub.pem`
 - **HA environment:** Share the new private key among all Orchestrator instances
 - **Faspex 5.0.4+:** Enable 'allow_global_key': 'true' or 'Allow signing with global key' parameter
+
+
+**Note:** Newer versions of OpenSSH default to generating ED25519 keys rather than RSA. If you encounter the error *do_convert_to_pem: unsupported key type ED25519* when exporting the public key to PEM format, it means an ED25519 key was generated, which is not supported for PEM conversion. Make sure to use the `-t rsa` flag as shown above to explicitly generate an RSA key.
+
 
 #### Faspex Server Configuration
 
@@ -25496,6 +26476,7 @@ This action provides the ability to detect folders on a remote node via the FTP 
 
 | Version | Comment                                                    |
 |---------|------------------------------------------------------------|
+| 0.1.2   | Enhanced action template UI                                |
 | 0.1.1   | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8        |
 | 0.0.2   | Adding Remote Node Dependency                              |
@@ -25698,6 +26679,7 @@ This action enables the detection of files on a remote node via the FTP protocol
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 2.2.2 | Enhanced action template UI |
 | 2.2.1 | Updated the label from Keep ongoing to Continue Monitoring |
 | 2.2.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 2.1.4 | Fixes a potential infinite loop in case of recursive scan |
@@ -25928,6 +26910,7 @@ This action plug-in watches a local directory for files matching defined pattern
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 1.9.3 | Enhanced action template UI |
 | 1.9.2 | Handle files that are deleted during candidate processing |
 | 1.9.1 | Updated the label from Keep ongoing to Continue Monitoring |
 | 1.9.0 | Remove hardcoded aspera directory reference, Updating to be compatible with Ruby 3.4 and Rails 8 |
@@ -26185,6 +27168,7 @@ This action plug-in provides the ability to wait for the arrival of folder match
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 1.6.3 | Enhanced action template UI |
 | 1.6.2 | Removed empty option from trigger persistence scope dropdown |
 | 1.6.1 | Updated the label from Keep ongoing to Continue Monitoring |
 | 1.6.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
@@ -26341,6 +27325,7 @@ This action plug-in provides the ability to wait for the arrival of files matchi
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 2.4.3 | Enhanced action template UI |
 | 2.4.2 | Removed empty option from trigger persistence scope dropdown |
 | 2.4.1 | Updated the label from Keep Ongoing to Continue Monitoring |
 | 2.4.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
@@ -26539,19 +27524,20 @@ Configure the settings below to control how the system searches for trigger file
 - The Watch directory path is relative to the remote user's docroot, as declared in `aspera.conf`.
 - Files and directories must have correct permissions for the configured user.
 
-                        <user>
-                            <name>xfer</name>
-                            <file_system>
-                                <access>
-                                    <paths>
-                                        <path>
-                                            <absolute>/home/xfer/data</absolute>
-                                        </path>
-                                    </paths>
-                                </access>
-                            </file_system>
-                        </user>
-                    
+\
+                    \<user\>\
+                        \<name\>xfer\</name\>\
+                        \<file_system\>\
+                            \<access\>\
+                                \<paths\>\
+                                    \<path\>\
+                                        \<absolute\>/home/xfer/data\</absolute\>\
+                                    \</path\>\
+                                \</paths\>\
+                            \</access\>\
+                        \</file_system\>\
+                    \</user\>\
+                
 
 For example, a watch directory `/foo` corresponds to `/home/xfer/data/foo` on the remote server.
 
@@ -26573,6 +27559,7 @@ This action plug-in provides the ability to wait for the arrival of a folder mat
 
 | Version | Comment                                                    |
 |---------|------------------------------------------------------------|
+| 0.2.4   | Enhanced action template UI                                |
 | 0.2.3   | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.2.2   | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.2.1   | Updating plugin migrations to Rails 8 format               |
@@ -26713,19 +27700,20 @@ Configure the settings below to control how the system searches for trigger file
 - The watch directory path is relative to the remote user's docroot as defined in `/opt/aspera/etc/aspera.conf`.
 - Files and folders must have the correct permissions for the configured remote user in order to be detected.
 
-                        <user>
-                            <name>xfer</name>
-                            <file_system>
-                                <access>
-                                    <paths>
-                                        <path>
-                                            <absolute>/home/xfer/data</absolute>
-                                        </path>
-                                    </paths>
-                                </access>
-                            </file_system>
-                        </user>
-                    
+\
+                    \<user\>\
+                        \<name\>xfer\</name\>\
+                        \<file_system\>\
+                            \<access\>\
+                                \<paths\>\
+                                    \<path\>\
+                                        \<absolute\>/home/xfer/data\</absolute\>\
+                                    \</path\>\
+                                \</paths\>\
+                            \</access\>\
+                        \</file_system\>\
+                    \</user\>\
+                
 
 For example, a watch directory such as `/foo` corresponds to `/home/xfer/data/foo` on the remote server.
 
@@ -26747,6 +27735,7 @@ This action plug-ins provide the ability schedule the triggering of the followin
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 1.2.2 | Enhanced action template UI |
 | 1.2.1 | Updated the label from Keep ongoing to Continue Monitoring |
 | 1.2.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 1.1.8 | Fix backward compatibility issue with rule value with delimiter versus no delimiter |
@@ -26925,6 +27914,7 @@ Enables hot folder functionality on a remote server using SFTP for automated fil
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.4.3 | Enhanced action template UI |
 | 0.4.2 | Fixes depth issue and adds recursion_depth to optional inputs |
 | 0.4.1 | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.4.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
@@ -27052,6 +28042,7 @@ This action plug-ins provides the ability wait for a SOAP message and extract it
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.2.4 | Enhanced action template UI |
 | 0.2.3 | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.2.2 | Updated help documentation |
 | 0.2.1 | Fix issue on loading plugin icon |
@@ -27213,6 +28204,7 @@ This plugin monitors Sony Ci folders for new files matching specified patterns a
 
 | Version | Comment                                                    |
 |---------|------------------------------------------------------------|
+| 0.1.3   | Enhanced action template UI                                |
 | 0.1.2   | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.1.1   | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8        |
@@ -27236,7 +28228,7 @@ This plugin monitors Sony Ci folders for new files matching specified patterns a
     - **Client secret**: Sony API client secret for authentication.
 3.  Set up the file monitoring parameters:
     - **Folder id**: The specific folder id to monitor in Sony Ci.
-    - **File pattern**: Regular expression pattern for file matching (e.g., .\*\\mxf for MXF files).
+    - **File pattern**: Regular expression pattern for file matching (e.g., .\*\\.mxf for MXF files).
     - **Polling frequency**: Interval in seconds between file checks.
     - **Return single match?**: Check to return only one file per instance.
 
@@ -27249,7 +28241,7 @@ This plugin monitors Sony Ci folders for new files matching specified patterns a
 | **Client id**                 | abc123def456                     |
 | **Client secret**             | \*\*\*\*\*\*\*\*                 |
 | **Folder id**                 | 321e7522a7a74c9aadcb631d3bc0b778 |
-| **File pattern**              | .\*\\mxf                         |
+| **File pattern**              | .\*\\.mxf                        |
 | **Polling frequency**         | 30                               |
 | **Check only once**           | unchecked                        |
 | **Continue Monitoring**       | checked                          |
@@ -27339,6 +28331,7 @@ This plugin provides the ability to insert entries in the Aspera Console databas
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.5.1 | Enhanced action template UI |
 | 0.5.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.4.3 | Added styling to input help text. |
 | 0.4.2 | 2016-02-18 RT - Added help file |
@@ -27481,6 +28474,8 @@ This action plugin provides the ability to send email as part of the execution o
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.7.4 | Enhanced action template UI |
+| 0.7.3 | Fix issues when using legacy mode |
 | 0.7.2 | Fix escaping issues in HTML message template |
 | 0.7.1 | Removing Legacy support |
 | 0.7.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
@@ -27581,11 +28576,12 @@ The available inputs depend on the templates you define:
 
 Provide an XML template describing how to build the email. Minimal fields are *Destinations*, *Subject*, and *Message*.
 
-      <MessageDefinition>
-      <Destinations><To>orchestrator@asperasoft.com</To></Destinations>
-      <Subject>New notification</Subject>
-      <Message>You have received a new notification.</Message>
-      </MessageDefinition>
+\
+  \<MessageDefinition\>\
+  \<Destinations\>\<To\>orchestrator@asperasoft.com\</To\>\</Destinations\>\
+  \<Subject\>New notification\</Subject\>\
+  \<Message\>You have received a new notification.\</Message\>\
+  \</MessageDefinition\>\
 
 - *Destinations*: list of recipients (one or more `<To>` elements).
 - *Subject*: email subject line.
@@ -27595,19 +28591,19 @@ Any field can contain runtime variables using `<%= variable_name %>`. Those vari
 
 **Example — destination resolved at run time**
 
-    <MessageDefinition>
-      <Destinations><To><%= user_address %></To></Destinations>
-      <Subject>New notification</Subject>
-      <Message>You have received a new notification.</Message>
-    </MessageDefinition>
+\<MessageDefinition\>\
+  \<Destinations\>\<To\>\<%= user_address %\>\</To\>\</Destinations\>\
+  \<Subject\>New notification\</Subject\>\
+  \<Message\>You have received a new notification.\</Message\>\
+\</MessageDefinition\>\
 
 **Default template (when left blank)**
 
-    <MessageDefinition>
-      <Destinations><To><%= To %></To></Destinations>
-      <Subject><%= Subject %></Subject>
-      <Message><%= Message %></Message>
-    </MessageDefinition>
+\<MessageDefinition\>\
+  \<Destinations\>\<To\>\<%= To %\>\</To\>\</Destinations\>\
+  \<Subject\>\<%= Subject %\>\</Subject\>\
+  \<Message\>\<%= Message %\>\</Message\>\
+\</MessageDefinition\>\
 
 #### *Defining the HTML Message Template*
 
@@ -27645,6 +28641,7 @@ This action plug-in provides the ability to read an RSS feed and can be used as 
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.5.2 | Enhanced action template UI |
 | 0.5.1 | Updated the label from Keep ongoing to Continue Monitoring |
 | 0.5.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.4.2 | Adds compatibility with open-uri 0.1.0 |
@@ -27708,18 +28705,18 @@ This is a minimal setup configuration for the RssFeedReader plugin.
 
 The resulting outputs will be as follows each time a new post is found:
 
-    Guid (String) -> http://example.com/article
-
-    Post_XML (String) ->
-    <item>...</item>
-
-    Title (String) -> Example title
-
-    Description (String) -> Example description
-
-    Pubdate (Date) -> 2018-10-03 10:15:35 EDT
-
-    Link (String) -> http://example.com/article
+Guid (String) -\> http://example.com/article\
+\
+Post_XML (String) -\>\
+\<item\>...\</item\>\
+\
+Title (String) -\> Example title\
+\
+Description (String) -\> Example description\
+\
+Pubdate (Date) -\> 2018-10-03 10:15:35 EDT\
+\
+Link (String) -\> http://example.com/article\
 
 #### Saved Parameters Description
 
@@ -27807,6 +28804,7 @@ This action plug-in provides the ability to interact with Slack
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.2.2 | Enhanced action template UI |
 | 0.2.1 | Update to be compatible with latest Slack API (tested with Slack v4.47) |
 | 0.2.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.1.0 | added attachments |
@@ -27950,19 +28948,20 @@ Attachments provide rich formatting with color-coded borders, titles, and struct
 
 **Attachment Example:**
 
-    [
-      {
-        "color": "good",
-        "title": "Success",
-        "text": "Workflow completed successfully"
-      },
-      {
-        "color": "#FF0000",
-        "title": "Error Details",
-        "text": "No errors encountered",
-        "footer": "Orchestrator Bot"
-      }
-    ]
+\
+\[\
+  {\
+    "color": "good",\
+    "title": "Success",\
+    "text": "Workflow completed successfully"\
+  },\
+  {\
+    "color": "#FF0000",\
+    "title": "Error Details",\
+    "text": "No errors encountered",\
+    "footer": "Orchestrator Bot"\
+  }\
+\]\
 
 #### Posting As User vs Bot
 
@@ -27975,16 +28974,17 @@ Attachments provide rich formatting with color-coded borders, titles, and struct
 
 Here's a complete example configuration:
 
-    channel: #plugin_test
-    text_message: Workflow execution completed successfully
-    username: Orchestrator Bot
-    attachments: [
-      {
-        "color": "good",
-        "title": "Execution Summary",
-        "text": "All steps completed without errors"
-      }
-    ]
+\
+channel: #plugin_test\
+text_message: Workflow execution completed successfully\
+username: Orchestrator Bot\
+attachments: \[\
+  {\
+    "color": "good",\
+    "title": "Execution Summary",\
+    "text": "All steps completed without errors"\
+  }\
+\]\
 
 #### Output Processing
 
@@ -28034,6 +29034,8 @@ This plugin provides an interactive way to present information and collect data 
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.8.2 | Enhanced action template UI |
+| 0.8.1 | Fix migration issues caused by nil references to deleted users & groups |
 | 0.8.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.7.0 | Added option to output all information about the user completing the task |
 | 0.6.4 | Fixed wrong name when detecting exception in listing user assignments |
@@ -28187,6 +29189,7 @@ This action plug-in provides the ability to check a file, folder or set of files
 
 | Version | Comment |
 |-------|---------------------------------------------------|
+| 0.3.1 | Enhanced action template UI |
 | 0.3.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
 | 0.2.1 | Fix bug preventing to run concurrent clamav scans |
 | 0.2.0 | Bug fix - typo times method |
@@ -28412,13 +29415,14 @@ There are two different command line executables available:
 
 ClamAV provides detailed output about scan results:
 
-    /path/to/file.txt: OK
-    /path/to/infected.exe: Trojan.Generic FOUND
-    /path/to/suspicious.doc: Heuristics.Phishing.Email FOUND
-
-    ----------- SCAN SUMMARY -----------
-    Infected files: 2
-    Time: 5.234 sec (0 m 5 s)
+\
+/path/to/file.txt: OK\
+/path/to/infected.exe: Trojan.Generic FOUND\
+/path/to/suspicious.doc: Heuristics.Phishing.Email FOUND\
+\
+----------- SCAN SUMMARY -----------\
+Infected files: 2\
+Time: 5.234 sec (0 m 5 s)\
 
 **Output indicators:**
 
@@ -28943,7 +29947,7 @@ Provide a list of files separated by the specified separator. The result is 2 ar
 
 To download sanitised files, use CURL plugin with a custom command like this:
 
-    cd DOWNLOAD_PATH ; curl -X GET http://OPSWAT_ADDRESS:OPSWAT_PORT/file/converted/DATA_ID?apikey=APIKEY -O -J
+cd DOWNLOAD_PATH ; curl -X GET http://OPSWAT_ADDRESS:OPSWAT_PORT/file/converted/DATA_ID?apikey=APIKEY -O -J
 
 replace the upper case names to variables and map them as input
 
