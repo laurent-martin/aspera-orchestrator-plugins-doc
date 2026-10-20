@@ -227,7 +227,7 @@ class ActionTemplateReference
   def humanize(name) = name.tr('_', ' ').downcase.sub(/\A\w/, &:upcase)
 
   # Flow style (one line) for each attribute, input and output: plugin > attributes|inputs|outputs > name
-  # Not for a name that looks like a password: secret scanners (Vault Radar) take `password: {type: ...}` for a value
+  # Not for a name matching SECRET_NAME: secret scanners (Vault Radar) read such a name followed by a one-line mapping as an assigned secret
   def flow_style(node, path)
     if path.size == 3 && %w[attributes inputs outputs].include?(path[1])
       if path[2].match?(SECRET_NAME)
