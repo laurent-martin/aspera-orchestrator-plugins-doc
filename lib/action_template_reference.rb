@@ -1,12 +1,14 @@
 # frozen_string_literal: true
 
-# Generates the Markdown reference of Orchestrator action templates (plugins)
+# Generates the reference of Orchestrator action templates (plugins), in Markdown and YAML,
 # from an Orchestrator `actions` directory (source tree or RPM extract).
 # No Rails needed: metadata, migrations and plugin classes are parsed as text.
+# The YAML file also uses the result of PluginProbe (lib/plugin_probe.rb), which evaluates plugin code.
 #
-# Usage: ruby lib/action_template_reference.rb <actions_dir> <output.md> [<orchestrator_version>]
+# Usage: ruby lib/action_template_reference.rb <actions_dir> <output.md|output.yml> [<orchestrator_version> [<probe.json>]]
 
 require 'yaml'
+require 'json'
 
 class ActionTemplateReference
   # MultiType constants used in plugin code
@@ -21,10 +23,67 @@ class ActionTemplateReference
   # Columns not part of the configuration
   IGNORED_COLUMNS = %w[id created_at updated_at].freeze
 
+  # Widget of the template editor (PluginProbe) to the value shown in the YAML file
+  WIDGETS = {
+    'text_field' => 'text', 'email_field' => 'text', 'url_field' => 'text', 'text_area' => 'multiline_text', 'password_field' => 'password',
+    'number_field' => 'number', 'radio_button' => 'select', 'hidden_field' => 'hidden', 'file_field' => 'file_upload',
+    'date_field' => 'date', 'time_field' => 'time', 'datetime_field' => 'date'
+  }.freeze
+  # Widget not written in the YAML file, by column type
+  DEFAULT_WIDGETS = {'string' => 'text', 'text' => 'text', 'mediumtext' => 'text', 'boolean' => 'boolean', 'integer' => 'text', 'bigint' => 'text', 'float' => 'text'}.freeze
+  # Columns of every template, not written in the YAML file
+  COMMON_COLUMNS = %w[name comments].freeze
+  # Notes made useless by the evaluation of the plugin
+  PROBED_NOTES = /has conditions|No `inputs_spec`|No `outputs_spec`/
+
   Plugin = Struct.new(:dir, :plugin_name, :display_name, :category, :description, :version, :min_server, :columns, :constants, :inputs, :outputs, :notes)
 
-  def initialize(actions_dir)
+  # @param probe [Hash, nil] result of PluginProbe: plugin name => form, inputs, outputs, placeholders, errors
+  def initialize(actions_dir, probe = nil)
     @actions_dir = actions_dir
+    @probe = probe || {}
+  end
+
+  YAML_HEADER = <<~HEADER
+    # Aspera Orchestrator %<version>s action plugins: template attributes, inputs and outputs.
+    # Generated from the plugin source code: do not edit.
+    # How to use it in a workflow file: see workflow-authoring-guide.md.
+    #
+    # <PluginClass>:          Step_type of a step, and class of its action template (key <PluginClass>__<N>)
+    #   attributes:           fields of the action template (element 3 of a workflow file), besides name and comments
+    #     <attribute>:
+    #       type:             database column type; in plain format, write a boolean as 1 or 0
+    #       label:            label in the template editor, when it is not the attribute name (aws_key: Aws key)
+    #       widget:           when not text or boolean: select, multiline_text, password, number, remote_node (name of a remote node),
+    #                         type_map ({'name'=>'type'}), list, hash, file, action_template (name of a template)
+    #       values:           allowed values
+    #       dynamic_values:   true: allowed values come from the server or an external system
+    #       run_time_value:   remote_node: value that makes the node an input of the step
+    #       default:          database default
+    #       code_default:     value used by the plugin when the attribute is blank
+    #       hint:             placeholder text in the template editor
+    #       format:           language of the value (code editor)
+    #       placeholders:     true: each <%%= variable %%> in the value creates a required input `variable`;
+    #                         also true for every text attribute named by the if_blank of an input
+    #       declares:         the value declares inputs or outputs of the step (required_inputs, optional_inputs, outputs),
+    #                         as {'name'=>'type'} (type_map) or ['name'] (list)
+    #   inputs, outputs:
+    #     <name>:             a name in angle brackets is the value of that template attribute
+    #       type:             value type: string, int, float, flag, date, array, hash, object, pwd, attachment
+    #       required:         inputs: the input must be mapped (false: optional)
+    #       if_blank:         exists only when this template attribute is blank (inputs: it replaces the attribute)
+    #       when:             exists only for some values of a template attribute: {<attribute>: {in: [...]}} or {not_in: [...]}
+    #   notes:                limits of the information above
+    #
+    # Inputs and outputs were found by calling the plugin with each attribute changed in turn from the default template.
+  HEADER
+
+  def yaml(version)
+    data = plugins.to_h { |plugin| [plugin.plugin_name, plugin_spec(plugin)] }
+    # copy through JSON: no shared object, so no YAML alias
+    stream = Psych.parse_stream(Psych.dump(JSON.parse(JSON.generate(data)), line_width: -1))
+    flow_style(stream.children.first.root, [])
+    format(YAML_HEADER, version: version) + stream.to_yaml(nil, line_width: -1)
   end
 
   def plugins
@@ -77,6 +136,113 @@ class ActionTemplateReference
   end
 
   private
+
+  # @return [Hash] entry of a plugin in the YAML file
+  def plugin_spec(plugin)
+    probe = @probe[plugin.plugin_name] || {}
+    form = probe['form'] || {}
+    probed = probe.key?('inputs')
+    spec = {
+      'display_name' => plugin.display_name.to_s.strip,
+      'category' => plugin.category.to_s.strip,
+      'version' => plugin.version,
+      'min_orchestrator' => plugin.min_server&.to_s,
+      'description' => plugin.description.to_s.gsub(/\s+/, ' ').strip
+    }.reject { |_, value| value.nil? || value.empty? }
+    inputs = probed ? probe['inputs'] : static_io(plugin.inputs, true)
+    outputs = probed ? probe['outputs'] : static_io(plugin.outputs, false).merge('Step_information' => {'types' => ['hash']})
+    unless probed
+      # input that replaces a blank attribute, found in source text
+      plugin.columns.each { |name, col| inputs[col[:input]]['if_blank'] = name if col[:input] && inputs[col[:input]] }
+    end
+    blank_inputs = inputs.filter_map { |_, info| info['if_blank'] }
+    spec['attributes'] = plugin.columns.except(*COMMON_COLUMNS).to_h do |name, col|
+      info = form[name] || {}
+      attribute = {'type' => col[:type]}
+      attribute['label'] = info['label'] if info['label'] && info['label'] != humanize(name)
+      widget = WIDGETS.fetch(info['widget'], info['widget'])
+      attribute['widget'] = widget if widget && widget != DEFAULT_WIDGETS[col[:type]]
+      attribute['values'] = info['values'] if info['values']
+      attribute['dynamic_values'] = true if info['dynamic_values'] && !info['values']
+      %w[run_time_value action_type format hint].each { |key| attribute[key] = info[key] if info[key] }
+      attribute['default'] = typed_default(col[:default], col[:type]) unless col[:default].nil?
+      if col[:default].nil?
+        code_default = probe['code_defaults']&.key?(name) ? probe['code_defaults'][name] : col[:code_default] && typed_default(col[:code_default], col[:type])
+        attribute['code_default'] = code_default unless code_default.nil? || code_default == ''
+      end
+      # a text attribute that gives an input when blank always accepts placeholders
+      attribute['placeholders'] = true if probe['placeholders']&.include?(name) && !blank_inputs.include?(name)
+      attribute['declares'] = probe['declares'][name] if probe['declares']&.key?(name)
+      [name, attribute]
+    end
+    spec['inputs'] = io_spec(inputs, true)
+    spec['outputs'] = io_spec(outputs, false)
+    notes = plugin.notes.uniq
+    # angle brackets are explained in the header of the file
+    notes = notes.grep_v(/angle brackets/)
+    if probed
+      notes = notes.grep_v(PROBED_NOTES)
+    else
+      notes << "Inputs and outputs found in source text only (the plugin could not be evaluated: #{probe['errors']&.first || 'no probe'}): conditions and required flags may be missing."
+    end
+    spec['notes'] = notes.map { |note| note.delete('`') } unless notes.empty?
+    spec
+  end
+
+  # Inputs or outputs found in source text, in the format of PluginProbe
+  def static_io(items, inputs)
+    items.to_h do |name, info|
+      entry = {'types' => info[:types]}
+      entry['required'] = info[:required] if inputs && !info[:required].nil?
+      [name, entry]
+    end
+  end
+
+  def io_spec(items, inputs)
+    items.to_h do |name, info|
+      types = info['types'] || []
+      entry = {}
+      entry['type'] = types.size == 1 ? types.first : types unless types.empty?
+      entry['required'] = info['required'] if inputs && !info['required'].nil?
+      entry['if_blank'] = info['if_blank'] || info['when_blank'] if info['if_blank'] || info['when_blank']
+      entry['when'] = info['when'] if info['when']
+      [name, entry]
+    end
+  end
+
+  # Rails label of an attribute
+  def humanize(name) = name.tr('_', ' ').downcase.sub(/\A\w/, &:upcase)
+
+  # Flow style (one line) for each attribute, input and output: plugin > attributes|inputs|outputs > name
+  def flow_style(node, path)
+    if path.size == 3 && %w[attributes inputs outputs].include?(path[1])
+      all_flow(node)
+    elsif node.is_a?(Psych::Nodes::Mapping)
+      node.children.each_slice(2) { |key, value| flow_style(value, path + [key.value]) }
+    end
+  end
+
+  def all_flow(node)
+    case node
+    when Psych::Nodes::Sequence then node.style = Psych::Nodes::Sequence::FLOW
+    when Psych::Nodes::Mapping then node.style = Psych::Nodes::Mapping::FLOW
+    when Psych::Nodes::Scalar
+      # a string that cannot be plain in flow style (for example with a comma) is quoted, without tag `!`
+      node.quoted = true
+      return
+    else return
+    end
+    node.children.each { |child| all_flow(child) }
+  end
+
+  def typed_default(value, type)
+    case type
+    when 'boolean' then %w[true 1 t].include?(value.to_s)
+    when 'integer', 'bigint' then Integer(value, exception: false) || value
+    when 'float', 'decimal' then Float(value, exception: false) || value
+    else value
+    end
+  end
 
   def anchor(text) = text.downcase.gsub(/[^a-z0-9 -]/, '').tr(' ', '-')
 
@@ -131,16 +297,24 @@ class ActionTemplateReference
     end
   end
 
+  public
+
+  # @return [Plugin] information found in source text of the plugin folder
   def parse_plugin(path)
     metadata = YAML.safe_load_file(File.join(path, 'metadata.yml'), permitted_classes: [Symbol, Date, Time])
     history = Array(metadata[:revision_history])
     latest = history.max_by { |rev| Gem::Version.new(rev[:version].to_s) } || {}
-    class_file = Dir.glob(File.join(path, '*.rb')).reject { |f| File.basename(f).match?(/^\d/) }.first
+    # the plugin class includes module Action (other files: migrations, helpers, controllers)
+    class_files = Dir.glob(File.join(path, '*.rb')).reject { |f| File.basename(f).match?(/^\d/) }.sort
+    class_file = class_files.find { |f| File.read(f).match?(/^\s*include\s+Action\b/) } || class_files.first
     source = class_file ? File.read(class_file) : ''
     constants = parse_constants(source)
     columns = parse_migrations(Dir.glob(File.join(path, '*.rb')).select { |f| File.basename(f).match?(/^\d/) }.sort)
-    plugin = Plugin.new(path, metadata[:plugin_name].to_s, metadata[:display_name], metadata[:category], metadata[:description],
+    # Step_type is the class name, which may differ from the name in metadata
+    class_name = source[/^class\s+(\w+)\s*<\s*(?:ActiveRecord::Base|ApplicationRecord)\b/, 1] || metadata[:plugin_name].to_s
+    plugin = Plugin.new(path, class_name, metadata[:display_name], metadata[:category], metadata[:description],
       latest[:version].to_s, latest[:minimum_server_version], columns, constants, {}, {}, [])
+    plugin.notes << "The name in `metadata.yml` is `#{metadata[:plugin_name]}`: use the class name `#{class_name}`." if class_name != metadata[:plugin_name].to_s
     columns.each do |name, col|
       code_default = constants["DEFAULT_#{name.upcase}"]
       col[:code_default] = unquote(code_default) if col[:default].nil? && code_default && code_default != 'nil'
@@ -149,6 +323,8 @@ class ActionTemplateReference
     analyze_outputs(plugin, method_body(source, 'outputs_spec'))
     plugin
   end
+
+  private
 
   # Constants defined at class level: NAME = value
   def parse_constants(source)
@@ -281,8 +457,9 @@ class ActionTemplateReference
 end
 
 if $PROGRAM_NAME == __FILE__
-  actions_dir, output, version = ARGV
-  abort("Usage: #{$PROGRAM_NAME} <actions_dir> <output.md> [<version>]") if output.nil?
-  File.write(output, ActionTemplateReference.new(actions_dir).markdown(version || ''))
+  actions_dir, output, version, probe_file = ARGV
+  abort("Usage: #{$PROGRAM_NAME} <actions_dir> <output.md|output.yml> [<version> [<probe.json>]]") if output.nil?
+  reference = ActionTemplateReference.new(actions_dir, probe_file && JSON.parse(File.read(probe_file)))
+  File.write(output, output.end_with?('.yml') ? reference.yaml(version || '') : reference.markdown(version || ''))
   puts "Generated #{output}"
 end
