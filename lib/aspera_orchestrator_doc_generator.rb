@@ -37,6 +37,21 @@ class AsperaOrchestratorDocGenerator
   RE_STRING_BODY = /.+?/
   RE_STRING_ARGUMENT = /['"](#{RE_STRING_BODY})['"]\s*/
 
+  # Example values in plugin help that secret scanners (Vault Radar) flag: [regex, placeholder]
+  # Placeholders must contain "_": a tag name cannot, so Markdown shows <A_B> as text, but would take <AB> as an HTML tag
+  # Words may be separated by non-breaking spaces, hence [[:space:]]
+  SECRET_PLACEHOLDERS = [
+    # PEM private key: full block on one line, or header followed by "..."
+    [/-----BEGIN[[:space:]](?:[A-Z]+[[:space:]])*PRIVATE[[:space:]]KEY-----(?:.*?-----END[[:space:]](?:[A-Z]+[[:space:]])*PRIVATE[[:space:]]KEY-----|[[:space:]]*\.\.\.)?/, '<PEM_PRIVATE_KEY>'],
+    # AWS access key ID
+    [/\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/, '<AWS_ACCESS_KEY_ID>'],
+    # Slack token
+    [/\bxox[abposr]-[0-9A-Za-z-]{10,}/, '<SLACK_TOKEN>'],
+    # HTTP Authorization value: token has a digit or base64 padding, unlike words such as "Bearer token"
+    [%r{\bBearer([[:space:]]+)(?=[^[:space:]"]*[0-9=])[A-Za-z0-9._~+/=-]{8,}}, 'Bearer\1<ACCESS_TOKEN>'],
+    [%r{\bBasic([[:space:]]+)(?=[^[:space:]"]*[0-9=])[A-Za-z0-9+/=]{8,}}, 'Basic\1<BASE64_CREDENTIALS>']
+  ].freeze
+
   def initialize
     @cat_const_to_name = {}
   end
@@ -389,6 +404,8 @@ class AsperaOrchestratorDocGenerator
     content.gsub!(%r{<img\s+src="([^"]+)"[^>]*alt="([^"]*)"[^>]*/?>}, '![\\2](\\1)')
     content.gsub!("\n|----|----|\n",
                   "\n|-------|---------------------------------------------------|\n")
+    # Replace example secrets with placeholders
+    SECRET_PLACEHOLDERS.each { |re, placeholder| content.gsub!(re, placeholder) }
     # Fix heading levels: document title should be H1, categories H2, plugin names H3
     lines = content.split("\n")
     if lines.first && !lines.first.start_with?('#')

@@ -3957,7 +3957,7 @@ This action plugin provides the ability to initiate and monitor server-to-server
   "direction":"send",\
   "remote_user":"root",\
   "remote_host":"testchris5.aspera.cloud",\
-  "ssh_private_key":"-----BEGIN DSA PRIVATE KEY-----\r\nMIIBugIBAAKBgQ5ypo9iLqM=\r\n-----END DSA PRIVATE KEY-----",\
+  "ssh_private_key":"<PEM_PRIVATE_KEY>",\
   "destination_root":"/",\
   "fasp_port":33001,\
   "ssh_port":33001,\
@@ -3976,7 +3976,7 @@ This action plugin provides the ability to initiate and monitor server-to-server
   "direction": "send",\
   "remote_host": "w.demo.aspera.org",\
   "remote_access_key": "ABCDEFGH",\
-  "token": "Basic XXXXYYYYYZZZZZ=",\
+  "token": "Basic <BASE64_CREDENTIALS>",\
   "target_rate_kbps": "",\
   "create_dir": false,\
   "ssh_port": "33001",\
@@ -3994,7 +3994,7 @@ This action plugin provides the ability to initiate and monitor server-to-server
 {\
   "direction": "send",\
   "remote_host": "testchris5.aspera.cloud",\
-  "token": "Bearer eJwlkEmzmkAAhO/8DK7EvGHYr",\
+  "token": "Bearer <ACCESS_TOKEN>",\
   "target_rate_kbps": 1000000,\
   "create_dir": true,\
   "ssh_port": "33001",\
@@ -5551,7 +5551,7 @@ This plugin integrates with Faspex5 servers to manage file processing workflows 
 |---------------------------|-------------------------------------|
 | **Faspex Node**           | faspex5-server                      |
 | **Faspex Server Address** | https://faspex5.company.com         |
-| **Ssh Private key**       | -----BEGIN RSA PRIVATE KEY----- ... |
+| **Ssh Private key**       | <PEM_PRIVATE_KEY> |
 | **Faspex User**           | orchestrator@company.com            |
 | **Faspex API Client ID**  | orchestrator-client-12345           |
 | **Operation**             | Retrieve the list of files          |
@@ -8393,7 +8393,7 @@ This is an example configuration for the AmazonDynamoDBOperations plugin retriev
 |-------|---------------------------------------------------|
 | Name | Get Customer Record |
 | Comments | Retrieve a single customer item from DynamoDB by partition key |
-| Aws key | AKIAIOSFODNN7EXAMPLE |
+| Aws key | <AWS_ACCESS_KEY_ID> |
 | Aws secret | (stored securely) |
 | Aws region | us-east-1 |
 | Verify SSL? | Checked |
@@ -8587,7 +8587,7 @@ This is an example configuration for the AmazonGlacierOperation plugin archiving
 |---------------------|---------------------------------------------------|
 | Name                | Archive Monthly Report                            |
 | Comments            | Archive end-of-month report file to Glacier vault |
-| Amazon access Key   | AKIAIOSFODNN7EXAMPLE                              |
+| Amazon access Key   | <AWS_ACCESS_KEY_ID>                              |
 | Amazon secret key   | (stored securely)                                 |
 | Region              | us-east-1                                         |
 | Proxy url           | (blank)                                           |
@@ -8774,7 +8774,7 @@ This is an example configuration for the AmazonMediaConvertOperation plugin subm
 |-------|---------------------------------------------------|
 | Name | Transcode VOD Asset |
 | Comments | Start a MediaConvert transcoding job for a new VOD asset |
-| Aws key | AKIAIOSFODNN7EXAMPLE |
+| Aws key | <AWS_ACCESS_KEY_ID> |
 | Aws secret | (stored securely) |
 | Aws region | us-east-1 |
 | API Endpoint | https://abc123.mediaconvert.us-east-1.amazonaws.com |
@@ -8975,7 +8975,7 @@ This action plug-in provides the ability to execute file and bucket operations (
 | Parameter | Example Value |
 |-------|---------------------------------------------------|
 | **Operations** | Upload to a Bucket |
-| **AWS key** | AKIA1234567890123456 |
+| **AWS key** | <AWS_ACCESS_KEY_ID> |
 | **AWS secret** | \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\* |
 | **AWS region** | us-east-1 |
 | **Verify SSL?** | checked |
@@ -9271,7 +9271,7 @@ This is an example configuration for the AmazonSNSOperation plugin publishing a 
 |---------------|-------------------------------------------------------|
 | Name          | Publish Order Notification                            |
 | Comments      | Publish order confirmation message to SNS topic       |
-| AWS Key       | AKIAIOSFODNN7EXAMPLE                                  |
+| AWS Key       | <AWS_ACCESS_KEY_ID>                                  |
 | AWS Secret    | (stored securely)                                     |
 | AWS Region    | us-east-1                                             |
 | Verify SSL?   | Checked                                               |
@@ -9488,7 +9488,7 @@ This is a minimal setup configuration for the AmazonSqsOperation plug-in.
 |-------|---------------------------------------------------|
 | Name | Amazon SQS Operation |
 | Comments | Send a message to an Amazon SQS queue |
-| AWS key | AKIAIOSFODNN7EXAMPLE |
+| AWS key | <AWS_ACCESS_KEY_ID> |
 | AWS secret | \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\* |
 | AWS region | us-east-1 |
 | Verify SSL? | Selected |
@@ -26164,7 +26164,7 @@ This plugin monitors Faspex5 server mailboxes for incoming packages matching spe
 |-------------------------------|-------------------------------------|
 | **Faspex Node**               | faspex5-server                      |
 | **Faspex Service Address**    | https://faspex5.company.com         |
-| **Private key**               | -----BEGIN RSA PRIVATE KEY----- ... |
+| **Private key**               | <PEM_PRIVATE_KEY> |
 | **Packages root**             | /opt/aspera/var/packages            |
 | **Faspex User**               | orchestrator@company.com            |
 | **API Client ID**             | orchestrator-client-12345           |
@@ -26360,7 +26360,7 @@ Provides the capability to monitor Faspex 5 package uploads, downloads, and comp
 | **Name**                      | Package Upload Monitor             |
 | **Comments**                  | Monitors package upload completion |
 | **Faspex Node**               | faspex-server-01                   |
-| **SSH Private key**           | -----BEGIN PRIVATE KEY-----...     |
+| **SSH Private key**           | <PEM_PRIVATE_KEY>     |
 | **Faspex User**               | monitor_user                       |
 | **Faspex API Client ID**      | orchestrator-client-id             |
 | **Polling frequency**         | 30                                 |
@@ -28845,7 +28845,7 @@ This action plug-in provides the ability to interact with Slack
 |-------|---------------------------------------------------|
 | **Name** | Workflow Completion Notification |
 | **Comments** | Sends notification when workflow completes |
-| **token** | xoxp-1234567891234-1234567891234-1234567891234-1234567890abcdefghijklmnopqrstuv |
+| **token** | <SLACK_TOKEN> |
 | **slack url** | https://slack.com/ |
 | **operation** | Send a Message |
 | **channel** | \#my-channel |
