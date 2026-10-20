@@ -699,45 +699,47 @@ end
 
 ### Helper Methods
 
-Common patterns for accessing configuration:
+`ActionTools` (included by `Action`) provides `default_get(field_name)`: the run time value of a template attribute.
+It takes the first of:
+
+1. The input that replaces the attribute when blank (see `implied_field_spec`: constant `VAR_<FIELD>`, else the attribute name with its first letter in upper case).
+2. The attribute value, if not blank.
+3. The constant `DEFAULT_<FIELD>`.
+
+A `string` or `text` value is then expanded with `Payload.expand`: placeholders are replaced by input values.
+If the attribute name ends with `_<type>` (for example `delay_int`), the value is converted to that type.
 
 ```ruby
-# Get value from runtime inputs or fall back to database configuration
-def default_get(field_name)
-  var_name = field_name.upcase
-  return @inputs[var_name] if @inputs && @inputs[var_name].present?
-  return self.send(field_name) if self.respond_to?(field_name)
-  return nil
-end
+DEFAULT_POLLING_FREQUENCY = 5
 
-# Example usage
 def polling_frequency_get
-  return default_get(:polling_frequency) || DEFAULT_POLLING_FREQUENCY
+  return default_get(:polling_frequency)
 end
 ```
 
 ### Dynamic Input/Output Specifications
 
-For plugins with variable inputs based on configuration:
+`ActionTools#default_inputs_spec(fields, required_inputs, optional_inputs)` derives inputs from template attributes (default: all attributes, into `@required_inputs` and `@optional_inputs`), and returns the two maps:
+
+- A text attribute left blank becomes an input (`implied_field_spec`), optional if the constant `DEFAULT_<FIELD>` exists.
+- A text attribute that is set gives one input per placeholder (`Payload.variables`): `<%= name %>`, arguments of `<%= function(a, b) %>`, `var(name)` in an expression.
+  The input is a `string`, or the type of a suffix `_<type>` of its name, required unless the constant `DEFAULT_<NAME>` exists.
+  No input is created for a name that is a method of the template with a value (`name`, a set attribute).
+- A non-text attribute left null becomes an input of the corresponding type.
 
 ```ruby
 def inputs_spec
   required_inputs = {}
-  optional_inputs = {}
-  
-  # Parse configuration to determine required inputs
-  if command.present?
-    Payload.variables(command).each do |var_name|
-      required_inputs[var_name] = TYPE_STRING
-    end
-  end
-  
-  # Add standard optional inputs
-  optional_inputs["timeout"] = TYPE_INT
-  
+  optional_inputs = {"timeout" => TYPE_INT}
+  # command: input Command if blank, else one input per placeholder
+  default_inputs_spec([:command], required_inputs, optional_inputs)
   return required_inputs, optional_inputs
 end
 ```
+
+An attribute handled by your own code (for example `required_inputs[VAR_SERVER] = TYPE_STRING if server.blank?`) gets no input for its placeholders: call `default_inputs_spec` for it, or scan it with `Payload.variables` (see [Using Payload Variables](#using-payload-variables)).
+The documentation generator marks an attribute `placeholders: true` in `plugins.yml` only when `<%= variable %>` in its value gives an input `variable`.
+See Placeholders in the [Workflow Authoring Guide](workflow-authoring-guide.md#placeholders) for the syntax as seen by workflow authors.
 
 ## Plugin Patterns Usage Statistics
 
@@ -790,6 +792,25 @@ Based on analysis of 205 plugins in the Orchestrator codebase:
 
 ### Using Payload Variables
 
+`Payload.variables(text)` returns the input names used by the placeholders of `text`:
+
+| Placeholder | Names returned |
+|-------------|----------------|
+| `<%= name %>` | `name` |
+| `<%= function(a, b) %>` | `a`, `b` (arguments are input names only) |
+| `<%= var(name).upcase %>` | `name` (`var` in an expression) |
+| `<%= name.upcase %>`, `<% ... %>` | none |
+
+`Payload.expand(text, @inputs, self)` replaces them with input values:
+
+- `<%= name %>`: the input value, an empty string if missing (or the value of method `name` of `self` if there is no such input), an array in Ruby notation.
+- `<%= function(a, b) %>`: `function` is a method of `self` (the template), of `Payload` (`xml`: a hash as XML elements), or a method with its class (`File.basename`).
+- If `<%=` remains after that, the text is evaluated as ERB, where a name is the value of the input with that name (`var(name)` returns its argument).
+  `<% ... %>` tags are evaluated only in that case.
+- `<%= var(name) %>` alone raises an error: `var` is a method of `Payload` class only.
+
+Scan with `Payload.variables` when `default_inputs_spec` does not fit, for example to give all inputs one type:
+
 ```ruby
 def inputs_spec
   required_inputs = {}
@@ -801,7 +822,7 @@ def inputs_spec
 end
 
 def execute
-  # Expand payload with actual values
+  # Expand payload with actual values (default_get(:command) does the same)
   expanded_command = Payload.expand(command, @inputs, self)
   # ... use expanded_command ...
 end

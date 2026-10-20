@@ -469,16 +469,14 @@ They do not change execution.
 The inputs of a step are declared by its action template, in method `inputs_spec` of the plugin: a map of required inputs and a map of optional inputs, each from name to [value type](#value-types).
 The [Action Template Reference](action-template-reference.md) lists them for each plugin.
 
-Many plugins derive inputs from some of their template attributes (`ActionTools#default_inputs_spec`).
-The [Action Template Reference](action-template-reference.md) shows those attributes in column **Input if blank**.
-For these attributes:
+Many plugins derive inputs from some of their template attributes (`ActionTools#default_inputs_spec`):
 
 - A text attribute **left blank** in the template becomes an input, so its value can come from the graph at run time.
+  The [Action Template Reference](action-template-reference.md) gives its name in column **Input if blank**.
   - Input name: the value of the plugin constant `VAR_<ATTRIBUTE>` if it exists, else the attribute name with its first letter in upper case (for example `file_path` gives `File_path`).
   - The input is optional if the plugin defines a constant `DEFAULT_<ATTRIBUTE>`, else required.
   - An attribute name ending with `_<type>` (for example `delay_int`) gives an input of that type, named without the suffix.
-- A text attribute containing placeholders `<%= variable %>` creates a required input `variable` (type `string`).
-  The placeholder is replaced by the input value at run time.
+- A text attribute that is set can contain [placeholders](#placeholders) `<%= variable %>`: each one creates an input.
 - A non-text attribute left null becomes an input of the corresponding type.
 
 So the same plugin can have different inputs depending on its template.
@@ -487,6 +485,45 @@ For example, `LocalFileWatcher` with `directory` left blank has a required input
 Plugins that let the template declare its inputs and outputs explicitly (for example `CustomRuby` and `Filter`) take them as a type map in text: JSON (`{"person":"string"}`) or Ruby hash syntax (`{'person'=>'string'}`).
 
 Before calling the action, Orchestrator adds these inputs: `OUTPUTS` (names and types of the outputs), `WORKORDER_ID` (the work step id), `ATTEMPT`, `RUNNING_AS`.
+
+### Placeholders
+
+A text attribute marked `placeholders: true` in [plugins.yml](plugins.yml) can contain ERB placeholders.
+Each variable they name becomes an input of the step, and the plugin replaces the placeholders with the input values at run time.
+For example, an `EmailNotification` template with `template` (the message body) set to `Hello <%= user_name %>, <%= file_name %> is ready.` gives required inputs `user_name` and `file_name`.
+
+Placeholders in an attribute that is not marked create no input.
+This is the case of some attributes that give an input when left blank.
+
+These forms create inputs:
+
+| Placeholder | Creates input | Replaced by |
+|-------------|---------------|-------------|
+| `<%= name %>` | `name` | The value of input `name`. |
+| `<%= function(a, b) %>` | `a`, `b` | The result of `function` called with the values of inputs `a` and `b`. Arguments are input names, not literal values. `function` is a method of the plugin (for example `proxy_tag` of `ItunesTransporter`), `xml` (a hash as XML elements: `{'v'=>[1, 2]}` gives `<v>1</v><v>2</v>`), or a method with its class (for example `File.basename`). |
+| `var(name)` in an expression | `name` | `var(name)` returns the value of input `name`, for example `<%= var(file_count).to_i + 1 %>`. |
+
+Any other Ruby code in `<%= ... %>` runs, but creates no input: in `<%= file_name.upcase %>`, `file_name` is not an input of the step, unless another placeholder declares it.
+Write `<%= var(file_name).upcase %>`.
+`var` is only for expressions: `<%= var(file_name) %>` alone fails, write `<%= file_name %>`.
+
+The input created by a placeholder:
+
+- Has the name written in the placeholder: letters, digits and `_`.
+- Is a `string`, unless the name ends with `_<type>`: `<%= count_int %>` gives input `count_int` (the suffix is kept) of type `int`.
+- Is required, unless the plugin defines a constant `DEFAULT_<NAME>`.
+- Is not created if the name is a method of the template that returns a value: `name` (the template name) or another attribute of the template that is set.
+  That value is used.
+
+Some plugins scan placeholders with their own code instead of `default_inputs_spec` (for example `Filter`): the input is a required `string`, unless the template declares it otherwise (`mandatory_inputs` and `optional_inputs` of `Filter`).
+
+Placeholders are scanned only in the value set in the template: the ones in `code_default` (attribute left blank) create no input.
+
+At run time:
+
+- An input without a value is replaced by an empty string.
+- An array is written in Ruby notation: `[1, 2]`.
+- `<% ... %>` tags (code without output, for example `<% if ... %>`) run only when the value also contains an expression such as `<%= var(file_name).upcase %>`: do not rely on them.
 
 ### Plugin specifications
 
@@ -522,7 +559,7 @@ Attributes (besides `name` and `comments`, common to all templates):
 | `code_default` | Value used by the plugin when the attribute is blank. |
 | `hint` | Placeholder text in the template editor. |
 | `format` | Language of the value (code editor). |
-| `placeholders` | `true`: each `<%= variable %>` in the value creates a required input `variable`. Not set: placeholders in the value are not scanned, even if the attribute gives an input when blank. |
+| `placeholders` | `true`: [placeholders](#placeholders) in the value create inputs (`<%= variable %>`, `<%= function(variable, ...) %>`, `var(variable)` in an expression). Not set: placeholders in the value are not scanned, even if the attribute gives an input when blank. |
 | `declares` | The value declares inputs or outputs of the step (`required_inputs`, `optional_inputs`, `outputs`), as a type map or a list. |
 
 Inputs and outputs (a name in angle brackets is the value of that template attribute):
@@ -616,7 +653,7 @@ The step ends with `Complete` if the result is true, `Failed` otherwise, and out
 
 | Attribute | Content |
 |-----------|---------|
-| `command` | Ruby expression. `<%= variable %>` placeholders create required inputs. |
+| `command` | Ruby expression. [Placeholders](#placeholders) create required `string` inputs, unless declared in `mandatory_inputs` or `optional_inputs`. They are replaced by text before the expression runs: quote a string value, as in `'<%= Status %>' == 'ok'`. |
 | `mandatory_inputs`, `optional_inputs` | Additional inputs: type maps. |
 | `filter_outputs` | Additional outputs: type map. |
 
