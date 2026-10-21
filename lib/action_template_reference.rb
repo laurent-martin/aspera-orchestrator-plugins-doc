@@ -37,8 +37,8 @@ class ActionTemplateReference
   SECRET_NAME = /pass|pwd/i
   # Notes made useless by the evaluation of the plugin
   PROBED_NOTES = /has conditions|No `inputs_spec`|No `outputs_spec`/
-  # Code in text of the overlay: hash, array, element of an array, placeholder, <name>
-  CODE_IN_TEXT = /\{[^{}]*\}|\w*(?:\[[^\[\]]*\])+|<%=.*?%>|<[\w ]+>\w*/
+  # Code in text of the overlay: hash, array, element of an array, placeholder, <name> (with the rest of a path or name)
+  CODE_IN_TEXT = %r{\{[^{}]*\}|\w*(?:\[[^\[\]]*\])+|<%=.*?%>|<[\w ]+>(?:[\w/.-]*[\w/])?}
 
   Plugin = Struct.new(:dir, :plugin_name, :display_name, :category, :description, :version, :min_server, :columns, :constants, :inputs, :outputs, :notes)
 
@@ -365,11 +365,11 @@ class ActionTemplateReference
     out << ''
     out << '### Inputs'
     out << ''
-    out.concat(io_list(plugin.inputs.merge(overlay_io(extra['inputs']))))
+    out.concat(io_list(with_overlay(plugin.inputs, extra['inputs'])))
     out << ''
     out << '### Outputs'
     out << ''
-    outputs = plugin.outputs.merge(overlay_io(extra['outputs']))
+    outputs = with_overlay(plugin.outputs, extra['outputs'])
     out.concat(io_list(outputs)) unless outputs.empty?
     # Step_information is added by default: don't duplicate if the probe already includes it
     out << '- `Step_information` (`hash`)' unless outputs.key?('Step_information')
@@ -397,10 +397,14 @@ class ActionTemplateReference
     end
   end
 
-  # Inputs or outputs of the overlay, in the format of io_list: type and required `varies` are explained by the note
-  def overlay_io(items)
-    (items || {}).to_h do |name, info|
-      [name, {types: Array(info['type']) - ['varies'], required: [true, false].include?(info['required']) ? info['required'] : nil, note: info['note']}]
+  # Inputs or outputs merged with those of the overlay (keys given replace generated ones): type and required `varies` are explained by the note
+  def with_overlay(items, extra)
+    (extra || {}).each_with_object(items.dup) do |(name, info), all|
+      entry = (all[name] || {types: []}).dup
+      entry[:types] = Array(info['type']) - ['varies'] if info.key?('type')
+      entry[:required] = info['required'] if [true, false].include?(info['required'])
+      entry[:note] = info['note'] if info['note']
+      all[name] = entry
     end
   end
 

@@ -2821,22 +2821,23 @@ DigitalrapidsTmTranscoding:
   min_orchestrator: 4.1.0
   description: This is Action plug-in provides the ability to submit a file transcoding job to a DigitalRapids Transcode Manager server.
   attributes:
-    tm_node: {type: string}
-    tm_server_address: {type: string}
-    tm_api_port: {type: integer, code_default: 44000}
-    project_path: {type: string}
-    project_id: {type: string}
-    group_name: {type: string}
-    tm_group_id: {type: string}
-    role: {type: string}
-    polling_frequency: {type: integer, code_default: 5}
-    source_file: {type: string}
-    destination_dir: {type: string}
-    priority: {type: string, code_default: '0'}
-    tag_values: {type: mediumtext}
-    separate_audio_source: {type: boolean, default: false}
-    audio_source_file: {type: string}
+    tm_node: {type: string, label: Transcode manager server node, widget: remote_node}
+    tm_server_address: {type: string, label: Server ip address (or hostname)}
+    tm_api_port: {type: integer, label: Transcode manager api port (optional), code_default: 44000}
+    project_path: {type: string, placeholders: true}
+    project_id: {type: string, label: Project list, widget: select, dynamic_values: true, placeholders: true}
+    group_name: {type: string, placeholders: true}
+    tm_group_id: {type: string, label: Group list, widget: select, dynamic_values: true, placeholders: true}
+    role: {type: string, widget: select, values: [ROLE_TRANSCODE, ROLE_KAYAK_TRANSCODE]}
+    polling_frequency: {type: integer, label: Status polling frequency, code_default: 5}
+    source_file: {type: string, placeholders: true}
+    destination_dir: {type: string, label: Destination directory, placeholders: true}
+    priority: {type: string, widget: select, values: ['1', '0', "-1"], code_default: '0'}
+    tag_values: {type: mediumtext, label: Tag Values, widget: hash, placeholders: true}
+    separate_audio_source: {type: boolean, label: 'Separate audio file?', default: false}
+    audio_source_file: {type: string, label: Audio file path}
   inputs:
+    Transcode_manager_server: {type: string, required: true, if_blank: tm_server_address}
     Source_file: {type: string, required: true, if_blank: source_file}
     Project_id: {type: string, required: true, if_blank: project_id}
     Tm_group_id: {type: string, required: true, if_blank: tm_group_id}
@@ -2844,16 +2845,12 @@ DigitalrapidsTmTranscoding:
     Project_path: {type: string, required: true, if_blank: project_path}
     Destination_dir: {type: string, required: false, if_blank: destination_dir}
     Tag_values: {type: string, required: false, if_blank: tag_values}
-    Transcode_manager_server: {type: string}
-    Audio_Source_Filepath: {type: string}
+    Audio_Source_Filepath: {type: string, required: true, if_blank: audio_source_file, when: {separate_audio_source: {in: [true]}}}
   outputs:
     Output_files: {type: array}
     Errors_during_transcode: {type: array}
     Job_id: {type: string}
     Step_information: {type: hash}
-  notes:
-  - 'Method inputs_spec has conditions: some inputs exist only for some template settings.'
-  - 'Inputs and outputs found in source text only (the plugin could not be evaluated: load: ArgumentError: wrong number of arguments (given 2, expected 0)): conditions and required flags may be missing.'
 DivaArchive:
   display_name: Diva archive
   category: File Operations
@@ -7464,8 +7461,8 @@ UserInput:
   description: This plugin provides an interactive way to present information and collect data from users through web forms within the Orchestrator control application.
   attributes:
     event_description: {type: string, hint: Describe the event shown to the user, placeholders: true}
-    assigned_roles: {type: string}
-    assigned_users: {type: string}
+    assigned_roles: {type: string, hint: 'Before version 0.6.0: group ids separated by commas. Used only when assigned_roles_logins is null.'}
+    assigned_users: {type: string, hint: 'Before version 0.6.0: user ids separated by commas. Used only when assigned_user_logins is null.'}
     keep_ongoing: {type: boolean, label: On-going trigger}
     direct_url: {type: string}
     email_notification: {type: boolean, label: Send notification email, default: false}
@@ -7476,14 +7473,14 @@ UserInput:
     email_additional_cc_addresses: {type: string, label: Additional cc destinations, hint: Enter additional CC email addresses, placeholders: true}
     email_additional_bcc_addresses: {type: string, label: Additional bcc destinations, hint: Enter additional BCC email addresses, placeholders: true}
     mailer_name: {type: string}
-    required_requested_data: {type: text}
-    assigned_user_logins: {type: text}
-    assigned_roles_logins: {type: text}
+    required_requested_data: {type: text, label: Mandatory requested data, widget: type_map, declares: outputs, hint: "{'name'=>'type'}: data the user must give in the form. Each name is an output of the step."}
+    assigned_user_logins: {type: text, hint: 'Logins of the users the task is assigned to, separated by commas (alice, bob) or as an array ([''alice'',''bob'']). Written by the template editor.'}
+    assigned_roles_logins: {type: text, hint: 'Names of the groups the task is assigned to, separated by commas (Operators, Admin) or as an array. Written by the template editor.'}
     expose_user_information: {type: boolean, label: 'Provide all user informations in outputs?', default: false}
     mandatory_inputs: {type: text, widget: type_map, declares: required_inputs}
     optional_inputs: {type: text, widget: type_map, declares: optional_inputs}
-    user_outputs: {type: text}
-    view_template: {type: string, widget: file}
+    user_outputs: {type: text, label: Optional requested data, widget: type_map, declares: outputs, hint: "{'name'=>'type'}: data the user may give in the form. Each name is an output of the step."}
+    view_template: {type: string, widget: file, hint: 'File name of a form view on the server, in folder <config_dir>/actions_config/user_inputs/ (default: /opt/aspera/orchestrator/config/orchestrator/actions_config/user_inputs/), starting with _ and ending with .html.erb (example: _review.html.erb). No API lists these files: ask the administrator. Blank: the default form (received parameters, one field per requested data).'}
   inputs:
     UserAssignmentsArray: {type: array, required: false}
     RoleAssignmentsArray: {type: array, required: false}
@@ -7496,6 +7493,7 @@ UserInput:
     Email_additional_cc_addresses: {type: string, required: false, if_blank: email_additional_cc_addresses, when: {email_notification: {in: [true]}}}
     Email_additional_bcc_addresses: {type: string, required: false, if_blank: email_additional_bcc_addresses, when: {email_notification: {in: [true]}}}
   outputs:
+    InputProvider: {type: string, note: 'Id of the user who completed the task (a number). Set expose_user_information to also get the login, name and email address.'}
     Step_information: {type: hash}
     First name: {type: string, when: {expose_user_information: {in: [true]}}}
     Last name: {type: string, when: {expose_user_information: {in: [true]}}}
@@ -7503,8 +7501,13 @@ UserInput:
     Email address: {type: string, when: {expose_user_information: {in: [true]}}}
     Alternate email addresses: {type: string, when: {expose_user_information: {in: [true]}}}
     Full name: {type: string, when: {expose_user_information: {in: [true]}}}
+    "<required_requested_data>": {type: varies, note: 'One output per name of required_requested_data, of the type given in the value.'}
+    "<user_outputs>": {type: varies, note: 'One output per name of user_outputs, of the type given in the value.'}
   notes:
   - 'Inputs are partly defined by template fields (for example a list of inputs, or <%= variable %> placeholders): see the template attributes.'
+  - 'Assignment: the task goes to the users of assigned_user_logins and to the groups of assigned_roles_logins. The inputs SingleUserAssignment (or else UserAssignmentsArray) and SingleRoleAssignment (or else RoleAssignmentsArray) replace them when set. assigned_users and assigned_roles (ids) are read only when assigned_user_logins or assigned_roles_logins is null: an empty string there means nobody. The first user to complete the task completes the step; the other assignments are preempted. A canceled task ends the step with status Failed.'
+  - 'View template: an ERB view rendered inside the task form, which already has the buttons Cancel and Complete Task. Locals: received_parameters ({''<input name>''=>value}: the inputs of the step), requested_user_inputs ({''<name>''=>''<type>''}: the requested data), and active_assignment. Each requested data must be a form field named outputs[<name>]: helper draw_input(''outputs'', name, type) draws a field for the type.'
+  - 'No view is installed with Orchestrator. Examples are in the plugin folder, /opt/aspera/orchestrator/actions/user_inputs/sample_templates/: _movie_qc, _review_movie_ui, _select_asset, _select_client follow the interface above; _test_template_ui uses an older one (fails in 4.1.6).'
 UserLookup:
   display_name: User lookup
   category: System

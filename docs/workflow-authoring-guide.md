@@ -136,12 +136,13 @@ A workflow file is a YAML sequence of exactly six elements, in this order:
 | 1 | Workflow | Workflow attributes: name, description, ... See [Workflow attributes](#workflow-attributes). |
 | 2 | Whiteboard | The graph (`xml_export`) and its state. See [Whiteboard attributes](#whiteboard-attributes). |
 | 3 | Action templates | A map: key `<StepType>__<N>`, value the template object. See [Action templates](#action-templates). |
-| 4 | Dependency list | A map: same keys as element 3, value the list of external entities used by the template. Empty lists for a workflow without dependencies. |
+| 4 | Dependency list | A map: same keys as element 3, value the list of external entities used by the template (written by `export_workflow`). |
 | 5 | Packed dependencies | A map of dependencies included in a `.wkf` package. `{}` for a `.yml` file. |
 | 6 | Plugin versions | A map: plugin name to version. Informational: not checked on import. |
 
-Rule for element 4 and 5: if element 4 lists dependencies and element 5 is empty, `import_workflow` does not import and returns the dependency list instead (see [import_workflow](#import_workflow)).
-For a self-contained workflow, use empty lists in element 4.
+Rule for element 4 and 5: element 4 is used only for the dependencies packed in element 5.
+When element 5 is empty (a `.yml` file), element 4 is ignored, and template attributes are imported as written: see [Referring to existing entities](#referring-to-existing-entities).
+In a hand-written file, use `{}` or empty lists in element 4.
 
 The file can be written in two encodings.
 Both are accepted by the import.
@@ -250,6 +251,40 @@ Element 3 maps each key `<StepType>__<N>` to an action template.
   If that fails, the import returns the list of missing plugins.
 
 How a template defines the inputs of its step is explained in [Inputs of a step](#inputs-of-a-step).
+
+### Referring to existing entities
+
+A template refers to an entity of the server (a workflow, a remote node, a journal book...) by the value of one of its attributes.
+In a `.yml` file, element 4 is ignored (see [Structure](#structure)): the import keeps the value written, and does not check that the entity exists.
+So write the reference in the attribute, as the entity is known on the target server, and leave element 4 empty.
+
+| Entity | Template attribute | Value |
+|--------|--------------------|-------|
+| Workflow | `SubWorkflow`: `workflow_id`, `workflow_portable_id` | Id of the workflow (see below for the portable id). |
+| Workflow | `WorkflowLauncher`: `workflow_id` | Id of the workflow. Or `workflow_id` blank, `use_portable_id` set to `1`, and `portable_id`: the portable id of the workflow, looked up at execution. |
+| Remote node | `remote_node`, and other attributes with widget `remote_node` in the plugin specification | Name of the node. |
+| Journal book | Step element `Journaling` of the graph | Name of the book. The import creates it if missing. |
+| Journal book | `FileJournalLogEntry`: `journal_book` | Name of an existing book. It is not created. |
+| Mailer | `EmailNotification`, `UserInput`: `mailer_name` | Name of a mailer configuration. Blank: the first active one. |
+| Global action template | Element 3 | A template with the same class, name and attributes: see [Action templates](#action-templates). |
+
+Ids and portable ids of workflows are given by `ascli orchestrator workflows list`.
+No API lists the other entities: ask the administrator of the server.
+
+`SubWorkflow`: each time its template is saved, import included, `workflow_portable_id` wins:
+if it is the portable id of a workflow of the server, `workflow_id` is set to the id of that workflow;
+otherwise, if `workflow_id` is the id of a workflow, `workflow_portable_id` is set to its portable id.
+`import_workflow` gives a new portable id to each workflow it creates (see [Workflow attributes](#workflow-attributes)): a portable id read on another server does not match.
+Write `workflow_id`, and leave `workflow_portable_id` blank.
+
+Packages (`.wkf`): with dependencies, `export_workflow` lists in element 4 each entity a template uses, for example `{entity: Workflow, id_key: id, id_value: 4, dependent_field: workflow_id}`, and packs sub-workflows and remote nodes (element 5).
+On import, each packed sub-workflow is imported first, and the attribute named by `dependent_field` is set to the `id_key` of the new entity.
+With `import_workflow`:
+
+- Remote nodes of the package are not imported: the attribute keeps the node name, and the node must exist on the server.
+  `import_with_constraints` imports or maps them (see [import_with_constraints](#import_with_constraints)).
+- Field `link_to_subworkflows` set to `true`: a packed sub-workflow that was already imported (a workflow with the same name and a `source_revision` equal to `<name>|<revision_id>` of the packed file) is used instead of a new copy.
+  The value is evaluated as Ruby code: only `true` links, and in a package with sub-workflows, a word other than `true` or `false` makes the import fail.
 
 ## Graph XML
 
@@ -1031,14 +1066,15 @@ Errors are returned with the exception message and stack trace in the response b
 | `import_file` | yes | The workflow file (file part). |
 | `import_file_name` | yes | File name, ending with `yml` or `wkf`. The upload is stored under this name in `<run_dir>/workflows/import/`. |
 | `folder_id` | no | Folder of the new workflow. |
-| `link_to_subworkflows` | no | Link to existing sub-workflows instead of importing them. |
+| `link_to_subworkflows` | no | `true`: in a `.wkf` package, use the sub-workflows already imported from the same files instead of importing them again. See [Referring to existing entities](#referring-to-existing-entities). |
 | `publish_workflow` | no | `true` or `1`: publish after import. The server option `publish_api_imported_workflow` sets the default. |
 
 Response: the new workflow as JSON (`{"workflow": {"id": ..., "name": ..., ...}}`), in both formats.
 Other responses with status 200:
 
 - `{"plugins": [...], "missing_deps": [...]}`: plugins that could not be enabled; nothing is imported.
-- `{"dependencies": ..., "file": ..., "workflow": ...}`: the file lists dependencies that are not packed; nothing is imported.
+
+The source also has a response `{"dependencies": ..., "file": ..., "workflow": ...}` for dependencies that are not packed, but its condition is never met (see [Known issues](#known-issues)).
 
 On error: status 500 with `{"error": ..., "message": ..., "details": ...}`.
 
@@ -1147,6 +1183,8 @@ Observed in Orchestrator 4.1.6:
 - A negative `Synch_factor` is never met (see [Prerequisites and branches](#prerequisites-and-branches)).
 - `find_constraints` returns empty constraints for a file that does not exist.
 - `export_workflow` exports dependencies for any non-empty value of `export_with_dependencies`, including `false`.
+- `import_workflow` and `import_with_constraints` should refuse a file whose element 4 lists dependencies when element 5 is empty, but the test also requires element 5 to be non-empty: such a file is imported, with template attributes as written.
+- `import_workflow` does not import the remote nodes of a `.wkf` package.
 - `export_workflow` has no route without the workflow id in the path, although its source comment documents `?id=`.
 - The `.wkf` package produced by `export_workflow` with dependencies contains an empty copy of itself (the archive is built in the folder it packs).
 - API errors return the exception stack trace, and often status 404 or 500 regardless of the cause.

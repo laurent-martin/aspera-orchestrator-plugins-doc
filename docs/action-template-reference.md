@@ -3551,6 +3551,7 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `Transcode_manager_server` (`string`, required)
 - `Source_file` (`string`, required)
 - `Project_id` (`string`, required)
 - `Tm_group_id` (`string`, required)
@@ -3558,8 +3559,7 @@ For each action plugin, this reference lists:
 - `Project_path` (`string`, required)
 - `Destination_dir` (`string`, optional)
 - `Tag_values` (`string`, optional)
-- `Transcode_manager_server` (`string`)
-- `Audio_Source_Filepath` (`string`)
+- `Audio_Source_Filepath` (`string`, required)
 
 ### Outputs
 
@@ -3567,10 +3567,6 @@ For each action plugin, this reference lists:
 - `Errors_during_transcode` (`array`)
 - `Job_id` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## DivaArchive
 
@@ -9245,6 +9241,14 @@ For each action plugin, this reference lists:
 | `user_outputs` | text |  |  |
 | `view_template` | string |  |  |
 
+- `view_template`: File name of a form view on the server, in folder `<config_dir>/actions_config/user_inputs/` (default: /opt/aspera/orchestrator/config/orchestrator/actions_config/user_inputs/), starting with _ and ending with .html.erb (example: _review.html.erb). No API lists these files: ask the administrator. Blank: the default form (received parameters, one field per requested data).
+- `assigned_user_logins`: Logins of the users the task is assigned to, separated by commas (alice, bob) or as an array (`['alice','bob']`). Written by the template editor.
+- `assigned_roles_logins`: Names of the groups the task is assigned to, separated by commas (Operators, Admin) or as an array. Written by the template editor.
+- `assigned_users`: Before version 0.6.0: user ids separated by commas. Used only when assigned_user_logins is null.
+- `assigned_roles`: Before version 0.6.0: group ids separated by commas. Used only when assigned_roles_logins is null.
+- `required_requested_data`: `{'name'=>'type'}`: data the user must give in the form. Each name is an output of the step.
+- `user_outputs`: `{'name'=>'type'}`: data the user may give in the form. Each name is an output of the step.
+
 ### Inputs
 
 - `UserAssignmentsArray` (`array`, optional)
@@ -9260,6 +9264,7 @@ For each action plugin, this reference lists:
 
 ### Outputs
 
+- `InputProvider` (`string`): Id of the user who completed the task (a number). Set expose_user_information to also get the login, name and email address.
 - `Step_information` (`hash`)
 - `First name` (`string`)
 - `Last name` (`string`)
@@ -9267,10 +9272,15 @@ For each action plugin, this reference lists:
 - `Email address` (`string`)
 - `Alternate email addresses` (`string`)
 - `Full name` (`string`)
+- `<required_requested_data>`: One output per name of required_requested_data, of the type given in the value.
+- `<user_outputs>`: One output per name of user_outputs, of the type given in the value.
 
 ### Notes
 
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
+- Assignment: the task goes to the users of assigned_user_logins and to the groups of assigned_roles_logins. The inputs SingleUserAssignment (or else UserAssignmentsArray) and SingleRoleAssignment (or else RoleAssignmentsArray) replace them when set. assigned_users and assigned_roles (ids) are read only when assigned_user_logins or assigned_roles_logins is null: an empty string there means nobody. The first user to complete the task completes the step; the other assignments are preempted. A canceled task ends the step with status Failed.
+- View template: an ERB view rendered inside the task form, which already has the buttons Cancel and Complete Task. Locals: received_parameters (`{'<input name>'=>value}`: the inputs of the step), requested_user_inputs (`{'<name>'=>'<type>'}`: the requested data), and active_assignment. Each requested data must be a form field named `outputs[<name>]`: helper draw_input('outputs', name, type) draws a field for the type.
+- No view is installed with Orchestrator. Examples are in the plugin folder, /opt/aspera/orchestrator/actions/user_inputs/sample_templates/: _movie_qc, _review_movie_ui, _select_asset, _select_client follow the interface above; _test_template_ui uses an older one (fails in 4.1.6).
 
 ## UserLookup
 

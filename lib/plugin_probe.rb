@@ -132,6 +132,8 @@ class ProbeAnything
   def self.respond_to_missing?(name, *) = !name.to_s.start_with?('to_')
   def self.to_s = PATH
   def self.to_str = PATH
+  # a stubbed class can be instantiated with any arguments (XSD::QName.new(nil, 'id'))
+  def initialize(*, **) = nil
   def method_missing(*) = self
   def respond_to_missing?(name, *) = !name.to_s.start_with?('to_')
   def to_s = PATH
@@ -144,6 +146,11 @@ class OrchConfig
   def self.get = self
   def self.method_missing(name, *) = "#{ProbeAnything::PATH}/<#{name}>"
   def self.respond_to_missing?(*) = true
+end
+
+# Orchestrator app/models/active_assignment.rb: name of an output of UserInput (a stubbed constant is not a name)
+class ActiveAssignment < ProbeAnything
+  INPUT_PROVIDER_VAR = 'InputProvider'
 end
 
 # Orchestrator lib/safe_yaml.rb, without the classes of the database
@@ -173,6 +180,7 @@ class PluginProbe
     node_selector_by_name: [1, nil, 'remote_node'],
     double_password:       [0, 1, 'password'],
     draw_variables_hash:   [1, 2, 'type_map'],
+    draw_variables_hash_with_upload: [1, 2, 'type_map'],
     draw_variables_array:  [1, 2, 'list'],
     draw_openended_hash:   [1, 2, 'hash'],
     draw_closedlist_hash:  [1, 2, 'hash'],
