@@ -1,0 +1,177 @@
+# Hand-authored enrichments applied on top of the generated plugins.yml.
+# This file is the source of truth for metadata that the plugin probe cannot discover:
+# - hints and notes that require reading source code or live testing
+# - allowed values for dynamic-values selects
+# - format documentation for complex Hash/text attributes
+#
+# Structure: same as plugins.yml.  Only the keys present here are merged;
+# everything else is left as generated.  Lists under "notes" are APPENDED
+# (not replaced); all other values replace the generated value.
+#
+# Rule: never edit docs/plugins.yml directly — add the data here instead.
+# Regenerate with: VERSION=<x> rake doc:plugin_specs
+
+# ── A2: MergePoint ───────────────────────────────────────────────────────────
+MergePoint:
+  attributes:
+    merged_inputs:
+      hint: "Hash: {'name' => ['primary_expr', 'alternate_expr', 'type',\
+        \ 'required|optional']}. Primary and alternate are placeholders or\
+        \ fixed values; blank means use the input named <name> or\
+        \ <name>_alternate respectively."
+    multi_inputs:
+      hint: "Hash: {'name' => ['type', count, 'required|optional']}. Generates\
+        \ inputs <name>_1 … <name>_N and outputs <name> with the first\
+        \ non-nil value."
+    mandatory_inputs:
+      hint: "Hash: {'name' => 'type'}. Shorthand for a merged_inputs entry\
+        \ ['', '<%= name %>', 'type', 'required']: one input <name>, one output\
+        \ <name>."
+    optional_inputs:
+      hint: "Hash: {'name' => 'type'}. Same as mandatory_inputs but marked\
+        \ optional."
+  inputs:
+    "<merged_inputs>":
+      type: string
+      required: false
+      note: "For each name declared in merged_inputs: input <name> if the\
+        \ primary expression is blank (else the variables of its placeholders),\
+        \ and input <name>_alternate if the alternate expression is blank (else\
+        \ the variables of its placeholders). Type comes from\
+        \ merged_inputs[name][2]."
+    "<multi_inputs>":
+      type: string
+      required: false
+      note: "One input per slot: <name>_1 … <name>_N. Type comes from\
+        \ multi_inputs[name][0]."
+  outputs:
+    "<merged_inputs>":
+      type: string
+      note: "One output per name declared in merged_inputs. Type comes from\
+        \ merged_inputs[name][2]."
+    "<multi_inputs>":
+      type: string
+      note: "One output per name declared in multi_inputs. Type comes from\
+        \ multi_inputs[name][0]."
+  notes:
+    - "merged_inputs format: {'name' => ['primary_expression',\
+      \ 'alternate_expression', 'type', 'required|optional']}. The primary\
+      \ expression is evaluated first; if the result is nil (or blank when\
+      \ consider_blank_nil is true), the alternate is evaluated. A blank\
+      \ expression means \"take the runtime input named <name>\" (primary)\
+      \ or \"<name>_alternate\" (alternate)."
+    - "multi_inputs format: {'name' => ['type', count, 'required|optional']}.\
+      \ Generates optional inputs <name>_1 … <name>_N; the output <name>\
+      \ receives the first non-nil value found in order."
+    - "mandatory_inputs and optional_inputs are shorthands: each entry adds\
+      \ a merged_inputs entry with blank primary, \"<%= name %>\" as\
+      \ alternate, and the given type."
+    - "When consider_blank_nil is true (default), empty strings and empty\
+      \ arrays are treated as nil, so the alternate expression is tried."
+    - "All inputs of the step are optional. 'required' (merged_inputs[name][3],\
+      \ multi_inputs[name][2], mandatory_inputs) acts at execution: when no\
+      \ value is found, the step ends with status Failed (\"A valid value was\
+      \ not found for <names>\")."
+
+# ── A4: SubWorkflow ───────────────────────────────────────────────────────────
+SubWorkflow:
+  attributes:
+    workflow_outputs:
+      hint: "Hash mapping output names in the parent to sub-workflow variable\
+        \ paths. Format: {'parent_output_name' => 'StepName:output_name'}.\
+        \ Use 'Parameter:ParameterName' to read a runtime parameter of the\
+        \ sub-workflow. Example: {'result' => 'my_step:Result'}."
+    workflow_inputs:
+      hint: "Hash renaming step inputs to sub-workflow parameter names.\
+        \ Format: {'step_input_name' => 'target_parameter_name'}. When blank,\
+        \ input names must match the sub-workflow parameter names exactly."
+  inputs:
+    "<workflow runtime parameters>":
+      type: varies
+      required: varies
+      note: "When workflow_id is set, one input per runtime parameter of the\
+        \ target workflow is generated (required or optional matching the\
+        \ parameter definition). Names come from workflow_inputs renaming, or\
+        \ the parameter name directly."
+  outputs:
+    "<workflow_outputs>":
+      type: varies
+      note: "When workflow_id is set and workflow_outputs is configured, one\
+        \ output per entry. Type comes from the Context variable of the\
+        \ sub-workflow."
+  notes:
+    - "When workflow_id is set, inputs are the runtime parameters of the\
+      \ target workflow (one per parameter, required/optional matching the\
+      \ parameter). workflow_inputs renames them: key = step input name,\
+      \ value = sub-workflow parameter name."
+    - "workflow_outputs maps parent output names to sub-workflow variable\
+      \ paths: {'parent_output' => 'StepName:output_name'}. Use\
+      \ 'Parameter:name' to read a runtime parameter. When workflow_id is\
+      \ blank, all sub-workflow variables are returned in\
+      \ Sub-Workflow_Outputs."
+    - "The sub-workflow runs asynchronously in a branched work order. The\
+      \ parent step polls until the sub-workflow completes."
+
+# ── A4: WorkflowLauncher ──────────────────────────────────────────────────────
+WorkflowLauncher:
+  attributes:
+    workflow_inputs:
+      hint: "Hash renaming step inputs to target workflow parameter names.\
+        \ Format: {'step_input_name' => 'target_parameter_name'}. When blank,\
+        \ input names must match parameter names."
+    saved_inputs:
+      hint: "Hash of parameter default values applied before runtime inputs:\
+        \ {'param_name' => 'value'}. A saved_input makes the corresponding\
+        \ runtime input optional."
+  notes:
+    - "When workflow_id is set, inputs are the runtime parameters of the\
+      \ target workflow. workflow_inputs renames them: key = local step input\
+      \ name, value = target parameter name. saved_inputs provides default\
+      \ values; a saved_input makes the corresponding runtime input optional."
+    - "WorkflowLauncher (fire-and-forget by default): the step completes as\
+      \ soon as the work order is launched. Set wait_for_completion to true\
+      \ to wait for the launched workflow to finish."
+    - "When wait_for_completion is false and the launched workflow later\
+      \ fails, the launcher step is already Complete: fail_if_failure has no\
+      \ effect in that case."
+
+# ── A7: EmailNotification ─────────────────────────────────────────────────────
+EmailNotification:
+  attributes:
+    mailer_name:
+      hint: "Name of the Mailer Configuration to use. When blank, the first\
+        \ active mailer (lowest id) is used."
+    destinations:
+      hint: "One entry per recipient, separated by \" ..- \" (space-dot-dot-\
+        hyphen-space). Format: \"<address> <type>\" where type is To, Cc or\
+        \ Bcc. Example: \"alice@example.com To ..- bob@example.com Cc ..-\".\
+        \ Legacy separator \"_-\" is also accepted."
+  notes:
+    - "destinations format: one entry per recipient separated by \" ..- \"\
+      \ (space · dot · dot · hyphen · space). Each entry is \"<address>\
+      \ <type>\" where type is To, Cc or Bcc. Example: \"alice@example.com\
+      \ To ..- bob@example.com Cc ..-\". The legacy separator \" _- \" is\
+      \ also accepted (To only)."
+    - "When mailer_name is blank, Orchestrator uses MailServer.identify(nil),\
+      \ which selects the first active Mailer Configuration (lowest id). If\
+      \ no active mailer exists, the step returns Error."
+
+# ── A8: FileJournalLogEntry ───────────────────────────────────────────────────
+FileJournalLogEntry:
+  attributes:
+    processing_status:
+      values: [Complete, Error, Failed, "In Progress"]
+    journal_book:
+      hint: "Name of an existing journal book, or \"--Runtime--\" to require\
+        \ the book name at runtime via the \"Journal Book\" input. When blank,\
+        \ the entry is logged without a book."
+  notes:
+    - "Allowed values for processing_status (and the File_processing_status\
+      \ input): Complete, Error, Failed, In Progress. These map to the\
+      \ standard Journal statuses defined in Journal::PREDEFINED_STATUS."
+    - "Journal books must exist before the step runs. A missing book is NOT\
+      \ created at execution time (unlike a workflow import, which creates\
+      \ the book automatically). Create the book in Engine > Journaling\
+      \ before deploying the workflow."
+    - "When journal_book is set to \"--Runtime--\", the \"Journal Book\"\
+      \ input becomes required."

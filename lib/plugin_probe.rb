@@ -139,9 +139,10 @@ class ProbeAnything
 end
 
 # Server configuration: folders used in class bodies of plugins
+# A folder is under ProbeAnything::PATH, named after the setting (<run_dir>): code_defaults gives it as <run_dir>/...
 class OrchConfig
   def self.get = self
-  def self.method_missing(*) = ProbeAnything::PATH
+  def self.method_missing(name, *) = "#{ProbeAnything::PATH}/<#{name}>"
   def self.respond_to_missing?(*) = true
 end
 
@@ -271,6 +272,11 @@ class PluginProbe
       value = klass.const_get(constant)
       value = value.to_s if value.is_a?(Symbol)
       next unless [String, Integer, Float, TrueClass, FalseClass].any? { |type| value.is_a?(type) }
+      if value.is_a?(String)
+        # a folder of the server configuration: <run_dir>/...; another value of the probe is not a default
+        value = value.delete_prefix("#{ProbeAnything::PATH}/")
+        next if value.include?(ProbeAnything::PATH)
+      end
       defaults[name] = value
     rescue Exception # rubocop:disable Lint/RescueException
       nil
@@ -280,6 +286,13 @@ class PluginProbe
   def load_class(plugin, errors)
     class_file = Dir.glob(File.join(plugin.dir, '*.rb')).find { |f| File.read(f).match?(/^\s*include\s+Action\b/) }
     return errors.push('No plugin class file found') && nil if class_file.nil?
+    # Load auxiliary files (services, helpers) before the main class so that constants they define
+    # (e.g. InboxWatcherMailboxContentService::MAILBOXES) are available when the form is evaluated.
+    # Skip migration files (names start with a timestamp) and the main class file itself.
+    Dir.glob(File.join(plugin.dir, '*.rb')).each do |f|
+      next if f == class_file || File.basename(f).match?(/\A\d{14}_/) || File.basename(f).match?(/_controller\.rb\z|_helper\.rb\z/)
+      self.class.load_ruby(f)
+    end
     self.class.load_ruby(class_file)
     self.class.stub_constants = false
     klass = Object.const_get(plugin.plugin_name)
@@ -512,7 +525,14 @@ class PluginProbe
 
   def spec_hash(hash)
     return {} unless hash.is_a?(Hash)
-    hash.to_h { |name, type| [name.to_s, type.to_s] }
+    hash.filter_map do |name, type|
+      name_s = name.to_s
+      # Skip keys that stringified to the probe sentinel path: they come from a plugin that
+      # used a ProbeAnything value as a hash key (e.g. UserInput with user_outputs blank).
+      # The real names depend on the template and are reported as <attribute> by derived_names.
+      next if name_s == ProbeAnything::PATH
+      [name_s, type.to_s]
+    end.to_h
   end
 
   # Text set in an attribute to find names and types given by its value

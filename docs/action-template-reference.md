@@ -16,10 +16,12 @@ For each action plugin, this reference lists:
 - **Template attributes**: the fields of an action template, as written in element 3 (action templates) of a workflow file.
   Built from the database migrations of the plugin.
   For a text field left blank in the template, the column **Input if blank** gives the name of the step input that replaces it (see `default_inputs_spec`).
-- **Inputs** and **Outputs**: names and types found in methods `inputs_spec` and `outputs_spec` of the plugin class.
-  They are extracted from source text: when the method computes names at run time (for example from a template field), the list is incomplete and a note says so.
+- **Inputs** and **Outputs**: names and types given by methods `inputs_spec` and `outputs_spec` of the plugin class, called on sample templates.
+  When the plugin cannot be evaluated, they are extracted from source text, and a note says so.
+  A name in angle brackets (`<attribute>`) is made from the value of that template attribute: a note explains how, when known.
   Every step also has output `Step_information` (`hash`).
 - **Default**: the database default of the attribute, or, marked `(code)`, the value used by the plugin when the attribute is blank.
+  `<run_dir>`, `<config_dir>`, `<archive_dir>` are folders of the server configuration (by default, under `/opt/aspera/orchestrator`: `var/run/orchestrator`, `config/orchestrator`, `archive`).
 
 ## Index
 
@@ -258,9 +260,9 @@ For each action plugin, this reference lists:
 
 - `Adi_file_path` (`string`, required)
 - `Adi_package_dir` (`string`, optional)
-- `Check_Filemd5s` (`flag`)
-- `Check_Filesizes` (`flag`)
-- `Pass_On_Missing_Files` (`flag`)
+- `Check_Filemd5s` (`flag`, optional)
+- `Check_Filesizes` (`flag`, optional)
+- `Pass_On_Missing_Files` (`flag`, optional)
 
 ### Outputs
 
@@ -282,10 +284,7 @@ For each action plugin, this reference lists:
 - `XSD_Validation_Error_Message` (`string`)
 - `URI Ids List` (`array`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
+- `<validate_fields>` (`string`)
 
 ## AdiParser
 
@@ -319,11 +318,10 @@ For each action plugin, this reference lists:
 - `Adi_package_dir` (`string`, optional)
 - `Dtd_file_path` (`string`, optional)
 - `Xsd_path` (`string`, optional)
-- `ADI_FILEPATH` (`string`)
-- `Check_Dtd_File` (`flag`)
-- `Check_Filemd5s` (`flag`)
-- `Check_Filesizes` (`flag`)
-- `Pass_On_Missing_Files` (`flag`)
+- `Check_Dtd_File` (`flag`, optional)
+- `Check_Filemd5s` (`flag`, optional)
+- `Check_Filesizes` (`flag`, optional)
+- `Pass_On_Missing_Files` (`flag`, optional)
 
 ### Outputs
 
@@ -347,10 +345,7 @@ For each action plugin, this reference lists:
 - `XSD_Validation` (`flag`)
 - `Title_class_hash` (`hash`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
+- `<validate_fields>` (`string`)
 
 ## AdiTransformation
 
@@ -416,7 +411,19 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- None found in source.
+- `User_name` (`string`, required)
+- `Active_password` (`string`, required)
+- `Workspace_id` (`string`, required)
+- `Library_id` (`string`, required)
+- `Origin_id` (`string`, required)
+- `Collection` (`string`, required)
+- `Source_file` (`string`, required)
+- `Media_library_id` (`string`, required)
+- `Target_path` (`string`, optional)
+- `Media_library_origin_id` (`string`, optional)
+- `Target_name` (`string`, optional)
+- `Remove_source_after_transcoding` (`flag`, optional)
+- `Polling_frequency` (`int`, optional)
 
 ### Outputs
 
@@ -446,27 +453,20 @@ For each action plugin, this reference lists:
 ### Inputs
 
 - `Url` (`string`, required)
-- `Payload` (`string`, required)
 - `Operation` (`string`, required)
 - `Polling_frequency` (`int`, optional)
-- `Response Received` (`hash`)
-- `Resouce_Id` (`string`)
-- `Error Message` (`hash`)
-- `Responce_XML_For_Job_Submit` (`hash`)
 
 ### Outputs
 
 - `Response Received` (`hash`)
-- `Resouce_Id` (`string`)
 - `Error Message` (`hash`)
-- `Responce_XML_For_Job_Submit` (`hash`)
 - `Step_information` (`hash`)
+- `Responce_XML_For_Job_Submit` (`hash`)
+- `Resouce_Id` (`string`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## AmazonDynamodbOperation
 
@@ -498,26 +498,20 @@ For each action plugin, this reference lists:
 
 - `Aws_key` (`string`, required)
 - `Aws_secret` (`string`, required)
-- `Aws_region` (`string`, optional)
 - `Operation` (`string`, required)
+- `Input hash` (`hash`, required)
+- `Aws_region` (`string`, optional)
 - `Proxy_url` (`string`, optional)
 - `External_id` (`string`, optional)
 - `Policy` (`string`, optional)
 - `Role_arn` (`string`, optional)
 - `Token_duration` (`int`, optional)
+- `Aws_session_token` (`pwd`, optional)
 - `Table_name` (`string`, required)
-- `Temporary_access_key` (`string`)
-- `Temporary_secret` (`string`)
-- `Temporary_token` (`string`)
-- `Item` (`hash`)
-- `Error Message` (`string`)
-- `Items` (`hash`)
-- `Item Collection Metrics` (`hash`)
-- `Input hash` (`hash`)
-- `Aws_session_token` (`pwd`)
 
 ### Outputs
 
+- `Step_information` (`hash`)
 - `Temporary_access_key` (`string`)
 - `Temporary_secret` (`string`)
 - `Temporary_token` (`string`)
@@ -525,13 +519,10 @@ For each action plugin, this reference lists:
 - `Error Message` (`string`)
 - `Items` (`hash`)
 - `Item Collection Metrics` (`hash`)
-- `Step_information` (`hash`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## AmazonElasticTranscoding
 
@@ -573,32 +564,22 @@ For each action plugin, this reference lists:
 - `Policy` (`string`, optional)
 - `Role_arn` (`string`, optional)
 - `Token_duration` (`int`, optional)
+- `Aws_session_token` (`pwd`, optional)
 - `Pipeline_id` (`string`, required)
 - `Aws_inputs` (`string`, optional)
 - `Aws_outputs` (`string`, optional)
 - `Output_key_prefix` (`string`, optional)
 - `User_metadata` (`string`, optional)
 - `Playlists` (`string`, optional)
-- `Temporary_access_key` (`string`)
-- `Temporary_secret` (`string`)
-- `Temporary_token` (`string`)
-- `Response` (`string` or `hash`)
-- `Error_Message` (`string`)
-- `Aws_session_token` (`pwd`)
 
 ### Outputs
 
 - `Temporary_access_key` (`string`)
 - `Temporary_secret` (`string`)
 - `Temporary_token` (`string`)
-- `Response` (`string` or `hash`)
-- `Error_Message` (`string`)
+- `Response` (`hash` or `string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `Error_Message` (`string`)
 
 ## AmazonGlacierOperation
 
@@ -619,8 +600,8 @@ For each action plugin, this reference lists:
 | `aws_region` | string |  | `Aws_region` |
 | `vault_name` | string |  | `Vault_name` |
 | `account_id` | string |  | `Account_id` |
-| `archive_description` | text | `` (code) | `Archive_description` |
-| `checksum` | string | `` (code) | `Checksum` |
+| `archive_description` | text |  | `Archive_description` |
+| `checksum` | string |  | `Checksum` |
 | `body` | text |  | `Body` |
 | `archive_id` | string |  | `Archive_id` |
 | `verify_ssl` | boolean | `false` |  |
@@ -642,26 +623,18 @@ For each action plugin, this reference lists:
 - `Policy` (`string`, optional)
 - `Role_arn` (`string`, optional)
 - `Token_duration` (`int`, optional)
+- `Aws_session_token` (`pwd`, optional)
 - `Vault_name` (`string`, required)
 - `Account_id` (`string`, required)
+- `Upload_file_path` (`string`, required)
 - `Archive_description` (`string`, optional)
 - `Checksum` (`string`, optional)
-- `Body` (`string`, required)
-- `Upload_file_path` (`string`, required)
 - `Archive_id` (`string`, required)
-- `Temporary_access_key` (`string`)
-- `Temporary_secret` (`string`)
-- `Temporary_token` (`string`)
-- `Response` (`string`)
-- `Location` (`string`)
-- `CheckSum` (`string`)
-- `Archive_Id` (`string`)
-- `Error_Message` (`string`)
-- `Response_Hash` (`hash`)
-- `Aws_session_token` (`pwd`)
+- `Body` (`string`, required)
 
 ### Outputs
 
+- `Step_information` (`hash`)
 - `Temporary_access_key` (`string`)
 - `Temporary_secret` (`string`)
 - `Temporary_token` (`string`)
@@ -671,12 +644,6 @@ For each action plugin, this reference lists:
 - `Archive_Id` (`string`)
 - `Error_Message` (`string`)
 - `Response_Hash` (`hash`)
-- `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## AmazonMediaConvertOperation
 
@@ -709,22 +676,18 @@ For each action plugin, this reference lists:
 - `Aws_secret` (`string`, required)
 - `Aws_region` (`string`, optional)
 - `Proxy_url` (`string`, optional)
+- `Aws_session_token` (`pwd`, optional)
 - `Mode` (`string`, required)
 - `Role` (`string`, required)
 - `Settings_path` (`string`, required)
 - `Job_id` (`string`, required)
-- `Aws_session_token` (`pwd`)
 
 ### Outputs
 
 - `Response` (`hash`)
-- `Run_Id` (`string`)
 - `Error_Message` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `Run_Id` (`string`)
 
 ## AmazonS3Operation
 
@@ -767,9 +730,9 @@ For each action plugin, this reference lists:
 | `endpoint_url` | string |  | `Endpoint_url` |
 | `force_path_style` | boolean | `false` |  |
 | `storage_class` | string |  | `Storage_class` |
-| `prefix` | string | `` (code) | `Prefix` |
-| `delimiter` | string | `` (code) | `Delimiter` |
-| `start_after` | string | `` (code) | `Start_after` |
+| `prefix` | string |  | `Prefix` |
+| `delimiter` | string |  | `Delimiter` |
+| `start_after` | string |  | `Start_after` |
 | `acl` | string | `Select` (code) |  |
 | `external_id` | string |  | `External_id` |
 | `policy` | text |  | `Policy` |
@@ -787,48 +750,43 @@ For each action plugin, this reference lists:
 - `Policy` (`string`, optional)
 - `Role_arn` (`string`, optional)
 - `Token_duration` (`int`, optional)
+- `Aws_session_token` (`pwd`, optional)
 - `Object_key` (`string`, required)
 - `Bucket` (`string`, required)
 - `Local_file_path` (`string`, required)
 - `Storage_class` (`string`, optional)
-- `Restore_version_id` (`string`, optional)
+- `Acl` (`string`, optional)
 - `Restore_tier` (`string`, required)
 - `Restore_days` (`int`, required)
+- `Restore_version_id` (`string`, optional)
 - `Request_payer` (`string`, optional)
 - `Use_accelerate_endpoint` (`flag`, optional)
 - `S3_file_path` (`string`, required)
-- `Source_region` (`string`, required)
 - `Method_type` (`string`, required)
 - `Expires_in` (`int`, optional)
 - `Prefix` (`string`, optional)
 - `Delimiter` (`string`, optional)
 - `Start_after` (`string`, optional)
-- `Acl` (`string`)
-- `Aws_session_token` (`pwd`)
+- `Source_region` (`string`, required)
 
 ### Outputs
 
+- `Error_Message` (`string`)
+- `Step_information` (`hash`)
 - `Temporary_access_key` (`string`)
 - `Temporary_secret` (`string`)
 - `Temporary_token` (`string`)
 - `ETag` (`string`)
 - `File_Uploaded` (`string`)
-- `Error_Message` (`string`)
 - `Object_Key` (`string`)
-- `Version_Id` (`string`)
 - `Location` (`string`)
 - `Bucket` (`string`)
-- `Aws_Response` (`hash`)
 - `Bucket_List` (`array`)
+- `Aws_Response` (`hash`)
 - `Pre-signed_Url` (`string`)
 - `Objects_List` (`array`)
 - `Objects_Count` (`int`)
-- `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `Version_Id` (`string`)
 
 ## AmazonSimpledbOperation
 
@@ -875,18 +833,18 @@ For each action plugin, this reference lists:
 - `Policy` (`string`, optional)
 - `Role_arn` (`string`, optional)
 - `Token_duration` (`int`, optional)
+- `Aws_session_token` (`pwd`, optional)
 - `Domain_name` (`string`, required)
-- `Max_number_of_domains` (`int`, optional)
-- `Next_token` (`string`, optional)
+- `Items_delete_list` (`array`, required)
+- `Items_put_list` (`array`, required)
+- `attributes_list` (`array`, required)
 - `Item_name` (`string`, required)
+- `Attributes_names_list` (`array`, optional)
+- `Attributes_put_list` (`array`, required)
 - `Select_expression` (`string`, required)
 - `Consistent_read` (`flag`, optional)
-- `Attributes_put_list` (`array`)
-- `attributes_list` (`array`)
-- `Items_put_list` (`array`)
-- `Items_delete_list` (`array`)
-- `Attributes_names_list` (`array`)
-- `Aws_session_token` (`pwd`)
+- `Next_token` (`string`, optional)
+- `Max_number_of_domains` (`int`, optional)
 
 ### Outputs
 
@@ -894,13 +852,12 @@ For each action plugin, this reference lists:
 - `Temporary_access_key` (`string`)
 - `Temporary_secret` (`string`)
 - `Temporary_token` (`string`)
+- `Step_information` (`hash`)
 - `Result` (`hash`)
 - `Domain_List` (`array`)
-- `Step_information` (`hash`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
 
 ## AmazonSnsOperation
@@ -947,15 +904,13 @@ For each action plugin, this reference lists:
 - `Policy` (`string`, optional)
 - `Role_arn` (`string`, optional)
 - `Token_duration` (`int`, optional)
+- `Aws_session_token` (`pwd`, optional)
 - `Topic_arn` (`string`, required)
-- `Target_arn` (`string`, required)
-- `Phone_number` (`string`, required)
 - `Message` (`string`, required)
 - `Is_structure_json` (`flag`, required)
 - `Protocol` (`string`, required)
 - `Endpoint` (`string`, required)
 - `Subscription_arn` (`string`, required)
-- `Aws_session_token` (`pwd`)
 
 ### Outputs
 
@@ -963,14 +918,10 @@ For each action plugin, this reference lists:
 - `Temporary_secret` (`string`)
 - `Temporary_token` (`string`)
 - `Error_Message` (`string`)
+- `Step_information` (`hash`)
 - `Message ID` (`string`)
 - `SubscriptionARN` (`string`)
 - `Successful?` (`flag`)
-- `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## AmazonSqsOperation
 
@@ -1015,13 +966,13 @@ For each action plugin, this reference lists:
 - `Policy` (`string`, optional)
 - `Role_arn` (`string`, optional)
 - `Token_duration` (`int`, optional)
+- `Aws_session_token` (`pwd`, optional)
 - `Queue_url` (`string`, required)
 - `Receipt_handle` (`string`, required)
 - `Max_number_of_messages` (`int`, optional)
 - `Message_body` (`string`, required)
 - `Message_group_id` (`string`, optional)
 - `Message_deduplication_id` (`string`, optional)
-- `Aws_session_token` (`pwd`)
 
 ### Outputs
 
@@ -1029,14 +980,10 @@ For each action plugin, this reference lists:
 - `Temporary_secret` (`string`)
 - `Temporary_token` (`string`)
 - `Response` (`hash`)
-- `Messages` (`array`)
-- `Messages_body` (`array`)
 - `Error_message` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `Messages` (`array`)
+- `Messages_body` (`array`)
 
 ## AmazonSqsTrigger
 
@@ -1080,13 +1027,7 @@ For each action plugin, this reference lists:
 - `Policy` (`string`, optional)
 - `Role_arn` (`string`, optional)
 - `Token_duration` (`int`, optional)
-- `Temporary_access_key` (`string`)
-- `Temporary_secret` (`string`)
-- `Temporary_token` (`string`)
-- `Response` (`hash`)
-- `Messages_body` (`array`)
-- `Error_Message` (`string`)
-- `Aws_session_token` (`pwd`)
+- `Aws_session_token` (`pwd`, optional)
 
 ### Outputs
 
@@ -1097,11 +1038,6 @@ For each action plugin, this reference lists:
 - `Messages_body` (`array`)
 - `Error_Message` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## AmazonSwfOperation
 
@@ -1129,7 +1065,7 @@ For each action plugin, this reference lists:
 | `execution_start_to_close_timeout` | integer |  | `Execution_start_to_close_timeout` |
 | `task_start_to_close_timeout` | integer |  | `Task_start_to_close_timeout` |
 | `swf_inputs` | text |  | `Swf_inputs` |
-| `tag_list` | text | `` (code) | `Tag_list` |
+| `tag_list` | text |  | `Tag_list` |
 | `child_policy` | string | `TERMINATE` (code) | `Child_policy` |
 | `verify_ssl` | boolean | `true` |  |
 | `proxy_url` | string |  | `Proxy_url` |
@@ -1148,6 +1084,7 @@ For each action plugin, this reference lists:
 - `Policy` (`string`, optional)
 - `Role_arn` (`string`, optional)
 - `Token_duration` (`int`, optional)
+- `Aws_session_token` (`pwd`, optional)
 - `Domain` (`string`, required)
 - `Swf_workflow_id` (`string`, required)
 - `Workflow_type_name` (`string`, required)
@@ -1159,21 +1096,16 @@ For each action plugin, this reference lists:
 - `Task_priority` (`int`, optional)
 - `Task_start_to_close_timeout` (`int`, optional)
 - `Execution_start_to_close_timeout` (`int`, optional)
-- `Aws_session_token` (`pwd`)
 
 ### Outputs
 
 - `Temporary_access_key` (`string`)
 - `Temporary_secret` (`string`)
 - `Temporary_token` (`string`)
-- `Response` (`string` or `hash`)
+- `Response` (`hash` or `string`)
+- `Step_information` (`hash`)
 - `Run_Id` (`string`)
 - `Error_Message` (`string`)
-- `Step_information` (`hash`)
-
-### Notes
-
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## AmazonTranscribeOperation
 
@@ -1213,17 +1145,17 @@ For each action plugin, this reference lists:
 
 - `Aws_key` (`string`, required)
 - `Aws_secret` (`string`, required)
-- `Aws_region` (`string`, optional)
 - `Transcription_job_name` (`string`, required)
 - `Lang_code` (`string`, required)
 - `Media_format` (`string`, required)
 - `File_uri` (`string`, required)
+- `Aws_region` (`string`, optional)
 - `Proxy_url` (`string`, optional)
 - `External_id` (`string`, optional)
 - `Policy` (`string`, optional)
 - `Role_arn` (`string`, optional)
 - `Token_duration` (`int`, optional)
-- `Aws_session_token` (`pwd`)
+- `Aws_session_token` (`pwd`, optional)
 
 ### Outputs
 
@@ -1259,13 +1191,12 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Amberfin_server_address` (`string`, required)
 - `Amberfin_server_node` (`string`, required)
 - `Source_file` (`string`, required)
 - `Template` (`string`, required)
-- `Target_dir` (`string`, required)
-- `Transcode_xml` (`string`, required)
 - `Api_port` (`string`, optional)
+- `Transcode_xml` (`string`, required)
+- `Target_dir` (`string`, required)
 
 ### Outputs
 
@@ -1274,10 +1205,6 @@ For each action plugin, this reference lists:
 - `Job_Id` (`string`)
 - `Input_file` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## AmqpMessage
 
@@ -1333,51 +1260,45 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `AMQP_Queue_name` (`string`, required)
+- `Message` (`string`, required)
 - `Queue_user` (`string`, optional)
 - `Queue_password` (`string`, optional)
 - `Routing_key` (`string`, optional)
 - `Exchange_name` (`string`, optional)
-- `AMQP_Queue_name` (`string`, required)
-- `Message` (`string`, required)
+- `Queue_port` (`int`, optional)
 - `Queue_node` (`string`, optional)
 - `Queue_host` (`string`, optional)
 - `Queue_vhost` (`string`, optional)
-- `Header` (`string`, required)
-- `Message_list` (`array`)
-- `Queue_port` (`int`)
-- `additional_queue_message_parameters` (`flag`)
-- `durable` (`flag`)
-- `auto_delete` (`flag`)
-- `exclusive` (`flag`)
-- `x_max_priority` (`int`)
-- `x_message_ttl` (`int`)
-- `x_expires` (`int`)
-- `persistent` (`flag`)
-- `mandatory` (`flag`)
-- `timestamp` (`date`)
-- `expiration` (`int`)
-- `type` (`string`)
-- `reply_to` (`string`)
-- `content_type` (`string`)
-- `content_encoding` (`string`)
-- `correlation_id` (`string`)
-- `priority` (`int`)
-- `message_id` (`string`)
-- `user_id` (`string`)
-- `app_id` (`string`)
-- `headers` (`hash`)
+- `additional_queue_message_parameters` (`flag`, optional)
+- `auto_delete` (`flag`, optional)
+- `exclusive` (`flag`, optional)
+- `x_max_priority` (`int`, optional)
+- `x_message_ttl` (`int`, optional)
+- `x_expires` (`int`, optional)
+- `mandatory` (`flag`, optional)
+- `timestamp` (`date`, optional)
+- `expiration` (`int`, optional)
+- `type` (`string`, optional)
+- `reply_to` (`string`, optional)
+- `content_type` (`string`, optional)
+- `content_encoding` (`string`, optional)
+- `correlation_id` (`string`, optional)
+- `priority` (`int`, optional)
+- `message_id` (`string`, optional)
+- `user_id` (`string`, optional)
+- `app_id` (`string`, optional)
+- `headers` (`hash`, optional)
+- `durable` (`flag`, optional)
+- `persistent` (`flag`, optional)
+- `Message_list` (`array`, required)
 
 ### Outputs
 
-- `Queue_name` (`string`)
-- `Inserted_messages` (`array`)
 - `Inserted_message` (`string`)
+- `Queue_name` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `Inserted_messages` (`array`)
 
 ## AmqpTrigger
 
@@ -1421,20 +1342,20 @@ For each action plugin, this reference lists:
 - `Queue_password` (`string`, optional)
 - `Max_number_of_item_per_cycle` (`int`, optional)
 - `Connection_timeout` (`int`, optional)
+- `Queue_port` (`int`, optional)
+- `x_max_priority` (`int`, optional)
+- `x_message_ttl` (`int`, optional)
+- `x_expires` (`int`, optional)
+- `not_durable` (`flag`, optional)
+- `routing_key` (`string`, optional)
+- `ca_certificate_location` (`string`, optional)
+- `certificate_location` (`string`, optional)
+- `certificate_key` (`string`, optional)
+- `use_tls` (`flag`, optional)
+- `verify_peer` (`flag`, optional)
 - `Queue_node` (`string`, optional)
 - `Queue_host` (`string`, optional)
 - `Queue_vhost` (`string`, optional)
-- `Queue_port` (`int`)
-- `x_max_priority` (`int`)
-- `x_message_ttl` (`int`)
-- `x_expires` (`int`)
-- `not_durable` (`flag`)
-- `routing_key` (`string`)
-- `ca_certificate_location` (`string`)
-- `certificate_location` (`string`)
-- `certificate_key` (`string`)
-- `use_tls` (`flag`)
-- `verify_peer` (`flag`)
 
 ### Outputs
 
@@ -1443,15 +1364,7 @@ For each action plugin, this reference lists:
 - `Messages_left_count` (`int`)
 - `Message_response` (`string`)
 - `Message_headers` (`string`)
-- `Message_payloads` (`array`)
-- `Messages_responses` (`array`)
-- `Messages_headers` (`array`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## ArchiveManager
 
@@ -1470,7 +1383,7 @@ For each action plugin, this reference lists:
 | `purge_file_pattern` | string | `[^/]+` (code) |  |
 | `kept_duration_unit` | string | `days` (code) |  |
 | `kept_duration` | integer |  | `Kept_duration` |
-| `manifest_dir` | string | `` (code) | `Manifest_directory` |
+| `manifest_dir` | string |  | `Manifest_directory` |
 | `delete_empty_folders` | boolean |  |  |
 | `compress` | boolean |  |  |
 | `compress_as` | string | `archive` (code) |  |
@@ -1485,11 +1398,11 @@ For each action plugin, this reference lists:
 
 - `Archive_root` (`string`, required)
 - `Kept_duration` (`int`, required)
+- `Purge_file_pattern` (`string`, optional)
+- `Compressed_name` (`string`, optional)
+- `Kept_duration_unit` (`string`, optional)
 - `Manifest_directory` (`string`, optional)
 - `Do_not_delete` (`flag`, optional)
-- `Purge_file_pattern` (`string`)
-- `Compressed_name` (`string`)
-- `Kept_duration_unit` (`string`)
 
 ### Outputs
 
@@ -1518,17 +1431,16 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `<fanout_variable>` (`array`)
+- `<fanout_variable>` (`array`, required)
 
 ### Outputs
 
-- `<fanned_as>` (`<variable_type>`)
 - `Fanout_Size` (`int`)
 - `Step_information` (`hash`)
+- `<fanned_as>` (`<variable_type>`)
 
 ### Notes
 
-- A name in angle brackets (`<attribute>`) is the value of that template attribute.
 - Outputs are partly defined by template fields: see the template attributes.
 
 ## AscpClient
@@ -1566,10 +1478,15 @@ For each action plugin, this reference lists:
 
 - `Remote_host` (`string`, required)
 - `Remote_user` (`string`, required)
-- `SSH_port` (`int`, optional)
-- `Token` (`string`, required)
 - `Remote_user_password` (`string`, required)
-- `Remote_node` (`string`, optional)
+- `Operation` (`string`, required)
+- `Files` (`array`, required)
+- `Destination_path` (`string`, required)
+- `SSH_port` (`int`, optional)
+- `Target_rate` (`string`, optional)
+- `Command_line_options` (`string`, optional)
+- `Cookie` (`string`, optional)
+- `Token` (`string`, required)
 
 ### Outputs
 
@@ -1577,10 +1494,6 @@ For each action plugin, this reference lists:
 - `Transferred files` (`array`)
 - `Transferred bytes` (`int`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## AsperaCentralWatcher
 
@@ -1619,58 +1532,55 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `Central_node` (`string`, required)
+- `service_URI` (`string`, optional)
+- `keep_ongoing` (`flag`, optional)
+- `trigger_on_empty_file` (`flag`, optional)
+- `trigger_on_zero_byte_transfers` (`flag`, optional)
+- `transfer_direction` (`string`, optional)
+- `transfer_server_address` (`string`, optional)
+- `transfer_client_address` (`string`, optional)
+- `session_status` (`string`, optional)
+- `file_transfer_status` (`string`, optional)
 - `File_regexp_filter` (`string`, optional)
 - `User_list_filter` (`string`, optional)
 - `Cookie pattern` (`string`, optional)
 - `Node_user` (`string`, optional)
 - `Node_password` (`string`, optional)
-- `monitored_node` (`string`)
-- `Central_node` (`string`)
-- `service_URI` (`string`)
-- `keep_ongoing` (`flag`)
-- `trigger_on_empty_file` (`flag`)
-- `trigger_on_zero_byte_transfers` (`flag`)
-- `transfer_direction` (`string`)
-- `transfer_server_address` (`string`)
-- `transfer_client_address` (`string`)
-- `session_status` (`string`)
-- `file_transfer_status` (`string`)
 
 ### Outputs
 
 - `session_id` (`string`)
-- `file_status` (`string`)
-- `user` (`string` or `array`)
-- `file_name` (`string`)
-- `file_size` (`string`)
-- `file_transfer_start_date` (`string`)
-- `file_transfer_end_date` (`string`)
-- `files_failed` (`array` or `int`)
-- `file_list` (`array`)
-- `files_information` (`hash`)
-- `direction` (`string`)
-- `file_count` (`int`)
 - `file_sizes_list` (`hash`)
+- `file_list` (`array`)
 - `source_files_list` (`array`)
 - `session_status` (`string`)
 - `remote_address` (`string`)
+- `direction` (`string`)
+- `user` (`string` or `array`)
 - `expected_byte_count` (`int`)
 - `expected_file_count` (`int`)
 - `actual_bytes_transferred` (`int`)
 - `error_code` (`int`)
 - `error_message` (`string`)
+- `files_failed` (`int` or `array`)
 - `files_md5` (`hash`)
 - `files_status` (`hash`)
 - `FASP_cookie` (`string`)
 - `start_time` (`date`)
 - `end_time` (`date`)
 - `Step_information` (`hash`)
+- `files_information` (`hash`)
+- `file_count` (`int`)
+- `file_status` (`string`)
+- `file_name` (`string`)
+- `file_size` (`string`)
+- `file_transfer_start_date` (`string`)
+- `file_transfer_end_date` (`string`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## AsperaFilesPackageDelivery
 
@@ -1691,13 +1601,13 @@ For each action plugin, this reference lists:
 | `files_user_name` | string |  | `Files_user_name` |
 | `private_key_filepath` | string |  | `Private_key_filepath` |
 | `files_organization_name` | string |  | `Files_organization_name` |
-| `workspace_name` | string | `` (code) |  |
+| `workspace_name` | string |  |  |
 | `workspace_id` | string |  | `Workspace_id` |
 | `package_name` | string |  | `Package_name` |
-| `package_note` | string | `` (code) | `Package_note` |
+| `package_note` | string |  | `Package_note` |
 | `recipient_data` | text |  | `Recipient_data` |
-| `package_metadata` | text | `` (code) | `Package_metadata` |
-| `custom_package_payload` | text | `` (code) |  |
+| `package_metadata` | text |  | `Package_metadata` |
+| `custom_package_payload` | text |  |  |
 | `package_operation` | string |  |  |
 | `transferred_file_sessions_count` | integer | `1` (code) | `Transferred_file_sessions_count` |
 | `files_package_id` | string |  | `Files_package_id` |
@@ -1714,17 +1624,17 @@ For each action plugin, this reference lists:
 - `Files_user_name` (`string`, required)
 - `Files_organization_name` (`string`, required)
 - `Private_key_filepath` (`string`, required)
+- `Package_name` (`string`, required)
+- `Workspace_id` (`string`, required)
+- `Recipient_data` (`string`, required)
 - `Http_proxy` (`string`, optional)
 - `Download_notification_list` (`string`, optional)
-- `Transferred_file_sessions_count` (`int`, optional)
-- `Files_package_id` (`string`, required)
-- `Package_name` (`string`, required)
 - `Package_note` (`string`, optional)
-- `Workspace_id` (`string`, required)
 - `Package_metadata` (`string`, optional)
-- `Recipient_data` (`string`, required)
-- `workspace_id` (`string`)
-- `workspace_name` (`string`)
+- `workspace_id` (`string`, optional)
+- `workspace_name` (`string`, optional)
+- `Files_package_id` (`string`, required)
+- `Transferred_file_sessions_count` (`int`, optional)
 
 ### Outputs
 
@@ -1740,20 +1650,16 @@ For each action plugin, this reference lists:
 - `Recipient_Email` (`string`)
 - `Recipient_Name` (`string`)
 - `Recipient_Type` (`string`)
+- `Step_information` (`hash`)
 - `Access_Key` (`string`)
 - `Host` (`string`)
 - `Node_ID` (`string`)
 - `Access_Token` (`string`)
 - `Tags` (`string`)
-- `workspace_id` (`string`)
-- `workspace_name` (`string`)
-- `Step_information` (`hash`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## AsperaFilesPackageWatcher
 
@@ -1778,9 +1684,9 @@ For each action plugin, this reference lists:
 | `files_package_id` | string |  | `Files_package_id` |
 | `keep_ongoing` | boolean |  |  |
 | `polling_frequency` | integer | `10` (code) | `Polling_frequency` |
-| `trigger_type` | string | `` (code) | `Trigger_type` |
+| `trigger_type` | string |  | `Trigger_type` |
 | `ignore_existing_packages` | boolean |  |  |
-| `filters_code` | text | `` (code) | `Filters_code` |
+| `filters_code` | text |  | `Filters_code` |
 | `extract_file_info` | boolean | `true` | `Extract_file_info` |
 | `node_access_key` | string |  | `Node_access_key` |
 | `node_secret` | string |  | `Node_secret` |
@@ -1801,14 +1707,11 @@ For each action plugin, this reference lists:
 - `Node_access_key` (`string`, optional)
 - `Node_secret` (`string`, optional)
 - `Http_proxy` (`string`, optional)
-- `Files_package_id` (`string`, required)
 - `Polling_frequency` (`int`, optional)
 - `Trigger_type` (`string`, optional)
 - `Filters_code` (`string`, optional)
-- `Extract_file_info` (`flag`, optional)
 - `Files_packages_folder_path` (`string`, optional)
-- `Authorization` (`<token>`)
-- `Token` (`<token>`)
+- `Files_package_id` (`string`, required)
 
 ### Outputs
 
@@ -1816,7 +1719,6 @@ For each action plugin, this reference lists:
 - `Files_OAuth_Token` (`string`)
 - `Files_Package_Name` (`string`)
 - `Files_Package_Note` (`string`)
-- `Authorization` (`<token>`)
 - `Files_Package_ID` (`string`)
 - `Contents_File_ID` (`string`)
 - `File_ID` (`string`)
@@ -1828,10 +1730,9 @@ For each action plugin, this reference lists:
 - `Recipient_Email` (`string`)
 - `Recipient_Name` (`string`)
 - `Recipient_Type` (`string`)
-- `Token` (`string` or `<token>`)
+- `Token` (`string`)
 - `Node_API_Header` (`hash`)
 - `Package_Hash` (`hash`)
-- `Workspace_Name` (`string`)
 - `Package_File_Paths_On_Node` (`array`)
 - `File_Names` (`array`)
 - `Files_Hash` (`hash`)
@@ -1839,10 +1740,7 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- A name in angle brackets (`<attribute>`) is the value of that template attribute.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 - Outputs are partly defined by template fields: see the template attributes.
 
 ## AsperaNodeApi
@@ -1880,28 +1778,24 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `Aspera_Node_Server_Address` (`string`, required)
+- `use_ssl` (`string`, optional)
+- `filter_file_type` (`string`, optional)
+- `filter_basename` (`string`, optional)
+- `max_count` (`string`, optional)
+- `filter_size_min` (`string`, optional)
+- `filter_size_max` (`string`, optional)
+- `filter_mtime_min` (`string`, optional)
+- `filter_mtime_max` (`string`, optional)
+- `AsperaNodeUser` (`string`, required)
+- `AsperaNodeUserPassword` (`string`, required)
 - `Source_File_Path` (`string`, required)
 - `Target_File_Path` (`string`, required)
-- `Aspera_Node_Server_Address` (`string`)
-- `AsperaNodeUser` (`string`)
-- `AsperaNodeUserPassword` (`string`)
-- `use_ssl` (`string`)
-- `filter_file_type` (`string`)
-- `filter_basename` (`string`)
-- `max_count` (`string`)
-- `filter_size_min` (`string`)
-- `filter_size_max` (`string`)
-- `filter_mtime_min` (`string`)
-- `filter_mtime_max` (`string`)
 
 ### Outputs
 
 - `NODE_API_RESULTS` (`hash`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## AsperaNodeApiTransferMonitor
 
@@ -1916,7 +1810,7 @@ For each action plugin, this reference lists:
 |-----------|------|---------|----------------|
 | `name` | string |  |  |
 | `comments` | text |  |  |
-| `auth_type` | string | `BASIC_AUTH` (code) | `Auth_type` |
+| `auth_type` | string | `Basic` (code) | `Auth_type` |
 | `remote_node` | string |  | `remote_node` |
 | `service_node_ip` | string |  | `Service_node_ip` |
 | `service_node_port` | string |  | `Service_node_port` |
@@ -1928,7 +1822,7 @@ For each action plugin, this reference lists:
 | `keep_ongoing` | boolean |  |  |
 | `polling_frequency` | integer | `10` (code) |  |
 | `use_ssl` | boolean | `false` (code) | `use_ssl` |
-| `trigger_type` | string | `TRIG_GROUP` (code) |  |
+| `trigger_type` | string | `by workorder group` (code) |  |
 | `filter_direction` | string |  | `Filter_direction` |
 | `filter_file_path` | string |  | `Filter_file_path` |
 | `ignore_zero_byte_transfers` | boolean | `false` (code) | `Ignore_zero_byte_transfers` |
@@ -1940,6 +1834,10 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `Service_node_ip` (`string`, required)
+- `Service_node_port` (`string`, required)
+- `User_login` (`string`, required)
+- `User_password` (`string`, required)
 - `Filter_direction` (`string`, optional)
 - `Filter_file_path` (`string`, optional)
 - `Ignore_zero_byte_transfers` (`flag`, optional)
@@ -1949,30 +1847,16 @@ For each action plugin, this reference lists:
 - `Count` (`int`, optional)
 - `Tag_filter` (`string`, optional)
 - `Transfer_id` (`string`, optional)
-- `Service_node_ip` (`string`, required)
 - `use_ssl` (`flag`, optional)
 - `Auth_type` (`string`, optional)
-- `Service_node_port` (`string`, required)
-- `User_login` (`string`, required)
-- `User_password` (`string`, required)
-- `remote_node` (`string`, required)
-- `File_list` (`array`)
-- `Error` (`string`)
-- `File_List_With_Details` (`hash` or `array`)
-- `Transfer_id_list` (`string` or `array`)
 
 ### Outputs
 
 - `File_list` (`array`)
 - `Error` (`string`)
-- `File_List_With_Details` (`hash` or `array`)
-- `Transfer_id_list` (`string` or `array`)
+- `File_List_With_Details` (`array` or `hash`)
+- `Transfer_id_list` (`array` or `string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## AsperaNodeApiTransferOperation
 
@@ -2021,11 +1905,11 @@ For each action plugin, this reference lists:
 | `response_output` | boolean | `true` |  |
 | `rate_policy` | string | `fair` | `Rate_policy` |
 | `crypt_op` | string | `none` (code) | `EAR operation` |
-| `passphrase` | string | `` (code) | `EAR passphrase` |
-| `proxy` | string | `` (code) | `Proxy` |
-| `httpproxy` | string | `` (code) | `Httpproxy` |
+| `passphrase` | string |  | `EAR passphrase` |
+| `proxy` | string |  | `Proxy` |
+| `httpproxy` | string |  | `Httpproxy` |
 | `verbose` | boolean | `false` |  |
-| `src_base` | string | `` (code) | `Src_base` |
+| `src_base` | string |  | `Src_base` |
 | `path_separator_char` | string | `,` (code) |  |
 
 ### Inputs
@@ -2033,47 +1917,37 @@ For each action plugin, this reference lists:
 - `Service_node_ip` (`string`, required)
 - `Use_ssl` (`flag`, required)
 - `Operation` (`string`, required)
-- `Service_node_port` (`string`, optional)
 - `User_login` (`string`, required)
 - `User_password` (`string`, required)
-- `Proxy` (`string`, optional)
-- `Httpproxy` (`string`, optional)
-- `Remote_node` (`string`, required)
-- `Payload` (`string`, required)
-- `Job_id` (`string`, required)
-- `Remote_token` (`string`, required)
-- `Remote_access_key` (`string`, required)
-- `Remote_secret_key` (`string`, required)
-- `Remote_user` (`string`, required)
-- `Remote_password` (`string`, required)
-- `Remote_private_key_passphrase` (`string`, optional)
-- `Remote_key_path` (`string`, required)
 - `Direction` (`string`, required)
 - `Remote_host` (`string`, required)
+- `Source` (`string`, required)
+- `Service_node_port` (`string`, optional)
+- `Proxy` (`string`, optional)
+- `Httpproxy` (`string`, optional)
 - `Multi_session` (`int`, optional)
 - `Create_dir` (`flag`, optional)
 - `Delete_source` (`flag`, optional)
-- `Source` (`string`, required)
 - `Destination_root` (`string`, optional)
 - `Source_root_id` (`string`, optional)
 - `Destination_root_id` (`string`, optional)
 - `Target_rate_kbps` (`int`, optional)
 - `Fasp_port` (`int`, optional)
 - `Ssh_port` (`int`, optional)
-- `Rate_policy` (`string`, optional)
 - `EAR operation` (`string`, optional)
 - `EAR passphrase` (`string`, optional)
 - `Src_base` (`string`, optional)
-- `Job_ID` (`string`)
-- `Transfer_Upload_Response_Received` (`hash`)
-- `Error_Code` (`int`)
-- `Error_Description` (`string`)
-- `Transferred file count` (`string`)
-- `Transferred File list` (`array`)
-- `Failed File list` (`array`)
-- `source` (`<source>`)
-- `remote_user` (`string`)
-- `Job_Status_Response_Received` (`hash`)
+- `Rate_policy` (`string`, required)
+- `Payload` (`string`, required)
+- `Job_id` (`string`, required)
+- `Remote_token` (`string`, required)
+- `remote_user` (`string`, optional)
+- `Remote_user` (`string`, required)
+- `Remote_password` (`string`, required)
+- `Remote_key_path` (`string`, required)
+- `Remote_private_key_passphrase` (`string`, optional)
+- `Remote_access_key` (`string`, required)
+- `Remote_secret_key` (`string`, required)
 
 ### Outputs
 
@@ -2084,15 +1958,8 @@ For each action plugin, this reference lists:
 - `Transferred file count` (`string`)
 - `Transferred File list` (`array`)
 - `Failed File list` (`array`)
-- `source` (`<source>`)
 - `Job_Status_Response_Received` (`hash`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- A name in angle brackets (`<attribute>`) is the value of that template attribute.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## AsperaNodeFileWatcher
 
@@ -2122,7 +1989,7 @@ For each action plugin, this reference lists:
 | `keep_ongoing` | boolean |  |  |
 | `return_single` | boolean |  |  |
 | `trigger_on_partial` | boolean |  |  |
-| `trigger_type` | string | `TRIG_GROUP` (code) |  |
+| `trigger_type` | string | `by workorder group` (code) |  |
 | `rest_timeout` | integer | `60` (code) |  |
 | `exclusions` | string |  | `Exclusions` |
 | `ignore_zero_bytes` | boolean | `false` | `Ignore_zero_bytes` |
@@ -2139,28 +2006,21 @@ For each action plugin, this reference lists:
 
 - `File_pattern` (`string`, required)
 - `Watch_directory` (`string`, required)
+- `node_user_name` (`string`, required)
+- `node_password` (`string`, required)
+- `server_address` (`string`, required)
 - `Exclusions` (`string`, optional)
-- `Ignore_zero_bytes` (`flag`, optional)
 - `Count` (`int`, optional)
-- `File_list` (`array`)
-- `File_path` (`string`)
-- `node_user_name` (`string`)
-- `node_password` (`string`)
-- `server_address` (`string`)
-- `use_ssl` (`flag`)
-- `Node_API_port` (`int`)
 
 ### Outputs
 
 - `File_list` (`array`)
-- `File_path` (`string`)
 - `Step_information` (`hash`)
+- `File_path` (`string`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## AsperaNodeSearch
 
@@ -2194,21 +2054,21 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `Aspera_Node_Server_Address` (`string`, required)
+- `AsperaNodeUser` (`string`, required)
+- `AsperaNodeUserPassword` (`string`, required)
 - `Search_root` (`string`, optional)
-- `Aspera_Node_Server_Address` (`string`)
-- `AsperaNodeUser` (`string`)
-- `AsperaNodeUserPassword` (`string`)
-- `Use_ssl` (`flag`)
-- `Filter_file_type` (`string`)
-- `Filter_name` (`string`)
-- `Filter_basename` (`string`)
-- `max_count` (`int`)
-- `max_depth` (`int`)
-- `Filter_size_min` (`int`)
-- `Filter_size_max` (`int`)
-- `Filter_mtime_min` (`date`)
-- `Filter_mtime_max` (`date`)
-- `Node_API_port` (`int`)
+- `Use_ssl` (`flag`, optional)
+- `Filter_file_type` (`string`, optional)
+- `Filter_name` (`string`, optional)
+- `Filter_basename` (`string`, optional)
+- `max_count` (`int`, optional)
+- `max_depth` (`int`, optional)
+- `Filter_size_min` (`int`, optional)
+- `Filter_size_max` (`int`, optional)
+- `Filter_mtime_min` (`date`, optional)
+- `Filter_mtime_max` (`date`, optional)
+- `Node_API_port` (`int`, optional)
 
 ### Outputs
 
@@ -2216,10 +2076,6 @@ For each action plugin, this reference lists:
 - `Item Count` (`int`)
 - `Total Count` (`int`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## AsperaOnCloudManagement
 
@@ -2267,21 +2123,14 @@ For each action plugin, this reference lists:
 - `Email_address` (`string`, required)
 - `First_name` (`string`, required)
 - `Last_name` (`string`, required)
-- `User type` (`string`)
+- `User type` (`string`, required)
 
 ### Outputs
 
 - `result` (`string`)
 - `result_json` (`string`)
 - `HTTP_return_code` (`int`)
-- `Workspace name` (`string`)
-- `User type` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## AsperaOtfv
 
@@ -2317,19 +2166,27 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `file_status` (`string`)
+- `node_ip_address` (`string`, required)
+- `node_user` (`string`, required)
+- `node_password` (`string`, required)
+- `Operation` (`string`, required)
+- `session_uuid` (`string`, required)
+- `file_id` (`string`, required)
+- `file_status` (`string`, required)
+- `node_port` (`int`, optional)
+- `validator_id` (`string`, optional)
+- `bytes_processed` (`int`, optional)
+- `error_code` (`int`, optional)
+- `error_description` (`string`, optional)
+- `max_result` (`int`, optional)
+- `polling_frequency` (`int`, optional)
+- `remote_node` (`string`, required)
 
 ### Outputs
 
+- `Step_information` (`hash`)
 - `result_count` (`int`)
 - `file_transfer_info` (`array`)
-- `file_status` (`string`)
-- `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## AsperaSharesManagement
 
@@ -2351,8 +2208,8 @@ For each action plugin, this reference lists:
 | `shares_user_name` | string |  | `Shares_user_name` |
 | `shares_password` | string |  | `Shares_password` |
 | `email_id` | string |  | `Email_id` |
-| `first_name` | string | `` (code) | `First_name` |
-| `last_name` | string | `` (code) | `Last_name` |
+| `first_name` | string |  | `First_name` |
+| `last_name` | string |  | `Last_name` |
 | `group_name` | string |  | `Group_name` |
 | `node_name` | string |  | `Node_name` |
 | `share_name` | string |  | `Share_name` |
@@ -2364,28 +2221,23 @@ For each action plugin, this reference lists:
 - `Shares_version` (`string`, required)
 - `Operation_type` (`string`, required)
 - `Execution_node` (`string`, required)
+- `Share_name` (`string`, required)
+- `Node_name` (`string`, required)
+- `Directory` (`string`, required)
 - `Shares_user_name` (`string`, required)
 - `Shares_password` (`string`, required)
 - `Email_id` (`string`, required)
 - `First_name` (`string`, optional)
 - `Last_name` (`string`, optional)
 - `Group_name` (`string`, required)
-- `Share_name` (`string`, required)
-- `Node_name` (`string`, required)
-- `Directory` (`string`, required)
 
 ### Outputs
 
 - `Error_Message` (`string`)
+- `Step_information` (`hash`)
 - `Login_Id` (`string`)
 - `Group_Name` (`string`)
 - `Share_Name` (`string`)
-- `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## AsyncRemoteExecution
 
@@ -2403,21 +2255,21 @@ For each action plugin, this reference lists:
 | `command` | text |  | `Command` |
 | `remote_node` | string |  |  |
 | `remote_address` | string |  |  |
-| `remote_ssh_username` | string | `` (code) |  |
-| `remote_ssh_password` | string | `` (code) |  |
+| `remote_ssh_username` | string |  |  |
+| `remote_ssh_password` | string |  |  |
 | `remote_ssh_port` | string | `22` (code) |  |
-| `remote_ssh_key` | string | `` (code) |  |
+| `remote_ssh_key` | string |  |  |
 | `timeout` | integer | `60` (code) | `Timeout` |
 | `keep_ongoing` | boolean | `false` (code) |  |
-| `polling_command` | text | `` (code) | `Polling_command` |
+| `polling_command` | text |  | `Polling_command` |
 | `polling_period` | integer | `10` (code) | `Polling_period` |
-| `polling_stop_condition` | text | `` (code) | `Polling_stop_condition` |
+| `polling_stop_condition` | text |  | `Polling_stop_condition` |
 | `processed_outputs` | text |  |  |
-| `processed_outputs_code` | text | `` (code) | `Processed_outputs_code` |
+| `processed_outputs_code` | text |  | `Processed_outputs_code` |
 | `environment_variables` | string |  |  |
-| `connection_options` | string | `` (code) |  |
-| `remote_ssh_key_passphrase` | string | `` (code) |  |
-| `remote_ssh_key_data` | text | `` (code) |  |
+| `connection_options` | string |  |  |
+| `remote_ssh_key_passphrase` | string |  |  |
+| `remote_ssh_key_data` | text |  |  |
 | `shell` | string |  |  |
 
 ### Inputs
@@ -2428,14 +2280,15 @@ For each action plugin, this reference lists:
 - `Polling_period` (`int`, optional)
 - `Polling_stop_condition` (`string`, optional)
 - `Processed_outputs_code` (`string`, optional)
-- `remote_node` (`string`)
-- `remote_address` (`string`)
-- `remote_ssh_username` (`string`)
-- `remote_ssh_password` (`string`)
-- `remote_ssh_key` (`string`)
-- `remote_ssh_key_data` (`string`)
-- `remote_ssh_key_passphrase` (`string`)
-- `remote_ssh_port` (`int`)
+- `remote_node` (`string`, optional)
+- `remote_address` (`string`, optional)
+- `remote_ssh_username` (`string`, optional)
+- `remote_ssh_password` (`string`, optional)
+- `remote_ssh_key` (`string`, optional)
+- `remote_ssh_key_data` (`string`, optional)
+- `remote_ssh_key_passphrase` (`string`, optional)
+- `remote_ssh_port` (`int`, optional)
+- `<environment_variables>` (`string`, required)
 
 ### Outputs
 
@@ -2443,21 +2296,11 @@ For each action plugin, this reference lists:
 - `std_error` (`string`)
 - `exit_code` (`int`)
 - `PID` (`int`)
-- `remote_node` (`string`)
-- `remote_address` (`string`)
-- `remote_ssh_username` (`string`)
-- `remote_ssh_password` (`string`)
-- `remote_ssh_key` (`string`)
-- `remote_ssh_key_data` (`string`)
-- `remote_ssh_key_passphrase` (`string`)
-- `remote_ssh_port` (`int`)
 - `Step_information` (`hash`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 - Outputs are partly defined by template fields: see the template attributes.
 
 ## AtemeTranscoding
@@ -2483,11 +2326,11 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `server address` (`string`, required)
 - `source` (`string`, required)
 - `destination` (`string`, required)
 - `transcoding_payload` (`string`, optional)
 - `preset_name` (`string`, optional)
-- `server address` (`string`)
 
 ### Outputs
 
@@ -2495,10 +2338,6 @@ For each action plugin, this reference lists:
 - `Ateme_status_code` (`string`)
 - `Ateme_error_message` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## AuroraFileVerification
 
@@ -2520,7 +2359,7 @@ For each action plugin, this reference lists:
 | `password` | string |  |  |
 | `file_path` | string |  |  |
 | `test_plan` | string |  |  |
-| `report_folder` | string | `` (code) |  |
+| `report_folder` | string |  |  |
 | `pass_on_warnings` | boolean |  |  |
 | `stop_on_error` | boolean |  |  |
 | `queue_on_top` | boolean | `false` (code) |  |
@@ -2533,8 +2372,12 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Queue_on_top` (`flag`)
-- `Aurora_node_or_address` (`string`)
+- `User` (`string`, required)
+- `Password` (`string`, required)
+- `Test_plan` (`string`, required)
+- `File_path` (`string`, required)
+- `Aurora_node_or_address` (`string`, required)
+- `Queue_on_top` (`flag`, optional)
 
 ### Outputs
 
@@ -2546,15 +2389,10 @@ For each action plugin, this reference lists:
 - `Template_used` (`string`)
 - `Time_to_complete` (`int`)
 - `PDF_report_link` (`string`)
-- `HTML_report_link` (`string`)
 - `XML_report` (`string`)
 - `HTML_report` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `HTML_report_link` (`string`)
 
 ## AzureServiceBusOperation
 
@@ -2590,13 +2428,9 @@ For each action plugin, this reference lists:
 
 ### Outputs
 
-- `Message_body` (`string`)
 - `Error_message` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `Message_body` (`string`)
 
 ## AzureServiceBusTrigger
 
@@ -2633,13 +2467,9 @@ For each action plugin, this reference lists:
 
 ### Outputs
 
-- `Message_body` (`string`)
 - `Error_message` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `Message_body` (`string`)
 
 ## BatonFileCorrection
 
@@ -2673,17 +2503,16 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `Baton_server_address` (`string`, required)
+- `Destination_folder` (`string`, required)
+- `Baton_task_id` (`string`, required)
 - `Baton_server_user` (`string`, optional)
 - `Baton_server_password` (`string`, optional)
 - `Test_plan` (`string`, optional)
-- `Destination_folder` (`string`, required)
 - `Output_format` (`string`, optional)
-- `Baton_task_id` (`string`, required)
 - `Baton_version` (`string`, optional)
-- `Api_token` (`string`, required)
 - `Correction_server_ip` (`string`, required)
-- `Baton_server_address` (`string`)
-- `Baton_node` (`string`)
+- `Api_token` (`string`, required)
 
 ### Outputs
 
@@ -2693,10 +2522,6 @@ For each action plugin, this reference lists:
 - `Completion_time` (`date`)
 - `Output_file` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## BatonFileVerification
 
@@ -2712,8 +2537,8 @@ For each action plugin, this reference lists:
 | `name` | string |  |  |
 | `comments` | text |  |  |
 | `server` | string |  |  |
-| `user` | string | `` (code) | `Baton_server_user` |
-| `password` | string | `` (code) | `Baton_server_password` |
+| `user` | string |  | `Baton_server_user` |
+| `password` | string |  | `Baton_server_password` |
 | `test_plan` | string |  | `Test_plan` |
 | `plan_version` | integer |  |  |
 | `priority` | string |  |  |
@@ -2737,18 +2562,19 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `File_name` (`string`, required)
+- `Baton_server_address` (`string`, required)
 - `Test_plan` (`string`, required)
+- `Baton_version` (`string`, required)
+- `Test_plan_version` (`int`, optional)
+- `Priority` (`string`, optional)
+- `Polling_frequency` (`int`, optional)
+- `Baton_port` (`int`, optional)
+- `Needed_cores` (`int`, optional)
 - `Dynamic_test_plan_parameters` (`string`, optional)
 - `Baton_server_user` (`string`, optional)
 - `Baton_server_password` (`string`, optional)
-- `Baton_version` (`string`, required)
-- `Test_plan_version` (`int`)
-- `Priority` (`string`)
-- `Polling_frequency` (`int`)
-- `Baton_port` (`int`)
-- `Needed_cores` (`int`)
-- `Baton_server_address` (`string`)
-- `Baton_node` (`string`)
+- `Folder_name` (`string`, required)
 
 ### Outputs
 
@@ -2759,17 +2585,15 @@ For each action plugin, this reference lists:
 - `Start_time` (`date`)
 - `Completion_time` (`date`)
 - `Report_folder` (`string` or `array`)
+- `XML_report` (`string` or `array`)
 - `Report_PDF_link` (`string` or `array`)
 - `Report_XML_link` (`string` or `array`)
 - `Report_VIDEO_link` (`string` or `array`)
-- `XML_report` (`string` or `array`)
 - `Step_information` (`hash`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## BatonXmlReport
 
@@ -2794,22 +2618,17 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `taskIDs` (`string` or `array`, required)
+- `taskIDs` (`array`, required)
+- `Baton_server_address` (`string`, required)
 - `Baton_server_user` (`string`, required)
 - `Baton_server_password` (`string`, required)
+- `Baton_port` (`int`, optional)
 - `Baton_version` (`string`, optional)
-- `Baton_port` (`int`)
-- `Baton_server_address` (`string`)
-- `Baton_node` (`string`)
 
 ### Outputs
 
 - `XML_report` (`array`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## BitmovinEncoding
 
@@ -2834,7 +2653,7 @@ For each action plugin, this reference lists:
 | `input_id` | string |  |  |
 | `output_id` | string |  |  |
 | `cloud_region` | string | `AUTO` (code) | `Cloud region` |
-| `infrastructure_id` | string | `` (code) | `Infrastructure id` |
+| `infrastructure_id` | string |  | `Infrastructure id` |
 | `streams` | text |  |  |
 | `segment_length` | integer | `4` (code) | `Segment length` |
 | `overwrite` | boolean | `false` (code) |  |
@@ -2843,9 +2662,9 @@ For each action plugin, this reference lists:
 
 - `Source file path` (`string`, required)
 - `Bitmovin API key` (`string`, required)
+- `Output path root` (`string`, required)
 - `Cloud region` (`string`, optional)
 - `Infrastructure id` (`string`, optional)
-- `Output path root` (`string`, required)
 - `Segment length` (`int`, optional)
 
 ### Outputs
@@ -2871,26 +2690,20 @@ For each action plugin, this reference lists:
 | `remote_node` | string |  |  |
 | `server_address` | string |  |  |
 | `polling_frequency` | integer | `5` (code) |  |
-| `api_port` | integer | `CLUSTER_API_PORT` (code) | `Api_port` |
+| `api_port` | integer | `8649` (code) | `Api_port` |
 | `transcoding_payload` | text |  | `Transcoding_payload` |
 
 ### Inputs
 
+- `Remote_node_or_address` (`string`, required)
 - `Transcoding_payload` (`string`, required)
 - `Api_port` (`int`, optional)
-- `Remote_node_or_address` (`string`)
 
 ### Outputs
 
 - `Detailed_response` (`hash`)
 - `Output_filename` (`string`)
-- `Remote_node_or_address` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## CarbonCoderTranscoding
 
@@ -2908,31 +2721,29 @@ For each action plugin, this reference lists:
 | `server_address` | string |  |  |
 | `carbon_api_port` | integer | `1120` (code) |  |
 | `polling_frequency` | integer | `5` (code) |  |
-| `transcoding_payload` | text | `<Sources><Module_0 Filename=\"<%= File_name %>\"/></Sources><Destinations><Module_0 ModuleGUID=\"<%= module_GUID %>\" ><ModuleData CML_P_BaseFileName=\"%s\" CML_P_Path=\"<%= Target_dir %>\"/></Module_0></Destinations>` (code) | `Transcoding_payload` |
+| `transcoding_payload` | text | `<Sources><Module_0 Filename="<%= File_name %>"/></Sources><Destinations><Module_0 ModuleGUID="<%= module_GUID %>" ><ModuleData CML_P_BaseFileName="%s" CML_P_Path="<%= Target_dir %>"/></Module_0></Destinations>` (code) | `Transcoding_payload` |
 | `transcoding_payload_file` | string |  |  |
 | `saved_inputs` | text |  |  |
 | `server_node` | string |  |  |
 | `api_version` | string |  |  |
 | `wfs_workflow_id` | string |  | `Wfs_workflow_id` |
 | `source` | string |  | `Source_file_path` |
-| `target` | string | `` (code) | `Target_file_path` |
+| `target` | string |  | `Target_file_path` |
 | `wfs_api_port` | string | `1301` (code) |  |
 | `carbon_job_name` | string |  | `Carbon_Job_Name` |
 
 ### Inputs
 
-- `Transcoding_payload` (`string`, optional)
+- `Carbon_server_address` (`string`, required)
 - `Source_file_path` (`string`, required)
-- `Target_file_path` (`string`, optional)
 - `Wfs_workflow_id` (`string`, required)
+- `Transcoding_payload` (`string`, optional)
+- `Target_file_path` (`string`, optional)
+- `Carbon_API_port` (`int`, optional)
+- `File_name` (`string`, required)
+- `module_GUID` (`string`, required)
+- `Target_dir` (`string`, required)
 - `Carbon_Job_Name` (`string`, optional)
-- `Errors` (`array`)
-- `Warnings` (`array`)
-- `Job_GUID` (`string`)
-- `input_file` (`string`)
-- `output_file(s)` (`array`)
-- `Carbon_API_port` (`int`)
-- `Carbon_server_address` (`string`)
 
 ### Outputs
 
@@ -2945,7 +2756,6 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
 
 ## CatdvRestRequest
@@ -2966,10 +2776,10 @@ For each action plugin, this reference lists:
 | `basic_auth_login` | string |  | `Basic_auth_login` |
 | `basic_auth_password` | string |  | `Basic_auth_password` |
 | `rest_endpoint` | string |  | `Rest_endpoint` |
-| `selector` | string | `` (code) | `Selector` |
+| `selector` | string |  | `Selector` |
 | `polling_frequency` | integer | `5` (code) |  |
 | `polling_stop_condition` | text | `true` (code) |  |
-| `post_body` | text | `` (code) | `Post_body` |
+| `post_body` | text |  | `Post_body` |
 | `query_parameters` | text | `{}` (code) | `Query_parameters` |
 | `keep_ongoing` | boolean |  |  |
 
@@ -2992,10 +2802,6 @@ For each action plugin, this reference lists:
 - `status` (`string`)
 - `result_hash` (`hash`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## CerifyFileVerification
 
@@ -3025,12 +2831,12 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `Cerify_server_address` (`string`, required)
 - `Media_location_name` (`string`, required)
 - `Media_url` (`string`, required)
 - `Profile_name` (`string`, required)
 - `Job_name` (`string`, required)
 - `Force_job_name` (`flag`, optional)
-- `Cerify_server_address` (`string`)
 
 ### Outputs
 
@@ -3040,10 +2846,6 @@ For each action plugin, this reference lists:
 - `File_Stats` (`hash`)
 - `Alerts` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## ClamavCheck
 
@@ -3079,22 +2881,17 @@ For each action plugin, this reference lists:
 ### Inputs
 
 - `Input_file_path` (`string`, required)
+- `ClamAV_node` (`string`, required)
 - `Options` (`string`, optional)
 - `Binary_path` (`string`, optional)
-- `ClamAV_node` (`string`)
 
 ### Outputs
 
 - `Clean_files` (`array`)
 - `Infected_files` (`array`)
 - `Infection_report` (`string`)
-- `Output_file_path` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `Output_file_path` (`string`)
 
 ## CollectionManager
 
@@ -3118,20 +2915,16 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Source_collection` (`hash`)
-- `Source_JSON_collection` (`string`)
+- `Source_collection` (`hash`, optional)
+- `Source_JSON_collection` (`string`, optional)
 
 ### Outputs
 
 - `Modified_collection` (`hash`)
+- `Step_information` (`hash`)
 - `Modified_JSON_collection` (`string`)
 - `Modified_pretty_JSON_collection` (`string`)
 - `Modified_TOML_collection` (`string`)
-- `Step_information` (`hash`)
-
-### Notes
-
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## ConsoleNotification
 
@@ -3163,35 +2956,34 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `event_name` (`string`, required)
+- `Console_node_or_address` (`string`, required)
 - `Console_DB_user` (`string`, required)
 - `Console_DB_password` (`string`, required)
-- `node_from` (`string`)
-- `node_to` (`string`)
-- `session_status` (`string`)
-- `session_start` (`date`)
-- `session_stop` (`date`)
-- `session_user` (`string`)
-- `operation` (`string`)
-- `destination_path` (`string`)
-- `files_complete` (`array`)
-- `files_failed` (`array`)
-- `error_message` (`string`)
-- `Bytes_transferred` (`string`)
-- `Bytes_written` (`string`)
-- `package` (`string`)
-- `journal_status` (`string`)
-- `journal_step` (`string`)
-- `Console_node_or_address` (`string`)
-- `Console_DB_port` (`int`)
+- `node_from` (`string`, optional)
+- `node_to` (`string`, optional)
+- `session_status` (`string`, optional)
+- `session_start` (`date`, optional)
+- `session_stop` (`date`, optional)
+- `session_user` (`string`, optional)
+- `operation` (`string`, optional)
+- `destination_path` (`string`, optional)
+- `files_complete` (`array`, optional)
+- `files_failed` (`array`, optional)
+- `error_message` (`string`, optional)
+- `Bytes_transferred` (`string`, optional)
+- `Bytes_written` (`string`, optional)
+- `Console_DB_port` (`int`, optional)
+- `journal_step` (`string`, required)
+- `package` (`string`, optional)
+- `journal_status` (`string`, optional)
 
 ### Outputs
 
-- None found in source.
 - `Step_information` (`hash`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
 
 ## ConsoleSmartTransferOperation
@@ -3210,10 +3002,10 @@ For each action plugin, this reference lists:
 | `console_ip` | text |  | `Console_ip` |
 | `console_port` | integer | `443` (code) | `Console_port` |
 | `source_path_list` | string | `[]` (code) | `Source_path_list` |
-| `source_base` | string | `` (code) | `Source_base` |
+| `source_base` | string |  | `Source_base` |
 | `smart_transfer_id` | integer |  | `Smart_transfer_id` |
-| `transfer_name` | string | `` (code) | `Transfer_name` |
-| `transfer_comments` | string | `` (code) | `Transfer_comments` |
+| `transfer_name` | string |  | `Transfer_name` |
+| `transfer_comments` | string |  | `Transfer_comments` |
 | `operation` | string |  |  |
 | `login` | string |  | `Login` |
 | `password` | string |  | `Password` |
@@ -3225,27 +3017,21 @@ For each action plugin, this reference lists:
 - `Login` (`string`, required)
 - `Password` (`string`, required)
 - `Console_ip` (`string`, required)
+- `source_path_list` (`array`, required)
 - `Console_port` (`int`, optional)
 - `Smart_transfer_id` (`int`, required)
 - `Source_base` (`string`, optional)
 - `Transfer_name` (`string`, optional)
 - `Transfer_comments` (`string`, optional)
-- `Source_path_list` (`string`, optional)
-- `source_path_list` (`array`)
 
 ### Outputs
 
-- `Transfer_Ids` (`array`)
-- `Transfer_Status` (`string`)
-- `Raw_Output` (`hash`)
 - `Smart_Template_List` (`array`)
 - `Error_Message` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `Transfer_Ids` (`array`)
+- `Transfer_Status` (`string`)
+- `Raw_Output` (`hash`)
 
 ## ConvertPath
 
@@ -3267,19 +3053,13 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `File_path` (`string`, required)
 - `Input_mount_point` (`string`, required)
 - `Output_mount_point` (`string`, required)
-- `File_path` (`string`, required)
-- `File_paths` (`array`)
+- `File_paths` (`array`, required)
 
 ### Outputs
 
-- `output_file_paths` (`array`)
-- `output_file_nakednames` (`array`)
-- `output_file_basenames` (`array`)
-- `output_file_dirnames` (`array`)
-- `output_file_nakeddirs` (`array`)
-- `output_file_extensions` (`array`)
 - `output_file_path` (`string`)
 - `output_file_nakedname` (`string`)
 - `output_file_basename` (`string`)
@@ -3287,11 +3067,12 @@ For each action plugin, this reference lists:
 - `output_file_nakeddir` (`string`)
 - `output_file_extension` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `output_file_paths` (`array`)
+- `output_file_nakednames` (`array`)
+- `output_file_basenames` (`array`)
+- `output_file_dirnames` (`array`)
+- `output_file_nakeddirs` (`array`)
+- `output_file_extensions` (`array`)
 
 ## CorbaOperation
 
@@ -3332,11 +3113,6 @@ For each action plugin, this reference lists:
 - `Log_File_Content` (`string`)
 - `Step_information` (`hash`)
 
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
-
 ## CurlOperation
 
 - **Display name**: Curl Operations
@@ -3369,28 +3145,19 @@ For each action plugin, this reference lists:
 ### Inputs
 
 - `Remote_node` (`string`, required)
+- `Entire_command` (`string`, required)
 - `Service_url` (`string`, required)
 - `Request_type` (`string`, required)
 - `Result_file_path` (`string`, required)
-- `Entire_command` (`string`, required)
 - `Image_location` (`string`, required)
-- `Execution Result` (`string`)
-- `Execution Result Path` (`string`)
-- `Error Message Received` (`string`)
-- `Image Download Location` (`string`)
 
 ### Outputs
 
 - `Execution Result` (`string`)
 - `Execution Result Path` (`string`)
 - `Error Message Received` (`string`)
-- `Image Download Location` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `Image Download Location` (`string`)
 
 ## CustomProgressNotifier
 
@@ -3420,12 +3187,7 @@ For each action plugin, this reference lists:
 
 ### Outputs
 
-- None found in source.
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## CustomPython
 
@@ -3458,22 +3220,19 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Flask_server_port` (`int`, required)
-- `Github_hostname` (`string`, optional)
-- `Github_token` (`string`, optional)
 - `Github_repo` (`string`, required)
 - `Github_file_path` (`string`, required)
-- `Github_branch_name` (`string`, optional)
 - `Github_user_name` (`string`, required)
+- `Github_hostname` (`string`, optional)
+- `Github_token` (`string`, optional)
+- `Github_branch_name` (`string`, optional)
 
 ### Outputs
 
-- None found in source.
 - `Step_information` (`hash`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
 - Outputs are partly defined by template fields: see the template attributes.
 
@@ -3510,23 +3269,20 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Github_hostname` (`string`, optional)
-- `Github_token` (`string`, optional)
 - `Github_repo` (`string`, required)
 - `Github_file_path` (`string`, required)
-- `Github_branch_name` (`string`, optional)
 - `Github_user_name` (`string`, required)
+- `Github_hostname` (`string`, optional)
+- `Github_token` (`string`, optional)
+- `Github_branch_name` (`string`, optional)
 
 ### Outputs
 
-- None found in source.
 - `Step_information` (`hash`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 - Outputs are partly defined by template fields: see the template attributes.
 
 ## CustomTrigger
@@ -3561,14 +3317,11 @@ For each action plugin, this reference lists:
 
 ### Outputs
 
-- None found in source.
 - `Step_information` (`hash`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 - Outputs are partly defined by template fields: see the template attributes.
 
 ## DaletAssetManagement
@@ -3603,7 +3356,6 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
 
 ## DatabaseQuery
@@ -3628,31 +3380,23 @@ For each action plugin, this reference lists:
 | `database_query` | text |  | `SQL_query` |
 | `row_formatting_code` | text |  | `Row_formatting_code` |
 | `result_formatting_code` | text |  | `Result_formatting_code` |
-| `result_type` | string | `TYPE_ARRAY` (code) |  |
+| `result_type` | string | `array` (code) |  |
 | `database_node` | string |  |  |
 
 ### Inputs
 
+- `DB_type` (`string`, required)
+- `DB_name` (`string`, required)
+- `DB_user` (`string`, required)
+- `DB_password` (`pwd`, required)
 - `SQL_query` (`string`, required)
 - `Row_formatting_code` (`string`, optional)
 - `Result_formatting_code` (`string`, optional)
-- `DB_type` (`string`)
-- `VAR_DATABASE_HOST` (`string`)
-- `DB_node` (`string`)
-- `DB_port` (`int`)
-- `VAR_DATABASE_NAME` (`string`)
-- `DB_user` (`string`)
-- `DB_password` (`pwd`)
 
 ### Outputs
 
-- `Inserted Id` (`int`)
+- `Query_results` (`array` or `string` or `int` or `hash` or `flag`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## DatabaseTrigger
 
@@ -3685,23 +3429,17 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Keep_ongoing` (`flag`)
-- `SQL_query` (`string`)
-- `DB_host` (`string`)
-- `DB_port` (`int`)
-- `DB_type` (`string`)
-- `DB_name` (`string`)
-- `DB_user` (`string`)
-- `DB_password` (`string`)
+- `SQL_query` (`string`, required)
+- `DB_type` (`string`, required)
+- `DB_name` (`string`, required)
+- `DB_user` (`string`, required)
+- `DB_password` (`string`, required)
+- `Keep_ongoing` (`flag`, optional)
 
 ### Outputs
 
-- None found in source.
+- `Trigger_results` (`array` or `string` or `int` or `hash` or `flag`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## DependencyChecker
 
@@ -3719,23 +3457,24 @@ For each action plugin, this reference lists:
 | `dependency_paths` | string |  |  |
 | `polling_frequency` | integer | `10` (code) |  |
 | `stability_period` | integer | `10` (code) |  |
-| `base_path` | string | `` (code) |  |
+| `base_path` | string |  |  |
 | `accept_partial_files` | boolean | `false` (code) |  |
 | `timeout_in_sec` | integer | `0` (code) |  |
 
 ### Inputs
 
-- `Dependency_paths` (`array`)
+- `Dependency_paths` (`array`, required)
+- `Polling_frequency` (`int`, optional)
+- `Stability_period` (`int`, optional)
+- `Base_path` (`string`, optional)
+- `Accept_partial_files` (`flag`, optional)
+- `Timeout_in_sec` (`int`, optional)
 
 ### Outputs
 
 - `Dependency file paths` (`array`)
 - `Pending files` (`array`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## DigitalrapidsStreamTranscoding
 
@@ -3768,9 +3507,9 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Project XML Definition` (`string`)
-- `Stream_server` (`string`)
-- `Stream_server_port` (`int`)
+- `Project XML Definition` (`string`, required)
+- `Stream_server` (`string`, required)
+- `Stream_server_port` (`int`, required)
 
 ### Outputs
 
@@ -3779,7 +3518,6 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
 
 ## DigitalrapidsTmTranscoding
@@ -3807,7 +3545,7 @@ For each action plugin, this reference lists:
 | `source_file` | string |  | `Source_file` |
 | `destination_dir` | string |  | `Destination_dir` |
 | `priority` | string | `0` (code) |  |
-| `tag_values` | mediumtext | `` (code) | `Tag_values` |
+| `tag_values` | mediumtext |  | `Tag_values` |
 | `separate_audio_source` | boolean | `false` |  |
 | `audio_source_file` | string |  |  |
 
@@ -3871,21 +3609,21 @@ For each action plugin, this reference lists:
 ### Inputs
 
 - `server address` (`string`, required)
-- `server port` (`int`, optional)
 - `object name` (`string`, required)
+- `server port` (`int`, optional)
 - `priority` (`int`, optional)
+- `polling_frequency` (`int`, optional)
+- `media name` (`string`, required)
 - `source / dest` (`string`, required)
+- `filepath root` (`string`, required)
+- `filename list` (`string`, required)
+- `object category` (`string`, required)
 - `Options` (`string`, optional)
 - `Qos` (`int`, optional)
 - `partial restore parameters` (`string`, required)
 - `format` (`int`, required)
-- `media name` (`string`, required)
-- `filepath root` (`string`, required)
-- `filename list` (`string`, required)
 - `Basic auth login` (`string`, required)
 - `Basic auth password` (`string`, required)
-- `object category` (`string`)
-- `polling_frequency` (`int`)
 
 ### Outputs
 
@@ -3898,7 +3636,6 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
 
 ## DolbyOperation
@@ -3927,7 +3664,6 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Api_operation` (`string`, required)
 - `Url` (`string`, required)
 - `Workorder_name` (`string`, required)
 - `Workorder_type` (`string`, required)
@@ -3938,6 +3674,7 @@ For each action plugin, this reference lists:
 
 ### Outputs
 
+- `Step_information` (`hash`)
 - `Workflows List` (`hash`)
 - `Workflows List Count` (`int`)
 - `Error Message` (`hash`)
@@ -3945,7 +3682,6 @@ For each action plugin, this reference lists:
 - `Refresh Time` (`int`)
 - `Correlation Id` (`string`)
 - `Status` (`string`)
-- `Step_information` (`hash`)
 
 ## ElementalMediaConvert
 
@@ -3969,27 +3705,26 @@ For each action plugin, this reference lists:
 | `target` | string |  | `Output_folder_path` |
 | `job_template_id` | string |  | `Job template id` |
 | `queue_id` | string |  |  |
-| `json_payload` | text | `` (code) | `Custom JSON payload` |
+| `json_payload` | text |  | `Custom JSON payload` |
 | `polling_frequency` | integer | `5` (code) |  |
 | `reload_job_template` | boolean | `false` |  |
-| `destinations` | string | `` (code) | `Destinations` |
-| `operation` | string | `OPERATION_CONVERT` (code) | `Operation` |
+| `destinations` | string |  | `Destinations` |
+| `operation` | string | `convert` (code) | `Operation` |
 | `job_id` | string |  | `Job_id` |
 
 ### Inputs
 
-- `Job_id` (`string`, required)
 - `Access_key_value` (`string`, required)
 - `Secret_key_value` (`string`, required)
 - `Region` (`string`, required)
-- `Operation` (`string`, optional)
-- `Destinations` (`string`, optional)
-- `Endpoint` (`string`, optional)
 - `Input_file_path` (`string`, required)
 - `Output_folder_path` (`string`, required)
 - `Role` (`string`, required)
 - `Job template id` (`string`, required)
-- `Custom JSON payload` (`string`, optional)
+- `Operation` (`string`, optional)
+- `Destinations` (`string`, optional)
+- `Endpoint` (`string`, optional)
+- `Job_id` (`string`, required)
 
 ### Outputs
 
@@ -3998,10 +3733,6 @@ For each action plugin, this reference lists:
 - `result_job_template_json` (`string`)
 - `job_id` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## ElementalTranscoding
 
@@ -4026,7 +3757,7 @@ For each action plugin, this reference lists:
 | `api_key` | string |  |  |
 | `authentication` | boolean | `false` (code) |  |
 | `polling_frequency` | integer | `5` (code) |  |
-| `xml_payload` | mediumtext | `"<?xml version=\"1.0\" encoding=\"UTF-8\"?><job>" +` (code) | `Xml_payload` |
+| `xml_payload` | mediumtext | `<?xml version="1.0" encoding="UTF-8"?><job><input><file_input><uri><%= Source %></uri></file_input></input><profile><%= Profile_Id %></profile></job>` (code) | `Xml_payload` |
 | `proxy_address` | string |  |  |
 | `proxy_port` | integer |  |  |
 | `use_ssl` | boolean |  |  |
@@ -4038,19 +3769,17 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Elemental_API_port` (`string`, optional)
-- `Return_error` (`flag`, required)
+- `Elemental_server_address` (`string`, required)
 - `Source_file_path` (`string`, required)
 - `Profile_id` (`string`, required)
+- `Elemental_API_port` (`string`, optional)
+- `Proxy_server_address` (`string`, optional)
+- `Proxy_port` (`int`, optional)
+- `API_key_value` (`string`, required)
+- `User_name` (`string`, required)
 - `S3_shared_key` (`string`, required)
 - `S3_secret_key` (`string`, required)
 - `S3_authentication_type` (`string`, optional)
-- `Xml_payload` (`string`, optional)
-- `Elemental_server_address` (`string`)
-- `API_key_value` (`string`)
-- `User_name` (`string`)
-- `Proxy_server_address` (`string`)
-- `Proxy_port` (`int`)
 
 ### Outputs
 
@@ -4062,7 +3791,6 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
 
 ## EmailInboxWatcher
@@ -4092,15 +3820,15 @@ For each action plugin, this reference lists:
 | `polling_frequency` | integer |  |  |
 | `archive_folder` | string |  |  |
 | `download_attachments` | boolean | `false` (code) |  |
-| `attachments_target_folder` | string | `#{EMAIL_WATCHER_DIR}/attachments` (code) |  |
+| `attachments_target_folder` | string | `<run_dir>/email_inbox_watchers/attachments` (code) |  |
 | `encoding` | string |  |  |
 
 ### Inputs
 
-- `Polling_frequency` (`int`)
-- `Email_server_address` (`string`)
-- `Email_server_port` (`int`)
-- `Filters_override` (`string`)
+- `Email_server_address` (`string`, required)
+- `Polling_frequency` (`int`, optional)
+- `Email_server_port` (`int`, optional)
+- `Filters_override` (`string`, optional)
 
 ### Outputs
 
@@ -4119,7 +3847,6 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
 
 ## EmailNotification
@@ -4135,7 +3862,7 @@ For each action plugin, this reference lists:
 |-----------|------|---------|----------------|
 | `name` | string |  |  |
 | `comments` | text |  |  |
-| `template` | text | `<font color=\"gray\">eMail generated by Aspera Orchestrator</font>` (code) | `Template` |
+| `template` | text | `<font color="gray">eMail generated by Aspera Orchestrator</font>` (code) | `Template` |
 | `payload` | text | `<MessageDefinition><Destinations><To><%= To %></To></Destinations><Subject><%= Subject %></Subject></MessageDefinition>` (code) |  |
 | `mailer_name` | string |  |  |
 | `attachment_list` | text |  | `Attachment_list` |
@@ -4148,18 +3875,20 @@ For each action plugin, this reference lists:
 | `only_accept_full_email_address` | boolean | `false` (code) | `Only_accept_full_email_address` |
 | `force_base64` | boolean |  |  |
 
+- `mailer_name`: Name of the Mailer Configuration to use. When blank, the first active mailer (lowest id) is used.
+- `destinations`: One entry per recipient, separated by " ..- " (space-dot-dot-hyphen-space). Format: "`<address>` `<type>`" where type is To, Cc or Bcc. Example: "alice@example.com To ..- bob@example.com Cc ..-". Legacy separator "_-" is also accepted.
+
 ### Inputs
 
-- `Template` (`string`, optional)
-- `Only_accept_full_email_address` (`flag`, optional)
-- `Attachment_list` (`string`, required)
 - `To` (`string`, required)
 - `Subject` (`string`, required)
+- `MessageDefinition_Override` (`string`, optional)
+- `Template` (`string`, optional)
+- `Only_accept_full_email_address` (`flag`, optional)
+- `attachment_list` (`array`, optional)
 - `Reply_to` (`string`, optional)
 - `From_name` (`string`, optional)
 - `From_address` (`string`, optional)
-- `MessageDefinition_Override` (`string`)
-- `attachment_list` (`array`)
 
 ### Outputs
 
@@ -4168,7 +3897,8 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
+- destinations format: one entry per recipient separated by " ..- " (space · dot · dot · hyphen · space). Each entry is "`<address>` `<type>`" where type is To, Cc or Bcc. Example: "alice@example.com To ..- bob@example.com Cc ..-". The legacy separator " _- " is also accepted (To only).
+- When mailer_name is blank, Orchestrator uses MailServer.identify(nil), which selects the first active Mailer Configuration (lowest id). If no active mailer exists, the step returns Error.
 
 ## EmotionOperation
 
@@ -4192,7 +3922,7 @@ For each action plugin, this reference lists:
 | `report` | string |  |  |
 | `api_inputs` | string | `{}` (code) | `api_inputs` |
 | `api_outputs` | string | `{}` (code) | `api_outputs` |
-| `job_title` | string | `` (code) | `Job_title` |
+| `job_title` | string |  | `Job_title` |
 | `payload` | text |  | `Payload` |
 | `polling_frequency` | integer | `10` (code) | `Polling_frequency` |
 
@@ -4200,30 +3930,29 @@ For each action plugin, this reference lists:
 
 - `API Operation` (`string`, required)
 - `Service_url` (`string`, required)
-- `api_inputs` (`string` or `hash`, optional)
-- `api_outputs` (`string` or `hash`, optional)
+- `api_inputs` (`hash`, optional)
+- `api_outputs` (`hash`, optional)
 - `Polling_frequency` (`int`, optional)
-- `Job_uuid` (`string`, required)
 - `Workflow_uuid` (`string`, required)
 - `source` (`string`, required)
+- `job_uuid` (`string`, optional)
 - `destination` (`string`, optional)
 - `Job_title` (`string`, optional)
+- `Job_uuid` (`string`, required)
 - `Payload` (`string`, required)
-- `job_uuid` (`string`)
 
 ### Outputs
 
+- `Step_information` (`hash`)
 - `job uuid` (`string`)
 - `Error` (`string`)
 - `Response Message` (`string`)
 - `Job Raw Response` (`hash`)
 - `State Description` (`string`)
 - `Workflows List` (`hash`)
-- `Step_information` (`hash`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
 
 ## EncodingdotcomTranscoding
@@ -4257,20 +3986,16 @@ For each action plugin, this reference lists:
 - `User_id` (`string`, required)
 - `Api_key` (`string`, required)
 - `Operation` (`string`, required)
+- `Source_file` (`string`, required)
+- `Output_format` (`string`, required)
+- `Media_Ids` (`string`, required)
 - `Custom_payload` (`string`, required)
-- `Source_file` (`string`)
-- `Output_format` (`string`)
-- `Media_Ids` (`string`)
 
 ### Outputs
 
 - `Input_and_Output_media` (`hash`)
 - `Errors` (`hash`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## EnvivioVodEncoding
 
@@ -4301,15 +4026,15 @@ For each action plugin, this reference lists:
 ### Inputs
 
 - `Preset_ID` (`string`, required)
-- `Job_name` (`string`, optional)
 - `Input_filename` (`string`, required)
 - `Output_filename` (`string`, required)
+- `4Balancer_server` (`string`, required)
+- `Job_name` (`string`, optional)
 - `Content_ID` (`string`, optional)
 - `Priority` (`int`, optional)
 - `Input_start_time` (`string`, optional)
 - `Input_end_time` (`string`, optional)
 - `Additional_parameters` (`string`, optional)
-- `4Balancer_server` (`string`)
 
 ### Outputs
 
@@ -4317,10 +4042,6 @@ For each action plugin, this reference lists:
 - `Job_name` (`string`)
 - `Job_ID` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## EolementheWorkflowManager
 
@@ -4348,20 +4069,16 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `remote node or server address` (`string`, required)
 - `source` (`string`, required)
 - `workflow id` (`string`, required)
 - `API key` (`string`, required)
 - `server port` (`int`, optional)
-- `remote node or server address` (`string`)
 
 ### Outputs
 
 - `result` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## EpisodeTranscoding
 
@@ -4392,17 +4109,15 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Polling_frequency` (`int`, optional)
 - `Input_filepath` (`string`, required)
+- `Server_node_or_address` (`string`, required)
+- `Epitask_filepath` (`string`, required)
+- `Priority` (`int`, optional)
+- `RPC_port` (`int`, optional)
+- `Polling_frequency` (`int`, optional)
 - `Output_filepath` (`string`, optional)
 - `Naming` (`string`, optional)
 - `Job_name` (`string`, optional)
-- `Server_address` (`string`, required)
-- `Server_node_or_address` (`string`, required)
-- `Epitask_filepath` (`string`, required)
-- `Epitask_payload` (`string`, optional)
-- `Priority` (`int`)
-- `RPC_port` (`int`)
 
 ### Outputs
 
@@ -4410,10 +4125,6 @@ For each action plugin, this reference lists:
 - `Job_ID` (`string`)
 - `Workflow_IDs` (`array`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## EvertzMediatorOperation
 
@@ -4441,21 +4152,14 @@ For each action plugin, this reference lists:
 
 - `Placing_id` (`string`, required)
 - `Mediator_status` (`string`, required)
-- `Session_ID` (`string`)
-- `Mediator_password` (`pwd`)
-- `Mediator_user` (`string`)
-- `Mediator_node` (`string`)
-- `Mediator_address` (`string`)
+- `Mediator_address` (`string`, required)
+- `Mediator_password` (`pwd`, required)
+- `Mediator_user` (`string`, required)
 
 ### Outputs
 
 - `Session_ID` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## ExiftoolXmpTagger
 
@@ -4472,8 +4176,8 @@ For each action plugin, this reference lists:
 | `comments` | text |  |  |
 | `media_file_path` | string |  | `Media_file_path` |
 | `tagged_media_file_path` | string |  | `Tagged_media_file_path` |
-| `operation` | string | `OP_READ` (code) |  |
-| `options` | string | `` (code) | `Options` |
+| `operation` | string | `Read` (code) |  |
+| `options` | string |  | `Options` |
 | `execution_node` | string |  |  |
 | `execution_login` | string |  |  |
 | `execution_password` | string |  |  |
@@ -4486,19 +4190,15 @@ For each action plugin, this reference lists:
 
 - `Media_file_path` (`string`, required)
 - `Options` (`string`, optional)
-- `Tags` (`string` or `hash`, required)
+- `Tags` (`hash`, optional)
 - `Tagged_media_file_path` (`string`, required)
 
 ### Outputs
 
-- `Metadata` (`hash`)
 - `Tagged_media_file` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `Metadata` (`hash`)
+- `<additional_outputs>`
 
 ## ExitStatus
 
@@ -4555,9 +4255,6 @@ For each action plugin, this reference lists:
 - `video_file` (`string`, required)
 - `object_id` (`string`, required)
 - `folder` (`string`, optional)
-- `response` (`hash`)
-- `upload_id` (`string`)
-- `video_id` (`string`)
 
 ### Outputs
 
@@ -4565,11 +4262,6 @@ For each action plugin, this reference lists:
 - `upload_id` (`string`)
 - `video_id` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## FaspControl
 
@@ -4600,35 +4292,17 @@ For each action plugin, this reference lists:
 | `transfer_user` | string |  |  |
 | `is_shared_rate` | boolean | `false` |  |
 | `rate_value` | integer |  | `Rate_Value` |
-| `session_ids` | text | `` (code) | `Session_ids` |
+| `session_ids` | text |  | `Session_ids` |
 | `output_only_failed_files` | boolean | `false` |  |
 | `max_results` | integer | `100000` (code) |  |
 
 ### Inputs
 
-- `Rate_Value` (`int`, required)
-- `Session_ids` (`string`, optional)
 - `AsperaCentral Node_or_Address` (`string`, required)
-- `Session_ID` (`array` or `string`)
-- `Job_ID` (`string`)
 
 ### Outputs
 
-- `Session_file_list` (`array`)
-- `Sessions_failed_to_cancel` (`array`)
-- `Session_status` (`string`)
-- `Failed_file_list` (`array`)
-- `Transferred_file_list` (`array`)
-- `No_of_files_transferred` (`int`)
-- `Growing_file_list` (`array`)
-- `List_of_Sessions` (`array`)
-- `Transfer_Rate_Set` (`int`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## FaspTransfer
 
@@ -4660,13 +4334,21 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `Central_node` (`string`, required)
+- `Timeout` (`int`, optional)
+- `FullXMLPayload` (`string`, optional)
+- `Operation` (`string`, optional)
+- `RemoteAddress` (`string`, optional)
+- `SSHPort` (`string`, optional)
+- `RemoteUserName` (`string`, optional)
+- `RemotePassword` (`string`, optional)
+- `FaspPort` (`string`, optional)
+- `TargetRate` (`string`, optional)
+- `RemoteFilePath_list` (`string`, optional)
+- `LocalFilePath_list` (`string`, optional)
 - `Node_user` (`string`, optional)
 - `Node_password` (`string`, optional)
 - `Split_separator` (`string`, optional)
-- `Central_node` (`string`, required)
-- `Timeout` (`int`)
-- `FullXMLPayload` (`string`)
-- `AsperaCentral_Address` (`string`)
 
 ### Outputs
 
@@ -4682,9 +4364,7 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 - Outputs are partly defined by template fields: see the template attributes.
 
 ## Faspex5Delivery
@@ -4704,18 +4384,18 @@ For each action plugin, this reference lists:
 | `faspex_sender_user` | string |  | `Faspex_sender_user` |
 | `faspex_hostname` | string |  | `Faspex_server_address` |
 | `faspex_node` | string |  |  |
-| `notified_on_upload` | string | `` (code) | `Notified_on_upload` |
-| `notified_on_download` | string | `` (code) | `Notified_on_download` |
-| `notified_on_receipt` | string | `` (code) | `Notified_on_receipt` |
+| `notified_on_upload` | string |  | `Notified_on_upload` |
+| `notified_on_download` | string |  | `Notified_on_download` |
+| `notified_on_receipt` | string |  | `Notified_on_receipt` |
 | `expiration_policy` | string | `none` (code) |  |
 | `release_policy` | string | `now` (code) |  |
 | `release_at` | string |  |  |
-| `content_protection_passphrase` | string | `` (code) | `Content_protection_passphrase` |
+| `content_protection_passphrase` | string |  | `Content_protection_passphrase` |
 | `payload` | text |  |  |
-| `note` | text | `` (code) | `Note` |
-| `metadata` | text | `` (code) |  |
+| `note` | text |  | `Note` |
+| `metadata` | text |  |  |
 | `recipients` | text |  | `Recipients` |
-| `private_recipients` | text | `` (code) | `Private_recipients` |
+| `private_recipients` | text |  | `Private_recipients` |
 | `paths` | text |  | `File_paths` |
 | `private_key` | text |  | `Ssh_private_key` |
 | `client_id` | text |  | `Faspex_api_client_id` |
@@ -4735,32 +4415,27 @@ For each action plugin, this reference lists:
 ### Inputs
 
 - `Title` (`string`, required)
+- `Faspex_server_address` (`string`, required)
+- `Recipients` (`string`, required)
+- `Faspex_sender_user` (`string`, required)
+- `Faspex_api_client_id` (`string`, required)
+- `Ssh_private_key` (`string`, required)
+- `File_paths` (`string`, required)
 - `Note` (`string`, optional)
 - `Notified_on_upload` (`string`, optional)
 - `Notified_on_download` (`string`, optional)
 - `Notified_on_receipt` (`string`, optional)
 - `Content_protection_passphrase` (`string`, optional)
-- `Faspex_server_address` (`string`, required)
-- `Recipients` (`string`, required)
 - `Private_recipients` (`string`, optional)
-- `Faspex_sender_user` (`string`, required)
-- `Faspex_api_client_id` (`string`, required)
-- `Ssh_private_key` (`string`, required)
-- `File_paths` (`string`, required)
-- `Shared_folder_id` (`int` or `string`, optional)
-- `Release_date` (`date`)
+- `Shared_folder_id` (`string` or `int`, optional)
+- `Release_date` (`date`, required)
 
 ### Outputs
 
 - `Id` (`string`)
 - `Transfer_spec` (`string`)
-- `Status_link` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `Status_link` (`string`)
 
 ## Faspex5FileProcessing
 
@@ -4792,21 +4467,19 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Faspex_server_address` (`string`)
-- `Polling frequency` (`int`)
-- `Error_message` (`string`)
-- `File_status` (`string`)
+- `Faspex_server_address` (`string`, required)
+- `Faspex_user` (`string`, required)
+- `Faspex_client_id` (`string`, required)
+- `Ssh_private_key` (`string`, required)
+- `File_id` (`string`, required)
+- `Error_message` (`string`, optional)
+- `File_status` (`string`, required)
 
 ### Outputs
 
+- `Step_information` (`hash`)
 - `result_count` (`int`)
 - `file_transfer_info` (`array`)
-- `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## Faspex5InboxWatcher
 
@@ -4842,7 +4515,7 @@ For each action plugin, this reference lists:
 | `client_key_passphrase` | text |  |  |
 | `shared_inbox_name` | string |  |  |
 | `private_key` | text |  |  |
-| `filters` | text | `` (code) | `Filters_override` |
+| `filters` | text |  | `Filters_override` |
 | `destination_root` | text |  | `Destination_root` |
 | `get_package_download_link` | text |  |  |
 | `package_id` | text |  |  |
@@ -4851,19 +4524,17 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Packages_root` (`string`, optional)
-- `Ignore_faspex_failures` (`flag`, optional)
-- `Ignore_empty_metadata` (`flag`, optional)
-- `Faspex_client_id` (`string`, required)
 - `Faspex_user` (`string`, required)
+- `Ssh_private_key` (`string`, required)
+- `Faspex_client_id` (`string`, required)
+- `Faspex_server_address` (`string`, required)
+- `Polling_frequency` (`int`, optional)
+- `Persistence_scope` (`string`, optional)
+- `Package Id` (`string`, optional)
+- `Packages_root` (`string`, optional)
 - `Filters_override` (`string`, optional)
 - `Destination_root` (`string`, optional)
-- `Faspex_server_address` (`string`, required)
-- `Polling_frequency` (`int`)
-- `Shared_inbox_name` (`string`)
-- `Ssh_private_key` (`string`)
-- `Persistence_scope` (`string`)
-- `Package Id` (`string`)
+- `Shared_inbox_name` (`string`, required)
 
 ### Outputs
 
@@ -4895,7 +4566,6 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
 
 ## Faspex5PackageMonitor
@@ -4932,6 +4602,10 @@ For each action plugin, this reference lists:
 
 ### Outputs
 
+- `Download_details` (`array`)
+- `Downloader_list` (`array`)
+- `Package Download Link` (`string`)
+- `Step_information` (`hash`)
 - `Title` (`string`)
 - `Id` (`string`)
 - `Completed` (`date`)
@@ -4953,15 +4627,6 @@ For each action plugin, this reference lists:
 - `Partial download count` (`int`)
 - `Active download count` (`int`)
 - `Expiration policy` (`string`)
-- `Package Download Link` (`string`)
-- `Download_details` (`array`)
-- `Downloader_list` (`array`)
-- `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## Faspstream
 
@@ -4979,14 +4644,14 @@ For each action plugin, this reference lists:
 | `initiating_node` | string |  | `Initiating_node` |
 | `initiating_host` | string |  | `Initiating node or address` |
 | `initiating_ssh_user_name` | string |  | `Initiating node ssh username` |
-| `initiating_ssh_password` | string | `` (code) | `Initiating node ssh password` |
-| `initiating_ssh_key_file_path` | string | `` (code) | `Initiating node ssh key path` |
+| `initiating_ssh_password` | string |  | `Initiating node ssh password` |
+| `initiating_ssh_key_file_path` | string |  | `Initiating node ssh key path` |
 | `initiating_ssh_port` | integer | `33001` (code) | `Initiating node ssh port` |
 | `serving_node` | string |  | `Serving_node` |
 | `serving_host` | string |  | `Serving node or address` |
 | `serving_ssh_user_name` | string |  | `Serving node ssh username` |
-| `serving_ssh_password` | string | `` (code) | `Serving node ssh password` |
-| `serving_ssh_key_file_path` | string | `` (code) | `Serving node ssh key path` |
+| `serving_ssh_password` | string |  | `Serving node ssh password` |
+| `serving_ssh_key_file_path` | string |  | `Serving node ssh key path` |
 | `serving_ssh_port` | integer | `33001` (code) | `Serving node ssh port` |
 | `node_api_host` | string | `initiating_node` (code) | `Node API target` |
 | `node_api_user_name` | string |  | `Node API user name` |
@@ -4998,7 +4663,7 @@ For each action plugin, this reference lists:
 | `source_stream_url` | string |  | `Source stream URL` |
 | `destination_stream_url` | string |  | `Destination stream URL` |
 | `ascp_binary_path` | string | `ascp4` (code) | `Ascp4 binary path` |
-| `command_line_options` | string | `` (code) | `Command line options` |
+| `command_line_options` | string |  | `Command line options` |
 | `transfer_mode` | string | `send` (code) | `Transfer mode` |
 | `polling_frequency` | integer | `10` (code) |  |
 
@@ -5006,25 +4671,23 @@ For each action plugin, this reference lists:
 
 - `Initiating node or address` (`string`, required)
 - `Initiating node ssh username` (`string`, required)
-- `Initiating node ssh password` (`string`, optional)
-- `Initiating node ssh key path` (`string`, optional)
-- `Initiating node ssh port` (`int`, optional)
-- `Initiating_node` (`string`, required)
 - `Serving node or address` (`string`, required)
 - `Serving node ssh username` (`string`, required)
-- `Serving node ssh password` (`string`, optional)
-- `Serving node ssh key path` (`string`, optional)
-- `Serving node ssh port` (`int`, optional)
-- `Serving_node` (`string`, required)
-- `Node API target` (`string`, optional)
 - `Node API user name` (`string`, required)
 - `Node API user password` (`string`, required)
-- `Node API port` (`int`, optional)
 - `Target rate` (`string`, required)
 - `Minimum rate` (`string`, required)
 - `Source stream URL` (`string`, required)
 - `Destination stream URL` (`string`, required)
-- `Transfer mode` (`string`, optional)
+- `Initiating node ssh password` (`string`, optional)
+- `Initiating node ssh key path` (`string`, optional)
+- `Initiating node ssh port` (`int`, optional)
+- `Serving node ssh password` (`string`, optional)
+- `Serving node ssh key path` (`string`, optional)
+- `Serving node ssh port` (`int`, optional)
+- `Node API target` (`string`, required)
+- `Node API port` (`int`, optional)
+- `Transfer mode` (`string`, required)
 - `Chunk size` (`string`, optional)
 - `Ascp4 binary path` (`string`, optional)
 - `Command line options` (`string`, optional)
@@ -5032,14 +4695,7 @@ For each action plugin, this reference lists:
 ### Outputs
 
 - `statistics` (`hash`)
-- `Transfer mode` (`string`)
-- `Node API target` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## FederatedWorkflow
 
@@ -5072,7 +4728,7 @@ For each action plugin, this reference lists:
 | `use_ssl` | boolean |  |  |
 | `identify_by_name` | boolean |  |  |
 | `work_order_name` | string |  | `Work_order_name` |
-| `web_root` | string | `"/aspera/orchestrator".freeze` (code) |  |
+| `web_root` | string | `/aspera/orchestrator` (code) |  |
 | `return_all_outputs` | boolean |  |  |
 | `no_webroot` | boolean |  |  |
 | `report_status_details` | boolean | `false` (code) | `Report_status_details` |
@@ -5082,31 +4738,25 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `"Remote_user".freeze` (`string`, required)
+- `Remote_workflow_id` (`int`, required)
+- `Remote_address` (`string`, required)
+- `Work_order_parameters` (`hash`, required)
 - `Work_order_name` (`string`, optional)
-- `"Remote_password".freeze` (`string`, required)
 - `Report_status_details` (`flag`, optional)
+- `Remote_port` (`string` or `int`, optional)
+- `Remote_user` (`string`, required)
+- `Remote_password` (`string`, required)
 - `Remote_workflow_name` (`string`, required)
 - `Remote_workflow_portable_id` (`string`, required)
-- `"Remote_address".freeze` (`string`, required)
-- `"Remote_port".freeze` (`string` or `int`, optional)
-- `"Work_order_parameters".freeze` (`string` or `hash`, required)
-- `"Remote_workflow_id".freeze` (`int`)
-- `"Remote_node".freeze` (`string`)
 
 ### Outputs
 
-- `"WorkOrder_ID".freeze` (`int`)
-- `"WorkOrder_Status".freeze` (`string`)
-- `"Execution_address".freeze` (`string`)
-- `"Execution_node".freeze` (`string`)
-- `"WorkOrder_Outputs".freeze` (`hash`)
+- `WorkOrder_ID` (`int`)
+- `WorkOrder_Status` (`string`)
+- `Execution_address` (`string`)
+- `Execution_node` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `WorkOrder_Outputs` (`hash`)
 
 ## FfmpgTranscoding
 
@@ -5128,37 +4778,32 @@ For each action plugin, this reference lists:
 | `input_file_path` | string |  | `Input_file_path` |
 | `output_file_path` | string |  | `Output_file_path` |
 | `force_file_format` | string |  |  |
-| `options` | text | `` (code) | `Options` |
+| `options` | text |  | `Options` |
 | `overwrite_output` | boolean | `false` (code) | `Overwrite_output` |
-| `post_path_parameters` | text | `` (code) | `Post_path_parameters` |
+| `post_path_parameters` | text |  | `Post_path_parameters` |
 | `is_manual_command` | boolean | `false` |  |
 | `manual_command` | text |  | `Manual_command` |
 | `execution_on_windoz` | boolean | `false` (code) | `Execution_on_windoz` |
 
 ### Inputs
 
-- `Manual_command` (`string`, required)
-- `Execution_node` (`string`, required)
-- `Binary_path` (`string`, optional)
 - `Input_file_path` (`string`, required)
 - `Output_file_path` (`string`, required)
+- `Execution_node` (`string`, required)
+- `Binary_path` (`string`, optional)
 - `Options` (`string`, optional)
 - `Post_path_parameters` (`string`, optional)
 - `Execution_login` (`string`, optional)
 - `Execution_password` (`string`, optional)
 - `Overwrite_output` (`flag`, optional)
 - `Execution_on_windoz` (`flag`, optional)
+- `Manual_command` (`string`, required)
 
 ### Outputs
 
-- `transformation_report` (`string`)
 - `Result_file_path` (`string`)
+- `transformation_report` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## FfprobeInfo
 
@@ -5179,28 +4824,23 @@ For each action plugin, this reference lists:
 | `binary_path` | string | `ffprobe` (code) | `Binary_path` |
 | `input_file_path` | string |  | `Input_file_path` |
 | `report_file_path` | string |  | `Report_file_path` |
-| `options` | string | `` (code) | `Options` |
+| `options` | string |  | `Options` |
 
 ### Inputs
 
 - `Input_file_path` (`string`, required)
+- `Execution_node` (`string`, required)
 - `Report_file_path` (`string`, optional)
 - `Options` (`string`, optional)
-- `Execution_node` (`string`, required)
 - `Binary_path` (`string`, optional)
 - `Execution_login` (`string`, optional)
 - `Execution_password` (`string`, optional)
 
 ### Outputs
 
-- `Report_File_Path` (`string`)
 - `Report` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `Report_File_Path` (`string`)
 
 ## FileArchivingOperation
 
@@ -5237,35 +4877,28 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `remote_node` (`string`, required)
+- `source` (`array` or `string`, required)
 - `target` (`string`, optional)
-- `Sources` (`string`, required)
-- `base` (`string`, optional)
 - `Cmd_line_options` (`string`, optional)
 - `Chmod` (`string`, optional)
 - `Uid` (`string`, optional)
 - `Guid` (`string`, optional)
-- `Recursive` (`flag`, optional)
-- `runtime_remote_node` (`string`)
-- `remote_node_ip_address` (`string`)
-- `remote_node_user` (`string`)
-- `remote_node_password` (`string`)
-- `remote_node_port` (`int`)
+- `base` (`string`, optional)
+- `remote_node` (`string`, required)
+- `remote_node_ip_address` (`string`, optional)
+- `remote_node_user` (`string`, optional)
+- `remote_node_password` (`string`, optional)
+- `remote_node_port` (`int`, optional)
 
 ### Outputs
 
-- `Command` (`string`)
 - `File_list` (`array`)
 - `Failed_list` (`array`)
 - `target_file` (`string`)
 - `Exit_Code` (`int`)
 - `Operation_Output` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `Command` (`string`)
 
 ## FileGenerator
 
@@ -5291,20 +4924,18 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Target_file_path` (`string`, optional)
 - `File_body_path` (`string`, required)
+- `Target_file_path` (`string`, optional)
 
 ### Outputs
 
 - `Generated_file_path` (`string`)
-- `Generated_file_content` (`string`)
 - `Step_information` (`hash`)
+- `Generated_file_content` (`string`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## FileInfo
 
@@ -5330,29 +4961,24 @@ For each action plugin, this reference lists:
 
 ### Outputs
 
-- `folder?` (`hash` or `flag`)
-- `symlink?` (`hash` or `flag`)
-- `naked_name` (`hash` or `string`)
-- `parent` (`hash` or `string`)
-- `extension` (`hash` or `string`)
+- `folder?` (`flag` or `hash`)
+- `symlink?` (`flag` or `hash`)
+- `naked_name` (`string` or `hash`)
+- `parent` (`string` or `hash`)
+- `extension` (`string` or `hash`)
 - `atime` (`string`)
-- `unix_atime` (`hash` or `int`)
-- `parent_name` (`hash` or `string`)
+- `unix_atime` (`int` or `hash`)
+- `parent_name` (`string` or `hash`)
 - `mtime` (`string`)
-- `unix_mtime` (`hash` or `int`)
-- `file_name` (`hash` or `string`)
-- `file_size` (`hash` or `string`)
+- `unix_mtime` (`int` or `hash`)
+- `file_name` (`string` or `hash`)
+- `file_size` (`string` or `hash`)
 - `ctime` (`string`)
-- `unix_ctime` (`hash` or `int`)
-- `exists?` (`hash` or `flag`)
-- `file_size_in_KB` (`hash` or `int`)
-- `file_size_in_bytes` (`hash` or `int`)
+- `unix_ctime` (`int` or `hash`)
+- `exists?` (`flag` or `hash`)
+- `file_size_in_KB` (`int` or `hash`)
+- `file_size_in_bytes` (`int` or `hash`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## FileJournalLogEntry
 
@@ -5372,31 +4998,34 @@ For each action plugin, this reference lists:
 | `package` | string |  |  |
 | `step_name` | string |  |  |
 | `processing_status` | string |  |  |
-| `event` | string | `` (code) |  |
+| `event` | string |  |  |
 | `processing_timeout` | integer |  |  |
 | `journal_book` | string |  |  |
 | `new_file` | boolean | `false` (code) | `New_file` |
 | `new_package` | boolean | `false` (code) | `New_package` |
 | `milestone` | integer | `0` (code) | `Milestone` |
 | `journal_to_file` | boolean | `false` (code) |  |
-| `journal_file_path` | string | `#{Rails.root}/log/journal.log` (code) |  |
+| `journal_file_path` | string | `/tmp/log/journal.log` (code) |  |
 | `file_entry_format` | string | `event[time],event[package],event[file],event[status],event[event]` (code) |  |
 | `max_file_count` | integer | `5` (code) |  |
 | `max_file_size_in_mb` | integer | `5` (code) |  |
 | `write_to_journal` | boolean | `true` |  |
 
+- `processing_status`: Allowed values: `Complete`, `Error`, `Failed`, `In Progress`.
+- `journal_book`: Name of an existing journal book, or "--Runtime--" to require the book name at runtime via the "Journal Book" input. When blank, the entry is logged without a book.
+
 ### Inputs
 
+- `File_path` (`string`, optional)
+- `package` (`string`, optional)
+- `package_ID` (`string`, optional)
+- `file` (`string`, optional)
+- `File_processing_status` (`string`, optional)
+- `file_ID` (`int`, optional)
 - `New_file` (`flag`, optional)
 - `New_package` (`flag`, optional)
 - `Milestone` (`int`, optional)
-- `File_path` (`string`)
-- `package` (`string`)
-- `package_ID` (`string`)
-- `file` (`string`)
-- `File_processing_status` (`string`)
-- `file_ID` (`int`)
-- `Journal Book` (`string`)
+- `Journal Book` (`string`, optional)
 
 ### Outputs
 
@@ -5408,7 +5037,9 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
+- Allowed values for processing_status (and the File_processing_status input): Complete, Error, Failed, In Progress. These map to the standard Journal statuses defined in Journal::PREDEFINED_STATUS.
+- Journal books must exist before the step runs. A missing book is NOT created at execution time (unlike a workflow import, which creates the book automatically). Create the book in Engine > Journaling before deploying the workflow.
+- When journal_book is set to "--Runtime--", the "Journal Book" input becomes required.
 
 ## Filter
 
@@ -5439,7 +5070,6 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
 - Outputs are partly defined by template fields: see the template attributes.
 
@@ -5472,16 +5102,24 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- None found in source.
+- `address` (`string`, required)
+- `Use_ssl` (`flag`, required)
+- `username` (`string`, required)
+- `password` (`string`, required)
+- `Use_advanced_mode` (`flag`, required)
+- `source_file_name` (`string`, required)
+- `source_storage_id_or_name` (`string`, required)
+- `template_id_or_name` (`string`, required)
+- `port` (`int`, optional)
+- `title` (`string`, optional)
+- `tags` (`string`, optional)
+- `polling_frequency` (`int`, optional)
+- `custom_task` (`string`, required)
 
 ### Outputs
 
 - `destination_files` (`array`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## FlipFactoryTransformation
 
@@ -5496,7 +5134,7 @@ For each action plugin, this reference lists:
 |-----------|------|---------|----------------|
 | `name` | string |  |  |
 | `comments` | text |  |  |
-| `message` | text | `<?xml version='1.0' encoding='UTF-8'?><message uuid=''><envelope subject='FlipFactory default message'><to> <account username='<%= #{ VAR_USERNAME} %>' password='<%= #{ VAR_PASSWORD} %>' address='' personal=''><factory name='<%= #{ VAR_FACTORYNAME} %>'/> </account></to></envelope><parcel> <content type='<%= #{ VAR_MEDIA_TYPE} %>'><file version='original' path='<%= #{ VAR_FILEPATH} %>'/> </content></parcel></message>` (code) |  |
+| `message` | text | `<?xml version='1.0' encoding='UTF-8'?><message uuid=''><envelope subject='FlipFactory default message'><to> <account username='<%= user_name %>' password='<%= user_password %>' address='' personal=''><factory name='<%= factory_name %>'/> </account></to></envelope><parcel> <content type='<%= media_type %>'><file version='original' path='<%= file_path %>'/> </content></parcel></message>` (code) |  |
 | `saved_inputs` | text |  |  |
 | `server_url` | string |  |  |
 | `server_node` | string |  |  |
@@ -5504,10 +5142,14 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `message_override` (`string`)
-- `user_password` (`string`)
-- `FlipFactoryNode` (`string`)
-- `FlipFactoryServer_url` (`string`)
+- `FlipFactoryServer_url` (`string`, required)
+- `user_name` (`string`, required)
+- `user_password` (`string`, required)
+- `factory_name` (`string`, required)
+- `media_type` (`string`, required)
+- `file_path` (`string`, required)
+- `message_override` (`string`, optional)
+- `FlipFactoryNode` (`string`, optional)
 
 ### Outputs
 
@@ -5522,7 +5164,6 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
 
 ## FrameioOperation
@@ -5557,25 +5198,23 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Verify_ssl` (`flag`, required)
-- `Api_version` (`string`, required)
-- `Auth_type` (`string`, required)
 - `Token` (`string`, required)
 - `Account_id` (`string`, required)
 - `Team_id` (`string`, required)
 - `Assets_id` (`string`, required)
 - `Asset_name` (`string`, required)
+- `asset_type` (`string`, optional)
+- `file_type` (`string`, optional)
+- `file_size` (`string`, optional)
+- `local_file_path` (`string`, optional)
+- `upload_urls_list` (`array`, required)
 - `Local_file_path` (`string`, required)
 - `Content_type` (`string`, required)
-- `asset_type` (`string`)
-- `file_type` (`string`)
-- `file_size` (`string`)
-- `local_file_path` (`string`)
-- `upload_urls_list` (`array`)
 
 ### Outputs
 
 - `Error_Message` (`string`)
+- `Step_information` (`hash`)
 - `Result` (`hash`)
 - `Account_Id` (`string`)
 - `Team_List` (`array`)
@@ -5583,11 +5222,6 @@ For each action plugin, this reference lists:
 - `Assets_List` (`array`)
 - `Upload_Urls` (`array`)
 - `Number_of_threads_successfully_executed` (`int`)
-- `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## FtpFolderTrigger
 
@@ -5615,7 +5249,7 @@ For each action plugin, this reference lists:
 | `recursion_depth` | integer | `0` (code) |  |
 | `use_ftp_glob` | boolean | `true` (code) |  |
 | `disable_dns_lookup` | boolean | `false` (code) |  |
-| `trigger_foldername_pattern` | string | `` (code) | `Trigger_foldername_pattern` |
+| `trigger_foldername_pattern` | string |  | `Trigger_foldername_pattern` |
 | `check_once` | boolean |  |  |
 | `check_folders_recursively` | boolean | `false` (code) | `check_folders_recursively` |
 | `allow_multiple` | boolean |  |  |
@@ -5623,25 +5257,19 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `remote_user` (`string`, required)
 - `remote_server` (`string`, required)
 - `remote_server_port` (`int`, optional)
+- `remote_password` (`string`, optional)
 - `Ftp_timeout` (`int`, optional)
 - `remote_directory` (`string`, optional)
 - `check_folders_recursively` (`flag`, optional)
 - `Trigger_foldername_pattern` (`string`, optional)
-- `remote_user` (`string`)
-- `remote_password` (`string`)
 
 ### Outputs
 
 - `trigger_folder` (`string`)
-- `trigger_folder_array` (`array`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## FtpTransfer
 
@@ -5687,43 +5315,33 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Do_archive` (`flag`, optional)
+- `remote_server` (`string`, required)
+- `remote_user` (`string`, required)
+- `action` (`string`, required)
+- `source_filename` (`string`, required)
+- `remote_server_port` (`int`, optional)
+- `local_directory` (`string`, required)
+- `remote_directory` (`string`, optional)
+- `remote_password` (`string`, optional)
+- `target_filename` (`string`, optional)
+- `binary` (`flag`, optional)
+- `passive_mode` (`flag`, optional)
+- `remove_after_transfer` (`flag`, optional)
+- `validate_file_size` (`flag`, optional)
+- `upload_folder_recursively` (`flag`, optional)
 - `Archive_directory` (`string`, optional)
-- `target_file` (`array` or `string`)
-- `size` (`int`)
-- `local_file_path` (`array` or `string`)
-- `remote_file_path` (`array` or `string`)
-- `modification_times` (`array` or `string`)
-- `file_size_validation` (`flag`)
-- `size_validation_failure_files` (`array`)
-- `invalid_files` (`array`)
-- `remote_server_port` (`int`)
-- `local_directory` (`string`)
-- `remote_directory` (`string`)
-- `remote_password` (`string`)
-- `target_filename` (`string`)
-- `binary` (`flag`)
-- `passive_mode` (`flag`)
-- `remove_after_transfer` (`flag`)
-- `validate_file_size` (`flag`)
-- `upload_folder_recursively` (`flag`)
 
 ### Outputs
 
-- `target_file` (`array` or `string`)
+- `target_file` (`string` or `array`)
 - `size` (`int`)
-- `local_file_path` (`array` or `string`)
-- `remote_file_path` (`array` or `string`)
-- `modification_times` (`array` or `string`)
+- `local_file_path` (`string` or `array`)
+- `remote_file_path` (`string` or `array`)
+- `modification_times` (`string` or `array`)
 - `file_size_validation` (`flag`)
 - `size_validation_failure_files` (`array`)
-- `invalid_files` (`array`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `invalid_files` (`array`)
 
 ## FtpTrigger
 
@@ -5771,34 +5389,26 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `remote_server` (`string`, required)
+- `remote_user` (`string`, required)
+- `remote_server_port` (`int`, optional)
+- `remote_password` (`string`, optional)
+- `remote_directory` (`string`, optional)
+- `file_name_pattern` (`string`, optional)
+- `import_directory` (`string`, optional)
+- `check_folders_recursively` (`flag`, optional)
 - `Move_after_trigger` (`string`, optional)
 - `Ftp_timeout` (`int`, optional)
-- `Ignore_zero_bytes_files` (`flag`, optional)
-- `Ignore_folders` (`flag`, optional)
 - `Move_after_trigger_suffix` (`string`, optional)
 - `Move_after_trigger_default_suffix` (`flag`, optional)
-- `remote_server_port` (`int`)
-- `remote_password` (`string`)
-- `remote_directory` (`string`)
-- `file_name_pattern` (`string`)
-- `import_directory` (`string`)
-- `check_folders_recursively` (`flag`)
-- `persistence_scope` (`string`)
+- `persistence_scope` (`string`, optional)
 
 ### Outputs
 
 - `trigger_filename` (`string`)
 - `archived_filename` (`string`)
 - `trigger_file_size` (`int`)
-- `trigger_files_array` (`array`)
-- `archived_files_array` (`array`)
-- `trigger_files_array_size` (`array`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## FtpsTransfer
 
@@ -5827,21 +5437,15 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `remote_server` (`string`, required)
 - `remote_user` (`string`, required)
 - `remote_password` (`string`, required)
 - `remote_directory` (`string`, optional)
-- `local_directory` (`string`, optional)
-- `target_filename` (`string`, optional)
-- `Remove_after_transfer` (`flag`, required)
 
 ### Outputs
 
 - `files_list` (`array`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## Funnelin
 
@@ -5867,23 +5471,18 @@ For each action plugin, this reference lists:
 ### Inputs
 
 - `Fail_if_failures` (`flag`, optional)
-- `<funnel_variable>` (`<funnel_type>`)
+- `<funnel_variable>` (`<funnel_type>`, required)
 
 ### Outputs
 
 - `Hash_by_state_id` (`hash`)
-- `<funnel_variable>` (`<funnel_type>`)
+- `Step_information` (`hash`)
 - `Status_by_state_id` (`hash`)
 - `Status_hash` (`hash`)
-- `#{inp}_hash` (`hash`)
-- `Step_information` (`hash`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- A name in angle brackets (`<attribute>`) is the value of that template attribute.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 - Outputs are partly defined by template fields: see the template attributes.
 
 ## FxpTransfer
@@ -5909,22 +5508,30 @@ For each action plugin, this reference lists:
 | `origin_password` | string |  |  |
 | `remote_directory` | string | `/` (code) |  |
 | `origin_file_path` | string |  |  |
-| `target_file_path` | string | `` (code) |  |
-| `handshake_protocol` | string | `SSCN` (code) |  |
+| `target_file_path` | string |  |  |
+| `handshake_protocol` | string | `SSCN (set secured client negotiation)` (code) |  |
 | `remote_file_name` | string |  |  |
 
 ### Inputs
 
-- `FXP debug flag` (`flag`)
+- `Origin_file_path` (`string`, required)
+- `Remote_server` (`string`, optional)
+- `Remote_server_port` (`int`, optional)
+- `Remote_user` (`string`, optional)
+- `Remote_password` (`string`, optional)
+- `Origin_server` (`string`, optional)
+- `Origin_server_port` (`int`, optional)
+- `Origin_user` (`string`, optional)
+- `Origin_password` (`string`, optional)
+- `Remote_directory` (`string`, optional)
+- `Target_file_path` (`string`, optional)
+- `Handshake_protocol` (`string`, optional)
+- `Remote_file_name` (`string`, optional)
+- `FXP debug flag` (`flag`, optional)
 
 ### Outputs
 
-- None found in source.
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## GoogleCloudstorageOperation
 
@@ -5952,18 +5559,14 @@ For each action plugin, this reference lists:
 - `Credentials_filepath` (`string`, required)
 - `Project_id` (`string`, required)
 - `Bucket_name` (`string`, required)
+- `Operation` (`string`, optional)
 - `Local_filepath` (`string`, required)
 - `Remote_filepath` (`string`, required)
-- `Operation` (`string`)
 
 ### Outputs
 
 - `Error_message` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## GooglePubsubOperation
 
@@ -5992,21 +5595,17 @@ For each action plugin, this reference lists:
 
 - `Credentials_filepath` (`string`, required)
 - `Project_id` (`string`, required)
+- `Operation` (`string`, optional)
 - `Topic_name` (`string`, required)
 - `Subscription_name` (`string`, required)
 - `Message_body` (`string`, required)
 - `Max_number_of_messages` (`int`, optional)
-- `Operation` (`string`)
 
 ### Outputs
 
-- `Messages` (`array`)
 - `Error_message` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `Messages` (`array`)
 
 ## HandbrakeTranscoding
 
@@ -6027,7 +5626,7 @@ For each action plugin, this reference lists:
 | `binary_path` | string |  | `Binary_path` |
 | `input_file_path` | string |  | `Input_file_path` |
 | `output_file_path` | string |  | `Output_file_path` |
-| `options` | text | `` (code) |  |
+| `options` | text |  |  |
 
 ### Inputs
 
@@ -6037,18 +5636,12 @@ For each action plugin, this reference lists:
 - `Execution_node` (`string`, optional)
 - `Execution_login` (`string`, optional)
 - `Execution_password` (`string`, optional)
-- `Result_file_path` (`string`)
-- `transformation_report` (`string`)
 
 ### Outputs
 
 - `Result_file_path` (`string`)
 - `transformation_report` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## HelloWorld
 
@@ -6068,8 +5661,8 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `prompt_override` (`string`)
-- `tempo` (`int`)
+- `prompt_override` (`string`, optional)
+- `tempo` (`int`, optional)
 
 ### Outputs
 
@@ -6108,12 +5701,12 @@ For each action plugin, this reference lists:
 - `Operation` (`string`, required)
 - `Remote_path` (`string`, required)
 - `Local_path` (`string`, required)
+- `Remote_node_or_address` (`string`, required)
 - `Remote_user` (`string`, optional)
 - `Remote_port` (`string`, optional)
 - `Remote_key_location` (`string`, optional)
-- `local_path` (`string`)
-- `Remote_node_or_address` (`string`)
-- `Remote_password` (`string`)
+- `Remote_password` (`string`, optional)
+- `local_path` (`string`, optional)
 
 ### Outputs
 
@@ -6121,10 +5714,6 @@ For each action plugin, this reference lists:
 - `Transferred_bytes` (`int`)
 - `Status details` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## HybrikTranscoder
 
@@ -6195,21 +5784,20 @@ For each action plugin, this reference lists:
 | `mq_ssl` | boolean | `false` |  |
 | `mq_cipher` | string |  | `Mq_cipher` |
 | `mq_trust_store` | string |  | `Mq_trust_store` |
-| `mq_trust_store_password` | string | `` (code) | `Mq_trust_store_password` |
+| `mq_trust_store_password` | string |  | `Mq_trust_store_password` |
 
 ### Inputs
 
-- `Polling_frequency` (`int`, optional)
-- `Mq_port` (`string`, optional)
 - `Mq_channel_name` (`string`, required)
 - `Mq_queue_name` (`string`, required)
 - `Mq_queue_manager` (`string`, required)
+- `Mq_ip_address` (`string`, required)
+- `Polling_frequency` (`int`, optional)
+- `Mq_port` (`string`, optional)
 - `Mq_user_name` (`string`, optional)
 - `Mq_user_password` (`string`, optional)
-- `Put_body` (`string`, required)
 - `Keep_ongoing` (`flag`, optional)
-- `Mq_ip_address` (`string`, required)
-- `Execution_node` (`string`, required)
+- `Put_body` (`string`, required)
 - `Mq_cipher` (`string`, required)
 - `Mq_trust_store` (`string`, required)
 - `Mq_trust_store_password` (`string`, optional)
@@ -6217,14 +5805,9 @@ For each action plugin, this reference lists:
 ### Outputs
 
 - `Message_Received` (`string`)
+- `Step_information` (`hash`)
 - `Message_Id` (`string`)
 - `Message_Received_JSON` (`string`)
-- `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## IbmMqMftTransfer
 
@@ -6260,23 +5843,21 @@ For each action plugin, this reference lists:
 | `mq_ssl` | boolean | `false` |  |
 | `mq_cipher` | string |  | `Mq_cipher` |
 | `mq_trust_store` | string |  | `Mq_trust_store` |
-| `mq_trust_store_password` | string | `` (code) | `Mq_trust_store_password` |
+| `mq_trust_store_password` | string |  | `Mq_trust_store_password` |
 
 ### Inputs
 
-- `Mq_port` (`string`, optional)
 - `Mq_channel_name` (`string`, required)
 - `Mq_queue_name` (`string`, required)
 - `Mq_queue_manager` (`string`, required)
+- `Mq_ip_address` (`string`, required)
+- `Mq_port` (`string`, optional)
 - `Mq_user_name` (`string`, optional)
 - `Mq_user_password` (`string`, optional)
 - `Put_body` (`string`, required)
 - `Subscription_queue_name` (`string`, required)
 - `Mq_agent_name` (`string`, required)
 - `Subscription_name` (`string`, required)
-- `Mq_message_id` (`string`, required)
-- `Mq_ip_address` (`string`, required)
-- `Execution_node` (`string`, required)
 - `Mq_cipher` (`string`, required)
 - `Mq_trust_store` (`string`, required)
 - `Mq_trust_store_password` (`string`, optional)
@@ -6286,11 +5867,6 @@ For each action plugin, this reference lists:
 - `Message_Received` (`string`)
 - `Transfer_Message_Id` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## IcapVirusScan
 
@@ -6326,19 +5902,14 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `File_list` (`string`)
+- `File_list` (`string`, required)
 
 ### Outputs
 
 - `Clean_file_list` (`array`)
 - `Quarantined_file_list` (`array`)
-- `Infection_manifest` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `Infection_manifest` (`string`)
 
 ## Imagemagick
 
@@ -6361,17 +5932,17 @@ For each action plugin, this reference lists:
 | `execution_node` | string |  |  |
 | `execution_login` | string |  |  |
 | `execution_password` | string |  |  |
-| `binary_path` | string | `` (code) |  |
+| `binary_path` | string |  |  |
 
 ### Inputs
 
-- `Media_file_path` (`string`)
-- `Options` (`string`)
-- `Command_arguments` (`string`)
-- `Imagemagick_node` (`string`)
-- `Execution_login` (`string`)
-- `Execution_password` (`string`)
-- `Binaries_folder_path` (`string`)
+- `Media_file_path` (`string`, required)
+- `Imagemagick_node` (`string`, required)
+- `Options` (`string`, optional)
+- `Command_arguments` (`string`, optional)
+- `Execution_login` (`string`, optional)
+- `Execution_password` (`string`, optional)
+- `Binaries_folder_path` (`string`, optional)
 
 ### Outputs
 
@@ -6380,7 +5951,6 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
 
 ## InfluxdbOperation
@@ -6413,26 +5983,21 @@ For each action plugin, this reference lists:
 - `Db_name` (`string`, required)
 - `Url` (`string`, required)
 - `Precision` (`string`, required)
-- `User_name` (`string`, optional)
-- `Password` (`string`, optional)
-- `Query` (`string`, required)
-- `Chunk_size` (`int`, optional)
 - `Data` (`string`, required)
 - `Consistency` (`string`, required)
+- `User_name` (`string`, optional)
+- `Password` (`string`, optional)
 - `Retention_policy` (`string`, optional)
+- `Query` (`string`, required)
+- `Chunk_size` (`int`, optional)
 
 ### Outputs
 
 - `Error Message` (`string`)
 - `Response Code` (`int`)
+- `Step_information` (`hash`)
 - `Raw Output` (`string`)
 - `Hash Output` (`hash`)
-- `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## InputManipulation
 
@@ -6462,26 +6027,11 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `String_input1` (`string`, required)
-- `String_pattern` (`string`, required)
-- `String_replace` (`string`, required)
-- `Array_input1` (`string`, required)
-- `Array_input2` (`string`, required)
-- `Hash_input1` (`string`, required)
-- `Hash_key` (`string`, required)
-- `array_input1` (`array`)
-- `array_input2` (`array`)
-- `hash_input1` (`hash`)
-- `hash_key` (`string`)
+- None found in source.
 
 ### Outputs
 
-- `output` (`string` or `array` or `flag` or `hash`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## IrtMxfAnalyser
 
@@ -6507,7 +6057,13 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Service_node_or_address` (`string`)
+- `File_path` (`string`, required)
+- `Profile_name` (`string`, required)
+- `Service_node_or_address` (`string`, required)
+- `Job_name` (`string`, optional)
+- `User_id` (`string`, optional)
+- `Priority` (`string`, optional)
+- `Server_port` (`string`, optional)
 
 ### Outputs
 
@@ -6516,10 +6072,6 @@ For each action plugin, this reference lists:
 - `Link to Report page` (`string`)
 - `Errors warnings and infos` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## IsmM3u8Parser
 
@@ -6540,19 +6092,15 @@ For each action plugin, this reference lists:
 ### Inputs
 
 - `File_path` (`string`, required)
-- `Return_output_as` (`array`, optional)
+- `Return_output_as` (`flag`, optional)
 
 ### Outputs
 
 - `Hash_of_ISM_Filenames` (`hash`)
 - `Hash_of_M3u8_Filenames` (`hash`)
+- `Step_information` (`hash`)
 - `Array_of_ISM_Filenames` (`array`)
 - `Array_of_M3u8_Filenames` (`array`)
-- `Step_information` (`hash`)
-
-### Notes
-
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## ItunesTransporter
 
@@ -6568,7 +6116,7 @@ For each action plugin, this reference lists:
 | `name` | string |  |  |
 | `comments` | text |  |  |
 | `operation` | string |  |  |
-| `command_line_payload` | text | `"<%= proxy_tag(proxy_host, proxy_port, http_proxy_host, http_proxy_Port) %> \` (code) |  |
+| `command_line_payload` | text | `<%= proxy_tag(proxy_host, proxy_port, http_proxy_host, http_proxy_Port) %> <%= target_rate_tag(target_rate, transport_mode) %> <%= jvm_heap_size_tag(JVM_heap_size) %> -m upload -v eXtreme -indicator true -throughput -t <%= transport_mode %> -WONoPause True -DchecksumValidation=<%= checksum_validation %> <%= move_or_delete_tag(delete_after_upload, move_after_success_path, move_after_failure_path) %> <%= output_log_tag(output_log_path) %> <%= add_management_port(management_port) %>` (code) |  |
 | `saved_inputs` | text |  | `Saved_inputs` |
 | `execution_node` | string |  |  |
 | `sender_node_address` | string | `localhost` (code) |  |
@@ -6580,6 +6128,19 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `transport_mode` (`string`, optional)
+- `checksum_validation` (`string`, optional)
+- `proxy_host` (`string`, optional)
+- `proxy_port` (`string`, optional)
+- `http_proxy_host` (`string`, optional)
+- `http_proxy_Port` (`string`, optional)
+- `target_rate` (`string`, optional)
+- `JVM_heap_size` (`string`, optional)
+- `delete_after_upload` (`string`, optional)
+- `move_after_success_path` (`string`, optional)
+- `move_after_failure_path` (`string`, optional)
+- `output_log_path` (`string`, optional)
+- `management_port` (`string`, optional)
 - `Saved_inputs` (`string`, optional)
 
 ### Outputs
@@ -6590,7 +6151,6 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
 
 ## JiraOperation
@@ -6611,11 +6171,11 @@ For each action plugin, this reference lists:
 | `ticket_type` | string |  | `Ticket Type` |
 | `jira_url` | string |  | `Jira_url` |
 | `priority` | string |  | `Priority` |
-| `assignee` | string | `` (code) | `Assignee` |
+| `assignee` | string |  | `Assignee` |
 | `proj_id` | string |  | `Project Key` |
 | `username` | string |  | `Username` |
 | `password` | string |  | `Password` |
-| `component` | string | `` (code) | `Component` |
+| `component` | string |  | `Component` |
 | `ssl_verification` | boolean | `true` | `Ssl_verification` |
 
 ### Inputs
@@ -6625,12 +6185,11 @@ For each action plugin, this reference lists:
 - `Ticket Type` (`string`, required)
 - `Jira_url` (`string`, required)
 - `Priority` (`string`, required)
-- `Assignee` (`string`, optional)
 - `Username` (`string`, required)
 - `Password` (`string`, required)
-- `Component` (`string`, optional)
-- `Ssl_verification` (`flag`, required)
 - `Project Key` (`string`, required)
+- `Assignee` (`string`, optional)
+- `Component` (`string`, optional)
 
 ### Outputs
 
@@ -6657,12 +6216,12 @@ For each action plugin, this reference lists:
 | `remote_port` | string | `9092` (code) | `Remote_port` |
 | `execution_node` | string |  | `Execution_node` |
 | `topic` | string |  | `Topic` |
-| `partition_id` | integer | `` (code) | `Partition_id` |
-| `partition_key` | string | `` (code) | `Partition_key` |
-| `message_key` | string | `` (code) | `Message_key` |
+| `partition_id` | integer |  | `Partition_id` |
+| `partition_key` | string |  | `Partition_key` |
+| `message_key` | string |  | `Message_key` |
 | `message_body` | text |  | `Message_body` |
 | `group_id2` | string |  | `Group_id` |
-| `pattern` | string | `` (code) | `Pattern` |
+| `pattern` | string |  | `Pattern` |
 | `sync_producer` | boolean | `true` |  |
 | `use_ssl` | boolean | `false` |  |
 | `read_from_beginning` | boolean | `false` |  |
@@ -6677,27 +6236,21 @@ For each action plugin, this reference lists:
 - `Topic` (`string`, required)
 - `Remote_address` (`string`, required)
 - `Remote_port` (`string`, optional)
-- `Execution_node` (`string`, required)
-- `Message_body` (`string`, required)
-- `Message_key` (`string`, optional)
-- `Partition_key` (`string`, optional)
-- `Partition_id` (`int`, optional)
-- `Group_id` (`string`, required)
-- `Pattern` (`string`, optional)
 - `Certificate_path` (`string`, required)
+- `Group_id` (`string`, required)
+- `Message_key` (`string`, optional)
+- `Partition_id` (`int`, optional)
+- `Pattern` (`string`, optional)
+- `Message_body` (`string`, required)
+- `Partition_key` (`string`, optional)
 
 ### Outputs
 
-- `Message_Body` (`array` or `string`)
-- `Partition_ID` (`array` or `int`)
-- `Message_Offset` (`array` or `int`)
-- `Message_Key` (`array` or `string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `Message_Body` (`string` or `array`)
+- `Partition_ID` (`int` or `array`)
+- `Message_Offset` (`int` or `array`)
+- `Message_Key` (`string` or `array`)
 
 ## LoadBalancer
 
@@ -6719,17 +6272,12 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Resource_list` (`string` or `array`, required)
-- `Resource_name` (`string`, optional)
+- `Resource_list` (`array`, required)
 
 ### Outputs
 
 - `Resource` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## LoadManager
 
@@ -6756,8 +6304,8 @@ For each action plugin, this reference lists:
 | `resource_hold_timeout` | integer |  |  |
 | `queue_id` | string |  | `Queue_id` |
 | `use_weight_for_allocation` | boolean |  |  |
-| `on_wait_timeout` | string | `ACTION_FAIL` (code) |  |
-| `manager_action` | string | `ACTION_RESERVE` (code) |  |
+| `on_wait_timeout` | string | `Fail` (code) |  |
+| `manager_action` | string | `Reserve` (code) |  |
 | `allocation_label` | string |  | `Allocation_label` |
 | `is_adhoc` | boolean | `true` |  |
 | `pool_name` | text |  | `Pool_name` |
@@ -6765,34 +6313,25 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Allocation_policy` (`string`, required)
-- `Managed_resources` (`string` or `<resource_capacity>`, required)
-- `Resource_capacity` (`int`, optional)
+- `Managed_resources` (`hash` or `array`, required)
 - `Resource_pool_name` (`string`, required)
 - `Allocation_label` (`string`, optional)
-- `Queue_id` (`string`, optional)
 - `Allocation_block` (`int`, optional)
+- `Resource_capacity` (`int`, optional)
+- `Expected_queued_item` (`string`, optional)
+- `Allocation_token_to_release` (`int`, required)
 - `Pool_name` (`string`, required)
-- `Allocation_token_to_release` (`int`)
-- `Expected_queued_item` (`string`)
-- `Queue` (`string`)
 
 ### Outputs
 
 - `Resource_reserved` (`string`)
+- `Allocation_token` (`int`)
+- `Capacity_reserved` (`int`)
+- `Step_information` (`hash`)
 - `Queued_item` (`string`)
 - `Queued_item_description` (`string`)
 - `Queued_item_tags` (`string`)
 - `Capacity_released` (`int`)
-- `Allocation_token` (`int`)
-- `Capacity_reserved` (`int`)
-- `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- A name in angle brackets (`<attribute>`) is the value of that template attribute.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## LocalExecution
 
@@ -6820,15 +6359,13 @@ For each action plugin, this reference lists:
 
 ### Outputs
 
-- `Multi` (`array`)
 - `stdio` (`string`)
 - `Step_information` (`hash`)
+- `Multi` (`array`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 - Outputs are partly defined by template fields: see the template attributes.
 
 ## LocalFileOperation
@@ -6864,29 +6401,25 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `operation` (`string`, required)
+- `source` (`array`, required)
+- `target` (`string`, optional)
+- `base` (`string`, optional)
+- `preserve_timestamp` (`flag`, optional)
 - `Chmod` (`string`, optional)
 - `Uid` (`string`, optional)
 - `Guid` (`string`, optional)
-- `Expose_explicit_failed_list` (`flag`, optional)
-- `target` (`string`, required)
-- `base` (`string`, optional)
-- `Sources` (`string`, required)
-- `preserve_timestamp` (`flag`)
-- `overwrite_flag` (`flag`)
-- `source` (`array` or `string`)
 
 ### Outputs
 
 - `File_list` (`array`)
 - `Failed_list` (`array`)
-- `All_Failed_Files` (`array`)
 - `Step_information` (`hash`)
+- `All_Failed_Files` (`array`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## LocalFilePermission
 
@@ -6909,7 +6442,7 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Source_files` (`string` or `array`, required)
+- `Source_files` (`array`, required)
 - `Permissions` (`string`, optional)
 - `Uid` (`string`, optional)
 - `Gid` (`string`, optional)
@@ -6922,10 +6455,6 @@ For each action plugin, this reference lists:
 - `CHMOD_File_list` (`array`)
 - `CHMOD_Failed_list` (`array`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## LocalFileWatcher
 
@@ -6941,7 +6470,7 @@ For each action plugin, this reference lists:
 | `name` | string |  |  |
 | `directory` | string |  | `directory` |
 | `use_regex_matching` | boolean |  |  |
-| `tempo` | integer | `(DEFAULT_POLLING_FREQUENCY * 1000)` (code) |  |
+| `tempo` | integer | `5000` (code) |  |
 | `partial_file` | boolean |  |  |
 | `return_all` | boolean |  |  |
 | `run_synchronous` | boolean |  |  |
@@ -6969,31 +6498,26 @@ For each action plugin, this reference lists:
 
 - `File_name` (`string`, required)
 - `directory` (`string` or `array`, required)
+- `removeFile` (`flag`, optional)
+- `archiveWithTimestamp` (`flag`, optional)
+- `allowMultiple` (`flag`, optional)
+- `readFile` (`flag`, optional)
+- `tempo` (`int`, optional)
+- `maxEntries` (`int`, optional)
+- `timeout` (`int`, optional)
+- `includeFolders` (`flag`, optional)
+- `directoryBase` (`string`, optional)
+- `archiveDirectory` (`string`, optional)
 - `Exclusions` (`string`, optional)
 - `Fullpath_exclusions` (`string`, optional)
-- `removeFile` (`flag`)
-- `archiveWithTimestamp` (`flag`)
-- `allowMultiple` (`flag`)
-- `readFile` (`flag`)
-- `tempo` (`int`)
-- `maxEntries` (`int`)
-- `timeout` (`int`)
-- `includeFolders` (`flag`)
-- `directoryBase` (`string`)
-- `archiveDirectory` (`string`)
-- `persistenceScope` (`string`)
-- `fileName` (`string`)
+- `persistenceScope` (`string`, optional)
+- `fileName` (`string`, optional)
 
 ### Outputs
 
-- `FileName` (`array` or `string`)
-- `FileContent` (`string`)
+- `FileName` (`string` or `array`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `FileContent` (`string`)
 
 ## LocalFolderWatcher
 
@@ -7029,24 +6553,16 @@ For each action plugin, this reference lists:
 
 - `watch_directory` (`string` or `array`, required)
 - `Folder_pattern` (`string`, optional)
+- `persistenceScope` (`string`, optional)
 - `Reject_regex` (`string`, optional)
 - `Polling_frequency` (`int`, optional)
-- `persistenceScope` (`string`)
-- `Folder_path` (`string`)
-- `Content` (`array` or `hash`)
-- `Folder_list` (`array`)
 
 ### Outputs
 
 - `Folder_path` (`string`)
-- `Content` (`array` or `hash`)
-- `Folder_list` (`array`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `Folder_list` (`array`)
+- `Content` (`array` or `hash`)
 
 ## MacCaptionOperation
 
@@ -7072,36 +6588,22 @@ For each action plugin, this reference lists:
 | `output_caption_file_path` | string |  | `Output_caption_file_path` |
 | `input_caption_format` | string |  | `Input_caption_format` |
 | `output_caption_format` | string |  | `Output_caption_format` |
-| `job_options` | text | `` (code) | `Job_Options` |
-| `input_options` | text | `` (code) | `Input_options` |
-| `output_options` | text | `` (code) | `Output_options` |
-| `options` | text | `` (code) |  |
-| `raw_command_line` | text | `` (code) | `Raw_command_line` |
-| `commands` | text | `` (code) | `Commands` |
-| `trim_inpoint` | string | `` (code) | `Trim_inpoint` |
-| `trim_outpoint` | string | `` (code) | `Trim_outpoint` |
+| `job_options` | text |  | `Job_Options` |
+| `input_options` | text |  | `Input_options` |
+| `output_options` | text |  | `Output_options` |
+| `options` | text |  |  |
+| `raw_command_line` | text |  | `Raw_command_line` |
+| `commands` | text |  | `Commands` |
+| `trim_inpoint` | string |  | `Trim_inpoint` |
+| `trim_outpoint` | string |  | `Trim_outpoint` |
 
 ### Inputs
 
-- `Raw_command_line` (`string`, optional)
-- `Execution_node` (`string`, required)
-- `Input_caption_source_file_path` (`string`, required)
-- `Job_Options` (`string`, optional)
-- `Input_options` (`string`, optional)
-- `Input_caption_format` (`string`, required)
-- `Output_caption_format` (`string`, required)
-- `Output_caption_file_path` (`string`, required)
-- `Commands` (`string`, optional)
-- `Trim_inpoint` (`string`, optional)
-- `Trim_outpoint` (`string`, optional)
-- `Output_options` (`string`, optional)
-- `Input_media_file_path` (`string`, required)
+- None found in source.
 
 ### Outputs
 
 - `Raw_report` (`string`)
-- `Captions_read` (`int`)
-- `Output_caption_file_path` (`string`)
 - `Step_information` (`hash`)
 
 ## MarquisMewsOperation
@@ -7136,7 +6638,6 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
 
 ## MassParameterSetter
@@ -7158,19 +6659,18 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Config_name` (`string`, required)
 - `Parameters` (`string`, required)
+- `Config_name` (`string`, required)
 
 ### Outputs
 
-- `Stored_parameters` (`hash`)
 - `Step_information` (`hash`)
+- `Stored_parameters` (`hash`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 - Outputs are partly defined by template fields: see the template attributes.
+- Outputs depend on the `parameters` attribute: each key of the hash `{'name'=>['value','type']}` becomes an output of the corresponding type (index 1: string, int, float, flag, date, array, hash, object, pwd, attachment).
 
 ## McAfeeVirusCheck
 
@@ -7209,11 +6709,9 @@ For each action plugin, this reference lists:
 ### Inputs
 
 - `Input_file_path` (`string`, required)
+- `McAfeeAV_node` (`string`, required)
 - `Options` (`string`, optional)
-- `McAfeeAV_node` (`string`)
-- `Execution_login` (`string`)
-- `Execution_password` (`string`)
-- `Binary_path` (`string`)
+- `Binary_path` (`string`, optional)
 
 ### Outputs
 
@@ -7223,11 +6721,6 @@ For each action plugin, this reference lists:
 - `Scan_report` (`string`)
 - `Output_file_path` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## Md5Checksum
 
@@ -7248,19 +6741,13 @@ For each action plugin, this reference lists:
 ### Inputs
 
 - `File_path` (`string`, required)
-- `Check_against` (`string`)
+- `Check_against` (`string`, optional)
 
 ### Outputs
 
 - `MD5_checksum` (`string`)
 - `Checked_filepath` (`string`)
-- `Check_against` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## MediaInfo
 
@@ -7291,14 +6778,14 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `Media_file_path` (`string`, required)
 - `Execution_node` (`string`, required)
+- `options` (`string`, optional)
 - `Binary_path` (`string`, optional)
 - `Execution_login` (`string`, optional)
 - `Execution_password` (`string`, optional)
 - `Xml_output` (`flag`, optional)
 - `Skip_cover_data_output` (`flag`, optional)
-- `Media_file_path` (`string`)
-- `options` (`string`)
 
 ### Outputs
 
@@ -7308,10 +6795,10 @@ For each action plugin, this reference lists:
 - `Image` (`hash`)
 - `XML output` (`string`)
 - `Step_information` (`hash`)
+- `<additional_sections>` (`hash`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
 
 ## MediaMateOperation
@@ -7333,14 +6820,14 @@ For each action plugin, this reference lists:
 | `operation` | string |  | `Operation` |
 | `model_path` | string |  | `Model_path` |
 | `polling_frequency` | integer | `5` (code) | `Polling_frequency` |
-| `xmlcfg` | mediumtext | `` (code) | `Xmlcfg` |
+| `xmlcfg` | mediumtext |  | `Xmlcfg` |
 
 ### Inputs
 
 - `Url` (`string`, required)
 - `Server` (`string`, required)
-- `Port` (`int`, optional)
 - `Operation` (`string`, required)
+- `Port` (`int`, optional)
 - `Model_path` (`string`, required)
 - `Xmlcfg` (`string`, optional)
 - `Polling_frequency` (`int`, optional)
@@ -7353,12 +6840,8 @@ For each action plugin, this reference lists:
 - `MediaMate Error` (`string`)
 - `Full Response` (`hash`)
 - `Error Message` (`string`)
-- `FLX Player State Value` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `FLX Player State Value` (`string`)
 
 ## MediabinAssetManagement
 
@@ -7385,25 +6868,16 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Mediabin_wsdl_url` (`string`, required)
-- `Mediabin_node` (`string`, required)
-- `Mediabin node or address` (`string`, required)
-- `Mediabin_path` (`string`, required)
-- `Local_path` (`string`, required)
 - `Mediabin_user` (`string`, required)
 - `Mediabin_password` (`string`, required)
-- `Assets` (`array`)
+- `Mediabin_path` (`string`, required)
+- `Local_path` (`string`, required)
 
 ### Outputs
 
+- `Step_information` (`hash`)
 - `Assets` (`array`)
 - `Local_path` (`string`)
-- `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## MergePoint
 
@@ -7424,19 +6898,30 @@ For each action plugin, this reference lists:
 | `mandatory_inputs` | text |  |  |
 | `optional_inputs` | text |  |  |
 
+- `merged_inputs`: Hash: `{'name' => ['primary_expr', 'alternate_expr', 'type', 'required|optional']}`. Primary and alternate are placeholders or fixed values; blank means use the input named `<name>` or `<name>_alternate` respectively.
+- `multi_inputs`: Hash: `{'name' => ['type', count, 'required|optional']}`. Generates inputs `<name>_1` … `<name>_N` and outputs `<name>` with the first non-nil value.
+- `mandatory_inputs`: Hash: `{'name' => 'type'}`. Shorthand for a merged_inputs entry `['', '<%= name %>', 'type', 'required']`: one input `<name>`, one output `<name>`.
+- `optional_inputs`: Hash: `{'name' => 'type'}`. Same as mandatory_inputs but marked optional.
+
 ### Inputs
 
-- None found in source.
+- `<merged_inputs>` (`string`, optional): For each name declared in merged_inputs: input `<name>` if the primary expression is blank (else the variables of its placeholders), and input `<name>_alternate` if the alternate expression is blank (else the variables of its placeholders). Type comes from `merged_inputs[name][2]`.
+- `<multi_inputs>` (`string`, optional): One input per slot: `<name>_1` … `<name>_N`. Type comes from `multi_inputs[name][0]`.
 
 ### Outputs
 
-- None found in source.
 - `Step_information` (`hash`)
+- `<merged_inputs>` (`string`): One output per name declared in merged_inputs. Type comes from `merged_inputs[name][2]`.
+- `<multi_inputs>` (`string`): One output per name declared in multi_inputs. Type comes from `multi_inputs[name][0]`.
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
+- merged_inputs format: `{'name' => ['primary_expression', 'alternate_expression', 'type', 'required|optional']}`. The primary expression is evaluated first; if the result is nil (or blank when consider_blank_nil is true), the alternate is evaluated. A blank expression means "take the runtime input named `<name>`" (primary) or "`<name>_alternate`" (alternate).
+- multi_inputs format: `{'name' => ['type', count, 'required|optional']}`. Generates optional inputs `<name>_1` … `<name>_N`; the output `<name>` receives the first non-nil value found in order.
+- mandatory_inputs and optional_inputs are shorthands: each entry adds a merged_inputs entry with blank primary, "`<%= name %>`" as alternate, and the given type.
+- When consider_blank_nil is true (default), empty strings and empty arrays are treated as nil, so the alternate expression is tried.
+- All inputs of the step are optional. 'required' (`merged_inputs[name][3]`, `multi_inputs[name][2]`, mandatory_inputs) acts at execution: when no value is found, the step ends with status Failed ("A valid value was not found for `<names>`").
 
 ## MinnetonkaAudiotoolserver
 
@@ -7463,9 +6948,9 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `remote node or server address` (`string`, required)
 - `Workflowxml` (`string`, required)
 - `priority` (`string`, required)
-- `remote node or server address` (`string`)
 
 ### Outputs
 
@@ -7473,10 +6958,6 @@ For each action plugin, this reference lists:
 - `ATS_status_message` (`string`)
 - `ATS_Log_Messages` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## MogMxfspeedrail
 
@@ -7503,12 +6984,12 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `remote node or server address` (`string`, required)
 - `xml payload` (`string`, required)
 - `flow name` (`string`, required)
 - `user name` (`string`, required)
 - `password` (`string`, required)
 - `Job Name` (`string`, optional)
-- `remote node or server address` (`string`)
 
 ### Outputs
 
@@ -7519,7 +7000,6 @@ For each action plugin, this reference lists:
 ### Notes
 
 - The name in `metadata.yml` is `MogMxfSpeedrail`: use the class name `MogMxfspeedrail`.
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## MongodbOperation
 
@@ -7559,31 +7039,31 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `Operation` (`string`, required)
+- `Collection_name` (`string`, required)
 - `Connection_uri` (`string`, optional)
 - `Database_name` (`string`, optional)
-- `Operation` (`string`, required)
-- `Client_options` (`string` or `hash`, optional)
-- `Database_options` (`string` or `hash`, optional)
-- `Pipeline` (`string` or `array`, required)
+- `Client_options` (`hash`, optional)
+- `Database_options` (`hash`, optional)
+- `Logging_enabled` (`flag`, optional)
+- `Collection_options` (`hash`, optional)
+- `Selector` (`hash`, optional)
+- `Options` (`hash`, optional)
+- `Pipeline` (`array`, optional)
 - `Key` (`string`, required)
+- `Document` (`hash`, optional)
 - `Map_function` (`string`, required)
 - `Reduce_function` (`string`, required)
-- `Logging_enabled` (`flag`)
-- `Allow_all_to_be_removed` (`flag`)
+- `Allow_all_to_be_removed` (`flag`, optional)
 
 ### Outputs
 
+- `Step_information` (`hash`)
 - `Response` (`hash`)
 - `Results` (`array`)
 - `Count` (`int`)
 - `Document` (`hash`)
 - `Document_id` (`string`)
-- `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## MxFixer
 
@@ -7599,22 +7079,22 @@ For each action plugin, this reference lists:
 | `name` | string |  |  |
 | `comments` | text |  |  |
 | `file_path` | string |  | `File_path` |
-| `report_path` | string | `` (code) | `Report_path` |
+| `report_path` | string |  | `Report_path` |
 | `max_level_for_success` | integer | `6` (code) | `Max_level_for_success` |
 | `execution_node` | string |  | `Execution_node` |
 | `execution_login` | string |  |  |
 | `execution_password` | string |  |  |
-| `binary_path` | string | `C:\\Program Files (x86)\\Metaglue\\MXFixer\\Fixerscript.exe` (code) |  |
-| `script_path` | string | `C:\\Program Files (x86)\\Metaglue\\MXFixer\\FixerScript\\FixertestXML.cfx` (code) | `Script_path` |
+| `binary_path` | string | `C:\Program Files (x86)\Metaglue\MXFixer\Fixerscript.exe` (code) |  |
+| `script_path` | string | `C:\Program Files (x86)\Metaglue\MXFixer\FixerScript\FixertestXML.cfx` (code) | `Script_path` |
 | `options` | string |  |  |
 
 ### Inputs
 
 - `File_path` (`string`, required)
+- `Execution_node` (`string`, required)
 - `Max_level_for_success` (`int`, optional)
 - `Report_path` (`string`, optional)
 - `Script_path` (`string`, optional)
-- `Execution_node` (`string`, required)
 
 ### Outputs
 
@@ -7622,11 +7102,6 @@ For each action plugin, this reference lists:
 - `Report file absolute path` (`string`)
 - `All verification messages (Level->[Text])` (`hash`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## MxfLegalizer
 
@@ -7652,21 +7127,15 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `remote node or server address` (`string`, required)
 - `source` (`string`, required)
 - `priority` (`string`, required)
 - `resource_id` (`string`, required)
-- `XML_result` (`hash` or `string`)
-- `remote node or server address` (`string`)
 
 ### Outputs
 
-- `XML_result` (`hash` or `string`)
+- `XML_result` (`string` or `hash`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## OpswatMetadefender
 
@@ -7683,21 +7152,31 @@ For each action plugin, this reference lists:
 | `comments` | text |  |  |
 | `opswat_address` | string |  |  |
 | `port` | integer | `8008` (code) |  |
-| `apikey` | string | `` (code) |  |
-| `username` | string | `` (code) |  |
-| `password` | string | `` (code) |  |
+| `apikey` | string |  |  |
+| `username` | string |  |  |
+| `password` | string |  |  |
 | `files` | string |  |  |
 | `separator` | string | `,` (code) |  |
 | `user_agent` | string | `Aspera Orchestrator` (code) |  |
 | `rule` | string |  |  |
-| `archivepwd` | string | `` (code) |  |
+| `archivepwd` | string |  |  |
 | `failinfected` | boolean | `false` (code) |  |
 | `polling_frequency` | integer | `5` (code) |  |
 
 ### Inputs
 
-- `user` (`<username>`)
-- `password` (`<password>`)
+- `Opswat_address` (`string`, required)
+- `Files` (`string`, required)
+- `Rule` (`string`, required)
+- `Port` (`int`, optional)
+- `Apikey` (`string`, optional)
+- `Username` (`string`, optional)
+- `Password` (`string`, optional)
+- `Separator` (`string`, optional)
+- `User_agent` (`string`, optional)
+- `Archivepwd` (`string`, optional)
+- `Failinfected` (`flag`, optional)
+- `Polling_frequency` (`int`, optional)
 
 ### Outputs
 
@@ -7706,11 +7185,6 @@ For each action plugin, this reference lists:
 - `Infected Files` (`array`)
 - `Sanitised Data ID` (`array`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- A name in angle brackets (`<attribute>`) is the value of that template attribute.
 
 ## OrchestratorAlertEntry
 
@@ -7726,7 +7200,7 @@ For each action plugin, this reference lists:
 | `name` | string |  |  |
 | `comments` | text |  |  |
 | `category_type` | integer |  | `Category_type` |
-| `header` | string | `` (code) | `Header` |
+| `header` | string |  | `Header` |
 | `alert_message` | text |  | `Alert_message` |
 
 ### Inputs
@@ -7775,30 +7249,17 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `Content_name` (`string`, required)
+- `Content_url` (`string`, required)
+- `Pdf_file_path` (`string`, required)
+- `Encryption_type` (`string`, required)
+- `Server_address` (`string`, required)
 - `Orion_port` (`int`, optional)
 - `Orion_username` (`string`, optional)
 - `Orion_password` (`string`, optional)
-- `Content_name` (`string`, required)
-- `Content_url` (`string`, required)
 - `Register_keys` (`string`, optional)
-- `Pdf_file_path` (`string`, required)
-- `Encryption_type` (`string`, required)
 - `Monitoring_profile` (`string`, optional)
 - `Monitoring_template` (`string`, optional)
-- `Server_address` (`string`, required)
-- `Minor_Errors_Count` (`int`)
-- `Major_Errors_Count` (`int`)
-- `Critical_Errors_Count` (`int`)
-- `Pdf_Report_Path` (`string`)
-- `Content_Id` (`int`)
-- `HTTP_Response_Code` (`int`)
-- `Raw_Response_Hash` (`hash`)
-- `Orion_Code_Received` (`int`)
-- `Message_Received` (`string`)
-- `Content_Register_Error_Message` (`string`)
-- `Key_Register_Error_Message` (`string`)
-- `Asset_Summary` (`hash`)
-- `Play_Url` (`string`)
 
 ### Outputs
 
@@ -7816,10 +7277,6 @@ For each action plugin, this reference lists:
 - `Asset_Summary` (`hash`)
 - `Play_Url` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## PasswordGenerator
 
@@ -7849,12 +7306,8 @@ For each action plugin, this reference lists:
 ### Outputs
 
 - `Generated password` (`string`)
-- `Encrypted generated password` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `Encrypted generated password` (`string`)
 
 ## PulsarContentVerification
 
@@ -7872,15 +7325,15 @@ For each action plugin, this reference lists:
 | `server_node` | string |  |  |
 | `server_address` | string |  |  |
 | `server_api_port` | integer | `8093` (code) |  |
-| `template_name` | string |  | `Template_name` |
+| `template_name` | string | `Default` (code) | `Template_name` |
 | `source_file` | string |  | `Source_file` |
 | `polling_frequency` | integer | `5` (code) |  |
 
 ### Inputs
 
-- `Template_name` (`string`, required)
+- `Pulsar_server_address` (`string`, required)
 - `Source_file` (`string`, required)
-- `Pulsar_server_address` (`string`)
+- `Template_name` (`string`, optional)
 
 ### Outputs
 
@@ -7889,10 +7342,6 @@ For each action plugin, this reference lists:
 - `Content_Verification_Result` (`string`)
 - `Content_Verification_Stats` (`hash`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## QscanFileVerification
 
@@ -7922,19 +7371,25 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- None found in source.
+- `address` (`string`, required)
+- `username` (`string`, required)
+- `password` (`string`, required)
+- `template_id` (`string`, required)
+- `repository_id` (`string`, required)
+- `file_path` (`string`, required)
+- `Save_pdf_report` (`flag`, required)
+- `Delete_completed_job` (`flag`, required)
+- `port` (`string`, optional)
+- `job_name` (`string`, optional)
+- `polling_frequency` (`int`, optional)
+- `pdf_report_file_path` (`string`, required)
 
 ### Outputs
 
 - `job_name` (`string`)
 - `events` (`array`)
-- `pdf_file_size` (`int`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `pdf_file_size` (`int`)
 
 ## QuasarVeneraQcOperation
 
@@ -7954,10 +7409,10 @@ For each action plugin, this reference lists:
 | `request_name` | string |  |  |
 | `end_point_url` | text |  | `End_point_url` |
 | `file_path` | text |  | `File_path` |
-| `template_name` | string |  | `Template_name` |
+| `template_name` | string | `Default` (code) | `Template_name` |
 | `template_type` | integer |  | `Template_type` |
 | `job_type` | integer |  | `Job_type` |
-| `user_note` | string | `` (code) | `User_note` |
+| `user_note` | string |  | `User_note` |
 | `access_key_id` | string |  | `Access_key_id` |
 | `access_key_secret` | string |  | `Access_key_secret` |
 | `polling_frequency` | integer | `10` (code) |  |
@@ -7968,18 +7423,12 @@ For each action plugin, this reference lists:
 - `Api_key` (`string`, required)
 - `End_point_url` (`string`, required)
 - `File_path` (`string`, required)
-- `Template_name` (`string`, required)
 - `Template_type` (`int`, required)
 - `Job_type` (`int`, required)
 - `Access_key_id` (`string`, required)
 - `Access_key_secret` (`string`, required)
+- `Template_name` (`string`, optional)
 - `User_note` (`string`, optional)
-- `Error_Message` (`string`)
-- `Create_Job_Raw_Response` (`hash`)
-- `Job_Status_Raw_Response` (`hash`)
-- `Message_Received` (`string`)
-- `Error_Count` (`int`)
-- `Warning_Count` (`int`)
 
 ### Outputs
 
@@ -7990,11 +7439,6 @@ For each action plugin, this reference lists:
 - `Error_Count` (`int`)
 - `Warning_Count` (`int`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## QueueStager
 
@@ -8028,37 +7472,32 @@ For each action plugin, this reference lists:
 ### Inputs
 
 - `Queue_ID` (`string`, required)
+- `Queued_item` (`string` or `array`, required)
+- `Queued_item_description` (`string` or `array`, optional)
+- `Weight` (`int` or `array`, optional)
 - `Priority` (`int` or `array`, optional)
-- `Tags` (`string` or `<tags>`, optional)
-- `Queued_item` (`string` or `array`)
-- `Queued_item_description` (`array` or `string`)
-- `Weight` (`array` or `int`)
-- `Max_item_count` (`int`)
+- `Tags` (`string`, optional)
+- `Max_item_count` (`int`, required)
 
 ### Outputs
 
+- `Queue_ID` (`string`)
+- `Step_information` (`hash`)
+- `Queued_item` (`string`)
+- `Queued_item_description` (`string`)
+- `Item_id` (`int`)
+- `Tags` (`string`)
+- `Items added` (`int`)
+- `Weight` (`int`)
 - `Queued_items` (`array` or `int`)
 - `Total_weight` (`int`)
 - `Queue_status` (`string`)
-- `Queued_item` (`string` or `array`)
-- `Item_id` (`int`)
-- `Tags` (`string` or `<tags>`)
-- `Queued_item_description` (`string` or `array`)
-- `Weight` (`int` or `array`)
 - `Rank` (`int`)
 - `Time in queue` (`int`)
-- `Items added` (`int`)
-- `Queue_ID` (`string`)
-- `Priority` (`array`)
-- `Max_item_count` (`int`)
-- `Step_information` (`hash`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- A name in angle brackets (`<attribute>`) is the value of that template attribute.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## RegexMatcher
 
@@ -8081,16 +7520,11 @@ For each action plugin, this reference lists:
 
 - `Expression` (`string`, required)
 - `Regex_pattern` (`string`, required)
-- `Match` (`string`)
 
 ### Outputs
 
 - `Match` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## RemoteExecution
 
@@ -8126,22 +7560,20 @@ For each action plugin, this reference lists:
 ### Inputs
 
 - `Execution_node` (`string`, required)
+- `Execution_login` (`string`, optional)
+- `Execution_password` (`string`, optional)
 - `Execution_server_address` (`string`, required)
-- `Execution_login` (`string`)
-- `Execution_password` (`string`)
 
 ### Outputs
 
 - `exit_code` (`int`)
-- `Multi` (`array`)
 - `stdio` (`string`)
 - `Step_information` (`hash`)
+- `Multi` (`array`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 - Outputs are partly defined by template fields: see the template attributes.
 
 ## RemoteFileOperation
@@ -8168,23 +7600,18 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `remote_node` (`string`, required)
 - `target` (`string`, required)
-- `base` (`string`, optional)
 - `operation` (`string`, required)
-- `Source` (`string`, required)
-- `remote_node_user` (`string`)
-- `remote_node_password` (`string`)
-- `source` (`array`)
+- `remote_node` (`string`, required)
+- `source` (`array`, required)
+- `remote_node_user` (`string`, optional)
+- `remote_node_password` (`string`, optional)
+- `base` (`string`, optional)
 
 ### Outputs
 
-- `Directory_list` (`array`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
+- `Directory_list` (`array`)
 
 ## RemoteFileWatcher
 
@@ -8207,7 +7634,7 @@ For each action plugin, this reference lists:
 | `polling_frequency` | integer | `10` (code) |  |
 | `check_once` | boolean |  |  |
 | `keep_ongoing` | boolean |  |  |
-| `trigger_type` | string | `TRIG_GROUP` (code) |  |
+| `trigger_type` | string | `by workorder group` (code) |  |
 | `return_single` | boolean |  |  |
 | `trigger_on_partial` | boolean |  |  |
 | `ignore_folders` | boolean |  |  |
@@ -8227,31 +7654,24 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Ignore_instant_files` (`flag`, optional)
-- `Recursive_search` (`flag`, optional)
-- `Force_exact_matching` (`flag`, optional)
-- `Result_limit` (`int`, optional)
+- `File_pattern` (`string`, required)
+- `Watch_directory` (`string` or `array`, required)
+- `remote_node` (`string`, required)
+- `remote_node_user` (`string`, optional)
+- `remote_node_password` (`string`, optional)
+- `polling_frequency` (`int`, optional)
+- `persistence_scope` (`string`, optional)
 - `Exclusions` (`string`, optional)
-- `remote_node_user` (`string`)
-- `remote_node_password` (`string`)
-- `File_list` (`array`)
-- `File_path` (`string`)
-- `File_pattern` (`string`)
-- `polling_frequency` (`int`)
-- `persistence_scope` (`string`)
-- `remote_node` (`string`)
 
 ### Outputs
 
 - `File_list` (`array`)
-- `File_path` (`string`)
 - `Step_information` (`hash`)
+- `File_path` (`string`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## RemoteFolderWatcher
 
@@ -8274,7 +7694,7 @@ For each action plugin, this reference lists:
 | `polling_frequency` | integer | `10` (code) |  |
 | `check_once` | boolean |  |  |
 | `keep_ongoing` | boolean |  |  |
-| `trigger_type` | string | `TRIG_GROUP` (code) |  |
+| `trigger_type` | string | `by workorder group` (code) |  |
 | `return_single` | boolean |  |  |
 | `multi_folders` | boolean |  |  |
 | `trigger_on_partial` | boolean |  |  |
@@ -8289,27 +7709,24 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `Folder_pattern` (`string`, required)
+- `Watch_directory` (`string` or `array`, required)
+- `remote_node` (`string`, required)
+- `remote_node_user` (`string`, optional)
+- `remote_node_password` (`string`, optional)
+- `polling_frequency` (`int`, optional)
+- `persistence_scope` (`string`, optional)
 - `Result_limit` (`int`, optional)
-- `remote_node_user` (`string`)
-- `remote_node_password` (`string`)
-- `Folder_path` (`string`)
-- `Folder_list` (`array`)
-- `Folder_pattern` (`string`)
-- `polling_frequency` (`int`)
-- `persistence_scope` (`string`)
-- `remote_node` (`string`)
 
 ### Outputs
 
-- `Folder_path` (`string`)
 - `Folder_list` (`array`)
 - `Step_information` (`hash`)
+- `Folder_path` (`string`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## ResourceManager
 
@@ -8344,35 +7761,25 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Unique_id` (`string`, required)
+- `Maximum_resources` (`int`, optional)
+- `Resource_list` (`array`, optional)
+- `Resource_name` (`string`, optional)
+- `Resource_to_release` (`string`, optional)
+- `Resource_token_path_to_release` (`string`, optional)
+- `Expected_queued_item` (`string`, optional)
 - `Pool_name` (`string`, required)
-- `Queue_id` (`string`, required)
-- `Resource_token_path_to_release` (`string`)
-- `Resource_name` (`string`)
-- `Resource_to_release` (`string`)
-- `Maximum_resources` (`int`)
-- `Resource_list` (`array`)
-- `Expected_queued_item` (`string`)
 
 ### Outputs
 
 - `Resource_ID` (`string`)
+- `Step_information` (`hash`)
 - `Token_path` (`string`)
 - `Queued_item` (`string`)
 - `Queued_item_description` (`string`)
-- `Resource_token_path_to_release` (`string`)
-- `Resource_name` (`string`)
-- `Resource_to_release` (`string`)
-- `Maximum_resources` (`int`)
-- `Resource_list` (`array`)
-- `Expected_queued_item` (`string`)
-- `Step_information` (`hash`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 - Outputs are partly defined by template fields: see the template attributes.
 
 ## RestRequest
@@ -8393,10 +7800,10 @@ For each action plugin, this reference lists:
 | `basic_auth_login` | string |  | `Basic_auth_login` |
 | `basic_auth_password` | string |  | `Basic_auth_password` |
 | `post_parameters` | text | `{}` (code) | `Post_parameters` |
-| `post_body` | text | `` (code) | `Post_body` |
+| `post_body` | text |  | `Post_body` |
 | `response_type` | string |  | `Response_type` |
 | `processed_outputs` | text |  |  |
-| `processed_outputs_code` | text | `` (code) | `Processed_outputs_code` |
+| `processed_outputs_code` | text |  | `Processed_outputs_code` |
 | `http_form_post_mode` | boolean |  |  |
 | `header_parameters` | text | `{}` (code) | `Header_parameters` |
 | `content_type` | string |  |  |
@@ -8407,7 +7814,7 @@ For each action plugin, this reference lists:
 | `record_identification_code` | text | `return record.to_yaml[3..-1]` (code) |  |
 | `records_extracting_code` | text | `return [result]` (code) | `Records_extracting_code` |
 | `record_formatting_code` | text |  | `Record_formatting_code` |
-| `proxy_address` | text | `` (code) | `Proxy_address` |
+| `proxy_address` | text |  | `Proxy_address` |
 | `save_to_file` | boolean | `false` | `Save_to_file` |
 | `response_file_path` | text |  | `Response_file_path` |
 | `ssl_verification` | boolean | `true` | `Ssl_verification` |
@@ -8424,6 +7831,7 @@ For each action plugin, this reference lists:
 ### Inputs
 
 - `Service_url` (`string`, required)
+- `Response_type` (`string`, required)
 - `Basic_auth_login` (`string`, optional)
 - `Basic_auth_password` (`string`, optional)
 - `Header_parameters` (`string`, optional)
@@ -8436,35 +7844,26 @@ For each action plugin, this reference lists:
 - `Ssl_client_key_path` (`string`, optional)
 - `Client_key_passphrase` (`string`, optional)
 - `Ssl_ca_file_path` (`string`, optional)
-- `Ssl_verification` (`flag`, required)
 - `Ssl_version` (`string`, optional)
 - `Request_timeout` (`int`, optional)
-- `Response_type` (`string`, required)
 - `Return_code_for_network_failure` (`int`, optional)
-- `Post_parameters` (`string`, optional)
 - `Post_body` (`string`, optional)
-- `Save_to_file` (`flag`, optional)
+- `Post_parameters` (`string`, optional)
 - `Response_file_path` (`string`, required)
-- `PUT_file_path` (`string`)
-- `Post_body_file_path` (`string`)
-- `Rest_Method` (`string`)
+- `Post_body_file_path` (`string`, required)
 
 ### Outputs
 
 - `HTTP_return_code` (`int`)
 - `Service_result` (`string`)
 - `Formatted_result` (`array`)
-- `JSON_result` (`hash`)
-- `XML_result` (`hash`)
 - `result_hash` (`hash`)
-- `Response_in_a_file` (`string`)
 - `Response_header` (`hash`)
 - `Step_information` (`hash`)
+- `Response_in_a_file` (`string`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 - Outputs are partly defined by template fields: see the template attributes.
 
 ## RobocopyOperation
@@ -8486,11 +7885,11 @@ For each action plugin, this reference lists:
 | `binary_path` | string |  | `Binary_path` |
 | `input_folder_path` | string |  | `Input_folder_path` |
 | `output_folder_path` | string |  | `Output_folder_path` |
-| `input_files` | string | `` (code) |  |
+| `input_files` | string |  |  |
 | `subdirectories_copy` | boolean | `false` (code) | `Subdirectories_copy` |
 | `empty_directories_copy` | boolean | `false` (code) | `Empty_directories_copy` |
 | `delete_from_source` | boolean | `false` (code) | `Delete_from_source` |
-| `options` | text | `` (code) |  |
+| `options` | text |  |  |
 
 ### Inputs
 
@@ -8503,10 +7902,6 @@ For each action plugin, this reference lists:
 - `Execution_node` (`string`, optional)
 - `Execution_login` (`string`, optional)
 - `Execution_password` (`string`, optional)
-- `files_tranferred` (`array`)
-- `transfer_report` (`string`)
-- `transfer_speed` (`array`)
-- `new_directories_transferred` (`array`)
 
 ### Outputs
 
@@ -8515,11 +7910,6 @@ For each action plugin, this reference lists:
 - `transfer_speed` (`array`)
 - `new_directories_transferred` (`array`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## RssFeedReader
 
@@ -8552,15 +7942,7 @@ For each action plugin, this reference lists:
 
 - `Rss_url` (`string`, required)
 - `Post_id_field` (`string`, optional)
-- `Do_validation` (`flag`, optional)
 - `New_only` (`flag`, optional)
-- `Title` (`string`)
-- `Link` (`string`)
-- `Description` (`string`)
-- `Post_ID` (`string`)
-- `All_posts` (`array`)
-- `Post_XML` (`string`)
-- `Item_keys` (`array`)
 
 ### Outputs
 
@@ -8568,15 +7950,10 @@ For each action plugin, this reference lists:
 - `Link` (`string`)
 - `Description` (`string`)
 - `Post_ID` (`string`)
-- `All_posts` (`array`)
-- `Post_XML` (`string`)
 - `Item_keys` (`array`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `All_posts` (`array`)
+- `Post_XML` (`string`)
 
 ## ScheduleTrigger
 
@@ -8601,20 +7978,15 @@ For each action plugin, this reference lists:
 ### Inputs
 
 - `schedule_rules` (`string`, required)
-- `keep_ongoing` (`flag`)
-- `trigger_start` (`date`)
-- `trigger_end` (`date`)
+- `keep_ongoing` (`flag`, optional)
+- `trigger_start` (`date`, optional)
+- `trigger_end` (`date`, optional)
 
 ### Outputs
 
-- `scheduled_trigger_time` (`date`)
 - `trigger_time` (`date`)
+- `scheduled_trigger_time` (`date`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## ScomNotification
 
@@ -8634,16 +8006,11 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `MessageCode` (`int`)
+- `MessageCode` (`int`, required)
 
 ### Outputs
 
-- None found in source.
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## ScpTransfer
 
@@ -8678,21 +8045,17 @@ For each action plugin, this reference lists:
 - `Operation` (`string`, required)
 - `Local_path` (`string`, required)
 - `Remote_path` (`string`, required)
+- `Remote_node_or_address` (`string`, required)
 - `Remote_user` (`string`, optional)
 - `Remote_port` (`string`, optional)
 - `Remote_key_location` (`string`, optional)
-- `Remote_node_or_address` (`string`)
-- `Remote_password` (`string`)
+- `Remote_password` (`string`, optional)
 
 ### Outputs
 
 - `Transferred_files` (`array`)
 - `Transferred_bytes` (`int`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## SftpTransfer
 
@@ -8730,29 +8093,32 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Remote_user` (`string`, optional)
+- `Upload_or_Download` (`string`, required)
+- `Local_path` (`string`, required)
+- `Remote_path` (`string`, required)
+- `Legacy_compatibility_mode` (`flag`, required)
+- `Keepalive` (`flag`, required)
+- `Remote_node_or_address` (`string`, required)
 - `Remote_port` (`int`, optional)
+- `Remote_user` (`string`, optional)
+- `Remote_passphrase` (`string`, optional)
 - `Remote_key_location` (`string`, optional)
-- `Remote_node_or_address` (`string`)
-- `Upload_or_Download` (`string`)
-- `Overwrite` (`flag`)
-- `Remove_source_file` (`flag`)
+- `Remove_source_file` (`flag`, optional)
+- `Preserve_timestamps` (`flag`, optional)
+- `Reporting_frequency` (`int`, optional)
+- `Proxy_host` (`string`, optional)
+- `Proxy_port` (`int`, optional)
+- `Proxy_user` (`string`, optional)
+- `Proxy_password` (`string`, optional)
+- `Overwrite` (`flag`, optional)
+- `Source_base` (`string`, optional)
 
 ### Outputs
 
 - `Transferred_files` (`array`)
 - `Transferred_bytes` (`int`)
 - `Failed_files` (`hash`)
-- `Remote_node_or_address` (`string`)
-- `Upload_or_Download` (`string`)
-- `Overwrite` (`flag`)
-- `Remove_source_file` (`flag`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## SftpTrigger
 
@@ -8791,26 +8157,21 @@ For each action plugin, this reference lists:
 ### Inputs
 
 - `Watch_folder` (`string`, required)
+- `Remote_node_or_address` (`string`, required)
 - `File_pattern` (`string`, optional)
 - `Recursion_depth` (`int`, optional)
+- `Polling_frequency` (`int`, optional)
+- `Persistence_scope` (`string`, optional)
 - `Remote_user` (`string`, optional)
 - `Remote_port` (`int`, optional)
 - `Remote_key_location` (`string`, optional)
 - `Remote_passphrase` (`string`, optional)
-- `Polling_frequency` (`int`)
-- `Persistence_scope` (`string`)
-- `Remote_node_or_address` (`string`)
 
 ### Outputs
 
-- `Files_found` (`array`)
 - `File_found` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `Files_found` (`array`)
 
 ## SglFlashnetArchive
 
@@ -8844,12 +8205,12 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Api_version` (`string`, optional)
 - `User_name` (`string`, required)
 - `Calling_application` (`string`, required)
 - `Operation` (`string`, required)
 - `Sgl_node_address` (`string`, required)
 - `Sgl_node_port` (`int`, required)
+- `Api_version` (`string`, optional)
 
 ### Outputs
 
@@ -8865,7 +8226,6 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
 
 ## SharedStateOperation
@@ -8898,32 +8258,26 @@ For each action plugin, this reference lists:
 ### Inputs
 
 - `full_path` (`string`, optional)
-- `aggregate_type` (`string`, optional)
-- `entry` (`string` or `<entry_type>`, required)
 - `path` (`string`, optional)
 - `entry_name` (`string`, optional)
-- `aggregate_id` (`int`)
-- `shared_state_id` (`int`)
+- `aggregate_type` (`string`, optional)
+- `shared_state_id` (`int`, optional)
+- `aggregate_id` (`int`, optional)
+- `entry` (`hash` or `array` or `date` or `flag` or `string` or `int`, optional)
 
 ### Outputs
 
+- `Step_information` (`hash`)
 - `id` (`int`)
-- `entry` (`<entry_type>`)
-- `entry_type` (`string`)
 - `path` (`string`)
 - `name` (`string`)
+- `entry` (`hash` or `array` or `date` or `flag` or `string` or `int`)
+- `entry_type` (`string`)
 - `aggregate_type` (`string`)
 - `aggregate_id` (`int`)
 - `Shared state(s)` (`array`)
 - `Number of shared states retrieved` (`int`)
 - `Errors` (`array`)
-- `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- A name in angle brackets (`<attribute>`) is the value of that template attribute.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## SharesTransferSetup
 
@@ -8953,7 +8307,6 @@ For each action plugin, this reference lists:
 - `remote node or server address` (`string`, required)
 - `user name` (`string`, required)
 - `password` (`string`, required)
-- `Remote_node` (`string`, required)
 - `source` (`string`, required)
 - `destination folder` (`string`, required)
 - `destination filename` (`string`, optional)
@@ -8963,10 +8316,6 @@ For each action plugin, this reference lists:
 
 - `transfer_spec` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## ShowMgrOperation
 
@@ -8995,31 +8344,18 @@ For each action plugin, this reference lists:
 
 - `Subscription_key` (`string`, required)
 - `Order_id` (`string`, required)
-- `Order_Info` (`hash`)
-- `Order_Id` (`string`)
-- `Job Status` (`string`)
-- `File Location` (`string`)
-- `Error` (`string`)
-- `Orders_list` (`array`)
-- `Execution Report` (`string`)
-- `Order Status` (`string`)
 
 ### Outputs
 
+- `Order Status` (`string`)
+- `Error` (`string`)
+- `Step_information` (`hash`)
+- `Orders_list` (`array`)
+- `Execution Report` (`string`)
 - `Order_Info` (`hash`)
 - `Order_Id` (`string`)
 - `Job Status` (`string`)
 - `File Location` (`string`)
-- `Error` (`string`)
-- `Orders_list` (`array`)
-- `Execution Report` (`string`)
-- `Order Status` (`string`)
-- `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## SimpleParameterLookup
 
@@ -9046,27 +8382,23 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `ColumnValues` (`array`)
-- `IndexedTable` (`hash`)
-- `ColumnToListValueFrom` (`string`)
-- `KeyForTableIndexing` (`string`)
-- `Keys` (`array`)
-- `Values` (`array`)
-- `rows` (`array`)
-- `ValuesHash` (`hash`)
+- `Param_file_name` (`string`, required)
+- `ColumnToListValueFrom` (`string`, optional)
+- `KeyForTableIndexing` (`string`, optional)
+- `Case_sensitive` (`flag`, optional)
+- `Strip_spaces` (`flag`, optional)
+- `Keys` (`array`, optional)
+- `Values` (`array`, optional)
+- `<parameters_associations>` (`string`, optional)
 
 ### Outputs
 
 - `ColumnValues` (`array`)
 - `IndexedTable` (`hash`)
-- `rows` (`array`)
 - `ValuesHash` (`hash`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `<parameters_associations>` (`string`)
+- `rows` (`array`)
 
 ## SlackNotification
 
@@ -9094,7 +8426,7 @@ For each action plugin, this reference lists:
 | `upload_filename` | string |  |  |
 | `initial_comment` | string |  |  |
 | `verify_ssl` | boolean | `false` (code) |  |
-| `attachments` | text | `` (code) | `Attachments` |
+| `attachments` | text |  | `Attachments` |
 
 ### Inputs
 
@@ -9108,6 +8440,7 @@ For each action plugin, this reference lists:
 
 ### Outputs
 
+- `Step_information` (`hash`)
 - `Error_Message` (`string`)
 - `Auth_Response_Received` (`hash`)
 - `Team_Id` (`string`)
@@ -9115,7 +8448,6 @@ For each action plugin, this reference lists:
 - `Company_Url` (`string`)
 - `Send_Text_Response` (`hash`)
 - `TS_Value` (`string`)
-- `Step_information` (`hash`)
 
 ## SnapshotPlugin
 
@@ -9131,8 +8463,8 @@ For each action plugin, this reference lists:
 | `name` | string |  |  |
 | `comments` | text | `Snapshot of Orchestrator configuration as of #{DateTime.now.strftime('%Y-%m-%d')} #{DateTime.now.strftime('%H:%M:%S')}` (code) |  |
 | `snapshot_name` | string | `Snapshot_#{Time.now.strftime('%Y%m%d%H%M%S')}` (code) | `Snapshot_name` |
-| `snapshot_directory` | string | `config.archive_dir` (code) | `Snapshot_directory` |
-| `custom_tables` | text | `` (code) |  |
+| `snapshot_directory` | string | `<archive_dir>` (code) | `Snapshot_directory` |
+| `custom_tables` | text |  |  |
 | `export_full_db` | boolean | `false` |  |
 | `db_export_directory` | string |  |  |
 
@@ -9140,18 +8472,13 @@ For each action plugin, this reference lists:
 
 - `Snapshot_name` (`string`, optional)
 - `Snapshot_directory` (`string`, optional)
-- `Db_export_path` (`string`)
+- `Db_export_path` (`string`, required)
 
 ### Outputs
 
 - `Snapshot_path` (`string`)
-- `Db_export_path` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `Db_export_path` (`string`)
 
 ## SoapRequest
 
@@ -9200,33 +8527,30 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `Wsdl_uri` (`string`, required)
+- `Service_action` (`string`, required)
 - `Polling_stop_condition` (`string`, optional)
 - `Records_extracting_code` (`string`, optional)
 - `Record_formatting_code` (`string`, optional)
 - `Result_formatting_code` (`string`, optional)
+- `Cookie` (`string`, optional)
+- `Explicit_payload` (`string`, required)
 - `Explicit_endpoint` (`string`, optional)
 - `Explicit_soap_action` (`string`, optional)
-- `Wsdl_uri` (`string`, required)
-- `Service_action` (`string`, required)
-- `Explicit_payload` (`string`, required)
 - `Http_basic_auth_user` (`string`, optional)
 - `Http_basic_auth_password` (`string`, optional)
-- `Session_header_parameters` (`hash`)
-- `Service_parameters` (`hash`)
-- `Cookie` (`string`)
 
 ### Outputs
 
-- `Raw_response` (`string`)
-- `Response_body` (`hash`)
+- `Service_results` (`array` or `string` or `int` or `hash` or `flag`)
 - `Cookie` (`string`)
 - `Step_information` (`hash`)
+- `Raw_response` (`string`)
+- `Response_body` (`hash`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## SoapRequestListener
 
@@ -9248,11 +8572,11 @@ For each action plugin, this reference lists:
 | `polling_frequency` | integer | `5` (code) |  |
 | `keep_ongoing` | boolean |  |  |
 | `processed_outputs` | text |  |  |
-| `processed_outputs_code` | text | `` (code) |  |
+| `processed_outputs_code` | text |  |  |
 
 ### Inputs
 
-- `Run-time call back ID` (`string`)
+- None found in source.
 
 ### Outputs
 
@@ -9264,7 +8588,6 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Outputs are partly defined by template fields: see the template attributes.
 
 ## SoftlayerApi
@@ -9283,19 +8606,19 @@ For each action plugin, this reference lists:
 | `softlayer_url` | string |  |  |
 | `softlayer_service` | string |  |  |
 | `softlayer_method` | string |  | `Softlayer_method` |
-| `softlayer_initparam` | string | `` (code) | `Softlayer_initparam` |
+| `softlayer_initparam` | string |  | `Softlayer_initparam` |
 | `username` | string |  | `Username` |
 | `apikey` | string |  | `Apikey` |
 | `rest_method` | string |  |  |
 | `response_type` | string | `json` (code) |  |
 | `ssl_verification` | boolean | `false` (code) |  |
 | `object_mask` | text | `[]` (code) | `Object_mask` |
-| `object_filter` | text | `` (code) | `Object_filter` |
-| `proxy_address` | string | `` (code) | `Proxy_address` |
-| `post_body` | text | `` (code) | `Post_body` |
+| `object_filter` | text |  | `Object_filter` |
+| `proxy_address` | string |  | `Proxy_address` |
+| `post_body` | text |  | `Post_body` |
 | `request_timeout` | integer |  | `Request_timeout` |
 | `processed_outputs` | text |  |  |
-| `processed_outputs_code` | text | `` (code) |  |
+| `processed_outputs_code` | text |  |  |
 | `keep_ongoing` | boolean |  |  |
 | `polling_frequency` | integer | `0` (code) |  |
 | `polling_stop_condition` | text |  |  |
@@ -9306,11 +8629,11 @@ For each action plugin, this reference lists:
 
 - `Username` (`string`, required)
 - `Apikey` (`string`, required)
+- `Softlayer_method` (`string`, required)
 - `Proxy_address` (`string`, optional)
 - `Object_mask` (`string`, optional)
 - `Object_filter` (`string`, optional)
 - `Request_timeout` (`int`, optional)
-- `Softlayer_method` (`string`, required)
 - `Post_body` (`string`, optional)
 - `Softlayer_initparam` (`string`, optional)
 - `Result_limit` (`int`, optional)
@@ -9324,8 +8647,6 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 - Outputs are partly defined by template fields: see the template attributes.
 
 ## SonyCi
@@ -9345,8 +8666,8 @@ For each action plugin, this reference lists:
 | `password` | string |  | `Password` |
 | `client_id` | string |  | `Client_id` |
 | `client_secret` | string |  | `Client_secret` |
-| `workspace_id` | string | `` (code) | `Workspace_id` |
-| `folder_id` | string | `` (code) | `Folder_id` |
+| `workspace_id` | string |  | `Workspace_id` |
+| `folder_id` | string |  | `Folder_id` |
 | `filesize` | integer | `1` (code) | `Filesize` |
 | `filepath` | string |  | `Filepath` |
 | `operation` | string |  |  |
@@ -9360,20 +8681,20 @@ For each action plugin, this reference lists:
 - `Password` (`string`, required)
 - `Client_id` (`string`, required)
 - `Client_secret` (`string`, required)
+- `Filepath` (`string`, required)
 - `Workspace_id` (`string`, optional)
 - `Folder_id` (`string`, optional)
 - `Filesize` (`int`, optional)
-- `Filepath` (`string`, required)
 - `Asset_id` (`string`, required)
 - `Download_folder` (`string`, required)
 - `Parameters` (`string`, required)
 
 ### Outputs
 
+- `Step_information` (`hash`)
 - `result_transfer_spec` (`string`)
 - `asset_id` (`string`)
 - `metadata` (`array`)
-- `Step_information` (`hash`)
 
 ## SonyCiFileWatcher
 
@@ -9398,7 +8719,7 @@ For each action plugin, this reference lists:
 | `keep_ongoing` | boolean |  |  |
 | `return_single` | boolean |  |  |
 | `check_once` | boolean |  |  |
-| `trigger_type` | string | `TRIG_GROUP` (code) |  |
+| `trigger_type` | string | `by workorder group` (code) |  |
 
 ### Inputs
 
@@ -9408,19 +8729,12 @@ For each action plugin, this reference lists:
 - `Client_secret` (`string`, required)
 - `Folder_id` (`string`, required)
 - `File_pattern` (`string`, required)
-- `File_info_list` (`array`)
-- `File_info` (`hash`)
 
 ### Outputs
 
 - `File_info_list` (`array`)
-- `File_info` (`hash`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `File_info` (`hash`)
 
 ## SpreadsheetParser
 
@@ -9450,15 +8764,10 @@ For each action plugin, this reference lists:
 
 ### Outputs
 
-- `First sheet` (`hash`)
-- `Sheet name` (`string`)
 - `Sheets` (`hash`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `First sheet` (`hash`)
+- `Sheet name` (`string`)
 
 ## SubWorkflow
 
@@ -9474,7 +8783,7 @@ For each action plugin, this reference lists:
 | `workflow_id` | integer |  |  |
 | `comments` | text |  |  |
 | `name` | string |  |  |
-| `exit_status_for_errors` | string | `ActionTools::STATUS_FAILED` (code) |  |
+| `exit_status_for_errors` | string | `Failed` (code) |  |
 | `use_true_name` | boolean |  |  |
 | `use_workorder_status` | boolean |  |  |
 | `workflow_portable_id` | string |  |  |
@@ -9482,24 +8791,30 @@ For each action plugin, this reference lists:
 | `workflow_outputs` | text |  |  |
 | `workflow_inputs` | text |  |  |
 
+- `workflow_outputs`: Hash mapping output names in the parent to sub-workflow variable paths. Format: `{'parent_output_name' => 'StepName:output_name'}`. Use 'Parameter:ParameterName' to read a runtime parameter of the sub-workflow. Example: `{'result' => 'my_step:Result'}`.
+- `workflow_inputs`: Hash renaming step inputs to sub-workflow parameter names. Format: `{'step_input_name' => 'target_parameter_name'}`. When blank, input names must match the sub-workflow parameter names exactly.
+
 ### Inputs
 
+- `Workflow_ID` (`int`, required)
+- `Sub-Workflow_Input_Parameters` (`hash`, optional)
 - `Execution_priority` (`int`, optional)
-- `Workflow_ID` (`int`)
-- `Sub-Workflow_Input_Parameters` (`hash`)
+- `<workflow runtime parameters>`: When workflow_id is set, one input per runtime parameter of the target workflow is generated (required or optional matching the parameter definition). Names come from workflow_inputs renaming, or the parameter name directly.
 
 ### Outputs
 
 - `Sub-Workflow_workorder_ID` (`int`)
 - `Sub-Workflow_Outputs` (`hash`)
 - `Step_information` (`hash`)
+- `<workflow_outputs>`: When workflow_id is set and workflow_outputs is configured, one output per entry. Type comes from the Context variable of the sub-workflow.
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 - Outputs are partly defined by template fields: see the template attributes.
+- When workflow_id is set, inputs are the runtime parameters of the target workflow (one per parameter, required/optional matching the parameter). workflow_inputs renames them: key = step input name, value = sub-workflow parameter name.
+- workflow_outputs maps parent output names to sub-workflow variable paths: `{'parent_output' => 'StepName:output_name'}`. Use 'Parameter:name' to read a runtime parameter. When workflow_id is blank, all sub-workflow variables are returned in Sub-Workflow_Outputs.
+- The sub-workflow runs asynchronously in a branched work order. The parent step polls until the sub-workflow completes.
 
 ## SublerOperation
 
@@ -9518,29 +8833,26 @@ For each action plugin, this reference lists:
 | `execution_login` | string |  | `Execution_login` |
 | `execution_password` | string |  | `Execution_password` |
 | `binary_path` | string |  | `Binary_path` |
-| `source_path` | string | `` (code) | `Source_path` |
-| `destination_path` | string | `` (code) | `Destination_path` |
-| `chapters_file_path` | string | `` (code) | `Chapters_file_path` |
-| `source_options` | text | `` (code) | `Source Options` |
-| `destination_options` | text | `` (code) | `Destination Options` |
-| `options` | text | `` (code) | `Options` |
+| `source_path` | string |  | `Source_path` |
+| `destination_path` | string |  | `Destination_path` |
+| `chapters_file_path` | string |  | `Chapters_file_path` |
+| `source_options` | text |  | `Source Options` |
+| `destination_options` | text |  | `Destination Options` |
+| `options` | text |  | `Options` |
 | `operation` | string |  |  |
 
 ### Inputs
 
-- `Source Options` (`string`, optional)
 - `Binary_path` (`string`, required)
+- `Execution_node` (`string`, required)
+- `Execution_login` (`string`, required)
+- `Execution_password` (`string`, required)
+- `Source Options` (`string`, optional)
 - `Destination Options` (`string`, optional)
 - `Options` (`string`, optional)
 - `Destination_path` (`string`, optional)
 - `Source_path` (`string`, optional)
 - `Chapters_file_path` (`string`, optional)
-- `Execution_node` (`string`, required)
-- `Execution_login` (`string`, required)
-- `Execution_password` (`string`, required)
-- `Result_file_path` (`string`)
-- `transformation_report` (`string`)
-- `execution_output` (`string`)
 
 ### Outputs
 
@@ -9548,10 +8860,6 @@ For each action plugin, this reference lists:
 - `transformation_report` (`string`)
 - `execution_output` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## SymantecIcapDlpOperation
 
@@ -9573,7 +8881,7 @@ For each action plugin, this reference lists:
 | `receiver_email` | string |  | `Receiver_email` |
 | `file_name` | string |  | `File_name` |
 | `timeout_sec` | integer |  | `Timeout_sec` |
-| `log_file_path` | string | `` (code) | `Log_file_path` |
+| `log_file_path` | string |  | `Log_file_path` |
 
 ### Inputs
 
@@ -9592,11 +8900,6 @@ For each action plugin, this reference lists:
 - `Log_File_Path` (`string`)
 - `Step_information` (`hash`)
 
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
-
 ## SymantecIcapVirusScanOperation
 
 - **Display name**: Symantec Icap Virus Scan Operations
@@ -9613,10 +8916,10 @@ For each action plugin, this reference lists:
 | `service_ip` | string |  | `Service_ip` |
 | `port` | integer |  | `Port` |
 | `scan_type` | string |  | `Scan_type` |
-| `send_size` | string | `` (code) | `Send_size` |
-| `file_size` | string | `` (code) | `File_size` |
+| `send_size` | string |  | `Send_size` |
+| `file_size` | string |  | `File_size` |
 | `file_name` | string |  | `File_name` |
-| `log_file_path` | string | `` (code) | `Log_file_path` |
+| `log_file_path` | string |  | `Log_file_path` |
 | `is_encrypted` | boolean |  |  |
 | `remote_node` | string |  | `Remote_node` |
 | `is_remote_execution` | boolean |  |  |
@@ -9633,17 +8936,17 @@ For each action plugin, this reference lists:
 - `Service_ip` (`string`, required)
 - `Port` (`int`, required)
 - `File_name` (`string`, required)
-- `Scan_action` (`string`, required)
-- `Clobber` (`flag`, optional)
-- `Verbose` (`flag`, optional)
-- `Api_version` (`string`, optional)
-- `Local_jar_path` (`string`, required)
 - `Scan_type` (`string`, required)
 - `File_size` (`string`, optional)
 - `Send_size` (`string`, optional)
 - `Log_file_path` (`string`, optional)
 - `Remote_node` (`string`, required)
 - `Remote_jar_path` (`string`, required)
+- `Scan_action` (`string`, required)
+- `Local_jar_path` (`string`, required)
+- `Clobber` (`flag`, optional)
+- `Verbose` (`flag`, optional)
+- `Api_version` (`string`, optional)
 
 ### Outputs
 
@@ -9651,11 +8954,6 @@ For each action plugin, this reference lists:
 - `Log_File_Path` (`string`)
 - `Log_file_Content` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## SymantecPgp
 
@@ -9684,11 +8982,11 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `target_file_path` (`string`)
-- `source_file_path` (`string`)
-- `passphrase` (`string`)
-- `options` (`string`)
-- `execution_node` (`string`)
+- `source_file_path` (`string`, required)
+- `passphrase` (`string`, required)
+- `execution_node` (`string`, required)
+- `target_file_path` (`string`, optional)
+- `options` (`string`, optional)
 
 ### Outputs
 
@@ -9698,7 +8996,6 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
 
 ## ThePlatform
@@ -9756,20 +9053,20 @@ For each action plugin, this reference lists:
 - `Media_asset` (`string`, required)
 - `Media_id_url` (`string`, required)
 - `Source_url` (`string`, required)
+- `Profile_id_url` (required)
 
 ### Outputs
 
 - `ThePlatform_Token` (`string`)
 - `Is_Token_Released` (`flag`)
+- `Step_information` (`hash`)
+- `QueryResults` (`hash` or `string`)
 - `Total_result_count` (`string`)
 - `Create_result` (`hash` or `string`)
 - `Media_Id_Url` (`string`)
-- `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `Update_result` (`hash` or `string`)
+- `Delete_result` (`hash` or `string`)
+- `Profile_Result_Id` (`hash` or `string`)
 
 ## ThreePlayOperation
 
@@ -9815,6 +9112,7 @@ For each action plugin, this reference lists:
 - `Apikey` (`string`, required)
 - `Api_secret_key` (`string`, required)
 - `Link` (`string`, required)
+- `Description_3play` (`string`, required)
 - `File` (`string`, optional)
 - `Attribute1` (`string`, optional)
 - `Attribute2` (`string`, optional)
@@ -9822,15 +9120,14 @@ For each action plugin, this reference lists:
 - `Batch_name` (`string`, optional)
 - `Batch_id` (`string`, optional)
 - `Video_id` (`string`, optional)
-- `Description_3play` (`string`, required)
 - `Account_name` (`string`, optional)
 - `Project_name` (`string`, optional)
 - `Name_3play` (`string`, optional)
 - `Internal_id` (`string`, required)
 - `Starting_timecode_smpte` (`string`, required)
+- `Format` (`string`, required)
 - `Frames_per_second` (`string`, optional)
 - `Drop_frame` (`string`, optional)
-- `Format` (`string`, required)
 
 ### Outputs
 
@@ -9839,11 +9136,6 @@ For each action plugin, this reference lists:
 - `Raw_Output` (`string`)
 - `Status` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## TimecodeManager
 
@@ -9858,9 +9150,9 @@ For each action plugin, this reference lists:
 |-----------|------|---------|----------------|
 | `name` | string |  |  |
 | `comments` | text |  |  |
-| `operation` | string | `CONVERT` (code) |  |
-| `input_format` | string | `TIMECODE` (code) | `Input_format` |
-| `frames_per_seconds` | string | `DEFAULT_FPS` (code) |  |
+| `operation` | string | `Convert` (code) |  |
+| `input_format` | string | `Timecode` (code) | `Input_format` |
+| `frames_per_seconds` | string | `25 fps` (code) |  |
 | `start_value` | string |  | `Start_value` |
 | `first_frame_offset` | string | `0` (code) | `First_frame_offset` |
 | `second_value` | string |  | `Second_value` |
@@ -9869,10 +9161,10 @@ For each action plugin, this reference lists:
 ### Inputs
 
 - `Start_value` (`string`, required)
+- `Second_value` (`string`, required)
 - `First_frame_offset` (`string`, optional)
 - `Input_format` (`string`, optional)
-- `Second_value` (`string`, required)
-- `Frames_per_seconds` (`string`)
+- `Frames_per_seconds` (`string`, required)
 
 ### Outputs
 
@@ -9880,10 +9172,6 @@ For each action plugin, this reference lists:
 - `timecode` (`string`)
 - `ms_count` (`int`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## UnifiedPackager
 
@@ -9901,14 +9189,20 @@ For each action plugin, this reference lists:
 | `execution_node` | string |  |  |
 | `output_file_path` | string |  |  |
 | `binary_path` | string | `mp4split` (code) |  |
-| `license_path` | string | `` (code) |  |
-| `options_before_output_file_path` | text | `` (code) |  |
-| `options_after_output_file_path` | text | `` (code) |  |
-| `input_files_data` | text | `` (code) |  |
+| `license_path` | string |  |  |
+| `options_before_output_file_path` | text |  |  |
+| `options_after_output_file_path` | text |  |  |
+| `input_files_data` | text |  |  |
 
 ### Inputs
 
-- None found in source.
+- `execution_node` (`string`, required)
+- `output_file_path` (`string`, required)
+- `binary_path` (`string`, optional)
+- `license_path` (`string`, optional)
+- `options_before_output_file_path` (`string`, optional)
+- `options_after_output_file_path` (`string`, optional)
+- `input_files_data` (`string`, optional)
 
 ### Outputs
 
@@ -9928,7 +9222,7 @@ For each action plugin, this reference lists:
 | Attribute | Type | Default | Input if blank |
 |-----------|------|---------|----------------|
 | `name` | string |  |  |
-| `event_description` | string | `` (code) | `Event_description` |
+| `event_description` | string |  | `Event_description` |
 | `comments` | text |  |  |
 | `assigned_roles` | string |  |  |
 | `assigned_users` | string |  |  |
@@ -9953,33 +9247,30 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `UserAssignmentsArray` (`array`, optional)
+- `RoleAssignmentsArray` (`array`, optional)
+- `SingleUserAssignment` (`string`, optional)
+- `SingleRoleAssignment` (`string`, optional)
+- `Event_description` (`string`, optional)
 - `Email_subject` (`string`, required)
 - `Email_body` (`string`, required)
 - `Email_additional_to_addresses` (`string`, optional)
 - `Email_additional_cc_addresses` (`string`, optional)
 - `Email_additional_bcc_addresses` (`string`, optional)
-- `Event_description` (`string`, optional)
-- `UserAssignmentsArray` (`array`)
-- `RoleAssignmentsArray` (`array`)
-- `SingleUserAssignment` (`string`)
-- `SingleRoleAssignment` (`string`)
 
 ### Outputs
 
-- `ActiveAssignment::INPUT_PROVIDER_VAR` (`string`)
+- `Step_information` (`hash`)
 - `First name` (`string`)
 - `Last name` (`string`)
 - `Orchestrator login` (`string`)
 - `Email address` (`string`)
 - `Alternate email addresses` (`string`)
 - `Full name` (`string`)
-- `Step_information` (`hash`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## UserLookup
 
@@ -10001,7 +9292,11 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `<lookup_by>` (`int` or `string`)
+- `<lookup_by>` (`string`, required)
+- `id` (`int`, required)
+- `login` (`string`, required)
+- `last_name` (`string`, required)
+- `email` (`string`, required)
 
 ### Outputs
 
@@ -10018,12 +9313,6 @@ For each action plugin, this reference lists:
 - `Alternate email addresses` (`array` or `hash`)
 - `Group memberships` (`array` or `hash`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- A name in angle brackets (`<attribute>`) is the value of that template attribute.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## UuidGenerator
 
@@ -10065,37 +9354,45 @@ For each action plugin, this reference lists:
 | `comments` | text |  |  |
 | `server_node` | string |  | `Server_node` |
 | `server_address` | string |  |  |
-| `api_port` | string |  |  |
+| `api_port` | string | `8676` (code) |  |
 | `source_file` | string |  | `Source_file` |
 | `workflow_id` | string |  | `Workflow_id` |
 | `workflow_name` | string |  | `Workflow_name` |
 | `job_name` | string |  | `Job_name` |
-| `polling_frequency` | integer |  |  |
+| `polling_frequency` | integer | `5` (code) |  |
 | `wf_items` | mediumtext |  |  |
-| `api_method` | string |  | `Api_method` |
+| `api_method` | string | `SubmitFile` (code) | `Api_method` |
 | `wf_variables` | mediumtext |  |  |
 | `reuse_job_id` | boolean | `false` |  |
 | `fail_if_cannot_restart` | boolean |  |  |
 
 ### Inputs
 
-- `Job_name` (`string`, required)
-- `Api_method` (`string`, required)
-- `Workflow_id` (`string`, required)
-- `Workflow_name` (`string`, required)
-- `Server_node` (`string`, required)
+- `Vantage_server_address` (`string`, required)
 - `Source_file` (`string`, required)
-- `Var_#{v}` (`string`)
-- `It_#{i}` (`string`)
+- `Job_name` (`string`, optional)
+- `Api_method` (`string`, optional)
+- `Vantage_Workflow_Id` (`string`, optional)
+- `Vantage_Workflow_Name` (`string`, optional)
+- `Vantage_server_node` (`string`, optional)
+- `Vantage_Items_JSON_str` (`string`, optional)
+- `Vantage_Variables_JSON_str` (`string`, optional)
+- `polling_frequency` (`int`, optional)
 
 ### Outputs
 
-- None found in source.
+- `Output_file(s)` (`array`)
+- `Errors` (`string`)
+- `Job_Id` (`string`)
+- `Job_Name` (`string`)
+- `Input_file` (`string`)
+- `Vantage_Steps_Info` (`hash`)
+- `Vantage_Items` (`array`)
+- `Vantage_Variables` (`array`)
+- `Vantage_workflows_hash` (`hash`)
+- `Output_files_hash` (`hash`)
+- `Labels` (`hash`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## VidcheckerVerification
 
@@ -10123,7 +9420,14 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Service_node_or_address` (`string`)
+- `Template_id` (`string`, required)
+- `File_path` (`string`, required)
+- `Service_node_or_address` (`string`, required)
+- `Server_port` (`string`, optional)
+- `Report_file_path` (`string`, optional)
+- `Fail_on_warning` (`flag`, optional)
+- `Polling_frequency` (`int`, optional)
+- `Report_type` (`string`, optional)
 
 ### Outputs
 
@@ -10134,10 +9438,6 @@ For each action plugin, this reference lists:
 - `Job_id` (`string`)
 - `Report_file_path` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## VqbifAnalyzer
 
@@ -10155,19 +9455,19 @@ For each action plugin, this reference lists:
 | `execution_node` | string |  | `Execution_node` |
 | `vqbif_binary_path` | string |  | `Vqbif_binary_path` |
 | `input_file_path` | string |  | `Input_file_path` |
-| `input_file_path_two` | string | `` (code) | `Input_file_path_two` |
-| `input_file_path_three` | string | `` (code) | `Input_file_path_three` |
-| `output_file_path` | string | `` (code) | `Output_file_path` |
-| `jpeg_folder_path` | string | `` (code) | `Jpeg_folder_path` |
-| `framewise_separation` | string | `` (code) | `Framewise_separation` |
-| `review_mode` | string | `DEFAULT_MODE` (code) | `Review_mode` |
+| `input_file_path_two` | string |  | `Input_file_path_two` |
+| `input_file_path_three` | string |  | `Input_file_path_three` |
+| `output_file_path` | string |  | `Output_file_path` |
+| `jpeg_folder_path` | string |  | `Jpeg_folder_path` |
+| `framewise_separation` | string |  | `Framewise_separation` |
+| `review_mode` | string |  | `Review_mode` |
 
 ### Inputs
 
 - `Input_file_path` (`string`, required)
-- `Output_file_path` (`string`, optional)
 - `Vqbif_binary_path` (`string`, required)
 - `Execution_node` (`string`, required)
+- `Output_file_path` (`string`, optional)
 - `Jpeg_folder_path` (`string`, optional)
 - `Review_mode` (`string`, optional)
 - `Framewise_separation` (`string`, optional)
@@ -10179,10 +9479,6 @@ For each action plugin, this reference lists:
 - `Output_File_Path` (`string`)
 - `Transformation_Report` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## VqmaAnalyzer
 
@@ -10200,21 +9496,19 @@ For each action plugin, this reference lists:
 | `execution_node` | string |  | `Execution_node` |
 | `vqma_binary_path` | string |  | `Vqma_binary_path` |
 | `input_file_path` | string |  | `Input_file_path` |
-| `output_file_path` | string | `` (code) | `Output_file_path` |
+| `output_file_path` | string |  | `Output_file_path` |
 | `format` | string |  | `Format` |
 | `hsize` | integer |  |  |
 | `vsize` | integer |  |  |
-| `options` | text | `` (code) |  |
+| `options` | text |  |  |
 
 ### Inputs
 
 - `Input_file_path` (`string`, required)
-- `Output_file_path` (`string`, optional)
 - `Vqma_binary_path` (`string`, required)
 - `Execution_node` (`string`, required)
 - `Format` (`string`, required)
-- `Result_file_path` (`string`)
-- `transformation_report` (`string`)
+- `Output_file_path` (`string`, optional)
 
 ### Outputs
 
@@ -10241,17 +9535,11 @@ For each action plugin, this reference lists:
 ### Inputs
 
 - `File_name` (`string`, required)
-- `Polling_frequency` (`int`, optional)
 
 ### Outputs
 
 - `File_Name` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## WatsonLanguageTranslator
 
@@ -10284,15 +9572,12 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Username` (`string`, required)
-- `Password` (`string`, required)
+- `Api_key` (`string`, required)
 - `Url` (`string`, optional)
 - `Api_version` (`string`, optional)
-- `Api_key` (`string`, required)
 - `Input_text` (`string`, required)
 - `Source_language` (`string`, required)
 - `Target_language` (`string`, required)
-- `Model_id` (`string`, required)
 - `File_path` (`string`, required)
 - `Filename` (`string`, required)
 - `Document_id` (`string`, required)
@@ -10301,16 +9586,12 @@ For each action plugin, this reference lists:
 ### Outputs
 
 - `Error_Message` (`string`)
+- `Step_information` (`hash`)
 - `Result` (`hash` or `string`)
 - `Translations` (`array`)
 - `Document_id` (`string`)
 - `Filename` (`string`)
 - `Status` (`string`)
-- `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## WatsonSpeechToText
 
@@ -10338,17 +9619,21 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- None found in source.
+- `file_path` (`string`, required)
+- `url` (`string`, required)
+- `username` (`string`, required)
+- `password` (`string`, required)
+- `Use_api_key` (`flag`, required)
+- `model` (`string`, optional)
+- `keywords` (`string`, optional)
+- `keywords_threshold` (`string`, optional)
+- `polling_frequency` (`int`, optional)
+- `api_key` (`string`, required)
 
 ### Outputs
 
 - `results` (`array`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## WatsonTextToSpeech
 
@@ -10374,17 +9659,19 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- None found in source.
+- `file_path` (`string`, required)
+- `url` (`string`, required)
+- `username` (`string`, required)
+- `password` (`string`, required)
+- `Use_api_key` (`flag`, required)
+- `voice` (`string`, optional)
+- `text` (`string`, optional)
+- `api_key` (`string`, required)
 
 ### Outputs
 
 - `file_size` (`int`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## WatsonVideoEnrichment
 
@@ -10413,22 +9700,27 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- None found in source.
+- `video_url` (`string`, required)
+- `api_key` (`string`, required)
+- `Return_profanity_analysis_result` (`flag`, required)
+- `Save_transcript_result` (`flag`, required)
+- `Return_video_analysis_result` (`flag`, required)
+- `job_name` (`string`, optional)
+- `language` (`string`, optional)
+- `caption_url` (`string`, optional)
+- `service_url` (`string`, optional)
+- `polling_frequency` (`int`, optional)
+- `transcript_result_file_path` (`string`, required)
 
 ### Outputs
 
 - `profanity-analysis_url` (`string`)
 - `transcript_url` (`string`)
 - `video-analysis_url` (`string`)
+- `Step_information` (`hash`)
 - `profanity-analysis` (`hash`)
 - `transcript_file_size` (`int`)
 - `video-analysis` (`hash`)
-- `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## WebdavTransfer
 
@@ -10461,29 +9753,20 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `Remote_node_or_address` (`string`, required)
 - `Remote_user` (`string`, optional)
 - `Remote_password` (`string`, optional)
 - `Remote_port` (`string`, optional)
 - `Source_path` (`string`, required)
 - `Target_path` (`string`, required)
-- `Transferred_files` (`array`)
-- `CreationDate:Status:LastModified:DisplayName:LinkToAccess:Type:Size` (`array`)
-- `Response_Code` (`int`)
-- `Transferred_bytes` (`int`)
-- `Remote_node_or_address` (`string`)
 
 ### Outputs
 
 - `Transferred_files` (`array`)
-- `CreationDate:Status:LastModified:DisplayName:LinkToAccess:Type:Size` (`array`)
-- `Response_Code` (`int`)
 - `Transferred_bytes` (`int`)
+- `Response_Code` (`int`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
+- `CreationDate:Status:LastModified:DisplayName:LinkToAccess:Type:Size` (`array`)
 
 ## WorkOrderMetaData
 
@@ -10498,7 +9781,7 @@ For each action plugin, this reference lists:
 |-----------|------|---------|----------------|
 | `name` | string |  |  |
 | `comments` | text |  |  |
-| `label` | string | `` (code) | `Work Order Label` |
+| `label` | string |  | `Work Order Label` |
 | `tags` | string | `[]` (code) | `tags` |
 | `strict_label_and_tags` | boolean | `false` |  |
 | `show_work_order_id` | boolean | `false` |  |
@@ -10509,32 +9792,26 @@ For each action plugin, this reference lists:
 ### Inputs
 
 - `Work Order Label` (`string`, optional)
-- `tags` (`string` or `array`, optional)
-- `Append_tags` (`flag`, required)
-- `Master_id` (`string` or `int`, optional)
+- `tags` (`array`, optional)
+- `Master_id` (`int`, optional)
 
 ### Outputs
 
 - `Work Order Label Name` (`string`)
 - `work_order_id` (`int`)
-- `tags` (`array`)
-- `master_id` (`int`)
 - `previous work step` (`array`)
 - `number_of_work_steps_present` (`int`)
 - `step_info` (`hash`)
 - `longest_steps` (`array`)
 - `shortest_steps` (`array`)
 - `work_order_url` (`string`)
+- `tags` (`array`)
+- `master_id` (`int`)
 - `previous_work_step_information` (`array`)
 - `initiated_by` (`int`)
 - `workflow_name` (`string`)
 - `workflow_id` (`int`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## WorkflowLauncher
 
@@ -10566,19 +9843,20 @@ For each action plugin, this reference lists:
 | `workflow_inputs` | text |  |  |
 | `dedicated_worker` | boolean |  |  |
 
+- `workflow_inputs`: Hash renaming step inputs to target workflow parameter names. Format: `{'step_input_name' => 'target_parameter_name'}`. When blank, input names must match parameter names.
+- `saved_inputs`: Hash of parameter default values applied before runtime inputs: `{'param_name' => 'value'}`. A saved_input makes the corresponding runtime input optional.
+
 ### Inputs
 
-- `Tags` (`string` or `array`, optional)
-- `Workflow_Portable_Id` (`string`, required)
+- `Workflow_ID` (`int`, required)
+- `Tags` (`array`, optional)
+- `Master_id` (`int`, optional)
+- `Workflow_Parameters` (`hash`, optional)
 - `WorkOrder_Description` (`string`, optional)
 - `Running_as_user` (`string`, optional)
+- `Execution_priority` (`int`, optional)
 - `Launched_comments` (`string`, optional)
-- `WorkOrder_ID` (`int`)
-- `WorkOrder_Status` (`string`)
-- `Master_id` (`int`)
-- `Workflow_ID` (`int`)
-- `Workflow_Parameters` (`hash`)
-- `Execution_priority` (`int`)
+- `Workflow_Portable_Id` (`string`, required)
 
 ### Outputs
 
@@ -10588,10 +9866,11 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 - Outputs are partly defined by template fields: see the template attributes.
+- When workflow_id is set, inputs are the runtime parameters of the target workflow. workflow_inputs renames them: key = local step input name, value = target parameter name. saved_inputs provides default values; a saved_input makes the corresponding runtime input optional.
+- WorkflowLauncher (fire-and-forget by default): the step completes as soon as the work order is launched. Set wait_for_completion to true to wait for the launched workflow to finish.
+- When wait_for_completion is false and the launched workflow later fails, the launcher step is already Complete: fail_if_failure has no effect in that case.
 
 ## XfConverter
 
@@ -10618,22 +9897,16 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `remote node or server address` (`string`, required)
 - `profile` (`string`, required)
 - `source` (`string`, required)
 - `destination` (`string`, required)
-- `XML_result` (`string`)
-- `Xf_status_message` (`string`)
-- `remote node or server address` (`string`)
 
 ### Outputs
 
 - `XML_result` (`string`)
 - `Xf_status_message` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## XmlParsing
 
@@ -10655,21 +9928,19 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
+- `xml_file_path` (`string`, required)
 - `Parameters` (`string`, required)
-- `Accept_xml_as` (`string`, required)
-- `xml_file_as_string` (`string`)
-- `xml_file_path` (`string`)
+- `Accept_xml_as` (`flag`, required)
+- `xml_file_as_string` (`string`, required)
 
 ### Outputs
 
-- None found in source.
 - `Step_information` (`hash`)
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 - Outputs are partly defined by template fields: see the template attributes.
+- Outputs depend on the `parameters` attribute: each key of the hash `{'name'=>['value','type']}` becomes an output of the corresponding type (index 1: string, int, float, flag, date, array, hash, object, pwd, attachment).
 
 ## XsdValidation
 
@@ -10695,19 +9966,13 @@ For each action plugin, this reference lists:
 ### Inputs
 
 - `XML_content_or_path` (`string`, required)
-- `VAR_XML_BODY` (`string`, required)
 - `XSD_content_or_path` (`string`, required)
-- `VAR_XSD_BODY` (`string`, required)
-- `XSD_paths` (`array`)
+- `XSD_paths` (`array`, required)
 
 ### Outputs
 
 - `Validation_errors` (`string`)
 - `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 
 ## XsltTransformation
 
@@ -10731,22 +9996,15 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- `Target_file_path` (`string`, optional)
 - `XML_content_or_path` (`string`, required)
-- `VAR_XML_BODY` (`string`, required)
 - `XSLT_content_or_path` (`string`, required)
-- `VAR_XSLT_BODY` (`string`, required)
+- `Target_file_path` (`string`, optional)
 
 ### Outputs
 
+- `Step_information` (`hash`)
 - `Generated_file_path` (`string`)
 - `Generated_file_content` (`string`)
-- `Step_information` (`hash`)
-
-### Notes
-
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
-- Method `outputs_spec` has conditions: some outputs exist only for some template settings.
 
 ## XytechMediaPulse
 
@@ -10787,7 +10045,6 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.
 
 ## ZencoderTranscoding
@@ -10804,7 +10061,7 @@ For each action plugin, this reference lists:
 | `name` | string |  |  |
 | `comments` | text |  |  |
 | `input_uri` | string |  |  |
-| `outputs_payload` | text | `[{ label: 'Default transformation', url: "<%= #{VAR_OUTPUT_URI} %>" }].to_s` (code) |  |
+| `outputs_payload` | text | `[{label: "Default transformation", url: "<%= Output_URI %>"}]` (code) |  |
 | `saved_inputs` | text |  |  |
 | `api_key` | string |  |  |
 | `status_polling_frequency` | integer | `5` (code) |  |
@@ -10813,7 +10070,12 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- None found in source.
+- `Input_uri` (`string`, required)
+- `Api_key` (`string`, required)
+- `Saved_inputs` (`string`, optional)
+- `Output_spec_file` (`string`, optional)
+- `Outputs_payload` (`string`, optional)
+- `Region` (`string`, optional)
 
 ### Outputs
 
@@ -10822,5 +10084,4 @@ For each action plugin, this reference lists:
 
 ### Notes
 
-- Method `inputs_spec` has conditions: some inputs exist only for some template settings.
 - Inputs are partly defined by template fields (for example a list of inputs, or `<%= variable %>` placeholders): see the template attributes.

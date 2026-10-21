@@ -37,6 +37,8 @@ class ActionTemplateReference
   SECRET_NAME = /pass|pwd/i
   # Notes made useless by the evaluation of the plugin
   PROBED_NOTES = /has conditions|No `inputs_spec`|No `outputs_spec`/
+  # Code in text of the overlay: hash, array, element of an array, placeholder, <name>
+  CODE_IN_TEXT = /\{[^{}]*\}|\w*(?:\[[^\[\]]*\])+|<%=.*?%>|<[\w ]+>\w*/
 
   Plugin = Struct.new(:dir, :plugin_name, :display_name, :category, :description, :version, :min_server, :columns, :constants, :inputs, :outputs, :notes)
 
@@ -62,7 +64,9 @@ class ActionTemplateReference
     #       dynamic_values:   true: allowed values come from the server or an external system
     #       run_time_value:   remote_node: value that makes the node an input of the step
     #       default:          database default
-    #       code_default:     value used by the plugin when the attribute is blank
+    #       code_default:     value used by the plugin when the attribute is blank;
+    #                         <run_dir>, <config_dir>, <archive_dir>: folders of the server configuration
+    #                         (default, under /opt/aspera/orchestrator: var/run/orchestrator, config/orchestrator, archive)
     #       hint:             placeholder text in the template editor
     #       format:           language of the value (code editor)
     #       placeholders:     true: placeholders in the value create inputs: <%%= variable %%>, <%%= function(variable, ...) %%>,
@@ -72,9 +76,11 @@ class ActionTemplateReference
     #                         as {'name'=>'type'} (type_map) or ['name'] (list)
     #   inputs, outputs:
     #     <name>:             a name in angle brackets is the value of that template attribute
-    #       type:             value type: string, int, float, flag, date, array, hash, object, pwd, attachment
+    #       type:             value type: string, int, float, flag, date, array, hash, object, pwd, attachment; varies: see note
     #       required:         inputs: true: the input must be mapped, false: optional,
-    #                         {if_blank: ...}, {if_set: ...} or {when: ...}: required only then, depends: on other template settings
+    #                         {if_blank: ...}, {if_set: ...} or {when: ...}: required only then, depends: on other template settings,
+    #                         varies: see note
+    #       note:             how names and types come from the template
     #       if_blank:         exists only when this template attribute is blank (inputs: it replaces the attribute),
     #                         or when all attributes of the list are blank
     #       if_set:           exists only when this template attribute (or all of the list) is not blank
@@ -90,26 +96,75 @@ class ActionTemplateReference
     # or to a value for an attribute not set by default.
   HEADER
 
-  def yaml(version)
+  # @param overlay [Hash, nil] hand-authored enrichments (lib/plugins_overlay.yml) to merge on top of generated data
+  def yaml(version, overlay = nil)
     data = plugins.to_h { |plugin| [plugin.plugin_name, plugin_spec(plugin)] }
+    apply_overlay(data, overlay) if overlay
+    format(YAML_HEADER, version: version) + serialize_plugins(data)
+  end
+
+  # Serialize a plugin data hash in flow-style YAML (one line per attribute/input/output).
+  # Can be called on data loaded from an existing plugins.yml (apply_overlay task).
+  def serialize_plugins(data)
     # copy through JSON: no shared object, so no YAML alias
     stream = Psych.parse_stream(Psych.dump(JSON.parse(JSON.generate(data)), line_width: -1))
     flow_style(stream.children.first.root, [])
-    format(YAML_HEADER, version: version) + stream.to_yaml(nil, line_width: -1)
+    stream.to_yaml(nil, line_width: -1)
+  end
+
+  # Deep-merge overlay into data.
+  # - Hash values: recurse (overlay keys are added or replace generated keys)
+  # - Array values under "notes": append overlay items to existing list
+  # - All other values: overlay replaces generated
+  def apply_overlay(data, overlay)
+    overlay.each do |plugin_name, plugin_overlay|
+      next unless data.key?(plugin_name)
+      next unless plugin_overlay.is_a?(Hash)
+      plugin_overlay.each do |section, section_overlay|
+        case section
+        when 'notes'
+          # append notes; avoid duplicates
+          existing = data[plugin_name]['notes'] ||= []
+          Array(section_overlay).each { |note| existing << note unless existing.include?(note) }
+        when 'attributes', 'inputs', 'outputs'
+          target = data[plugin_name][section] ||= {}
+          next unless section_overlay.is_a?(Hash)
+          section_overlay.each do |key, key_overlay|
+            if key_overlay.is_a?(Hash)
+              target[key] ||= {}
+              key_overlay.each { |k, v| target[key][k] = v }
+            else
+              target[key] = key_overlay
+            end
+          end
+        else
+          data[plugin_name][section] = section_overlay
+        end
+      end
+    end
   end
 
   def plugins
     Dir.children(@actions_dir).sort.filter_map do |dir|
       path = File.join(@actions_dir, dir)
       next unless File.exist?(File.join(path, 'metadata.yml'))
-      parse_plugin(path)
+      plugin = parse_plugin(path)
+      # When the probe is available, replace statically-parsed inputs/outputs with probe results
+      probe = @probe[plugin.plugin_name]
+      if probe&.key?('inputs')
+        plugin.inputs = probe['inputs'].transform_values { |info| {types: Array(info['types']), required: info['required']} }
+        plugin.outputs = probe['outputs'].transform_values { |info| {types: Array(info['types'])} }
+      end
+      plugin
     rescue StandardError => e
       warn("#{dir}: #{e.class}: #{e.message}")
       nil
     end.sort_by(&:plugin_name)
   end
 
-  def markdown(version)
+  # @param overlay [Hash, nil] hand-authored enrichments (lib/plugins_overlay.yml), shown with the generated data
+  def markdown(version, overlay = nil)
+    overlay ||= {}
     list = plugins
     out = []
     out << '<!--'
@@ -130,10 +185,12 @@ class ActionTemplateReference
     out << '- **Template attributes**: the fields of an action template, as written in element 3 (action templates) of a workflow file.'
     out << '  Built from the database migrations of the plugin.'
     out << '  For a text field left blank in the template, the column **Input if blank** gives the name of the step input that replaces it (see `default_inputs_spec`).'
-    out << '- **Inputs** and **Outputs**: names and types found in methods `inputs_spec` and `outputs_spec` of the plugin class.'
-    out << '  They are extracted from source text: when the method computes names at run time (for example from a template field), the list is incomplete and a note says so.'
+    out << '- **Inputs** and **Outputs**: names and types given by methods `inputs_spec` and `outputs_spec` of the plugin class, called on sample templates.'
+    out << '  When the plugin cannot be evaluated, they are extracted from source text, and a note says so.'
+    out << '  A name in angle brackets (`<attribute>`) is made from the value of that template attribute: a note explains how, when known.'
     out << '  Every step also has output `Step_information` (`hash`).'
     out << '- **Default**: the database default of the attribute, or, marked `(code)`, the value used by the plugin when the attribute is blank.'
+    out << '  `<run_dir>`, `<config_dir>`, `<archive_dir>` are folders of the server configuration (by default, under `/opt/aspera/orchestrator`: `var/run/orchestrator`, `config/orchestrator`, `archive`).'
     out << ''
     out << '## Index'
     out << ''
@@ -143,7 +200,7 @@ class ActionTemplateReference
       out << "| [#{plugin.plugin_name}](##{anchor(plugin.plugin_name)}) | #{cell(plugin.display_name)} | #{cell(plugin.category)} | #{plugin.version} |"
     end
     out << ''
-    list.each { |plugin| out.concat(plugin_section(plugin)) }
+    list.each { |plugin| out.concat(plugin_section(plugin, overlay[plugin.plugin_name] || {})) }
     out.join("\n")
   end
 
@@ -177,10 +234,8 @@ class ActionTemplateReference
       attribute['dynamic_values'] = true if info['dynamic_values'] && !info['values']
       %w[run_time_value action_type format hint].each { |key| attribute[key] = info[key] if info[key] }
       attribute['default'] = typed_default(col[:default], col[:type]) unless col[:default].nil?
-      if col[:default].nil?
-        code_default = probe['code_defaults']&.key?(name) ? probe['code_defaults'][name] : col[:code_default] && typed_default(col[:code_default], col[:type])
-        attribute['code_default'] = code_default unless code_default.nil? || code_default == ''
-      end
+      code_default = code_default(probe, name, col)
+      attribute['code_default'] = code_default unless code_default.nil?
       # a text attribute that gives an input when blank does not always accept placeholders: only the probe tells
       attribute['placeholders'] = true if probe['placeholders']&.include?(name)
       attribute['declares'] = probe['declares'][name] if probe['declares']&.key?(name)
@@ -198,6 +253,13 @@ class ActionTemplateReference
     end
     spec['notes'] = notes.map { |note| note.delete('`') } unless notes.empty?
     spec
+  end
+
+  # @return value used by the plugin when the attribute is blank (and has no database default), or nil
+  def code_default(probe, name, col)
+    return nil unless col[:default].nil?
+    value = probe['code_defaults']&.key?(name) ? probe['code_defaults'][name] : col[:code_default] && typed_default(col[:code_default], col[:type])
+    value == '' ? nil : value
   end
 
   # Inputs or outputs found in source text, in the format of PluginProbe
@@ -271,7 +333,9 @@ class ActionTemplateReference
 
   def cell(text) = text.to_s.gsub('|', '\\|').gsub(/\s+/, ' ').strip
 
-  def plugin_section(plugin)
+  # @param extra [Hash] entry of the plugin in the overlay: attributes (hint, values), inputs and outputs (type, required, note), notes
+  def plugin_section(plugin, extra)
+    probe = @probe[plugin.plugin_name] || {}
     out = []
     out << "## #{plugin.plugin_name}"
     out << ''
@@ -288,24 +352,37 @@ class ActionTemplateReference
       out << '| Attribute | Type | Default | Input if blank |'
       out << '|-----------|------|---------|----------------|'
       plugin.columns.each do |name, col|
-        default = col[:default].nil? ? (col[:code_default] ? "`#{cell(col[:code_default])}` (code)" : '') : "`#{cell(col[:default])}`"
+        code_default = code_default(probe, name, col)
+        default = col[:default].nil? ? (code_default.nil? ? '' : "`#{cell(code_default)}` (code)") : "`#{cell(col[:default])}`"
         out << "| `#{name}` | #{col[:type]} | #{default} | #{col[:input] ? "`#{col[:input]}`" : ''} |"
       end
+      formats = (extra['attributes'] || {}).filter_map do |name, info|
+        text = [info['values'] && "Allowed values: #{info['values'].map { |v| "`#{v}`" }.join(', ')}.", info['hint'] && code_spans(info['hint'])].compact
+        "- `#{name}`: #{text.join(' ')}" unless text.empty?
+      end
+      out.push('', *formats) unless formats.empty?
     end
     out << ''
     out << '### Inputs'
     out << ''
-    out.concat(io_list(plugin.inputs))
+    out.concat(io_list(plugin.inputs.merge(overlay_io(extra['inputs']))))
     out << ''
     out << '### Outputs'
     out << ''
-    out.concat(io_list(plugin.outputs))
-    out << '- `Step_information` (`hash`)'
+    outputs = plugin.outputs.merge(overlay_io(extra['outputs']))
+    out.concat(io_list(outputs)) unless outputs.empty?
+    # Step_information is added by default: don't duplicate if the probe already includes it
+    out << '- `Step_information` (`hash`)' unless outputs.key?('Step_information')
     out << ''
-    unless plugin.notes.empty?
+    notes = plugin.notes.uniq
+    notes = notes.grep_v(/angle brackets/)
+    # When the probe replaced inputs/outputs, static-analysis notes about conditions are no longer needed
+    notes = notes.grep_v(PROBED_NOTES) if probe.key?('inputs')
+    notes |= Array(extra['notes']).map { |note| code_spans(note) }
+    unless notes.empty?
       out << '### Notes'
       out << ''
-      plugin.notes.uniq.each { |note| out << "- #{note}" }
+      notes.each { |note| out << "- #{note}" }
       out << ''
     end
     out
@@ -316,9 +393,19 @@ class ActionTemplateReference
     items.map do |name, info|
       types = info[:types].map { |t| "`#{t}`" }.join(' or ')
       qualifier = [types.empty? ? nil : types, info[:required].nil? ? nil : (info[:required] ? 'required' : 'optional')].compact.join(', ')
-      "- `#{name}`#{" (#{qualifier})" unless qualifier.empty?}"
+      "- `#{name}`#{" (#{qualifier})" unless qualifier.empty?}#{": #{code_spans(info[:note])}" if info[:note]}"
     end
   end
+
+  # Inputs or outputs of the overlay, in the format of io_list: type and required `varies` are explained by the note
+  def overlay_io(items)
+    (items || {}).to_h do |name, info|
+      [name, {types: Array(info['type']) - ['varies'], required: [true, false].include?(info['required']) ? info['required'] : nil, note: info['note']}]
+    end
+  end
+
+  # Text written by hand without Markdown: code in backticks, so that it is not taken as HTML
+  def code_spans(text) = text.gsub(CODE_IN_TEXT) { |code| "`#{code}`" }
 
   public
 
@@ -475,6 +562,11 @@ class ActionTemplateReference
     plugin.notes << 'A name in angle brackets (`<attribute>`) is the value of that template attribute.' if (plugin.outputs.keys + plugin.outputs.values.flat_map { |v| v[:types] }).any? { |n| n.start_with?('<') }
     if body.match?(/convert_value_hash|eval\(|outputs_spec_code|\w+ => variable_type|fanned_as/)
       plugin.notes << 'Outputs are partly defined by template fields: see the template attributes.'
+    end
+    # MassParameterSetter and similar: outputs are the keys of a hash stored in attribute `parameters`
+    # Format: {'name'=>['value','type']} where index 0 is the value and index 1 is the type.
+    if body.match?(/convert_value_hash\(parameters/) || body.match?(/convert_value_hash\(\w+, false, true\).*\[1\]/)
+      plugin.notes << "Outputs depend on the `parameters` attribute: each key of the hash `{'name'=>['value','type']}` becomes an output of the corresponding type (index 1: string, int, float, flag, date, array, hash, object, pwd, attachment)."
     end
   end
 end

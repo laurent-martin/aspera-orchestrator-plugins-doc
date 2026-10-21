@@ -226,11 +226,16 @@ namespace :doc do
     )
   end
 
+  PATH_OVERLAY = TOP / 'lib' / 'plugins_overlay.yml'
+
   desc 'Generate action template reference (Markdown) from actions folder (env var ACTIONS_DIR overrides the RPM extract)'
-  task :template_reference do
+  task template_reference: PATH_PROBE_JSON do
+    require 'yaml'
     require_relative 'lib/action_template_reference'
     actions_dir = ENV['ACTIONS_DIR'] || PATH_BUILD_ACTIONS.to_s
-    File.write(PATH_DOCS / 'action-template-reference.md', ActionTemplateReference.new(actions_dir).markdown(BUILD_VERSION))
+    probe = JSON.parse(File.read(PATH_PROBE_JSON))
+    overlay = YAML.safe_load_file(PATH_OVERLAY)
+    File.write(PATH_DOCS / 'action-template-reference.md', ActionTemplateReference.new(actions_dir, probe).markdown(BUILD_VERSION, overlay))
   end
 
   desc 'Compare the REST API of Orchestrator (RPM extract) with its OpenAPI description (env var OPENAPI, default: clone of aspera-api-examples next to this one)'
@@ -242,9 +247,26 @@ namespace :doc do
 
   desc 'Generate plugin specifications (YAML): template attributes, inputs and outputs, found by evaluating plugin code'
   task plugin_specs: PATH_PROBE_JSON do
+    require 'yaml'
     require_relative 'lib/action_template_reference'
     probe = JSON.parse(File.read(PATH_PROBE_JSON))
-    File.write(PATH_PLUGINS_YML, ActionTemplateReference.new(PATH_BUILD_ACTIONS.to_s, probe).yaml(BUILD_VERSION))
+    overlay = YAML.safe_load_file(PATH_OVERLAY)
+    File.write(PATH_PLUGINS_YML, ActionTemplateReference.new(PATH_BUILD_ACTIONS.to_s, probe).yaml(BUILD_VERSION, overlay))
+  end
+
+  desc 'Apply hand-authored enrichments (lib/plugins_overlay.yml) onto the existing docs/plugins.yml without regenerating from the probe'
+  task :apply_overlay do
+    require 'yaml'
+    require 'json'
+    require_relative 'lib/action_template_reference'
+    overlay = YAML.safe_load_file(PATH_OVERLAY)
+    data = YAML.safe_load_file(PATH_PLUGINS_YML)
+    ref = ActionTemplateReference.new(PATH_BUILD_ACTIONS.to_s)
+    ref.apply_overlay(data, overlay)
+    # Preserve the header comment block then re-serialise in flow style
+    header = File.read(PATH_PLUGINS_YML).lines.take_while { |l| l.start_with?('#', "\n") }.join
+    File.write(PATH_PLUGINS_YML, header + ref.serialize_plugins(data))
+    puts "Overlay applied to #{PATH_PLUGINS_YML}"
   end
 end
 

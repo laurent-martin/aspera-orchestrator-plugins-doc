@@ -13,7 +13,9 @@
 #       dynamic_values:   true: allowed values come from the server or an external system
 #       run_time_value:   remote_node: value that makes the node an input of the step
 #       default:          database default
-#       code_default:     value used by the plugin when the attribute is blank
+#       code_default:     value used by the plugin when the attribute is blank;
+#                         <run_dir>, <config_dir>, <archive_dir>: folders of the server configuration
+#                         (default, under /opt/aspera/orchestrator: var/run/orchestrator, config/orchestrator, archive)
 #       hint:             placeholder text in the template editor
 #       format:           language of the value (code editor)
 #       placeholders:     true: placeholders in the value create inputs: <%= variable %>, <%= function(variable, ...) %>,
@@ -23,9 +25,11 @@
 #                         as {'name'=>'type'} (type_map) or ['name'] (list)
 #   inputs, outputs:
 #     <name>:             a name in angle brackets is the value of that template attribute
-#       type:             value type: string, int, float, flag, date, array, hash, object, pwd, attachment
+#       type:             value type: string, int, float, flag, date, array, hash, object, pwd, attachment; varies: see note
 #       required:         inputs: true: the input must be mapped, false: optional,
-#                         {if_blank: ...}, {if_set: ...} or {when: ...}: required only then, depends: on other template settings
+#                         {if_blank: ...}, {if_set: ...} or {when: ...}: required only then, depends: on other template settings,
+#                         varies: see note
+#       note:             how names and types come from the template
 #       if_blank:         exists only when this template attribute is blank (inputs: it replaces the attribute),
 #                         or when all attributes of the list are blank
 #       if_set:           exists only when this template attribute (or all of the list) is not blank
@@ -2817,23 +2821,22 @@ DigitalrapidsTmTranscoding:
   min_orchestrator: 4.1.0
   description: This is Action plug-in provides the ability to submit a file transcoding job to a DigitalRapids Transcode Manager server.
   attributes:
-    tm_node: {type: string, label: Transcode manager server node, widget: remote_node}
-    tm_server_address: {type: string, label: Server ip address (or hostname)}
-    tm_api_port: {type: integer, label: Transcode manager api port (optional), code_default: 44000}
-    project_path: {type: string, placeholders: true}
-    project_id: {type: string, label: Project list, widget: select, dynamic_values: true, placeholders: true}
-    group_name: {type: string, placeholders: true}
-    tm_group_id: {type: string, label: Group list, widget: select, dynamic_values: true, placeholders: true}
-    role: {type: string, widget: select, values: [ROLE_TRANSCODE, ROLE_KAYAK_TRANSCODE]}
-    polling_frequency: {type: integer, label: Status polling frequency, code_default: 5}
-    source_file: {type: string, placeholders: true}
-    destination_dir: {type: string, label: Destination directory, placeholders: true}
-    priority: {type: string, widget: select, values: ['1', '0', "-1"], code_default: '0'}
-    tag_values: {type: mediumtext, label: Tag Values, widget: hash, placeholders: true}
-    separate_audio_source: {type: boolean, label: 'Separate audio file?', default: false}
-    audio_source_file: {type: string, label: Audio file path}
+    tm_node: {type: string}
+    tm_server_address: {type: string}
+    tm_api_port: {type: integer, code_default: 44000}
+    project_path: {type: string}
+    project_id: {type: string}
+    group_name: {type: string}
+    tm_group_id: {type: string}
+    role: {type: string}
+    polling_frequency: {type: integer, code_default: 5}
+    source_file: {type: string}
+    destination_dir: {type: string}
+    priority: {type: string, code_default: '0'}
+    tag_values: {type: mediumtext}
+    separate_audio_source: {type: boolean, default: false}
+    audio_source_file: {type: string}
   inputs:
-    Transcode_manager_server: {type: string, required: true, if_blank: tm_server_address}
     Source_file: {type: string, required: true, if_blank: source_file}
     Project_id: {type: string, required: true, if_blank: project_id}
     Tm_group_id: {type: string, required: true, if_blank: tm_group_id}
@@ -2841,12 +2844,16 @@ DigitalrapidsTmTranscoding:
     Project_path: {type: string, required: true, if_blank: project_path}
     Destination_dir: {type: string, required: false, if_blank: destination_dir}
     Tag_values: {type: string, required: false, if_blank: tag_values}
-    Audio_Source_Filepath: {type: string, required: true, if_blank: audio_source_file, when: {separate_audio_source: {in: [true]}}}
+    Transcode_manager_server: {type: string}
+    Audio_Source_Filepath: {type: string}
   outputs:
     Output_files: {type: array}
     Errors_during_transcode: {type: array}
     Job_id: {type: string}
     Step_information: {type: hash}
+  notes:
+  - 'Method inputs_spec has conditions: some inputs exist only for some template settings.'
+  - 'Inputs and outputs found in source text only (the plugin could not be evaluated: load: ArgumentError: wrong number of arguments (given 2, expected 0)): conditions and required flags may be missing.'
 DivaArchive:
   display_name: Diva archive
   category: File Operations
@@ -3051,7 +3058,7 @@ EmailInboxWatcher:
     polling_frequency: {type: integer, label: Polling Frequency}
     archive_folder: {type: string, label: Archive Folder, hint: "-optional-"}
     download_attachments: {type: boolean, label: 'Download Attachments?', code_default: false}
-    attachments_target_folder: {type: string, label: Attachments Destination Folder, hint: Folder must be local to Orchestrator server, code_default: "/tmp/probe/email_inbox_watchers/attachments"}
+    attachments_target_folder: {type: string, label: Attachments Destination Folder, hint: Folder must be local to Orchestrator server, code_default: "<run_dir>/email_inbox_watchers/attachments"}
     encoding: {type: string, label: Special Encoding, widget: select, values: [None, ISO-8859-2/Windows-1250]}
   inputs:
     Email_server_address: {type: string, required: true, if_blank: [server, email_node]}
@@ -3082,10 +3089,10 @@ EmailNotification:
   attributes:
     template: {type: text, label: Html message template, widget: multiline_text, format: html, code_default: <font color="gray">eMail generated by Aspera Orchestrator</font>, placeholders: true}
     payload: {type: text, label: Message Core Parameters (XML payload), widget: multiline_text, code_default: "<MessageDefinition><Destinations><To><%= To %></To></Destinations><Subject><%= Subject %></Subject></MessageDefinition>"}
-    mailer_name: {type: string}
+    mailer_name: {type: string, hint: 'Name of the Mailer Configuration to use. When blank, the first active mailer (lowest id) is used.'}
     attachment_list: {type: text, placeholders: true}
     subject_line: {type: text, label: Subject, hint: Enter email subject, placeholders: true}
-    destinations: {type: text, placeholders: true}
+    destinations: {type: text, placeholders: true, hint: 'One entry per recipient, separated by " ..- " (space-dot-dot-hyphen-space). Format: "<address> <type>" where type is To, Cc or Bcc. Example: "alice@example.com To ..- bob@example.com Cc ..-". Legacy separator "_-" is also accepted.'}
     reply_to: {type: string, hint: optional - Use mailer specified one by default, placeholders: true}
     from_name: {type: string, label: Sender name, hint: optional - Use mailer specified one by default, placeholders: true}
     from_address: {type: string, label: Sender address, hint: optional - Use mailer specified one by default, placeholders: true}
@@ -3105,6 +3112,9 @@ EmailNotification:
   outputs:
     FullMessage: {type: string}
     Step_information: {type: hash}
+  notes:
+  - 'destinations format: one entry per recipient separated by " ..- " (space · dot · dot · hyphen · space). Each entry is "<address> <type>" where type is To, Cc or Bcc. Example: "alice@example.com To ..- bob@example.com Cc ..-". The legacy separator " _- " is also accepted (To only).'
+  - When mailer_name is blank, Orchestrator uses MailServer.identify(nil), which selects the first active Mailer Configuration (lowest id). If no active mailer exists, the step returns Error.
 EmotionOperation:
   display_name: Emotion operation
   category: Transcoding
@@ -3585,7 +3595,7 @@ Faspex5InboxWatcher:
     early_trigger: {type: boolean, label: 'Trigger before package is fully uploaded?'}
     new_only: {type: boolean, label: 'Ignore packages already in inbox on start-up?'}
     run_synchronous: {type: boolean}
-    mailbox: {type: string, widget: select, dynamic_values: true}
+    mailbox: {type: string, widget: select, values: [all, inbox, inbox_all, shared_inbox]}
     query: {type: string, label: General search, hint: 'Search by title, recipients, senders, or note'}
     faspex_node: {type: string, widget: remote_node}
     trigger_type: {type: string, label: Trigger persistence scope, widget: select, values: [by workorder group, by action template, absolute, by step, by workflow, none]}
@@ -3616,6 +3626,7 @@ Faspex5InboxWatcher:
     Packages_root: {type: string, required: false, if_blank: packages_root}
     Filters_override: {type: string, required: false, if_blank: filters}
     Destination_root: {type: string, required: false, if_blank: destination_root}
+    Shared_inbox_name: {type: string, required: true, if_blank: shared_inbox_name, when: {mailbox: {in: [shared_inbox]}}}
   outputs:
     Title: {type: string}
     Id: {type: string}
@@ -4022,10 +4033,10 @@ FileJournalLogEntry:
     file_path: {type: string, label: File path (optional), placeholders: true}
     package: {type: string, label: Package (optional), placeholders: true}
     step_name: {type: string, label: Step name (optional)}
-    processing_status: {type: string, label: Journal status, widget: select, dynamic_values: true}
+    processing_status: {type: string, label: Journal status, widget: select, dynamic_values: true, values: [Complete, Error, Failed, In Progress]}
     event: {type: string, label: Event (optional), placeholders: true}
     processing_timeout: {type: integer, label: Processing timeout for file (optional)}
-    journal_book: {type: string, widget: select, dynamic_values: true}
+    journal_book: {type: string, widget: select, dynamic_values: true, hint: 'Name of an existing journal book, or "--Runtime--" to require the book name at runtime via the "Journal Book" input. When blank, the entry is logged without a book.'}
     new_file: {type: boolean, label: 'New File?', code_default: false}
     new_package: {type: boolean, label: 'New Package?', code_default: false}
     milestone: {type: integer, label: Journal milestone, code_default: 0}
@@ -4052,6 +4063,10 @@ FileJournalLogEntry:
     actual_path: {type: string}
     journal_file_ID: {type: int}
     Step_information: {type: hash}
+  notes:
+  - 'Allowed values for processing_status (and the File_processing_status input): Complete, Error, Failed, In Progress. These map to the standard Journal statuses defined in Journal::PREDEFINED_STATUS.'
+  - Journal books must exist before the step runs. A missing book is NOT created at execution time (unlike a workflow import, which creates the book automatically). Create the book in Engine > Journaling before deploying the workflow.
+  - When journal_book is set to "--Runtime--", the "Journal Book" input becomes required.
 Filter:
   display_name: Filter
   category: System
@@ -5379,6 +5394,7 @@ MassParameterSetter:
     Stored_parameters: {type: hash, if_blank: config_name, when: {use_external_storage: {in: [true]}}}
   notes:
   - 'Outputs are partly defined by template fields: see the template attributes.'
+  - 'Outputs depend on the parameters attribute: each key of the hash {''name''=>[''value'',''type'']} becomes an output of the corresponding type (index 1: string, int, float, flag, date, array, hash, object, pwd, attachment).'
 McAfeeVirusCheck:
   display_name: McAfee virus check
   category: Virus Scan
@@ -5534,7 +5550,6 @@ MediabinAssetManagement:
     local_path: {type: string, placeholders: true}
     use_ssl: {type: boolean, label: 'Use ssl?'}
   inputs:
-    "/tmp/probe": {type: string, required: true, if_blank: [mediabin_node, mediabin_address, mediabin_wsdl_url]}
     Mediabin_user: {type: string, required: true, if_blank: mediabin_user}
     Mediabin_password:
       type: string
@@ -5553,16 +5568,25 @@ MergePoint:
   min_orchestrator: 4.1.6
   description: This plugin can be used to reconcile inputs coming from different branches of logical statements. It provides the ability to define pairs of inputs that get merged. Such steps can be used without inputs to clarify branching in complex workflows.
   attributes:
-    merged_inputs: {type: text}
-    multi_inputs: {type: text}
+    merged_inputs: {type: text, hint: 'Hash: {''name'' => [''primary_expr'', ''alternate_expr'', ''type'', ''required|optional'']}. Primary and alternate are placeholders or fixed values; blank means use the input named <name> or <name>_alternate respectively.'}
+    multi_inputs: {type: text, hint: 'Hash: {''name'' => [''type'', count, ''required|optional'']}. Generates inputs <name>_1 … <name>_N and outputs <name> with the first non-nil value.'}
     consider_blank_nil: {type: boolean, label: Consider empty objects as null, default: true}
-    mandatory_inputs: {type: text}
-    optional_inputs: {type: text}
-  inputs: {}
+    mandatory_inputs: {type: text, hint: 'Hash: {''name'' => ''type''}. Shorthand for a merged_inputs entry ['''', ''<%= name %>'', ''type'', ''required'']: one input <name>, one output <name>.'}
+    optional_inputs: {type: text, hint: 'Hash: {''name'' => ''type''}. Same as mandatory_inputs but marked optional.'}
+  inputs:
+    "<merged_inputs>": {type: string, required: false, note: 'For each name declared in merged_inputs: input <name> if the primary expression is blank (else the variables of its placeholders), and input <name>_alternate if the alternate expression is blank (else the variables of its placeholders). Type comes from merged_inputs[name][2].'}
+    "<multi_inputs>": {type: string, required: false, note: 'One input per slot: <name>_1 … <name>_N. Type comes from multi_inputs[name][0].'}
   outputs:
     Step_information: {type: hash}
+    "<merged_inputs>": {type: string, note: 'One output per name declared in merged_inputs. Type comes from merged_inputs[name][2].'}
+    "<multi_inputs>": {type: string, note: 'One output per name declared in multi_inputs. Type comes from multi_inputs[name][0].'}
   notes:
   - 'Inputs are partly defined by template fields (for example a list of inputs, or <%= variable %> placeholders): see the template attributes.'
+  - 'merged_inputs format: {''name'' => [''primary_expression'', ''alternate_expression'', ''type'', ''required|optional'']}. The primary expression is evaluated first; if the result is nil (or blank when consider_blank_nil is true), the alternate is evaluated. A blank expression means "take the runtime input named <name>" (primary) or "<name>_alternate" (alternate).'
+  - 'multi_inputs format: {''name'' => [''type'', count, ''required|optional'']}. Generates optional inputs <name>_1 … <name>_N; the output <name> receives the first non-nil value found in order.'
+  - 'mandatory_inputs and optional_inputs are shorthands: each entry adds a merged_inputs entry with blank primary, "<%= name %>" as alternate, and the given type.'
+  - When consider_blank_nil is true (default), empty strings and empty arrays are treated as nil, so the alternate expression is tried.
+  - 'All inputs of the step are optional. ''required'' (merged_inputs[name][3], multi_inputs[name][2], mandatory_inputs) acts at execution: when no value is found, the step ends with status Failed ("A valid value was not found for <names>").'
 MinnetonkaAudiotoolserver:
   display_name: Minnetonka AudioTools Server
   category: Transcoding
@@ -6826,7 +6850,7 @@ SnapshotPlugin:
   description: Takes a snapshot of the Orchestrator configuration.
   attributes:
     snapshot_name: {type: string, hint: 'e.g., orchestrator_backup_20250101', code_default: 'Snapshot_#{Time.now.strftime(''%Y%m%d%H%M%S'')}', placeholders: true}
-    snapshot_directory: {type: string, hint: 'e.g., /backups/orchestrator', code_default: "/tmp/probe", placeholders: true}
+    snapshot_directory: {type: string, hint: 'e.g., /backups/orchestrator', code_default: "<archive_dir>", placeholders: true}
     custom_tables: {type: text, hint: 'e.g., custom_workflows, custom_plugins'}
     export_full_db: {type: boolean, label: 'Export full database?', default: false}
     db_export_directory: {type: string, hint: 'e.g., /tmp/db_backups'}
@@ -7090,19 +7114,24 @@ SubWorkflow:
     use_workorder_status: {type: boolean, label: End with Work Order status}
     workflow_portable_id: {type: string}
     execution_priority: {type: integer, hint: Optional — defaults to calling work order priority}
-    workflow_outputs: {type: text}
-    workflow_inputs: {type: text}
+    workflow_outputs: {type: text, hint: 'Hash mapping output names in the parent to sub-workflow variable paths. Format: {''parent_output_name'' => ''StepName:output_name''}. Use ''Parameter:ParameterName'' to read a runtime parameter of the sub-workflow. Example: {''result'' => ''my_step:Result''}.'}
+    workflow_inputs: {type: text, hint: 'Hash renaming step inputs to sub-workflow parameter names. Format: {''step_input_name'' => ''target_parameter_name''}. When blank, input names must match the sub-workflow parameter names exactly.'}
   inputs:
     Workflow_ID: {type: int, required: true, if_blank: workflow_id}
     Sub-Workflow_Input_Parameters: {type: hash, required: false, if_blank: workflow_id}
     Execution_priority: {type: int, required: false, if_blank: execution_priority}
+    "<workflow runtime parameters>": {type: varies, required: varies, note: 'When workflow_id is set, one input per runtime parameter of the target workflow is generated (required or optional matching the parameter definition). Names come from workflow_inputs renaming, or the parameter name directly.'}
   outputs:
     Sub-Workflow_workorder_ID: {type: int}
     Sub-Workflow_Outputs: {type: hash, if_blank: workflow_id}
     Step_information: {type: hash}
+    "<workflow_outputs>": {type: varies, note: 'When workflow_id is set and workflow_outputs is configured, one output per entry. Type comes from the Context variable of the sub-workflow.'}
   notes:
   - 'Inputs are partly defined by template fields (for example a list of inputs, or <%= variable %> placeholders): see the template attributes.'
   - 'Outputs are partly defined by template fields: see the template attributes.'
+  - 'When workflow_id is set, inputs are the runtime parameters of the target workflow (one per parameter, required/optional matching the parameter). workflow_inputs renames them: key = step input name, value = sub-workflow parameter name.'
+  - 'workflow_outputs maps parent output names to sub-workflow variable paths: {''parent_output'' => ''StepName:output_name''}. Use ''Parameter:name'' to read a runtime parameter. When workflow_id is blank, all sub-workflow variables are returned in Sub-Workflow_Outputs.'
+  - The sub-workflow runs asynchronously in a branched work order. The parent step polls until the sub-workflow completes.
 SublerOperation:
   display_name: Subler Operation
   category: File Transformations
@@ -7467,7 +7496,6 @@ UserInput:
     Email_additional_cc_addresses: {type: string, required: false, if_blank: email_additional_cc_addresses, when: {email_notification: {in: [true]}}}
     Email_additional_bcc_addresses: {type: string, required: false, if_blank: email_additional_bcc_addresses, when: {email_notification: {in: [true]}}}
   outputs:
-    "/tmp/probe": {type: string}
     Step_information: {type: hash}
     First name: {type: string, when: {expose_user_information: {in: [true]}}}
     Last name: {type: string, when: {expose_user_information: {in: [true]}}}
@@ -7906,7 +7934,7 @@ WorkflowLauncher:
   attributes:
     workflow_id: {type: integer}
     priority: {type: integer, label: Execution priority, code_default: 'WorkOrder::DEFAULT_PRIORITY rescue 2'}
-    saved_inputs: {type: text, widget: hash}
+    saved_inputs: {type: text, widget: hash, hint: 'Hash of parameter default values applied before runtime inputs: {''param_name'' => ''value''}. A saved_input makes the corresponding runtime input optional.'}
     work_order_name: {type: string, label: Work order description, hint: Optional description for the launched work order, placeholders: true}
     use_true_name: {type: boolean}
     running_as_user: {type: string, placeholders: true}
@@ -7918,7 +7946,7 @@ WorkflowLauncher:
     fail_if_failure: {type: boolean, label: Fail if launched work order fails, code_default: false}
     use_portable_id: {type: boolean, label: Use portable ID (if run-time workflow selection), default: false}
     portable_id: {type: string, placeholders: true}
-    workflow_inputs: {type: text}
+    workflow_inputs: {type: text, hint: 'Hash renaming step inputs to target workflow parameter names. Format: {''step_input_name'' => ''target_parameter_name''}. When blank, input names must match parameter names.'}
     dedicated_worker: {type: boolean}
   inputs:
     Workflow_ID: {type: int, required: true, if_blank: workflow_id, when: {use_portable_id: {in: [false]}}}
@@ -7937,6 +7965,9 @@ WorkflowLauncher:
   notes:
   - 'Inputs are partly defined by template fields (for example a list of inputs, or <%= variable %> placeholders): see the template attributes.'
   - 'Outputs are partly defined by template fields: see the template attributes.'
+  - 'When workflow_id is set, inputs are the runtime parameters of the target workflow. workflow_inputs renames them: key = local step input name, value = target parameter name. saved_inputs provides default values; a saved_input makes the corresponding runtime input optional.'
+  - 'WorkflowLauncher (fire-and-forget by default): the step completes as soon as the work order is launched. Set wait_for_completion to true to wait for the launched workflow to finish.'
+  - 'When wait_for_completion is false and the launched workflow later fails, the launcher step is already Complete: fail_if_failure has no effect in that case.'
 XfConverter:
   display_name: Xf converter
   category: Transcoding
@@ -7982,6 +8013,7 @@ XmlParsing:
     Step_information: {type: hash}
   notes:
   - 'Outputs are partly defined by template fields: see the template attributes.'
+  - 'Outputs depend on the parameters attribute: each key of the hash {''name''=>[''value'',''type'']} becomes an output of the corresponding type (index 1: string, int, float, flag, date, array, hash, object, pwd, attachment).'
 XsdValidation:
   display_name: XSD Validation
   category: Quality Control

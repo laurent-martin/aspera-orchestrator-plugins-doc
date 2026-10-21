@@ -94,8 +94,9 @@ The same operations with the REST API are described in [REST API](#rest-api).
 ## Lifecycle
 
 1. **Write** a workflow file (`.yml`), or a package (`.wkf`) that also contains sub-workflows and remote nodes.
-2. **Import** it: Orchestrator creates a new workflow, in draft state, with a new `id`.
+2. **Import** it: Orchestrator creates a new workflow with a new `id`.
    Each step's action template is created (or mapped to an existing global template).
+   Whether the workflow is created in draft state or as a published revision depends on the server option `publish_api_imported_workflow` (default: published, `revision_id = 1`).
 3. **Publish** it: Orchestrator builds the runnable workflow from the last whiteboard revision.
 4. **Start** it: Orchestrator creates a work order.
    Runtime parameters are given at this point.
@@ -253,6 +254,11 @@ How a template defines the inputs of its step is explained in [Inputs of a step]
 ## Graph XML
 
 The whiteboard attribute `xml_export` holds the graph as XML.
+Validate a workflow file before import with the IBM Aspera CLI:
+
+```shell
+ascli orchestrator workflows check_import my_workflow.yml
+```
 
 ### Skeleton
 
@@ -446,6 +452,10 @@ Rules:
 
 - A parameter that is not linked to `Start` or to a step does not exist after publish: inputs mapped to it are silently not created.
 - Runtime parameters are the inputs of the workflow: `workflow_inputs_spec` lists them, and `initiate` receives them as `external_parameters`.
+- A **step parameter** is a parameter linked to a step instead of (or in addition to) `Start`.
+  Linking a parameter to a step does not change its value or scope: inputs of the step still map to the parameter by name.
+  The designer uses step parameter links only to display the parameter node near the step on the canvas; the execution engine does not use the link.
+  In practice, link a parameter to `Start` and map the input directly.
 
 ### Value types
 
@@ -459,7 +469,7 @@ Rules:
 | `array` | List (JSON array). |
 | `hash` | Map (JSON object). |
 | `object` | Any serializable value. |
-| `pwd` | Password: hidden in the user interface, masked or encrypted on export. |
+| `pwd` | Password: hidden in the user interface. **Only `pwd` parameters are protected on export**; template attributes (widget `password`) and other secrets in templates are exported in clear text. To avoid exposing a secret, store it in a `pwd` parameter and map the template input to that parameter. |
 | `attachment` | File attachment. |
 
 ### Notes
@@ -659,6 +669,17 @@ Contract of `execute_code`:
   The message is also kept with `Complete`: it is the `step_status_details` of output `Step_information`.
 - An exception ends the step with `Error`.
 - `JSON` is loaded: `JSON.parse` and `JSON.generate` work without `require`.
+
+Available in `execute_code` and in processing code (`Pre_processing`, `Post_processing`, `Input/Processing`, `Output/Processing`):
+
+| Available | Notes |
+|-----------|-------|
+| Full Ruby stdlib | `require 'net/http'`, `require 'fileutils'`, etc. |
+| `File.nakedname(path)` | Orchestrator extension: basename without the last extension. `File.nakedname("/tmp/file.avi")` → `"file"`. `File.nakedname("/tmp/file.avi.old")` → `"file.avi"`. |
+| `File.nakeddir(path)` | Orchestrator extension: immediate directory name. `File.nakeddir("/tmp/big/file.avi")` → `"big"`. |
+| `File.extension(path)` | Orchestrator extension: last extension without dot. `File.extension("/tmp/file.avi")` → `"avi"`. |
+| `XmlSimple.xml_in(xml)` | Requires `require 'xmlsimple'` at the top of the code block. The gem `xml-simple` is bundled with Orchestrator. |
+| All gems in the Orchestrator `Gemfile` | `rest-client`, `nokogiri`, `net-ldap`, `rubyzip`, `uuid`, `redis`, etc. Use `require` as usual. |
 
 ### Filter
 
@@ -1130,3 +1151,5 @@ Observed in Orchestrator 4.1.6:
 - The `.wkf` package produced by `export_workflow` with dependencies contains an empty copy of itself (the archive is built in the folder it packs).
 - API errors return the exception stack trace, and often status 404 or 500 regardless of the cause.
 - The example files of the product (`docs/workflow_examples`) contain `<Failed_retry_for_unit>`, while the parser reads `<Failed_retryForUnit>`: that setting is ignored.
+  The same applies to `<Error_retry_for_unit>` (correct: `<Error_retryForUnit>`).
+  Such workflows also exist on servers when imported from a `.wkf` package of unknown origin: the retry period is silently ignored.
