@@ -996,6 +996,8 @@ The response format is chosen with query parameter `format` (`xml`, the default,
 
 Routes: each endpoint below has a route with the given method.
 In addition, any endpoint can be called as `api/<endpoint>/<id>`, with any HTTP method, where `<id>` is the main identifier (workflow or work order).
+Some endpoints have no other route (for example `export_workflow`, `list_monitors`, `journal_files`, `pool_status`): when they do not use `<id>`, any value works, for example `0`.
+The [OpenAPI description](https://github.com/laurent-martin/aspera-api-examples/blob/main/openapi/IBM%20Aspera%20Orchestrator%20API-v1-enhanced.yaml) lists all endpoints and their parameters, checked against the source code with `rake doc:api_check` of this repository.
 
 Errors are returned with the exception message and stack trace in the response body.
 
@@ -1114,6 +1116,8 @@ Query parameters:
 | Start | `ascli orchestrator workflows start <id> [<parameters>] [<execution>]`, where execution is `{"synchronous":true}` or `{"step":"<step name>","variable":"<output name>"}` |
 | Work orders of a workflow | `ascli orchestrator workflows workorders <id>` |
 | Work order | `ascli orchestrator workorders status <id>`, `ascli orchestrator workorders output <id>`, `ascli orchestrator workorders cancel <id>` |
+| Journal, monitors, queues, resource pools | `ascli orchestrator journal files <book>`, `ascli orchestrator monitors list <type>`, `ascli orchestrator queues list`, `ascli orchestrator pools status <name>` |
+| Query parameters of an API call | `--query=@json:'{...}'`; `--query=help` lists them, from the OpenAPI description |
 
 ## Known issues
 

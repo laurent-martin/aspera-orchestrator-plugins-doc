@@ -93,4 +93,13 @@ The reference can also be generated without `rake` and `aspera-cli`:
 ruby lib/action_template_reference.rb <actions_dir> docs/action-template-reference.md <version>
 ```
 
+`doc:api_check` compares the REST API of the extracted Orchestrator (`config/routes.rb` and `ApiController`) with its OpenAPI description, and prints a report in Markdown: endpoints missing or not implemented, HTTP methods, endpoints routed only with an id in the path, default response format, and parameters read by the source and not declared, or declared and not read.
+The OpenAPI file is the one of a clone of [aspera-api-examples](https://github.com/laurent-martin/aspera-api-examples) next to this repository, or the file given in env var `OPENAPI`.
+It needs the RPM extract of `extract_rpm` (`build/<VERSION>/rpmout`).
+
+```bash
+rake doc:api_check
+ruby lib/api_check.rb build/<VERSION>/rpmout/opt/aspera/orchestrator <openapi.yaml>
+```
+
 `rake -T` lists all tasks.
