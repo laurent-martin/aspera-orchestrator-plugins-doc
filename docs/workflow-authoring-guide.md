@@ -162,7 +162,8 @@ That converter is line-based, so the layout rules matter:
     The separator must be exactly `: !ruby/object:`.
 - A line `attributes:` is optional and ignored.
 - The other lines of a section are its attributes, one `name: value` per line, with the same indentation within a section.
-  Block scalars (`|`) are allowed, for example for `xml_export`.
+  Block scalars (`|`) are allowed, for example for `xml_export`, and for template attributes such as `execute_code` (Ruby code) or a private key in PEM format.
+  In a double-quoted value, YAML escapes apply, for example `\r\n` between lines of `parameters_associations` of [`SimpleParameterLookup`](#simpleparameterlookup).
 - The class of a template is the part of its key before `__`.
 - An unknown attribute name makes the import fail.
 - In element 1, attributes with a null value are ignored.
@@ -296,6 +297,8 @@ General rules:
 
 `Fail` and `Error` are also reached **implicitly**: when a work step ends with status `Failed` (or `Error`) and no step is connected to it for that status, the work order goes to `Fail` (or `Error`).
 So only success paths need to be connected to `End`; failures do not need explicit links.
+The status details of the work order are then `No behavior defined for step status change to <status> - in <step name>`.
+The reason of the failure is in key `step_status_details` of output `<step name>:Step_information`: `ascli orchestrator workorders output <work order id>` shows it.
 
 ### Step
 
@@ -612,7 +615,16 @@ If processing code raises an exception, a warning is logged and execution contin
 
 Some plugins wait for an event instead of executing at once, for example `LocalFileWatcher`.
 They do not hold a worker while waiting.
-If the template enables continuous monitoring (attribute `allow_multiple` of `LocalFileWatcher`), each event starts a new work order that continues with the next steps, while the trigger keeps waiting.
+
+If the template enables continuous monitoring (for example attribute `allow_multiple` of `LocalFileWatcher`, or `keep_ongoing` of `Faspex5InboxWatcher`), the work order is cloned at the trigger step each time the step ends with a status other than `Error` (`WorkStep`, `WorkOrder.clone_at_step`):
+
+- The work order that detected the event continues with the next steps, with the outputs of the trigger.
+- The clone is a new work order that waits for the next event.
+  Its `comments` are `Derived from WorkOrder <id>, forked at '<step name>' (<step id>)`, and its `derived_from` and `master_id` are the id of the first work order.
+
+So the work order that waits is always the last one, and its id changes after each event.
+To stop the monitoring, cancel that work order: `ascli orchestrator workflows workorders <workflow id>` lists the work orders, the waiting one is `In Progress` on the trigger step.
+When the trigger step ends with `Error`, no clone is created, and the monitoring stops.
 
 ## Main action plugins
 
@@ -644,7 +656,9 @@ Contract of `execute_code`:
   Only outputs declared in `typed_outputs` are stored.
 - Optionally set `@status` to `Complete` (default), `Failed` or `Error`, and `@status_details` to a message.
   Any other status becomes `Error`.
+  The message is also kept with `Complete`: it is the `step_status_details` of output `Step_information`.
 - An exception ends the step with `Error`.
+- `JSON` is loaded: `JSON.parse` and `JSON.generate` work without `require`.
 
 ### Filter
 
@@ -666,7 +680,7 @@ Output `FileName` is the full path of the file (`string`), or the list of paths 
 |-----------|---------|
 | `directory` | Directory to watch. Blank: becomes input `directory`. |
 | `file_name` | File name pattern (glob, or regular expression if `use_regex_matching`). Blank: becomes input `File_name`. |
-| `allow_multiple` | Continuous monitoring: start a new work order for each detection, and keep watching. |
+| `allow_multiple` | Continuous monitoring: keep watching after a detection (see [Triggers](#triggers)). |
 | `remove_file` | Delete the file once detected. |
 | `archive_directory`, `archive_with_timestamp`, `keep_timestamps` | Move the file to an archive directory once detected. |
 | `cool_off` | Seconds a file must stay unchanged to be considered stable. |
@@ -679,6 +693,74 @@ Output `FileName` is the full path of the file (`string`), or the list of paths 
 Pitfall: with `remove_file` (and no archive directory) not set, a detected file stays in the directory.
 Past triggers are remembered per work order group by default, and each new work order is a new group: each new work order detects the same file again at once.
 Set `remove_file`, or `archive_directory`, so that a file is processed once.
+
+### SimpleParameterLookup
+
+Looks up a row in a table set in the template, and returns its values.
+
+| Attribute | Content |
+|-----------|---------|
+| `parameters_associations` | The table: one row per line (LF or CR LF), columns separated by `:::`. The first line is the header: the names of the columns. |
+| `param_file_name` | Instead of `parameters_associations`: path of a file on the Orchestrator host, with the same format, or CSV if its name ends with `.csv`. |
+| `case_sensitive` | Compare values with case (default: ignore case). |
+| `strip_spaces` | Remove spaces around values. |
+| `disable_glob`, `disable_regex` | Do not match cells as patterns. |
+| `return_array_of_rows` | Return all matching rows in output `rows`, instead of the first one. |
+
+Inputs and outputs come from the header:
+
+- Each column name is an optional `string` input, and a `string` output.
+- The inputs that have a value select the row: the first row whose cells, in those columns, match the input values.
+  A cell matches if it is equal to the value, if it is a glob pattern that matches it (`File.fnmatch`), or if it is written `/<regular expression>/` and matches it.
+- The outputs are the cells of that row, for all columns.
+- If no row matches, the step ends with `Failed`: `No configuration match for data set: <column>:<value>`.
+
+Example: the step has input `Profile`, and outputs `FFMPEG Options` and `Target Extension` (plain format, rows separated by `\r\n` in a double-quoted value):
+
+```yaml
+  SimpleParameterLookup__5: !ruby/object:SimpleParameterLookup
+    attributes:
+      name: W0__Transcoding profile
+      parameters_associations: "Profile:::FFMPEG Options:::Target Extension\r\nMP4:::-vf scale=1280:720:::mp4\r\nXDCAM HD422:::-target pal-dvd -aspect 16:9:::avi"
+```
+
+### Faspex5InboxWatcher
+
+Waits for packages in a Faspex 5 mailbox.
+Each event is one package: the oldest one not seen yet.
+
+| Attribute | Content |
+|-----------|---------|
+| `server` | URL of Faspex, for example `https://faspex.example.com/aspera/faspex`. |
+| `user`, `client_id`, `private_key` | JWT authentication: the user whose mailbox is watched, the id of a Faspex API client with JWT enabled, and the RSA private key (PEM) whose public key is registered for that client. No client secret is used. |
+| `mailbox` | `all` ("Global All", used when blank), `inbox` ("My Packages": packages received by the user), `inbox_all` ("All packages"), `shared_inbox` (with `shared_inbox_name`). |
+| `keep_ongoing` | Continuous monitoring (see [Triggers](#triggers)). |
+| `new_only` | Ignore the packages already in the mailbox when the step starts. |
+| `early_trigger` | `1`: trigger before the upload ends. `0`: trigger when the upload is complete and the package is released. |
+| `polling_frequency` | Seconds between checks. |
+| `get_transfer_spec`, `transfer_type`, `destination_root` | Output `Transfer_spec`: the transfer spec to download the package, for `connect` or `transfer_client`, with `destination_root` replaced by the attribute when it is set. |
+
+Outputs:
+
+- `Id`: the package id, a number (as a `string`). `Package UUID`: its UUID.
+- `File_list`: names of the files of the package, without path.
+- `Transfer_spec`: JSON text from Faspex, with `direction` `receive`, `remote_host`, `remote_user`, `authentication` `token` and `token`, and one path: `paths[0].source` is the folder of the package on the Faspex storage, `<storage>/<title> - <UUID>.aspera-package/PKG - <title>/`.
+  The token is stored in clear in the outputs of the work order.
+
+To download the package to a node, give `Transfer_spec` as payload to [`AsperaNodeApiTransferOperation`](#asperanodeapitransferoperation).
+
+### AsperaNodeApiTransferOperation
+
+Starts a transfer on a node with the Node API, then checks its status every `polling_frequency` seconds (default 5) until it ends.
+
+- With operation `Submit Transfer Using Payload`, input `Payload` (attribute `payload` blank) is posted as is to `/ops/transfers` of the node: a transfer spec as JSON text.
+- The node is `https://<service_node_ip>:<service_node_port>` with `use_ssl` `1` (default port 9092), `http://` and port 9091 with `use_ssl` `0`, or the address of `remote_node`.
+  `service_node_ip` can include the port (`<host>:<port>`).
+  The certificate of the node is not verified.
+- Authentication is Basic, with `user_login` and `user_password`: a node user and its password, or an access key and its secret.
+  They are required also with `remote_node`.
+  With wrong credentials, the step ends with `Failed`: `Transfer failed: 401 Unauthorized`.
+- `destination_root` of the transfer spec is a path in the docroot of the node user, or in the storage root of the access key.
 
 ### ArrayFanout and Funnelin
 
@@ -1030,6 +1112,7 @@ Query parameters:
 | Publish | `ascli orchestrator workflows publish <id>` |
 | Inputs, outputs | `ascli orchestrator workflows inputs <id>`, `ascli orchestrator workflows outputs <id>` |
 | Start | `ascli orchestrator workflows start <id> [<parameters>] [<execution>]`, where execution is `{"synchronous":true}` or `{"step":"<step name>","variable":"<output name>"}` |
+| Work orders of a workflow | `ascli orchestrator workflows workorders <id>` |
 | Work order | `ascli orchestrator workorders status <id>`, `ascli orchestrator workorders output <id>`, `ascli orchestrator workorders cancel <id>` |
 
 ## Known issues
