@@ -827,7 +827,7 @@ Starts a transfer on a node with the Node API, then checks its status every `pol
 - `Funnelin`: attribute `funnel_variable` (and `funnel_type`) is the name of the input collected from each execution, `funneled_inputs` additional inputs (type map), `return_status` to add status outputs, `fail_if_failures` to fail if an execution failed.
   Output `Hash_by_state_id` maps each work step id to its value; each additional input `x` gives an output `x_hash`.
 
-The steps between them use `Carry_thru` to pass the current element along.
+Exactly one step can be between them, and `Funnelin` must be linked to each end status of that step: see [Recipe: one work order per file](#recipe-one-work-order-per-file).
 
 ## Recipes
 
@@ -996,6 +996,412 @@ ascli orchestrator workflows start <id> @json:'{}' @json:'{"step":"Wait for file
 ```
 
 The command returns when a matching file has been stable for `cool_off` seconds, for example `/tmp/ascli_watch_20261006_230726.txt`.
+
+### Recipe: sub-workflow with outputs
+
+Workflow `child` upper-cases its runtime parameter `text`: step `Upper`, output `result`.
+Workflow `parent` runs it in step `Call child` (`SubWorkflow`), and gets `result` of `Upper` as output `upper` of the step.
+
+Import and publish `child` first, and write its id in `workflow_id` of the `SubWorkflow` template (see [Referring to existing entities](#referring-to-existing-entities)).
+The inputs and outputs of the step come from the published `child`:
+
+- One input per runtime parameter of `child`, with the same name: here `text`, required because `Runtime_optional` is `false` in `child`.
+- One output per entry of `workflow_outputs`, `{'<output name>'=>'<step name>:<output name in child>'}`, with the type of that output in `child`.
+
+```yaml
+---
+- !ruby/object:Workflow
+  attributes:
+    name: child
+    run_as: SYSTEM
+- !ruby/object:Whiteboard
+  attributes:
+    error_free: true
+    xml_export: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Workflow id="0">
+      <Start x="100" y="50" id="start"><Parameters><Parameter id="p_text"/></Parameters></Start>
+      <Error x="600" y="350" id="error"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Error>
+      <End x="600" y="50" id="end"><Synch_factor>0</Synch_factor><Prerequisites><Prerequisite id="upper" status="Complete"/></Prerequisites></End>
+      <Fail x="600" y="200" id="fail"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Fail>
+      <Steps>
+      <Step x="300" y="50" id="upper"><Action_id>1</Action_id><Step_name>Upper</Step_name><Step_type>CustomRuby</Step_type><Synch_factor>0</Synch_factor>
+        <Prerequisites><Prerequisite id="start" status="true"/></Prerequisites><Parameters></Parameters>
+        <Inputs><Input name="text"><Map_to type="parameter" name="text"/></Input></Inputs><Outputs></Outputs></Step>
+      </Steps>
+      <Parameters><Parameter x="100" y="200" id="p_text"><Name>text</Name><Value></Value><Value_type>string</Value_type><Runtime_override>true</Runtime_override><Runtime_optional>false</Runtime_optional></Parameter></Parameters>
+      <Notes></Notes>
+      </Workflow>
+- CustomRuby__1: !ruby/object:CustomRuby
+    attributes:
+      name: W0__Upper
+      mandatory_inputs: "{'text'=>'string'}"
+      execute_code: "outputs['result'] = @inputs['text'].upcase"
+      typed_outputs: "{'result'=>'string'}"
+- CustomRuby__1: []
+- {}
+- CustomRuby: 0.7.0
+```
+
+```yaml
+---
+- !ruby/object:Workflow
+  attributes:
+    name: parent
+    run_as: SYSTEM
+- !ruby/object:Whiteboard
+  attributes:
+    error_free: true
+    xml_export: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Workflow id="0">
+      <Start x="100" y="50" id="start"><Parameters><Parameter id="p_text"/></Parameters></Start>
+      <Error x="900" y="350" id="error"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Error>
+      <End x="900" y="50" id="end"><Synch_factor>0</Synch_factor><Prerequisites><Prerequisite id="use" status="Complete"/></Prerequisites></End>
+      <Fail x="900" y="200" id="fail"><Synch_factor>0</Synch_factor><Prerequisites><Prerequisite id="call" status="Failed"/></Prerequisites></Fail>
+      <Steps>
+      <Step x="300" y="50" id="call"><Action_id>1</Action_id><Step_name>Call child</Step_name><Step_type>SubWorkflow</Step_type><Synch_factor>0</Synch_factor>
+        <Prerequisites><Prerequisite id="start" status="true"/></Prerequisites><Parameters></Parameters>
+        <Inputs><Input name="text"><Map_to type="parameter" name="text"/></Input></Inputs><Outputs></Outputs></Step>
+      <Step x="600" y="50" id="use"><Action_id>2</Action_id><Step_name>Use result</Step_name><Step_type>CustomRuby</Step_type><Synch_factor>0</Synch_factor>
+        <Prerequisites><Prerequisite id="call" status="Complete"/></Prerequisites><Parameters></Parameters>
+        <Inputs><Input name="value"><Map_to type="output" name="upper" step_type="SubWorkflow" action_id="1" step_name="Call child"/></Input></Inputs><Outputs></Outputs></Step>
+      </Steps>
+      <Parameters><Parameter x="100" y="200" id="p_text"><Name>text</Name><Value>hello</Value><Value_type>string</Value_type><Runtime_override>true</Runtime_override><Runtime_optional>true</Runtime_optional></Parameter></Parameters>
+      <Notes></Notes>
+      </Workflow>
+- SubWorkflow__1: !ruby/object:SubWorkflow
+    attributes:
+      name: W0__Call child
+      workflow_id: <id of child>
+      workflow_outputs: "{'upper'=>'Upper:result'}"
+  CustomRuby__2: !ruby/object:CustomRuby
+    attributes:
+      name: W0__Use result
+      mandatory_inputs: "{'value'=>'string'}"
+      execute_code: "outputs['result'] = \"child returned #{@inputs['value']}\""
+      typed_outputs: "{'result'=>'string'}"
+- SubWorkflow__1: []
+  CustomRuby__2: []
+- {}
+- SubWorkflow: 1.3.1
+  CustomRuby: 0.7.0
+```
+
+```shell
+ascli orchestrator workflows import child.yml @json:'{"publish":true}'
+ascli orchestrator workflows import parent.yml @json:'{"publish":true}'
+ascli orchestrator workflows start <id of parent> @json:'{"text":"abc"}' @json:'{"step":"Use result","variable":"result"}'   # child returned ABC
+```
+
+`child` runs in a work order of its own.
+The import of `parent` sets `workflow_portable_id` of the template to the portable id of `child`.
+
+### Recipe: one work order per file
+
+Workflow `watch_folder` watches the folder `/tmp/doc_test_watch/` of the Orchestrator host, and starts workflow `per_file` once per file found:
+
+- `Detect files` (`LocalFileWatcher`): continuous monitoring (`allow_multiple`, see [Triggers](#triggers)), all files found at once (`return_all`): output `FileName` is an array.
+- `Each file` (`ArrayFanout`): runs the next step once per element of input `all_files`, with the element as output `file`.
+- `Process file` (`WorkflowLauncher`): starts `per_file` with `file_path` set to `file`, waits for its end (`wait_for_completion`), and ends with `Failed` if it fails (`fail_if_failure`).
+- `Wait all` (`Funnelin`): runs once all executions of `Process file` have ended, and gathers their values.
+
+`per_file` reads the size of the file and deletes it.
+
+```yaml
+---
+- !ruby/object:Workflow
+  attributes:
+    name: per_file
+    run_as: SYSTEM
+- !ruby/object:Whiteboard
+  attributes:
+    error_free: true
+    xml_export: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Workflow id="0">
+      <Start x="100" y="50" id="start"><Parameters><Parameter id="p_file_path"/></Parameters></Start>
+      <Error x="600" y="350" id="error"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Error>
+      <End x="600" y="50" id="end"><Synch_factor>0</Synch_factor><Prerequisites><Prerequisite id="process" status="Complete"/></Prerequisites></End>
+      <Fail x="600" y="200" id="fail"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Fail>
+      <Steps>
+      <Step x="300" y="50" id="process"><Action_id>1</Action_id><Step_name>Process file</Step_name><Step_type>CustomRuby</Step_type><Synch_factor>0</Synch_factor>
+        <Prerequisites><Prerequisite id="start" status="true"/></Prerequisites><Parameters></Parameters>
+        <Inputs><Input name="file_path"><Map_to type="parameter" name="file_path"/></Input></Inputs><Outputs></Outputs></Step>
+      </Steps>
+      <Parameters><Parameter x="100" y="200" id="p_file_path"><Name>file_path</Name><Value></Value><Value_type>string</Value_type><Runtime_override>true</Runtime_override><Runtime_optional>false</Runtime_optional></Parameter></Parameters>
+      <Notes></Notes>
+      </Workflow>
+- CustomRuby__1: !ruby/object:CustomRuby
+    attributes:
+      name: W0__Process file
+      mandatory_inputs: "{'file_path'=>'string'}"
+      execute_code: "outputs['size'] = File.size(@inputs['file_path']); File.delete(@inputs['file_path'])"
+      typed_outputs: "{'size'=>'int'}"
+- CustomRuby__1: []
+- {}
+- CustomRuby: 0.7.3
+```
+
+```yaml
+---
+- !ruby/object:Workflow
+  attributes:
+    name: watch_folder
+    run_as: SYSTEM
+- !ruby/object:Whiteboard
+  attributes:
+    error_free: true
+    xml_export: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Workflow id="0">
+      <Start x="100" y="50" id="start"><Parameters></Parameters></Start>
+      <Error x="1200" y="350" id="error"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Error>
+      <End x="1200" y="50" id="end"><Synch_factor>0</Synch_factor><Prerequisites><Prerequisite id="wait" status="Complete"/></Prerequisites></End>
+      <Fail x="1200" y="200" id="fail"><Synch_factor>0</Synch_factor><Prerequisites><Prerequisite id="wait" status="Failed"/></Prerequisites></Fail>
+      <Steps>
+      <Step x="300" y="50" id="detect"><Action_id>1</Action_id><Step_name>Detect files</Step_name><Step_type>LocalFileWatcher</Step_type><Synch_factor>0</Synch_factor>
+        <Prerequisites><Prerequisite id="start" status="true"/></Prerequisites><Parameters></Parameters><Inputs></Inputs><Outputs></Outputs></Step>
+      <Step x="525" y="50" id="each"><Action_id>2</Action_id><Step_name>Each file</Step_name><Step_type>ArrayFanout</Step_type><Synch_factor>0</Synch_factor>
+        <Prerequisites><Prerequisite id="detect" status="Complete"/></Prerequisites><Parameters></Parameters>
+        <Inputs><Input name="all_files"><Map_to type="output" name="FileName" step_type="LocalFileWatcher" action_id="1" step_name="Detect files"/></Input></Inputs><Outputs></Outputs></Step>
+      <Step x="750" y="50" id="launch"><Action_id>3</Action_id><Step_name>Process file</Step_name><Step_type>WorkflowLauncher</Step_type><Synch_factor>0</Synch_factor>
+        <Prerequisites><Prerequisite id="each" status="Complete"/></Prerequisites><Parameters></Parameters>
+        <Inputs><Input name="file_path"><Map_to type="output" name="file" step_type="ArrayFanout" action_id="2" step_name="Each file"/></Input></Inputs><Outputs></Outputs></Step>
+      <Step x="975" y="50" id="wait"><Action_id>4</Action_id><Step_name>Wait all</Step_name><Step_type>Funnelin</Step_type><Synch_factor>1</Synch_factor>
+        <Prerequisites><Prerequisite id="launch" status="Complete"/><Prerequisite id="launch" status="Failed"/><Prerequisite id="launch" status="Error"/></Prerequisites><Parameters></Parameters>
+        <Inputs><Input name="file"><Map_to type="output" name="file" step_type="ArrayFanout" action_id="2" step_name="Each file"/></Input>
+        <Input name="WorkOrder_ID"><Map_to type="output" name="WorkOrder_ID" step_type="WorkflowLauncher" action_id="3" step_name="Process file"/></Input></Inputs><Outputs></Outputs></Step>
+      </Steps>
+      <Parameters></Parameters><Notes></Notes>
+      </Workflow>
+- LocalFileWatcher__1: !ruby/object:LocalFileWatcher
+    attributes:
+      name: W0__Detect files
+      directory: /tmp/doc_test_watch/
+      file_name: "*.txt"
+      allow_multiple: 1
+      return_all: 1
+      cool_off: 2
+  ArrayFanout__2: !ruby/object:ArrayFanout
+    attributes:
+      name: W0__Each file
+      fanout_variable: all_files
+      fanned_as: file
+      variable_type: string
+  WorkflowLauncher__3: !ruby/object:WorkflowLauncher
+    attributes:
+      name: W0__Process file
+      workflow_id: <id of per_file>
+      wait_for_completion: 1
+      fail_if_failure: 1
+  Funnelin__4: !ruby/object:Funnelin
+    attributes:
+      name: W0__Wait all
+      funnel_variable: file
+      funnel_type: string
+      funneled_inputs: "{'WorkOrder_ID'=>'int'}"
+      return_status: 1
+      fail_if_failures: 1
+- LocalFileWatcher__1: []
+  ArrayFanout__2: []
+  WorkflowLauncher__3: []
+  Funnelin__4: []
+- {}
+- LocalFileWatcher: 1.9.3
+  ArrayFanout: 1.2.2
+  WorkflowLauncher: 1.6.1
+  Funnelin: 1.1.3
+```
+
+```shell
+ascli orchestrator workflows import per_file.yml @json:'{"publish":true}'
+ascli orchestrator workflows import watch_folder.yml @json:'{"publish":true}'
+ascli orchestrator workflows start <id of watch_folder> @json:'{}'
+```
+
+Observed with the files `a_ok.txt`, `b_ok.txt` and `c_locked.txt`, the last one made impossible to delete (`chattr +i`):
+
+- One work order of `per_file` per file.
+  The executions of the fanned step are named `Process file (0)`, `Process file (1)`, ... in `Step_information`.
+- Outputs of `Wait all`, by work step id: `Hash_by_state_id` (value of `file`), `Status_by_state_id`; by value of `file`: `Status_hash`, and `WorkOrder_ID_hash` for the input `WorkOrder_ID` declared in `funneled_inputs`.
+  For example `Status_hash` is `{"/tmp/doc_test_watch/a_ok.txt" => "Complete", "/tmp/doc_test_watch/b_ok.txt" => "Complete", "/tmp/doc_test_watch/c_locked.txt" => "Failed"}`.
+- `Wait all` ends with `Failed` (`fail_if_failures`: `Funneled in 3 work steps with 1 failures`), and the work order goes to `Fail`.
+  When all files are processed, it goes to `End`.
+- The work order that detected the files continues; a clone waits for the next files: cancel it to stop the monitoring.
+
+Rules of this pattern (source of `ArrayFanout` and `Funnelin`, and tests):
+
+- Exactly one step between `ArrayFanout` and `Funnelin`, otherwise `ArrayFanout` ends with `Error`.
+  For more processing, use a `SubWorkflow` or `WorkflowLauncher` step, as here.
+- Connect `Funnelin` to each end status of that step (`Complete`, `Failed`, `Error`), with `Synch_factor` 1: `ArrayFanout` replaces 1 by the number of elements, so `Funnelin` waits for all executions, whatever their status.
+  With a link on `Complete` only, a failed execution has no next step, and the work order fails at once (`No behavior defined for step status change to Failed - in Process file (1)`).
+- A file still in the folder is detected again by the next clone (each work order is a new group for the default `trigger_type`, see [LocalFileWatcher](#localfilewatcher)): with `c_locked.txt` left in the folder, each new clone started `per_file` on it again.
+  Remove or move each file, also when its processing fails.
+
+### Recipe: queue and resource pool
+
+Workflow `queue` runs step `Work` for one work order at a time, in the order the work orders started:
+
+- `Enqueue` (`QueueStager`, operation `Add`): adds the runtime parameter `item` to the queue `doc test queue`, created on first use (`adhoc_queue`).
+  With `lifetime` `WorkOrder`, the items of a work order that stopped are removed from the queue.
+- `Reserve` (`LoadManager`, action `Reserve`): reserves a resource of the pool `doc test pool`, created on first use (default `is_adhoc`) with one resource of capacity 1 (`max_resources`, `resource_capacity`).
+  With `queue_id` set to the queue, and input `Expected_queued_item` mapped to output `Queued_item` of `Enqueue`, it waits until this item is the first of the queue and a resource is free, and then removes the item from the queue.
+  The value of an item identifies it: use a value that is unique to the work order, for example a file path.
+- `Work` (`CustomRuby`): 10 seconds of work; with `fail` set to `yes`, it raises an exception (`Error`).
+- `Release` and `Release on error` (`LoadManager`, action `Release`): release the reservation (input `Allocation_token_to_release` mapped to output `Allocation_token` of `Reserve`), after `Complete` of `Work`, and after `Failed` or `Error` (`Synch_factor` 1).
+  A reservation that is not released holds the resource until `resource_hold_timeout` (none by default): the next work orders wait.
+
+```yaml
+---
+- !ruby/object:Workflow
+  attributes:
+    name: queue
+    run_as: SYSTEM
+- !ruby/object:Whiteboard
+  attributes:
+    error_free: true
+    xml_export: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Workflow id="0">
+      <Start x="100" y="50" id="start"><Parameters><Parameter id="p_item"/><Parameter id="p_fail"/></Parameters></Start>
+      <Error x="1200" y="350" id="error"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Error>
+      <End x="1200" y="50" id="end"><Synch_factor>0</Synch_factor><Prerequisites><Prerequisite id="release" status="Complete"/></Prerequisites></End>
+      <Fail x="1200" y="200" id="fail"><Synch_factor>0</Synch_factor><Prerequisites><Prerequisite id="release_error" status="Complete"/></Prerequisites></Fail>
+      <Steps>
+      <Step x="300" y="50" id="enqueue"><Action_id>1</Action_id><Step_name>Enqueue</Step_name><Step_type>QueueStager</Step_type><Synch_factor>0</Synch_factor>
+        <Prerequisites><Prerequisite id="start" status="true"/></Prerequisites><Parameters></Parameters>
+        <Inputs><Input name="Queued_item"><Map_to type="parameter" name="item"/></Input></Inputs><Outputs></Outputs></Step>
+      <Step x="525" y="50" id="reserve"><Action_id>2</Action_id><Step_name>Reserve</Step_name><Step_type>LoadManager</Step_type><Synch_factor>0</Synch_factor>
+        <Prerequisites><Prerequisite id="enqueue" status="Complete"/></Prerequisites><Parameters></Parameters>
+        <Inputs><Input name="Expected_queued_item"><Map_to type="output" name="Queued_item" step_type="QueueStager" action_id="1" step_name="Enqueue"/></Input></Inputs><Outputs></Outputs></Step>
+      <Step x="750" y="50" id="work"><Action_id>3</Action_id><Step_name>Work</Step_name><Step_type>CustomRuby</Step_type><Synch_factor>0</Synch_factor>
+        <Prerequisites><Prerequisite id="reserve" status="Complete"/></Prerequisites><Parameters></Parameters>
+        <Inputs><Input name="fail"><Map_to type="parameter" name="fail"/></Input></Inputs><Outputs></Outputs></Step>
+      <Step x="975" y="50" id="release"><Action_id>4</Action_id><Step_name>Release</Step_name><Step_type>LoadManager</Step_type><Synch_factor>0</Synch_factor>
+        <Prerequisites><Prerequisite id="work" status="Complete"/></Prerequisites><Parameters></Parameters>
+        <Inputs><Input name="Allocation_token_to_release"><Map_to type="output" name="Allocation_token" step_type="LoadManager" action_id="2" step_name="Reserve"/></Input></Inputs><Outputs></Outputs></Step>
+      <Step x="975" y="200" id="release_error"><Action_id>5</Action_id><Step_name>Release on error</Step_name><Step_type>LoadManager</Step_type><Synch_factor>1</Synch_factor>
+        <Prerequisites><Prerequisite id="work" status="Failed"/><Prerequisite id="work" status="Error"/></Prerequisites><Parameters></Parameters>
+        <Inputs><Input name="Allocation_token_to_release"><Map_to type="output" name="Allocation_token" step_type="LoadManager" action_id="2" step_name="Reserve"/></Input></Inputs><Outputs></Outputs></Step>
+      </Steps>
+      <Parameters><Parameter x="100" y="200" id="p_item"><Name>item</Name><Value></Value><Value_type>string</Value_type><Runtime_override>true</Runtime_override><Runtime_optional>false</Runtime_optional></Parameter>
+      <Parameter x="100" y="300" id="p_fail"><Name>fail</Name><Value>no</Value><Value_type>string</Value_type><Runtime_override>true</Runtime_override><Runtime_optional>true</Runtime_optional></Parameter></Parameters>
+      <Notes></Notes>
+      </Workflow>
+- QueueStager__1: !ruby/object:QueueStager
+    attributes:
+      name: W0__Enqueue
+      operation: Add
+      queue_name: doc test queue
+      adhoc_queue: 1
+      lifetime: WorkOrder
+  LoadManager__2: !ruby/object:LoadManager
+    attributes:
+      name: W0__Reserve
+      manager_action: Reserve
+      unique_id: doc test pool
+      max_resources: 1
+      resource_capacity: 1
+      unicity_type: absolute
+      queue_id: doc test queue
+  CustomRuby__3: !ruby/object:CustomRuby
+    attributes:
+      name: W0__Work
+      optional_inputs: "{'fail'=>'string'}"
+      execute_code: "sleep 10; raise 'asked to fail' if @inputs['fail'] == 'yes'; outputs['done_at'] = Time.now.utc.strftime('%H:%M:%S')"
+      typed_outputs: "{'done_at'=>'string'}"
+  LoadManager__4: !ruby/object:LoadManager
+    attributes:
+      name: W0__Release
+      manager_action: Release
+  LoadManager__5: !ruby/object:LoadManager
+    attributes:
+      name: W0__Release on error
+      manager_action: Release
+- QueueStager__1: []
+  LoadManager__2: []
+  CustomRuby__3: []
+  LoadManager__4: []
+  LoadManager__5: []
+- {}
+- QueueStager: 0.9.5
+  LoadManager: 0.5.3
+  CustomRuby: 0.7.3
+```
+
+```shell
+ascli orchestrator workflows import queue.yml @json:'{"publish":true}'
+ascli orchestrator workflows start <id> @json:'{"item":"a"}'
+ascli orchestrator workflows start <id> @json:'{"item":"b","fail":"yes"}'
+ascli orchestrator workflows start <id> @json:'{"item":"c"}'
+ascli orchestrator queues list
+ascli orchestrator pools status 'doc test pool'   # taken 0, capacity 1: all released
+```
+
+Observed: `Reserve` waited 0 s for `a`, 15 s for `b` and 25 s for `c` (`processingTime` in `Step_information`).
+`a` and `c` end `Complete`; `b` ends `Failed`, through `Release on error`.
+Generic resources are named `resource_1`, `resource_2`, ... (output `Resource_reserved`).
+
+### Recipe: lookup table
+
+Workflow `lookup` takes the settings of the runtime parameter `profile` from a table (see [SimpleParameterLookup](#simpleparameterlookup)), and fails for an unknown profile.
+Rows are separated by `\n` in a double-quoted value.
+
+```yaml
+---
+- !ruby/object:Workflow
+  attributes:
+    name: lookup
+    run_as: SYSTEM
+- !ruby/object:Whiteboard
+  attributes:
+    error_free: true
+    xml_export: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Workflow id="0">
+      <Start x="100" y="50" id="start"><Parameters><Parameter id="p_profile"/></Parameters></Start>
+      <Error x="900" y="350" id="error"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Error>
+      <End x="900" y="50" id="end"><Synch_factor>0</Synch_factor><Prerequisites><Prerequisite id="build" status="Complete"/></Prerequisites></End>
+      <Fail x="900" y="200" id="fail"><Synch_factor>0</Synch_factor><Prerequisites><Prerequisite id="lookup" status="Failed"/></Prerequisites></Fail>
+      <Steps>
+      <Step x="300" y="50" id="lookup"><Action_id>1</Action_id><Step_name>Profile settings</Step_name><Step_type>SimpleParameterLookup</Step_type><Synch_factor>0</Synch_factor>
+        <Prerequisites><Prerequisite id="start" status="true"/></Prerequisites><Parameters></Parameters>
+        <Inputs><Input name="Profile"><Map_to type="parameter" name="profile"/></Input></Inputs><Outputs></Outputs></Step>
+      <Step x="600" y="50" id="build"><Action_id>2</Action_id><Step_name>Build command</Step_name><Step_type>CustomRuby</Step_type><Synch_factor>0</Synch_factor>
+        <Prerequisites><Prerequisite id="lookup" status="Complete"/></Prerequisites><Parameters></Parameters>
+        <Inputs><Input name="options"><Map_to type="output" name="Options" step_type="SimpleParameterLookup" action_id="1" step_name="Profile settings"/></Input>
+        <Input name="extension"><Map_to type="output" name="Extension" step_type="SimpleParameterLookup" action_id="1" step_name="Profile settings"/></Input></Inputs><Outputs></Outputs></Step>
+      </Steps>
+      <Parameters><Parameter x="100" y="200" id="p_profile"><Name>profile</Name><Value>MP4</Value><Value_type>string</Value_type><Runtime_override>true</Runtime_override><Runtime_optional>true</Runtime_optional></Parameter></Parameters>
+      <Notes></Notes>
+      </Workflow>
+- SimpleParameterLookup__1: !ruby/object:SimpleParameterLookup
+    attributes:
+      name: W0__Profile settings
+      parameters_associations: "Profile:::Options:::Extension\nMP4:::-c:v libx264:::mp4\nWEBM:::-c:v libvpx-vp9:::webm\n/^AUDIO/:::-vn -c:a libmp3lame:::mp3"
+  CustomRuby__2: !ruby/object:CustomRuby
+    attributes:
+      name: W0__Build command
+      mandatory_inputs: "{'options'=>'string','extension'=>'string'}"
+      execute_code: "outputs['command'] = \"ffmpeg -i in.mov #{@inputs['options']} out.#{@inputs['extension']}\""
+      typed_outputs: "{'command'=>'string'}"
+- SimpleParameterLookup__1: []
+  CustomRuby__2: []
+- {}
+- SimpleParameterLookup: 0.8.8
+  CustomRuby: 0.7.3
+```
+
+```shell
+ascli orchestrator workflows start <id> @json:'{"profile":"webm"}' @json:'{"step":"Build command","variable":"command"}'       # ffmpeg -i in.mov -c:v libvpx-vp9 out.webm
+ascli orchestrator workflows start <id> @json:'{"profile":"AUDIO_HQ"}' @json:'{"step":"Build command","variable":"command"}'   # ffmpeg -i in.mov -vn -c:a libmp3lame out.mp3
+```
+
+- `webm` matches `WEBM`: the comparison ignores case by default (`case_sensitive`).
+- `AUDIO_HQ` matches the row `/^AUDIO/`, a regular expression.
+- With `{}`, `profile` has its default value `MP4`.
+- `PRORES` matches no row: `Profile settings` ends with `Failed` (`No configuration match for data set: Profile:PRORES`), and the work order goes to `Fail`.
 
 ### Update an existing workflow
 
