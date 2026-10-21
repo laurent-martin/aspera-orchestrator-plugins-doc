@@ -1403,6 +1403,109 @@ ascli orchestrator workflows start <id> @json:'{"profile":"AUDIO_HQ"}' @json:'{"
 - With `{}`, `profile` has its default value `MP4`.
 - `PRORES` matches no row: `Profile settings` ends with `Failed` (`No configuration match for data set: Profile:PRORES`), and the work order goes to `Fail`.
 
+### Recipe: operator decision
+
+Workflow `review` delivers to the runtime parameter `target` if it is valid, and otherwise asks an operator for another target.
+Two branches join in a `MergePoint` step:
+
+- `Check target` (`Filter`): `Complete` if `target` starts with `/data/`, `Failed` otherwise.
+- `Ask operator` (`UserInput`), after `Failed`: creates a task in the web interface (tab Tasks) for the user `admin` (`assigned_user_logins`), described as `Invalid target for <title>`.
+  The task shows `title` and `target` (`mandatory_inputs`), and asks for `new_target` (required, `required_requested_data`) and `rejected` (optional, `user_outputs`): they become outputs of the step.
+  See [Plugin specifications](#plugin-specifications) of `UserInput` for custom forms (`view_template`).
+- `Check rejection` (`Filter`): `Failed` if the operator wrote `yes` in `rejected`: the work order goes to `Fail`.
+- `Merge target` (`MergePoint`), after `Complete` of `Check target` or of `Check rejection` (`Synch_factor` 1): output `target` is input `target` (mapped to `new_target` of `Ask operator`) when it has a value, and input `target_alternate` (mapped to the parameter `target`) otherwise.
+  When `Ask operator` did not run, its outputs have no value.
+- `Deliver` (`CustomRuby`): uses `target` of `Merge target`.
+
+```yaml
+---
+- !ruby/object:Workflow
+  attributes:
+    name: review
+    run_as: SYSTEM
+- !ruby/object:Whiteboard
+  attributes:
+    error_free: true
+    xml_export: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Workflow id="0">
+      <Start x="100" y="50" id="start"><Parameters><Parameter id="p_title"/><Parameter id="p_target"/></Parameters></Start>
+      <Error x="1400" y="350" id="error"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Error>
+      <End x="1400" y="50" id="end"><Synch_factor>0</Synch_factor><Prerequisites><Prerequisite id="deliver" status="Complete"/></Prerequisites></End>
+      <Fail x="1400" y="200" id="fail"><Synch_factor>0</Synch_factor><Prerequisites><Prerequisite id="check_rejection" status="Failed"/></Prerequisites></Fail>
+      <Steps>
+      <Step x="300" y="50" id="check_target"><Action_id>1</Action_id><Step_name>Check target</Step_name><Step_type>Filter</Step_type><Synch_factor>0</Synch_factor>
+        <Prerequisites><Prerequisite id="start" status="true"/></Prerequisites><Parameters></Parameters>
+        <Inputs><Input name="target"><Map_to type="parameter" name="target"/></Input></Inputs><Outputs></Outputs></Step>
+      <Step x="500" y="200" id="ask"><Action_id>2</Action_id><Step_name>Ask operator</Step_name><Step_type>UserInput</Step_type><Synch_factor>0</Synch_factor>
+        <Prerequisites><Prerequisite id="check_target" status="Failed"/></Prerequisites><Parameters></Parameters>
+        <Inputs><Input name="title"><Map_to type="parameter" name="title"/></Input><Input name="target"><Map_to type="parameter" name="target"/></Input></Inputs><Outputs></Outputs></Step>
+      <Step x="750" y="200" id="check_rejection"><Action_id>3</Action_id><Step_name>Check rejection</Step_name><Step_type>Filter</Step_type><Synch_factor>0</Synch_factor>
+        <Prerequisites><Prerequisite id="ask" status="Complete"/></Prerequisites><Parameters></Parameters>
+        <Inputs><Input name="rejected"><Map_to type="output" name="rejected" step_type="UserInput" action_id="2" step_name="Ask operator"/></Input></Inputs><Outputs></Outputs></Step>
+      <Step x="1000" y="50" id="merge"><Action_id>4</Action_id><Step_name>Merge target</Step_name><Step_type>MergePoint</Step_type><Synch_factor>1</Synch_factor>
+        <Prerequisites><Prerequisite id="check_target" status="Complete"/><Prerequisite id="check_rejection" status="Complete"/></Prerequisites><Parameters></Parameters>
+        <Inputs><Input name="target"><Map_to type="output" name="new_target" step_type="UserInput" action_id="2" step_name="Ask operator"/></Input>
+        <Input name="target_alternate"><Map_to type="parameter" name="target"/></Input></Inputs><Outputs></Outputs></Step>
+      <Step x="1200" y="50" id="deliver"><Action_id>5</Action_id><Step_name>Deliver</Step_name><Step_type>CustomRuby</Step_type><Synch_factor>0</Synch_factor>
+        <Prerequisites><Prerequisite id="merge" status="Complete"/></Prerequisites><Parameters></Parameters>
+        <Inputs><Input name="target"><Map_to type="output" name="target" step_type="MergePoint" action_id="4" step_name="Merge target"/></Input></Inputs><Outputs></Outputs></Step>
+      </Steps>
+      <Parameters><Parameter x="100" y="200" id="p_title"><Name>title</Name><Value>clip 1</Value><Value_type>string</Value_type><Runtime_override>true</Runtime_override><Runtime_optional>true</Runtime_optional></Parameter>
+      <Parameter x="100" y="300" id="p_target"><Name>target</Name><Value>/data/default</Value><Value_type>string</Value_type><Runtime_override>true</Runtime_override><Runtime_optional>true</Runtime_optional></Parameter></Parameters>
+      <Notes></Notes>
+      </Workflow>
+- Filter__1: !ruby/object:Filter
+    attributes:
+      name: W0__Check target
+      command: "'<%= target %>'.start_with?('/data/')"
+  UserInput__2: !ruby/object:UserInput
+    attributes:
+      name: W0__Ask operator
+      event_description: "Invalid target for <%= title %>"
+      assigned_user_logins: admin
+      mandatory_inputs: "{'title'=>'string','target'=>'string'}"
+      required_requested_data: "{'new_target'=>'string'}"
+      user_outputs: "{'rejected'=>'string'}"
+  Filter__3: !ruby/object:Filter
+    attributes:
+      name: W0__Check rejection
+      command: "'<%= rejected %>' != 'yes'"
+  MergePoint__4: !ruby/object:MergePoint
+    attributes:
+      name: W0__Merge target
+      merged_inputs: "{'target'=>['','','string','required']}"
+  CustomRuby__5: !ruby/object:CustomRuby
+    attributes:
+      name: W0__Deliver
+      mandatory_inputs: "{'target'=>'string'}"
+      execute_code: "outputs['result'] = \"delivered to #{@inputs['target']}\""
+      typed_outputs: "{'result'=>'string'}"
+- Filter__1: []
+  UserInput__2: []
+  Filter__3: []
+  MergePoint__4: []
+  CustomRuby__5: []
+- {}
+- Filter: 0.3.1
+  UserInput: 0.8.2
+  MergePoint: 0.5.2
+  CustomRuby: 0.7.3
+```
+
+```shell
+ascli orchestrator workflows start <id> @json:'{"target":"/data/ok"}' @json:'{"step":"Deliver","variable":"result"}'   # delivered to /data/ok
+ascli orchestrator workflows start <id> @json:'{"title":"clip 2","target":"bad/path"}'
+```
+
+The second work order waits on `Ask operator`.
+No API completes a task: in the web interface, the operator fills the form and clicks `Complete Task`.
+Observed:
+
+- `new_target` `/data/fixed`, `rejected` empty: `delivered to /data/fixed`, work order `Complete`.
+- `rejected` `yes`: `Check rejection` ends with `Failed`, work order `Failed`.
+- Output `InputProvider` of `Ask operator` is the id of the user who completed the task (`1` for `admin`).
+
 ### Update an existing workflow
 
 `import_workflow` always creates a new workflow.
