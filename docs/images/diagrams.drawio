@@ -1,0 +1,197 @@
+<mxfile host='Electron' pages='3' version='26.1.1'>
+  <diagram id='plugin-folders' name='plugin-folders'>
+    <mxGraphModel arrows='1' connect='1' dx='1200' dy='700' fold='1' grid='1' gridSize='10' guides='1' math='0' page='1' pageHeight='560' pageScale='1' pageWidth='1100' shadow='0' tooltips='1'>
+      <root>
+        <mxCell id='pf0'/>
+        <mxCell id='pf1' parent='pf0'/>
+        <mxCell id='pf-stock' parent='pf1' style='shape=folder;tabWidth=90;tabHeight=16;tabPosition=left;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;verticalAlign=top;spacingLeft=10;spacingTop=22;fontSize=12;' value='&lt;b&gt;Stock folder&lt;/b&gt;&lt;br&gt;/opt/aspera/orchestrator/actions/my_greetings/&lt;br&gt;&lt;br&gt;my_greeting.rb&lt;br&gt;metadata.yml&lt;br&gt;edit.html.erb, edit.css, edit.js&lt;br&gt;help.html.erb&lt;br&gt;MyGreeting.png&lt;br&gt;20261023123000_my_greetings_create_my_greetings.rb' vertex='1'>
+          <mxGeometry as='geometry' height='185' width='340' x='20' y='40'/>
+        </mxCell>
+        <mxCell id='pf-load' parent='pf1' style='shape=folder;tabWidth=90;tabHeight=16;tabPosition=left;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;verticalAlign=top;spacingLeft=10;spacingTop=22;fontSize=12;' value='&lt;b&gt;Load folder&lt;/b&gt;&lt;br&gt;&amp;lt;config_dir&amp;gt;/actions/my_greetings/&lt;br&gt;default: /opt/aspera/var/config/orchestrator/actions/my_greetings/&lt;br&gt;&lt;br&gt;Copy of the stock folder, without the migrations' vertex='1'>
+          <mxGeometry as='geometry' height='120' width='380' x='480' y='40'/>
+        </mxCell>
+        <mxCell id='pf-proc' parent='pf1' style='rounded=1;whiteSpace=wrap;html=1;fillColor=#1f649e;fontColor=#ffffff;strokeColor=none;fontSize=12;' value='&lt;b&gt;Orchestrator processes&lt;/b&gt;&lt;br&gt;web server, workers, delayed_job&lt;br&gt;load the classes, render edit.html.erb' vertex='1'>
+          <mxGeometry as='geometry' height='70' width='320' x='510' y='220'/>
+        </mxCell>
+        <mxCell id='pf-db' parent='pf1' style='shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;' value='&lt;b&gt;Database&lt;/b&gt;&lt;br&gt;action_my_greetings: templates&lt;br&gt;schema_migrations&lt;br&gt;plugins' vertex='1'>
+          <mxGeometry as='geometry' height='110' width='190' x='900' y='200'/>
+        </mxCell>
+        <mxCell id='pf-icon' parent='pf1' style='rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;align=left;spacingLeft=10;' value='&lt;b&gt;Icon&lt;/b&gt;&lt;br&gt;/opt/aspera/orchestrator/public/aspera/orchestrator/assets/actions/MyGreeting.png' vertex='1'>
+          <mxGeometry as='geometry' height='60' width='480' x='20' y='420'/>
+        </mxCell>
+        <mxCell edge='1' id='pf-e1' parent='pf1' source='pf-stock' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;' target='pf-load' value='Enable: copy'>
+          <mxGeometry as='geometry' relative='1'>
+            <Array as='points'>
+              <mxPoint x='420' y='100'/>
+            </Array>
+            <mxPoint as='sourcePoint' x='360' y='100'/>
+            <mxPoint as='targetPoint' x='480' y='100'/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell edge='1' id='pf-e2' parent='pf1' source='pf-load' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;' target='pf-proc' value='load'>
+          <mxGeometry as='geometry' relative='1'/>
+        </mxCell>
+        <mxCell edge='1' id='pf-e3' parent='pf1' source='pf-stock' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.7;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;' target='pf-db' value='Enable, Upgrade: migrations of the stock folder'>
+          <mxGeometry as='geometry' relative='1'>
+            <Array as='points'>
+              <mxPoint x='258' y='360'/>
+              <mxPoint x='995' y='360'/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell edge='1' id='pf-e4' parent='pf1' source='pf-stock' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;' target='pf-icon' value='copy by hand'>
+          <mxGeometry as='geometry' relative='1'/>
+        </mxCell>
+        <mxCell edge='1' id='pf-e5' parent='pf1' source='pf-proc' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;startArrow=block;startFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;' target='pf-db' value='templates'>
+          <mxGeometry as='geometry' relative='1'/>
+        </mxCell>
+        <mxCell id='pf-note' parent='pf1' style='shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#ffffff;strokeColor=#999999;align=left;spacingLeft=8;fontSize=11;' value='Disable: deletes the load folder; the table and the templates stay.&lt;br&gt;Reload: loads the load folder again.' vertex='1'>
+          <mxGeometry as='geometry' height='60' width='360' x='560' y='410'/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id='step-execution' name='step-execution'>
+    <mxGraphModel arrows='1' connect='1' dx='1200' dy='900' fold='1' grid='1' gridSize='10' guides='1' math='0' page='1' pageHeight='820' pageScale='1' pageWidth='900' shadow='0' tooltips='1'>
+      <root>
+        <mxCell id='se0'/>
+        <mxCell id='se1' parent='se0'/>
+        <mxCell id='se-start' parent='se1' style='rounded=1;whiteSpace=wrap;html=1;fillColor=#1f649e;fontColor=#ffffff;strokeColor=none;fontSize=12;' value='&lt;b&gt;Step starts&lt;/b&gt;&lt;br&gt;inputs from the workflow, timeout' vertex='1'>
+          <mxGeometry as='geometry' height='50' width='240' x='60' y='20'/>
+        </mxCell>
+        <mxCell id='se-valid' parent='se1' style='rhombus;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;' value='validate_inputs' vertex='1'>
+          <mxGeometry as='geometry' height='70' width='180' x='90' y='100'/>
+        </mxCell>
+        <mxCell id='se-invalid' parent='se1' style='rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;' value='&lt;b&gt;Error&lt;/b&gt;&lt;br&gt;Invalid inputs: ...' vertex='1'>
+          <mxGeometry as='geometry' height='50' width='200' x='380' y='110'/>
+        </mxCell>
+        <mxCell id='se-exec' parent='se1' style='rounded=1;whiteSpace=wrap;html=1;fillColor=#1f649e;fontColor=#ffffff;strokeColor=none;fontSize=12;' value='&lt;b&gt;execute&lt;/b&gt; (in a worker)&lt;br&gt;returns status, details, outputs or delay' vertex='1'>
+          <mxGeometry as='geometry' height='60' width='240' x='60' y='200'/>
+        </mxCell>
+        <mxCell id='se-sync' parent='se1' style='rhombus;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;' value='synchronous_execution?&lt;br&gt;or final status' vertex='1'>
+          <mxGeometry as='geometry' height='90' width='220' x='70' y='290'/>
+        </mxCell>
+        <mxCell id='se-persist' parent='se1' style='rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;' value='&lt;b&gt;Persist&lt;/b&gt; the plugin object (Marshal)&lt;br&gt;free the worker' vertex='1'>
+          <mxGeometry as='geometry' height='50' width='240' x='60' y='420'/>
+        </mxCell>
+        <mxCell id='se-check' parent='se1' style='rounded=1;whiteSpace=wrap;html=1;fillColor=#1f649e;fontColor=#ffffff;strokeColor=none;fontSize=12;' value='&lt;b&gt;check_status&lt;/b&gt; (in any worker)&lt;br&gt;returns status, details, delay' vertex='1'>
+          <mxGeometry as='geometry' height='60' width='240' x='60' y='510'/>
+        </mxCell>
+        <mxCell id='se-final' parent='se1' style='rhombus;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;' value='final status' vertex='1'>
+          <mxGeometry as='geometry' height='70' width='180' x='90' y='610'/>
+        </mxCell>
+        <mxCell id='se-end' parent='se1' style='rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;' value='&lt;b&gt;Step ends&lt;/b&gt;&lt;br&gt;Complete, Failed or Error&lt;br&gt;outputs stored (+ Step_information)&lt;br&gt;post-processing, next steps&lt;br&gt;&lt;br&gt;multiple_execution? true (trigger):&lt;br&gt;the work order is cloned at the step' vertex='1'>
+          <mxGeometry as='geometry' height='120' width='300' x='540' y='275'/>
+        </mxCell>
+        <mxCell id='se-timeout' parent='se1' style='shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#ffffff;strokeColor=#999999;align=left;spacingLeft=8;fontSize=11;' value='Each call of execute and check_status: timeout without report_progress ends the step (On_timeout, default Failed)' vertex='1'>
+          <mxGeometry as='geometry' height='60' width='260' x='560' y='200'/>
+        </mxCell>
+        <mxCell edge='1' id='se-e1' parent='se1' source='se-start' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;' target='se-valid'>
+          <mxGeometry as='geometry' relative='1'/>
+        </mxCell>
+        <mxCell edge='1' id='se-e2' parent='se1' source='se-valid' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;' target='se-invalid' value='false'>
+          <mxGeometry as='geometry' relative='1'/>
+        </mxCell>
+        <mxCell edge='1' id='se-e3' parent='se1' source='se-valid' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;' target='se-exec' value='true'>
+          <mxGeometry as='geometry' relative='1'/>
+        </mxCell>
+        <mxCell edge='1' id='se-e4' parent='se1' source='se-exec' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;' target='se-sync'>
+          <mxGeometry as='geometry' relative='1'/>
+        </mxCell>
+        <mxCell edge='1' id='se-e5' parent='se1' source='se-sync' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;' target='se-end' value='yes: outputs = returned hash'>
+          <mxGeometry as='geometry' relative='1'/>
+        </mxCell>
+        <mxCell edge='1' id='se-e6' parent='se1' source='se-sync' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;' target='se-persist' value='no: asynchronous'>
+          <mxGeometry as='geometry' relative='1'/>
+        </mxCell>
+        <mxCell edge='1' id='se-e7' parent='se1' source='se-persist' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;' target='se-check' value='after delay'>
+          <mxGeometry as='geometry' relative='1'/>
+        </mxCell>
+        <mxCell edge='1' id='se-e8' parent='se1' source='se-check' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;' target='se-final'>
+          <mxGeometry as='geometry' relative='1'/>
+        </mxCell>
+        <mxCell edge='1' id='se-e9' parent='se1' source='se-final' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;' target='se-end' value='yes: outputs = @outputs'>
+          <mxGeometry as='geometry' relative='1'>
+            <Array as='points'>
+            <mxPoint x='460' y='645'/><mxPoint x='460' y='470'/><mxPoint x='690' y='470'/></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell edge='1' id='se-e10' parent='se1' source='se-final' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;' target='se-check' value='no: nil, In Progress, Undefined&lt;br&gt;persist, wait delay'>
+          <mxGeometry as='geometry' relative='1'>
+            <Array as='points'>
+              <mxPoint x='30' y='645'/>
+              <mxPoint x='30' y='540'/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id='template-form' name='template-form'>
+    <mxGraphModel arrows='1' connect='1' dx='1200' dy='700' fold='1' grid='1' gridSize='10' guides='1' math='0' page='1' pageHeight='560' pageScale='1' pageWidth='1100' shadow='0' tooltips='1'>
+      <root>
+        <mxCell id='tf0'/>
+        <mxCell id='tf1' parent='tf0'/>
+        <mxCell id='tf-ui' parent='tf1' style='rounded=1;whiteSpace=wrap;html=1;fillColor=#1f649e;fontColor=#ffffff;strokeColor=none;fontSize=12;' value='&lt;b&gt;Template list&lt;/b&gt; or&lt;br&gt;&lt;b&gt;step properties&lt;/b&gt; (designer)' vertex='1'>
+          <mxGeometry as='geometry' height='60' width='190' x='10' y='50'/>
+        </mxCell>
+        <mxCell id='tf-files' parent='tf1' style='shape=folder;tabWidth=70;tabHeight=14;tabPosition=left;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;verticalAlign=top;spacingLeft=10;spacingTop=18;fontSize=12;' value='&lt;b&gt;Load folder&lt;/b&gt;&lt;br&gt;edit.html.erb&lt;br&gt;edit.css, edit.js' vertex='1'>
+          <mxGeometry as='geometry' height='90' width='200' x='20' y='270'/>
+        </mxCell>
+        <mxCell id='tf-modal' parent='tf1' style='rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;arcSize=3;' value='' vertex='1'>
+          <mxGeometry as='geometry' height='420' width='400' x='300' y='40'/>
+        </mxCell>
+        <mxCell id='tf-title' parent='tf1' style='rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;fontSize=12;align=left;spacingLeft=8;' value='&lt;b&gt;Modal dialog&lt;/b&gt;: title, help button (Orchestrator)' vertex='1'>
+          <mxGeometry as='geometry' height='40' width='360' x='320' y='60'/>
+        </mxCell>
+        <mxCell id='tf-ul' parent='tf1' style='rounded=0;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#999999;dashed=1;' value='' vertex='1'>
+          <mxGeometry as='geometry' height='255' width='360' x='320' y='115'/>
+        </mxCell>
+        <mxCell id='tf-ul-label' parent='tf1' style='text;html=1;fontSize=11;fontColor=#666666;align=left;verticalAlign=middle;' value='&amp;lt;ul class=&quot;horizontal_form&quot;&amp;gt; (Orchestrator)' vertex='1'>
+          <mxGeometry as='geometry' height='20' width='300' x='330' y='118'/>
+        </mxCell>
+        <mxCell id='tf-erb' parent='tf1' style='rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;arcSize=4;fontFamily=Courier New;' value='&lt;b&gt;edit.html.erb&lt;/b&gt; (the plugin)&lt;br&gt;&lt;br&gt;&amp;lt;style&amp;gt; edit.css &amp;lt;/style&amp;gt;&lt;br&gt;&amp;lt;form id=&quot;edit_action&quot;&amp;gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;lt;li&amp;gt; label + my_greeting[greeting] &amp;lt;/li&amp;gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;lt;li&amp;gt; label + my_greeting[uppercase] &amp;lt;/li&amp;gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;...&lt;br&gt;&amp;lt;/form&amp;gt;&lt;br&gt;&amp;lt;script&amp;gt; edit.js &amp;lt;/script&amp;gt;' vertex='1'>
+          <mxGeometry as='geometry' height='210' width='330' x='335' y='145'/>
+        </mxCell>
+        <mxCell id='tf-buttons' parent='tf1' style='rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;fontSize=12;align=left;spacingLeft=8;' value='Save or Update, Cancel, Revision log (Orchestrator)' vertex='1'>
+          <mxGeometry as='geometry' height='50' width='360' x='320' y='390'/>
+        </mxCell>
+        <mxCell id='tf-post' parent='tf1' style='rounded=1;whiteSpace=wrap;html=1;fillColor=#1f649e;fontColor=#ffffff;strokeColor=none;fontSize=12;' value='&lt;b&gt;POST action_update&lt;/b&gt;&lt;br&gt;?action_type=my_greeting&amp;amp;id=...&lt;br&gt;params my_greeting[...]: sanitized' vertex='1'>
+          <mxGeometry as='geometry' height='70' width='260' x='800' y='300'/>
+        </mxCell>
+        <mxCell id='tf-db' parent='tf1' style='shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;' value='&lt;b&gt;action_my_greetings&lt;/b&gt;&lt;br&gt;one row per template' vertex='1'>
+          <mxGeometry as='geometry' height='90' width='180' x='840' y='420'/>
+        </mxCell>
+        <mxCell id='tf-ctrl' parent='tf1' style='rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;' value='&lt;b&gt;MyGreetingController&lt;/b&gt; (optional)&lt;br&gt;GET /my_greeting/&amp;lt;action&amp;gt;/&amp;lt;id&amp;gt;' vertex='1'>
+          <mxGeometry as='geometry' height='60' width='260' x='800' y='140'/>
+        </mxCell>
+        <mxCell edge='1' id='tf-e1' parent='tf1' source='tf-ui' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;entryX=0;entryY=0.5;entryDx=0;entryDy=0;' target='tf-title' value='open:&lt;br&gt;new, edit, show'>
+          <mxGeometry as='geometry' relative='1'/>
+        </mxCell>
+        <mxCell edge='1' id='tf-e2' parent='tf1' source='tf-files' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;entryX=0;entryY=0.75;entryDx=0;entryDy=0;' target='tf-erb' value='ERB, File.read'>
+          <mxGeometry as='geometry' relative='1'/>
+        </mxCell>
+        <mxCell edge='1' id='tf-e3' parent='tf1' source='tf-buttons' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;' target='tf-post' value='fields of form#edit_action'>
+          <mxGeometry as='geometry' relative='1'>
+            <Array as='points'>
+              <mxPoint x='740' y='415'/>
+              <mxPoint x='740' y='390'/>
+              <mxPoint x='930' y='390'/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell edge='1' id='tf-e4' parent='tf1' source='tf-post' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;' target='tf-db' value='update'>
+          <mxGeometry as='geometry' relative='1'>
+            <Array as='points'>
+              <mxPoint x='1080' y='335'/>
+              <mxPoint x='1080' y='465'/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell edge='1' id='tf-e5' parent='tf1' source='tf-erb' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;' target='tf-ctrl' value='fetch (script)'>
+          <mxGeometry as='geometry' relative='1'/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

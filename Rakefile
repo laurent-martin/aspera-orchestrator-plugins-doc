@@ -208,10 +208,27 @@ task :extract_rpm do
   # FileUtils.rm_rf(PATH_RPM_OUT)
 end
 
+# Diagrams: one image per tab of the draw.io file, named after the tab, with draw.io desktop (see gfm2pdf-toolchain)
+PATH_DRAWIO = PATH_DOCS / 'images' / 'diagrams.drawio'
+DRAWIO_TOOL = [RbConfig.ruby, (Pathname.new(ENV[ENV_VAR_DOC_TOOL]) / 'lib' / 'drawio.rb').to_s].freeze
+# SVG for GitHub, and PDF used instead of the SVG in PDF documents
+DRAWIO_SVGS = IO.popen([*DRAWIO_TOOL, 'list', PATH_DRAWIO.to_s, 'svg'], &:read).split.freeze
+DRAWIO_IMAGES = DRAWIO_SVGS.flat_map { |svg| [svg, svg.sub(/\.svg\z/, '.pdf')] }.freeze
+
+# An image is exported again only when older than the draw.io file
+DRAWIO_IMAGES.each do |image|
+  file image => PATH_DRAWIO do
+    sh(*DRAWIO_TOOL, 'export', PATH_DRAWIO.to_s, image, '--scale', '2')
+  end
+end
+
 # Generate PDF from Markdown documentation
 namespace :doc do
+  desc 'Export the diagrams of docs/images/diagrams.drawio (SVG and PDF)'
+  task diagrams: DRAWIO_IMAGES
+
   desc 'Generate PDF from plugin development guide'
-  task :guide do
+  task guide: :diagrams do
     markdown_to_pdf(
       md: PATH_DOCS / 'plugin-development-guide.md',
       pdf: PATH_DOCS / 'plugin-development-guide.pdf'

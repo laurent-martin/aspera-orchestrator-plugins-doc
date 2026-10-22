@@ -8,17 +8,19 @@ The plugin documentation is generated from the Orchestrator RPM: the `actions` f
 
 Generated documents and guides are in folder `docs`:
 
-| Document                                                                                       | Content                                                       | Rake task                     |
-|------------------------------------------------------------------------------------------------|---------------------------------------------------------------|-------------------------------|
-| [`Orchestrator_Plugin_Manual.md`](docs/Orchestrator_Plugin_Manual.md) and `.pdf`               | Help page of each plugin, by category                         | `md_manual`, `pdf_manual`     |
-| [`Orchestrator_Plugin_List.pdf`](docs/Orchestrator_Plugin_List.pdf)                            | Table of plugins: icon, name, version, description            | `pdf_list`                    |
-| [`Orchestrator_Plugin_Banner.pdf`](docs/Orchestrator_Plugin_Banner.pdf)                        | Icons and names of plugins, by category (landscape)           | `pdf_banner`                  |
-| [`action-template-reference.md`](docs/action-template-reference.md)                            | Template attributes, inputs and outputs of each action plugin | `doc:template_reference`      |
-| [`plugins.yml`](docs/plugins.yml)                                                              | Same, as data, with allowed values and conditions             | `doc:plugin_specs`            |
-| [`plugin-development-guide.md`](docs/plugin-development-guide.md) and `.pdf`                   | How to develop a plugin                                       | `doc:guide` (PDF only)        |
-| [`workflow-authoring-guide.md`](docs/workflow-authoring-guide.md) and `.pdf`                   | How to write workflows                                        | `doc:authoring` (PDF only)    |
+| Document                                                                         | Content                                                       | Rake task                      |
+|----------------------------------------------------------------------------------|---------------------------------------------------------------|--------------------------------|
+| [`Orchestrator_Plugin_Manual.md`](docs/Orchestrator_Plugin_Manual.md) and `.pdf` | Help page of each plugin, by category                         | `md_manual`, `pdf_manual`      |
+| [`Orchestrator_Plugin_List.pdf`](docs/Orchestrator_Plugin_List.pdf)              | Table of plugins: icon, name, version, description            | `pdf_list`                     |
+| [`Orchestrator_Plugin_Banner.pdf`](docs/Orchestrator_Plugin_Banner.pdf)          | Icons and names of plugins, by category (landscape)           | `pdf_banner`                   |
+| [`action-template-reference.md`](docs/action-template-reference.md)              | Template attributes, inputs and outputs of each action plugin | `doc:template_reference`       |
+| [`plugins.yml`](docs/plugins.yml)                                                | Same, as data, with allowed values and conditions             | `doc:plugin_specs`             |
+| [`plugin-development-guide.md`](docs/plugin-development-guide.md) and `.pdf`     | How to develop a plugin                                       | `doc:guide` (PDF and diagrams) |
+| [`workflow-authoring-guide.md`](docs/workflow-authoring-guide.md) and `.pdf`     | How to write workflows                                        | `doc:authoring` (PDF only)     |
 
 The two guides are written by hand (the task generates their PDF), the other documents are generated: do not edit them.
+
+Diagrams of the guides are drawn in [`docs/images/diagrams.drawio`](docs/images/diagrams.drawio), one tab per image: `rake doc:diagrams` exports each tab to `docs/images/<tab>.svg` (for GitHub) and `.pdf` (used in the PDF), with draw.io desktop, when the `.drawio` file is newer.
 
 Intermediate HTML files (`rake html`) are in `build/<VERSION>/out`.
 
@@ -31,14 +33,15 @@ Intermediate HTML files (`rake html`) are in `build/<VERSION>/out`.
   Its library is used for PDF generation from Markdown with `pandoc`.
 - Tools:
 
-| Tool          | Used for                                          |
-|---------------|---------------------------------------------------|
-| `rpm2cpio`    | Extract the RPM (`extract_rpm`)                   |
-| `wkhtmltopdf` | Generate the plugin list and banner PDF from HTML |
-| `qpdf`        | Make PDF files reproducible (document ID)         |
-| `exiftool`    | Make PDF files reproducible (dates)               |
-| `pandoc`      | Convert HTML to Markdown, and Markdown to PDF     |
-| `lualatex`    | PDF engine of `pandoc`                            |
+| Tool            | Used for                                           |
+|-----------------|----------------------------------------------------|
+| `rpm2cpio`      | Extract the RPM (`extract_rpm`)                    |
+| `wkhtmltopdf`   | Generate the plugin list and banner PDF from HTML  |
+| `qpdf`          | Make PDF files reproducible (document ID)          |
+| `exiftool`      | Make PDF files reproducible (dates)                |
+| `pandoc`        | Convert HTML to Markdown, and Markdown to PDF      |
+| `lualatex`      | PDF engine of `pandoc`                             |
+| draw.io desktop | Export the diagrams of the guides (`doc:diagrams`) |
 
 `pandoc` PDF uses fonts IBM Plex Sans and IBM Plex Mono.
 
@@ -46,7 +49,7 @@ On macOS, get them with `brew`:
 
 ```bash
 brew install rpm2cpio qpdf exiftool pandoc texlive
-brew install --cask wkhtmltopdf font-ibm-plex-sans font-ibm-plex-mono
+brew install --cask wkhtmltopdf drawio font-ibm-plex-sans font-ibm-plex-mono
 ```
 
 ## Usage
@@ -76,6 +79,7 @@ Other documents:
 ```bash
 rake doc:template_reference
 rake doc:plugin_specs
+rake doc:diagrams
 rake doc:guide
 rake doc:authoring
 ```
