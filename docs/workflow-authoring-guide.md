@@ -503,7 +503,7 @@ Rules:
 | `array` | List (JSON array). |
 | `hash` | Map (JSON object). |
 | `object` | Any serializable value. |
-| `pwd` | Password: hidden in the user interface. **Only `pwd` parameters are protected on export**; template attributes (widget `password`) and other secrets in templates are exported in clear text. To avoid exposing a secret, store it in a `pwd` parameter and map the template input to that parameter. |
+| `pwd` | Password, hidden in the user interface. **Only `pwd` parameters are protected on export**; template attributes (widget `password`) and other secrets in templates are exported in clear text. To avoid exposing a secret, store it in a `pwd` parameter and map the template input to that parameter. |
 | `attachment` | File attachment. |
 
 ### Notes
