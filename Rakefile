@@ -22,6 +22,11 @@ $LOAD_PATH.unshift(Pathname.new(ENV[ENV_VAR_DOC_TOOL]) / 'lib')
 require 'pandoc'
 include Gfm2Pdf
 
+# Toolchain with themes and options of documents in a comment `<!-- gfm2pdf`
+Gfm2Pdf.check_version('>= 1.0.0.pre, < 2')
+# IBM look of the PDF documents: theme of aspera-cli, unless env var GFM2PDF_THEME is set
+PDF_THEME = ENV.fetch('GFM2PDF_THEME') { (Pathname.new(ENV[ENV_VAR_ASPERA_CLI]) / 'build' / 'doc' / 'pdf_theme').to_s }
+
 raise 'Set env var VERSION' unless ENV.key?('VERSION')
 
 BUILD_VERSION = ENV['VERSION']
@@ -92,7 +97,8 @@ end
 file PATH_MANUAL_PDF => PATH_MANUAL_MD do
   markdown_to_pdf(
     md: PATH_MANUAL_MD_TMP,
-    pdf: PATH_MANUAL_PDF
+    pdf: PATH_MANUAL_PDF,
+    theme: PDF_THEME
   )
 end
 
@@ -231,7 +237,8 @@ namespace :doc do
   task guide: :diagrams do
     markdown_to_pdf(
       md: PATH_DOCS / 'plugin-development-guide.md',
-      pdf: PATH_DOCS / 'plugin-development-guide.pdf'
+      pdf: PATH_DOCS / 'plugin-development-guide.pdf',
+      theme: PDF_THEME
     )
   end
 
@@ -239,7 +246,8 @@ namespace :doc do
   task :authoring do
     markdown_to_pdf(
       md: PATH_DOCS / 'workflow-authoring-guide.md',
-      pdf: PATH_DOCS / 'workflow-authoring-guide.pdf'
+      pdf: PATH_DOCS / 'workflow-authoring-guide.pdf',
+      theme: PDF_THEME
     )
   end
 

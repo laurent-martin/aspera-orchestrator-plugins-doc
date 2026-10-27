@@ -28,9 +28,11 @@ Intermediate HTML files (`rake html`) are in `build/<VERSION>/out`.
 
 - Ruby
 - A clone of the `aspera-cli` repository, <https://github.com/IBM/aspera-cli>, with its gems installed (`bundle install` in that folder).
-  Its library is used for logging (`aspera/log`).
-- A clone of the `gfm2pdf-toolchain` repository, <https://github.com/laurent-martin/gfm2pdf-toolchain>.
+  Its library is used for logging (`aspera/log`), and its PDF theme `build/doc/pdf_theme` for the look of the PDF documents
+  (cover and fonts): set env var `GFM2PDF_THEME` to use another theme.
+- A clone of the `gfm2pdf-toolchain` repository, version 1.x, <https://github.com/laurent-martin/gfm2pdf-toolchain>.
   Its library is used for PDF generation from Markdown with `pandoc`.
+  The options of a document for PDF generation are in a comment `<!-- gfm2pdf` at the top of its Markdown file.
 - Tools:
 
 | Tool            | Used for                                           |
@@ -43,7 +45,7 @@ Intermediate HTML files (`rake html`) are in `build/<VERSION>/out`.
 | `lualatex`      | PDF engine of `pandoc`                             |
 | draw.io desktop | Export the diagrams of the guides (`doc:diagrams`) |
 
-`pandoc` PDF uses fonts IBM Plex Sans and IBM Plex Mono.
+The PDF theme of `aspera-cli` uses fonts IBM Plex Sans and IBM Plex Mono.
 
 On macOS, get them with `brew`:
 

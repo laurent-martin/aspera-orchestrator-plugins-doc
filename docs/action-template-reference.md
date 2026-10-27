@@ -1,9 +1,8 @@
-<!--
-PANDOC_DEFAULTS_BEGIN
-metadata:
-  title: "Aspera Orchestrator Action Template Reference"
-  author: "IBM Aspera"
-PANDOC_DEFAULTS_END
+<!-- gfm2pdf
+common:
+  metadata:
+    title: "Aspera Orchestrator Action Template Reference"
+    author: "IBM Aspera"
 -->
 
 # Aspera Orchestrator 4.1.6 Action Template Reference

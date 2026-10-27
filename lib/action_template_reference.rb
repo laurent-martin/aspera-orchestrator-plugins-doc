@@ -167,12 +167,12 @@ class ActionTemplateReference
     overlay ||= {}
     list = plugins
     out = []
-    out << '<!--'
-    out << 'PANDOC_DEFAULTS_BEGIN'
-    out << 'metadata:'
-    out << '  title: "Aspera Orchestrator Action Template Reference"'
-    out << '  author: "IBM Aspera"'
-    out << 'PANDOC_DEFAULTS_END'
+    # Options of the document for gfm2pdf-toolchain
+    out << '<!-- gfm2pdf'
+    out << 'common:'
+    out << '  metadata:'
+    out << '    title: "Aspera Orchestrator Action Template Reference"'
+    out << '    author: "IBM Aspera"'
     out << '-->'
     out << ''
     out << "# Aspera Orchestrator #{version} Action Template Reference"
