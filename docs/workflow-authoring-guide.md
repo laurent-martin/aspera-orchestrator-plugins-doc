@@ -113,7 +113,11 @@ Rules:
 - To add a revision to an existing workflow instead, use `import_with_constraints` with `add as revision`.
   See [Update an existing workflow](#update-an-existing-workflow).
 - The API has no operation to delete a workflow: delete it in the user interface.
-- **Web UI & Draft vs Revision caveat**: Importing via the API/CLI creates a published revision (`revision_id = 1`). When opening the workflow in the Web UI editor, the UI might initialize a new, empty *Draft* revision. **Never click "Publish" on an empty draft in the Web UI**, as this overwrites the workflow with an empty graph. To edit or view the imported graph in the Web UI, always open the imported revision explicitly under the **Revisions** tab and use *Rollback / Edit revision*, or manage publishing via `ascli`.
+- **Web UI**: opened from the list of workflows, the designer draws the published revision from the published steps and from the positions in its XML (`WorkflowsController#edit`).
+  The **Revisions** tab draws the XML of the chosen revision (`WhiteboardsController#show`).
+  If the designer shows an empty canvas, the graph is not lost, and importing again does not help: a `Synch_factor` other than `0` has no position (see [Prerequisites and branches](#prerequisites-and-branches)); the **Revisions** tab still shows the graph.
+  **Never click "Publish" on an empty canvas**: this publishes an empty graph.
+  A revision imported through the API is shown as created by *Unknown user*.
 
 ## Workflow file
 
@@ -325,6 +329,8 @@ General rules:
 - Usual XML escaping applies (`&amp;`, `&lt;`, `&quot;`).
   Values of parameters and of inputs mapped to a value are also URL-decoded: `%XX` and `%uXXXX` sequences are decoded.
   Write `%25` for a literal `%` followed by two hexadecimal digits.
+- On import, the graph is parsed and stored written again: root element `opt`, one element per line with indentation, attribute values in double quotes, and the new template ids in `Action_id` and in `action_id` of `Map_to` and `Carry_thru`.
+  This is observed with both formats of file, and with `import_with_constraints`: the export of an imported workflow shows this form, not the one of the file.
 
 ### Terminal nodes
 
@@ -349,7 +355,7 @@ Each `Step` element has attributes `id`, `x`, `y`, and these children:
 | `Action_id` | yes | Number `<N>` of the template key `<Step_type>__<N>`. |
 | `Step_name` | yes | Name of the step, unique in the workflow. Used to name outputs (`<Step_name>:<output>`) and in `Map_to` of type `output`. |
 | `Step_type` | yes | Plugin class name, for example `CustomRuby`. |
-| `Synch_factor` | yes | Number of prerequisites to meet. See [Prerequisites and branches](#prerequisites-and-branches). The designer adds attributes `x` and `y` (position of the join symbol). |
+| `Synch_factor` | yes | Number of prerequisites to meet. See [Prerequisites and branches](#prerequisites-and-branches). When it is not `0`, attributes `x` and `y` (position of the join symbol) are needed by the designer. |
 | `Prerequisites` | yes (to be valid) | Links from previous nodes. |
 | `Inputs` | yes (may be empty) | Inputs of the step. See [Inputs](#inputs). |
 | `Outputs` | yes (may be empty) | Output settings and carry-throughs. See [Outputs](#outputs). |
@@ -391,6 +397,10 @@ A `Prerequisite` element links a previous node to the current one:
 | `0` | All prerequisites (AND). |
 | `N` > 0 | At least `N` prerequisites. `1` is OR: for example `End` after alternative branches. |
 | negative | Documented in the source as "all but N", but computed as "number of prerequisites + N": never met. Do not use. |
+
+When `Synch_factor` is not `0`, the designer draws a join symbol, at the position given by attributes `x` and `y` of `Synch_factor`.
+Write them, on steps and on `End`, `Fail` and `Error`: `<Synch_factor x="920" y="70">1</Synch_factor>`.
+The engine ignores them, but without them, the workflow opened from the list of workflows shows an empty canvas (see [Known issues](#known-issues)).
 
 A link from `Start` always counts as met.
 
@@ -503,7 +513,7 @@ Rules:
 | `array` | List (JSON array). |
 | `hash` | Map (JSON object). |
 | `object` | Any serializable value. |
-| `pwd` | Password, hidden in the user interface. **Only `pwd` parameters are protected on export**; template attributes (widget `password`) and other secrets in templates are exported in clear text. To avoid exposing a secret, store it in a `pwd` parameter and map the template input to that parameter. |
+| `pwd` | Password, hidden in the user interface, and encrypted in the published workflow and in work orders. The `Value` of a `pwd` parameter is in clear in the graph XML and in exports: give secrets at run time. See [Secrets](#secrets). |
 | `attachment` | File attachment. |
 
 ### Notes
@@ -669,6 +679,97 @@ If the template enables continuous monitoring (for example attribute `allow_mult
 So the work order that waits is always the last one, and its id changes after each event.
 To stop the monitoring, cancel that work order: `ascli orchestrator workflows workorders <workflow id>` lists the work orders, the waiting one is `In Progress` on the trigger step.
 When the trigger step ends with `Error`, no clone is created, and the monitoring stops.
+
+## Secrets
+
+Orchestrator has no secret store for workflows.
+A secret (password, API key, token, passphrase) reaches a step from a template attribute, from an input mapped to a value or to a parameter, or from an entity of the server, such as a remote node.
+These ways differ in where the value is stored in clear, and in who can read it.
+
+### Where a secret is stored
+
+| Source of the secret | Storage on the server | In an export (`export_workflow`, export in the web UI) |
+|----------------------|-----------------------|--------------------------------------------------------|
+| Template attribute, for example with widget `password` in [plugins.yml](plugins.yml) | Clear, in the template. | Clear. |
+| `Map_to` of type `value` | Clear, in the graph XML of each revision. | Clear. |
+| `Value` of a parameter of type `pwd` | Clear, in the graph XML of each revision. Encrypted in the published workflow. | Clear. |
+| Runtime parameter of type `pwd`, given when starting the workflow | Encrypted, in the variables of the work order. | Not exported. |
+| Remote node, referred to by name (see [Referring to existing entities](#referring-to-existing-entities)) | Encrypted, in the remote node. | The name only. A `.wkf` package contains the node, with its password encrypted with the key of the exporting server. |
+
+Encrypted values are prefixed with `~p:`: AES-256-GCM, with a key derived from the `secret_key_base` of the server (`OrchCipher`).
+The designer hides the value of a `pwd` parameter, but sends it to the browser: any user who can open the workflow in the designer, or export it, can read it.
+
+**Push to Git** (Orchestrator 4.1.7 and later): option **Protect Passwords on Push** of the Git settings replaces, in the pushed file, the `Value` of `pwd` parameters and the `Map_to` values of inputs of type `pwd`.
+The replacement is the value encrypted with the export token of the Git settings (prefix `~gx:`), or an empty string when no token is set.
+An import, of any kind, on a server with the same export token decrypts them.
+Template attributes are pushed in clear, and `export_workflow` does not use this option.
+
+### Where a secret is displayed
+
+The work step page of the web UI masks:
+
+- Inputs and outputs of type `pwd`.
+  The type of an input is the one declared by the plugin, not the type of the parameter mapped to it.
+- Inputs, outputs and carry-throughs whose name contains `password` (any case), when the server option `mask_password_variables` is set (the default).
+
+Other values are displayed in clear, even when they come from a `pwd` parameter.
+For example, inputs `Aws_secret` (Amazon plugins), `Files_client_secret`, `Api_token` and `Apikey` are of type `string`: check the type and the name of an input in [plugins.yml](plugins.yml).
+
+The API does not mask: it returns the decrypted values to the users who can view the workflow.
+
+| Endpoint | `ascli` command | Values |
+|----------|-----------------|--------|
+| `work_step_status` | `ascli orchestrator workstep status <WORK_STEP_ID>` | Inputs, outputs and carry-throughs of a work step. |
+| `work_order_output` | `ascli orchestrator workorders output <WORK_ORDER_ID>` | Outputs of a work order. |
+| `workflow_inputs_spec` | `ascli orchestrator workflows inputs <WORKFLOW_ID>` | `Value` of the optional runtime parameters. |
+
+Logs:
+
+- The request log of Orchestrator writes `[FILTERED]` instead of the value of a request parameter whose name contains `passw`, `secret`, `token`, `_key`, `crypt`, `salt`, `certificate`, `login`, `email`, `otp` or `ssn` (`config/initializers/filter_parameter_logging.rb`).
+  This applies to the runtime parameters in `external_parameters`.
+- The access log of the web server (nginx) records the URL, with its query string.
+
+### Recommendations
+
+1. Do not write a secret in a workflow file, in a template attribute, or in a `Map_to` of type `value`.
+   Leave the attribute blank: it becomes an input of the step (see [Inputs of a step](#inputs-of-a-step)), and map this input to a parameter.
+2. Give the secret when starting the workflow: a runtime parameter of type `pwd`, required, without `Value`.
+   The secret is then in no revision, export or Git push, and `workflow_inputs_spec` does not return it.
+3. For the credentials of a server defined as a remote node, refer to the remote node by name.
+   For email, refer to a mail server configuration (`mailer_name`).
+4. Name a runtime parameter that carries a secret so that the request log filters it: with `password`, `secret` or `token` in its name, for example `db_password`.
+5. In `CustomRuby`, declare the inputs and outputs that carry a secret with type `pwd`: they are masked on the work step page, and a `pwd` output is stored encrypted.
+   A `pwd` input accepts a `string` value.
+6. Pass the secret in the JSON body of `POST api/initiate`, never in the URL.
+   `ascli orchestrator workflows start` sends the parameters in the body.
+   Do not type the secret on the command line (shell history, process list): read the parameters from a file, or from an environment variable, with `@json:@file:<PARAMS_FILE>` or `@json:@env:<VARIABLE>`.
+7. Do not put a secret in an output, in `@status_details`, in an exception message or in a log (`Rails.logger`, `puts`).
+   Outputs are returned by the API, and the status details of a step are in its output `Step_information`.
+8. Give the permission to view the workflow only to the users who may read its secrets: the API returns them decrypted.
+9. With Git, enable **Protect Passwords on Push** and set an export token (Orchestrator 4.1.7 and later).
+   It protects `pwd` values, not template attributes.
+
+Example: `DatabaseQuery`, with attribute `database_password` left blank, has a required input `DB_password` of type `pwd`.
+Map it to a required runtime parameter:
+
+```xml
+<Start x="100" y="50" id="start"><Parameters><Parameter id="p_db_password"/></Parameters></Start>
+...
+<Inputs><Input name="DB_password"><Map_to type="parameter" name="db_password"/></Input></Inputs>
+...
+<Parameters>
+  <Parameter x="100" y="200" id="p_db_password">
+    <Name>db_password</Name><Value></Value><Value_type>pwd</Value_type>
+    <Runtime_override>true</Runtime_override><Runtime_optional>false</Runtime_optional>
+  </Parameter>
+</Parameters>
+```
+
+Start it with the parameters read from a file that only its owner can read (`chmod 600`), containing `{"db_password":"<PASSWORD>"}`:
+
+```shell
+ascli orchestrator workflows start <WORKFLOW_ID> @json:@file:<PARAMS_FILE>
+```
 
 ## Main action plugins
 
@@ -912,7 +1013,7 @@ Step `Check` ends with `Failed` when the runtime parameter `value` is empty; one
       <Workflow id="0">
       <Start x="100" y="50" id="start"><Parameters><Parameter id="p_value"/></Parameters></Start>
       <Error x="1000" y="350" id="error"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Error>
-      <End x="1000" y="50" id="end"><Synch_factor>1</Synch_factor><Prerequisites><Prerequisite id="on_ok" status="Complete"/><Prerequisite id="on_failed" status="Complete"/></Prerequisites></End>
+      <End x="1000" y="50" id="end"><Synch_factor x="920" y="70">1</Synch_factor><Prerequisites><Prerequisite id="on_ok" status="Complete"/><Prerequisite id="on_failed" status="Complete"/></Prerequisites></End>
       <Fail x="1000" y="200" id="fail"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Fail>
       <Steps>
       <Step x="300" y="50" id="check"><Action_id>1</Action_id><Step_name>Check</Step_name><Step_type>CustomRuby</Step_type><Synch_factor>0</Synch_factor>
@@ -1167,7 +1268,7 @@ Workflow `watch_folder` watches the folder `/tmp/doc_test_watch/` of the Orchest
       <Step x="750" y="50" id="launch"><Action_id>3</Action_id><Step_name>Process file</Step_name><Step_type>WorkflowLauncher</Step_type><Synch_factor>0</Synch_factor>
         <Prerequisites><Prerequisite id="each" status="Complete"/></Prerequisites><Parameters></Parameters>
         <Inputs><Input name="file_path"><Map_to type="output" name="file" step_type="ArrayFanout" action_id="2" step_name="Each file"/></Input></Inputs><Outputs></Outputs></Step>
-      <Step x="975" y="50" id="wait"><Action_id>4</Action_id><Step_name>Wait all</Step_name><Step_type>Funnelin</Step_type><Synch_factor>1</Synch_factor>
+      <Step x="975" y="50" id="wait"><Action_id>4</Action_id><Step_name>Wait all</Step_name><Step_type>Funnelin</Step_type><Synch_factor x="895" y="70">1</Synch_factor>
         <Prerequisites><Prerequisite id="launch" status="Complete"/><Prerequisite id="launch" status="Failed"/><Prerequisite id="launch" status="Error"/></Prerequisites><Parameters></Parameters>
         <Inputs><Input name="file"><Map_to type="output" name="file" step_type="ArrayFanout" action_id="2" step_name="Each file"/></Input>
         <Input name="WorkOrder_ID"><Map_to type="output" name="WorkOrder_ID" step_type="WorkflowLauncher" action_id="3" step_name="Process file"/></Input></Inputs><Outputs></Outputs></Step>
@@ -1280,7 +1381,7 @@ Workflow `queue` runs step `Work` for one work order at a time, in the order the
       <Step x="975" y="50" id="release"><Action_id>4</Action_id><Step_name>Release</Step_name><Step_type>LoadManager</Step_type><Synch_factor>0</Synch_factor>
         <Prerequisites><Prerequisite id="work" status="Complete"/></Prerequisites><Parameters></Parameters>
         <Inputs><Input name="Allocation_token_to_release"><Map_to type="output" name="Allocation_token" step_type="LoadManager" action_id="2" step_name="Reserve"/></Input></Inputs><Outputs></Outputs></Step>
-      <Step x="975" y="200" id="release_error"><Action_id>5</Action_id><Step_name>Release on error</Step_name><Step_type>LoadManager</Step_type><Synch_factor>1</Synch_factor>
+      <Step x="975" y="200" id="release_error"><Action_id>5</Action_id><Step_name>Release on error</Step_name><Step_type>LoadManager</Step_type><Synch_factor x="895" y="220">1</Synch_factor>
         <Prerequisites><Prerequisite id="work" status="Failed"/><Prerequisite id="work" status="Error"/></Prerequisites><Parameters></Parameters>
         <Inputs><Input name="Allocation_token_to_release"><Map_to type="output" name="Allocation_token" step_type="LoadManager" action_id="2" step_name="Reserve"/></Input></Inputs><Outputs></Outputs></Step>
       </Steps>
@@ -1442,7 +1543,7 @@ Two branches join in a `MergePoint` step:
       <Step x="750" y="200" id="check_rejection"><Action_id>3</Action_id><Step_name>Check rejection</Step_name><Step_type>Filter</Step_type><Synch_factor>0</Synch_factor>
         <Prerequisites><Prerequisite id="ask" status="Complete"/></Prerequisites><Parameters></Parameters>
         <Inputs><Input name="rejected"><Map_to type="output" name="rejected" step_type="UserInput" action_id="2" step_name="Ask operator"/></Input></Inputs><Outputs></Outputs></Step>
-      <Step x="1000" y="50" id="merge"><Action_id>4</Action_id><Step_name>Merge target</Step_name><Step_type>MergePoint</Step_type><Synch_factor>1</Synch_factor>
+      <Step x="1000" y="50" id="merge"><Action_id>4</Action_id><Step_name>Merge target</Step_name><Step_type>MergePoint</Step_type><Synch_factor x="920" y="70">1</Synch_factor>
         <Prerequisites><Prerequisite id="check_target" status="Complete"/><Prerequisite id="check_rejection" status="Complete"/></Prerequisites><Parameters></Parameters>
         <Inputs><Input name="target"><Map_to type="output" name="new_target" step_type="UserInput" action_id="2" step_name="Ask operator"/></Input>
         <Input name="target_alternate"><Map_to type="parameter" name="target"/></Input></Inputs><Outputs></Outputs></Step>
@@ -1512,9 +1613,12 @@ To add a revision to an existing workflow, the file must be on the Orchestrator 
 
 1. Have the file on the server.
    `import_workflow` stores each uploaded file in `<run_dir>/workflows/import/<import_file_name>` (for example `/opt/aspera/orchestrator/var/run/orchestrator/workflows/import/`), but also imports it as a new workflow.
+   Upload it with `publish_workflow` set to `false`, so that this copy is not published, and delete the copy in the user interface.
 2. Call `import_with_constraints` with the path of the file and the id of the workflow to update (see [import_with_constraints](#import_with_constraints)).
    The response is the workflow; its last revision is the imported one.
 3. Publish the workflow: the new revision becomes the running one.
+
+The new revision has its own action templates: an embedded template is named `W<workflow id>__<step name>_1`, because the name `W<workflow id>__<step name>` is used by the template of the previous revision.
 
 With `ascli`:
 
@@ -1535,6 +1639,7 @@ File:
 - `error_free: true` in the whiteboard.
 - Each template key `<StepType>__<N>` matches the `Step_type` and `Action_id` of its steps.
 - Embedded templates named `W0__<step name>`.
+- No secret in the file: secrets are given by runtime `pwd` parameters, or by remote nodes (see [Secrets](#secrets)).
 
 Graph:
 
@@ -1549,6 +1654,7 @@ Graph:
 - Each required input of each template is mapped.
 - Each parameter has a `Name` and a `Value_type`; a parameter that is not a runtime parameter, or that is an optional runtime parameter, has a `Value`.
 - Join nodes after mutually exclusive / alternative branches have `Synch_factor` 1; join nodes after concurrent parallel nominal branches have `Synch_factor` 0.
+- Each `Synch_factor` other than `0` has attributes `x` and `y`, else the designer shows an empty canvas.
 - For optimal Web UI rendering, use `router="draw2d.ManhattanConnectionRouter"` on step prerequisites and `router="draw2d.BezierConnectionRouter"` on parameter links.
 - Retry settings (`Error_*`, `Failed_*`) only on steps that have an outgoing branch with that status.
 
@@ -1689,6 +1795,8 @@ Query parameters:
 Observed in Orchestrator 4.1.6:
 
 - A negative `Synch_factor` is never met (see [Prerequisites and branches](#prerequisites-and-branches)).
+- When a `Synch_factor` other than `0` has no attributes `x` and `y`, the designer opened from the list of workflows generates `workflow.addFigure(<join>, , );` (`WhiteboardsHelper#draw_operator`): the JavaScript does not parse, and the canvas is empty.
+  The **Revisions** tab (`draw_xmlconnections`) skips the join symbol and shows the graph.
 - `find_constraints` returns empty constraints for a file that does not exist.
 - `export_workflow` exports dependencies for any non-empty value of `export_with_dependencies`, including `false`.
 - `import_workflow` and `import_with_constraints` should refuse a file whose element 4 lists dependencies when element 5 is empty, but the test also requires element 5 to be non-empty: such a file is imported, with template attributes as written.
