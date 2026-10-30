@@ -23,6 +23,7 @@ Related documents:
 - [Action Template Reference](action-template-reference.md): attributes, inputs and outputs of every shipped plugin.
 - [Plugin specifications](plugins.yml): the same as data (YAML).
 - [Plugin Manual](Orchestrator_Plugin_Manual.md): functional description of each shipped plugin.
+- [Portlet Development Guide](portlet-development-guide.md): the same for dashboard portlets, which share several mechanisms with plugins.
 
 The source of the shipped plugins is the best set of examples: folder `/opt/aspera/orchestrator/actions` of an Orchestrator server, one folder per plugin.
 `HelloWorld` (`hello_worlds`) is a reference implementation with pause, resume, cancel, rollback and recovery.
@@ -43,7 +44,7 @@ The source of the shipped plugins is the best set of examples: folder `/opt/aspe
 ## Quick start
 
 The following plugin `MyGreeting` builds a message from a template attribute with placeholders.
-When attribute `wait_seconds` is not 0, it waits that long before completing, without holding a worker (asynchronous execution).
+When attribute `wait_seconds` is **not** `0`, it waits that long before completing, without holding a worker (asynchronous execution).
 Its template form has its own CSS and JavaScript: a live preview of the message.
 
 ### Source
@@ -324,7 +325,7 @@ At boot, Rails also loads the load folder with Zeitwerk (eager loading): each `.
 Otherwise, Orchestrator does not start (`Zeitwerk::NameError`).
 Zeitwerk ignores hidden files and folders, see [Extending Orchestrator from a plugin](#extending-orchestrator-from-a-plugin).
 
-## Metadata file
+### Metadata file
 
 `metadata.yml` describes the plugin and its versions.
 Keys are Ruby symbols (`:key:`).
@@ -354,7 +355,7 @@ The version of the plugin is the highest `:version` (method `self.version`).
 Enabling fails if this version is beta, or if the Orchestrator version is out of its `:minimum_server_version` and `:maximum_server_version`.
 The Plugins page shows the version of the last entry of the list: keep the list in increasing order.
 
-## Migrations
+### Migrations
 
 The table of the plugin is created and changed by migrations: Rails migration files in the plugin folder.
 Each template is one row of the table.
@@ -908,13 +909,15 @@ fetch('/aspera/orchestrator/my_greeting/list_profiles/0').then(function (r) { re
 In `edit.html.erb`, write the URL with `<%= Rails.configuration.web_root %>/my_greeting/list_profiles/0`.
 `CerifyFileVerification` (`cerify_file_verifications`) is an example.
 
-## Help page
+### Help page
 
 `help.html.erb` is the help page of the plugin, opened by the help button of the template dialog.
 It is an ERB view, read from the stock folder (`/opt/aspera/orchestrator/actions/<folder>/help.html.erb`).
 The help topics also show `:description` of `metadata.yml`.
 
-## Installing a plugin
+## Installation and updates
+
+### Installing a plugin
 
 ![Folders of a plugin, and what Enable does](images/plugin-folders.svg)
 
@@ -940,7 +943,7 @@ sudo -u aspweb env PATH=<ruby bin folder>:/usr/bin:/bin RAILS_ENV=production bin
 where `<ruby bin folder>` is the one of the service, given by `systemctl cat orchestrator_server`.
 The result of the job is in `log/production.log`: `Migrating to <migration class>`, `Initiating install of plugin <Class>`, then `Worker <n> reloading plugin <Class>`.
 
-### Plugin file
+### Importing and exporting
 
 The **Import Plugin** button of the Plugins page installs a plugin from a file `<Class>_<version>.plugin` (at most 50 MB): a `tar.gz` archive of the plugin folder.
 
@@ -951,7 +954,7 @@ tar -czf MyGreeting_1.0.0.plugin my_greetings
 Imported plugins are stored in `/opt/aspera/orchestrator/actions_imported/<folder>/<n>/`, and enabled like stock plugins.
 **Export** and the backups made at upgrade (`<archive_dir>/action_backups`) produce the same format.
 
-## Updating a plugin
+### Updating a plugin
 
 | Change | Do |
 | --- | --- |
@@ -965,6 +968,17 @@ Orchestrator has no function to drop the table of a plugin.
 
 The REST API reloads enabled plugins: `GET api/reload_plugin?action_type=<Class>` (all plugins without `action_type`), `POST api/reload_plugin_set` with `{"plugin_set": ["<Class>", ...]}` and `format=json`.
 `GET api/plugin_version/<Class>` returns the version of a plugin.
+
+### Gems and external tools
+
+A plugin can require gems:
+
+- Write them in a file `Gemfile` of the plugin folder, one `gem` line each (`gem 'aws-sdk', '~> 2.11'`).
+  The `Gemfile` of Orchestrator evaluates the `gem` lines of `actions/*/Gemfile`: other lines (`source`) are ignored.
+- Gems are not installed when the plugin is enabled: run `bundle install` in `/opt/aspera/orchestrator`, then restart Orchestrator (see [Adding a gem to Orchestrator](#adding-a-gem-to-orchestrator)).
+- 34 shipped plugins have a `Gemfile`.
+
+Programs used by the plugin (for example `ffmpeg`, `python3`) are declared in `:external_dependencies` of `metadata.yml`: Enable checks that they exist.
 
 ## Testing and debugging
 
@@ -987,18 +1001,32 @@ The REST API reloads enabled plugins: `GET api/reload_plugin?action_type=<Class>
 | A password is erased after editing the template. | Its attribute name is not in the list of [Saved values](#saved-values). |
 | The plugin has the generic icon. | The icon is not in the public folder (step 2 of [Installing a plugin](#installing-a-plugin)). |
 
-## Gems and external tools
+## Security
 
-A plugin can require gems:
+- Template attributes are stored in clear in the plugin table, except where the plugin encrypts them (`OrchCipher.encrypt`, `OrchCipher.decrypt`).
+- Inputs come from workflows and from external systems: validate them, quote them in shell commands (`MultiType.shell_doublequote`, or `Open3` with separate arguments), and use bound parameters in SQL.
+- Never `eval` an input.
+  Code entered in templates (for example `CustomRuby`) runs with the rights of Orchestrator.
+- Check that file paths stay in the expected folders.
+- Do not put secrets in the plugin files or in `metadata.yml`.
+- Do not expect secrets in template attributes: they are stored in clear in the plugin table, and written in clear in exported workflows.
+  Read secrets from inputs of type `pwd`, fed by Password parameters, from remote nodes (`login`, `password`, `certificate_passphrase`), or from secret references (see [Secret references](workflow-authoring-guide.md#secret-references)).
+- The saved state of an asynchronous step contains its inputs in clear, see [Asynchronous execution](#asynchronous-execution).
 
-- Write them in a file `Gemfile` of the plugin folder, one `gem` line each (`gem 'aws-sdk', '~> 2.11'`).
-  The `Gemfile` of Orchestrator evaluates the `gem` lines of `actions/*/Gemfile`: other lines (`source`) are ignored.
-- Gems are not installed when the plugin is enabled: run `bundle install` in `/opt/aspera/orchestrator`, then restart Orchestrator (see [Adding a gem to Orchestrator](#adding-a-gem-to-orchestrator)).
-- 34 shipped plugins have a `Gemfile`.
+## Checklist
 
-Programs used by the plugin (for example `ffmpeg`, `python3`) are declared in `:external_dependencies` of `metadata.yml`: Enable checks that they exist.
+1. Choose the class name, and check `"<Class>".tableize.classify == "<Class>"`.
+2. Create the folder `<folder>` with `<folder singular>.rb`, `metadata.yml`, one migration and `edit.html.erb`.
+3. Give the migration a version not used by any other migration: the current date and time.
+4. Write `self.version` as in the [Quick start](#quick-start), `category`, `inputs_spec`, `outputs_spec` and `execute`.
+5. Prefer `default_inputs_spec` and `<attribute>_get`, with constants `VAR_` and `DEFAULT_`.
+6. Return a final status and the outputs from `execute`; for a long wait, use asynchronous execution, and set `@outputs` before the final status of `check_status`.
+7. Build the form with `form_with ... id: "edit_action"`, one `<li>` per attribute; keep CSS and JavaScript in files of the folder.
+8. Check with `lib/plugin_probe.rb`, install, enable, restart the web server, run in a workflow.
 
-## Extending Orchestrator from a plugin
+## Annex
+
+### Extending Orchestrator from a plugin
 
 A plugin can change the behavior of Orchestrator for all steps, for example to read the inputs of every step from another source.
 Orchestrator has no extension point for that: the plugin changes core methods when its files are loaded.
@@ -1025,31 +1053,6 @@ Rules:
 - **Versions**: set `:minimum_server_version` and `:maximum_server_version` of `metadata.yml` to the version you tested.
   Before installing the changes, check the parameters of each changed method (`ActionTools.instance_method(:assign_inputs).parameters`): if one differs, install nothing, and log it.
 - **Upgrade**: code already loaded (the library) is not loaded again: restart Orchestrator after **Upgrade** (`orchestrator restart`).
-
-## Security
-
-- Template attributes are stored in clear in the plugin table, except where the plugin encrypts them (`OrchCipher.encrypt`, `OrchCipher.decrypt`).
-- Inputs come from workflows and from external systems: validate them, quote them in shell commands (`MultiType.shell_doublequote`, or `Open3` with separate arguments), and use bound parameters in SQL.
-- Never `eval` an input.
-  Code entered in templates (for example `CustomRuby`) runs with the rights of Orchestrator.
-- Check that file paths stay in the expected folders.
-- Do not put secrets in the plugin files or in `metadata.yml`.
-- Do not expect secrets in template attributes: they are stored in clear in the plugin table, and written in clear in exported workflows.
-  Read secrets from inputs of type `pwd`, fed by Password parameters, from remote nodes (`login`, `password`, `certificate_passphrase`), or from secret references (see [Secret references](workflow-authoring-guide.md#secret-references)).
-- The saved state of an asynchronous step contains its inputs in clear, see [Asynchronous execution](#asynchronous-execution).
-
-## Checklist
-
-1. Choose the class name, and check `"<Class>".tableize.classify == "<Class>"`.
-2. Create the folder `<folder>` with `<folder singular>.rb`, `metadata.yml`, one migration and `edit.html.erb`.
-3. Give the migration a version not used by any other migration: the current date and time.
-4. Write `self.version` as in the [Quick start](#quick-start), `category`, `inputs_spec`, `outputs_spec` and `execute`.
-5. Prefer `default_inputs_spec` and `<attribute>_get`, with constants `VAR_` and `DEFAULT_`.
-6. Return a final status and the outputs from `execute`; for a long wait, use asynchronous execution, and set `@outputs` before the final status of `check_status`.
-7. Build the form with `form_with ... id: "edit_action"`, one `<li>` per attribute; keep CSS and JavaScript in files of the folder.
-8. Check with `lib/plugin_probe.rb`, install, enable, restart the web server, run in a workflow.
-
-## Annex
 
 ### Patterns in the shipped plugins
 

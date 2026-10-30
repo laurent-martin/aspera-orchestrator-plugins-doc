@@ -17,8 +17,9 @@ Generated documents and guides are in folder `docs`:
 | [`plugins.yml`](docs/plugins.yml)                                                | Same, as data, with allowed values and conditions             | `doc:plugin_specs`             |
 | [`plugin-development-guide.md`](docs/plugin-development-guide.md) and `.pdf`     | How to develop a plugin                                       | `doc:guide` (PDF and diagrams) |
 | [`workflow-authoring-guide.md`](docs/workflow-authoring-guide.md) and `.pdf`     | How to write workflows                                        | `doc:authoring` (PDF only)     |
+| [`portlet-development-guide.md`](docs/portlet-development-guide.md) and `.pdf`   | How to develop a dashboard portlet                            | `doc:portlets` (PDF only)      |
 
-The two guides are written by hand (the task generates their PDF), the other documents are generated: do not edit them.
+The three guides are written by hand (the task generates their PDF), the other documents are generated: do not edit them.
 
 Diagrams of the guides are drawn in [`docs/images/diagrams.drawio`](docs/images/diagrams.drawio), one tab per image: `rake doc:diagrams` exports each tab to `docs/images/<tab>.svg` (for GitHub) and `.pdf` (used in the PDF), with draw.io desktop, when the `.drawio` file is newer.
 
@@ -84,6 +85,7 @@ rake doc:plugin_specs
 rake doc:diagrams
 rake doc:guide
 rake doc:authoring
+rake doc:portlets
 ```
 
 `doc:plugin_specs` generates `plugins.yml`, for tools and AI assistants: for each plugin, the template attributes (label, allowed values, defaults) and the inputs and outputs, with the template settings they depend on.
