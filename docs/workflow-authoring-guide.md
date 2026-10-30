@@ -685,6 +685,7 @@ When the trigger step ends with `Error`, no clone is created, and the monitoring
 Orchestrator has no secret store for workflows.
 A secret (password, API key, token, passphrase) reaches a step from a template attribute, from an input mapped to a value or to a parameter, or from an entity of the server, such as a remote node.
 These ways differ in where the value is stored in clear, and in who can read it.
+With the plugin `SecretReference`, a workflow holds a reference to a secret of an external store instead of the secret, see [Secret references](#secret-references).
 
 ### Where a secret is stored
 
@@ -695,6 +696,7 @@ These ways differ in where the value is stored in clear, and in who can read it.
 | `Value` of a parameter of type `pwd` | Clear, in the graph XML of each revision. Encrypted in the published workflow. | Clear. |
 | Runtime parameter of type `pwd`, given when starting the workflow | Encrypted, in the variables of the work order. | Not exported. |
 | Remote node, referred to by name (see [Referring to existing entities](#referring-to-existing-entities)) | Encrypted, in the remote node. | The name only. A `.wkf` package contains the node, with its password encrypted with the key of the exporting server. |
+| [Secret reference](#secret-references) `secret://...`, in any of the above | The reference only. The secret is in its store: HashiCorp Vault, an encrypted file, or a remote node. | The reference only. |
 
 Encrypted values are prefixed with `~p:`: AES-256-GCM, with a key derived from the `secret_key_base` of the server (`OrchCipher`).
 The designer hides the value of a `pwd` parameter, but sends it to the browser: any user who can open the workflow in the designer, or export it, can read it.

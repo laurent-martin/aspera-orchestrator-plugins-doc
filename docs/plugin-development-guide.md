@@ -320,6 +320,10 @@ When the plugin is loaded, every file of the folder whose name matches `[A-Za-z]
 Migration files start with a digit: they are not loaded with the class.
 A file must not reference, when loaded, a class defined in a file with a longer name.
 
+At boot, Rails also loads the load folder with Zeitwerk (eager loading): each `.rb` file, also in a subfolder, must define the constant named after its path, for example `my_greeting_helper.rb` defines `MyGreetingHelper`, and `drivers/sdk_service.rb` defines `Drivers::SdkService` (`VantageTranscoding`).
+Otherwise, Orchestrator does not start (`Zeitwerk::NameError`).
+Zeitwerk ignores hidden files and folders, see [Extending Orchestrator from a plugin](#extending-orchestrator-from-a-plugin).
+
 ## Metadata file
 
 `metadata.yml` describes the plugin and its versions.
@@ -517,6 +521,7 @@ Rules:
 - The inputs and outputs of a step are created when the workflow is published, from the template at that time.
 - At run time, `@inputs` is a hash of input values by name.
   Orchestrator also gives the inputs `OUTPUTS` (names and types of the outputs), `WORKORDER_ID`, `ATTEMPT` and `RUNNING_AS`.
+  Despite its name, `WORKORDER_ID` is the id of the work step (`state_id`): the id of the work order is `work_order_id`.
 - Outputs are taken from the hash returned by `execute`, or from `@outputs` (asynchronous steps).
   Only outputs declared by `outputs_spec` are stored.
 - `validate_inputs` is called before `execute`, with the input values.
@@ -670,6 +675,10 @@ An operation that waits (a transcoding job, a remote transfer, an event) should 
 Between `execute` and `check_status`, the plugin object is serialized with `Marshal`, with its attributes and instance variables (`@ready_at` in the [Quick start](#quick-start)).
 Instance variables must be serializable: no open connection, file, thread or `Proc`.
 Reconnect in each call of `check_status`.
+
+The serialized object includes `@inputs`, where the values of `pwd` inputs are decrypted, and the values cached by `default_get` (`@<attribute>`).
+`SharedState` stores it according to the server setting `persistence_mode`: file `state_<work step id>.prst` of the state folder (`disk`), a row of the database (`db`), or a Redis key (`redis`).
+Do not keep a secret in another instance variable.
 
 ### Triggers
 
@@ -989,6 +998,34 @@ A plugin can require gems:
 
 Programs used by the plugin (for example `ffmpeg`, `python3`) are declared in `:external_dependencies` of `metadata.yml`: Enable checks that they exist.
 
+## Extending Orchestrator from a plugin
+
+A plugin can change the behavior of Orchestrator for all steps, for example to read the inputs of every step from another source.
+Orchestrator has no extension point for that: the plugin changes core methods when its files are loaded.
+Such a plugin depends on the code of one Orchestrator version.
+
+The plugin `SecretReference` of repository `aspera-orchestrator-secret-reference` is an example: it replaces references `secret://...` in inputs and template attributes by secrets read from HashiCorp Vault, see [Secret references](workflow-authoring-guide.md#secret-references).
+
+Rules:
+
+- **Support file loaded first**: files are loaded shortest path first, so a support file with a shorter name than the main file (`secret_core.rb` before `secret_reference.rb`) installs the changes before the class is defined.
+- **Zeitwerk names**: at boot, Rails eager loads each load folder with Zeitwerk, so the support file must define the constant of its name (`SecretCore` in `secret_core.rb`).
+  A folder whose name is not a constant name (`vendor/aspera-cli`) stops the boot: `wrong constant name Aspera-cli`.
+- **Library in a hidden folder**: Zeitwerk ignores hidden folders, and `Plugin.load_plugin` loads only `[A-Za-z]*.rb` of the folder itself.
+  Copy the library and its gems into `.vendor` of the plugin folder, and add their `lib` folders to `$LOAD_PATH` from the support file: no `bundle install`.
+  The runtime dependencies of these gems must be satisfied by the gems of Orchestrator, at their versions (see `Gemfile.lock`).
+  Enable copies the folder with its subfolders, and the plugin file (`tar.gz`) keeps them.
+- **Change with `prepend`**: prepend a module whose methods call `super` to the class or module of Orchestrator (`ActionTools.prepend(Hook)`, `ActionTools.singleton_class.prepend(Hook)` for a class method).
+  A module prepended to a module, such as `ActionTools`, also applies to classes that included it before.
+- **Once per process**: a file is loaded by Zeitwerk at boot, then again with `load` by Enable, Reload and the reload of plugins by workers (`Engine.reload_plugin`).
+  Install the changes once per process (a flag in the support module).
+  Each service (web server, engine, workers) loads the plugin, so each one installs the changes.
+- **Disabled plugin**: Disable unloads only the constants under the name of the plugin class (`Plugin.unload_plugin_classes`): the support module and the prepended modules stay in memory.
+  Each changed method checks that the plugin is enabled (`Object.const_defined?(:SecretReference)`), and else only calls `super`.
+- **Versions**: set `:minimum_server_version` and `:maximum_server_version` of `metadata.yml` to the version you tested.
+  Before installing the changes, check the parameters of each changed method (`ActionTools.instance_method(:assign_inputs).parameters`): if one differs, install nothing, and log it.
+- **Upgrade**: code already loaded (the library) is not loaded again: restart Orchestrator after **Upgrade** (`orchestrator restart`).
+
 ## Security
 
 - Template attributes are stored in clear in the plugin table, except where the plugin encrypts them (`OrchCipher.encrypt`, `OrchCipher.decrypt`).
@@ -996,7 +1033,10 @@ Programs used by the plugin (for example `ffmpeg`, `python3`) are declared in `:
 - Never `eval` an input.
   Code entered in templates (for example `CustomRuby`) runs with the rights of Orchestrator.
 - Check that file paths stay in the expected folders.
-- Do not put secrets in the plugin files or in `metadata.yml`: use template attributes, or remote nodes.
+- Do not put secrets in the plugin files or in `metadata.yml`.
+- Do not expect secrets in template attributes: they are stored in clear in the plugin table, and written in clear in exported workflows.
+  Read secrets from inputs of type `pwd`, fed by Password parameters, from remote nodes (`login`, `password`, `certificate_passphrase`), or from secret references (see [Secret references](workflow-authoring-guide.md#secret-references)).
+- The saved state of an asynchronous step contains its inputs in clear, see [Asynchronous execution](#asynchronous-execution).
 
 ## Checklist
 
