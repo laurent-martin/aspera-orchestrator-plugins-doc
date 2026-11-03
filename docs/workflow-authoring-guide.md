@@ -110,6 +110,7 @@ Rules:
 - An import through `import_workflow` always creates a new workflow.
   If the name is already used, Orchestrator appends a space and `(import_1)`, `(import_2)`, and so on.
   The `portable_id` of the file is ignored and a new one is generated.
+  The import in the web UI and `import_with_constraints` keep it instead, unless a workflow of the server already has it.
 - To add a revision to an existing workflow instead, use `import_with_constraints` with `add as revision`.
   See [Update an existing workflow](#update-an-existing-workflow).
 - The API has no operation to delete a workflow: delete it in the user interface.
@@ -279,6 +280,7 @@ if it is the portable id of a workflow of the server, `workflow_id` is set to th
 otherwise, if `workflow_id` is the id of a workflow, `workflow_portable_id` is set to its portable id.
 `import_workflow` gives a new portable id to each workflow it creates (see [Workflow attributes](#workflow-attributes)): a portable id read on another server does not match.
 Write `workflow_id`, and leave `workflow_portable_id` blank.
+The import in the web UI and [import_with_constraints](#import_with_constraints) keep the portable id of the file, unless a workflow of the server already has it (`ImportExporter.import_new`): with them, a portable id written in the template matches the workflow imported from the same file.
 
 Packages (`.wkf`): with dependencies, `export_workflow` lists in element 4 each entity a template uses, for example `{entity: Workflow, id_key: id, id_value: 4, dependent_field: workflow_id}`, and packs sub-workflows and remote nodes (element 5).
 On import, each packed sub-workflow is imported first, and the attribute named by `dependent_field` is set to the `id_key` of the new entity.
@@ -363,7 +365,7 @@ Each `Step` element has attributes `id`, `x`, `y`, and these children:
 | `Version` | no | Plugin version, informational. |
 | `Pre_processing` | no | Ruby code run before the action. See [Processing code](#processing-code). |
 | `Post_processing` | no | Ruby code run after the action. |
-| `Timeout` | no | Execution timeout in seconds. Default: timeout of the plugin, else the system default. |
+| `Timeout` | no | Execution timeout in seconds, `0` for none. Default: timeout of the plugin, else the engine setting `default_step_timeout` (60 by default). |
 | `On_timeout` | no | Status on timeout: `Pass` (Complete), `Fail` (Failed, the default), `Error` (Error), `Raise` (Error, and the work order timeout action runs). |
 | `Error_attempts` | no | Maximum attempts when the step ends with `Error` and a branch with status `Error` leaves it. |
 | `Error_retryFor`, `Error_retryForUnit` | no | Retry period: value multiplied by unit (seconds). |
@@ -460,7 +462,12 @@ The `Outputs` element only adds settings:
 | Element | Content |
 |---------|---------|
 | `Output` | Attribute `name`. Optional children: `Processing` (Ruby code transforming the value), `Global` (name of a global variable that also receives the value). |
-| `Carry_thru` | Makes a variable available as an input of this step without the plugin declaring it. Attributes: `type` (`output` or `parameter`), `name`, and for `output`: `step_name`, `step_type`, `action_id`. Used for example after an `ArrayFanout`, to pass the current element through the steps of the fan-out. |
+| `Carry_thru` | Makes a variable available as an input of this step without the plugin declaring it: at run time, the value is in `@inputs` under `<name>` and `<step_name>/<name>`. Attributes: `type` (`output` or `parameter`), `name`, and for `output`: `step_name`, `step_type`, `action_id`. |
+
+An input can be mapped to an output of **any** step of the graph, not only of a step linked to it: the recipes [queue](#recipe-queue-and-resource-pool), [one work order per file](#recipe-one-work-order-per-file) and [operator decision](#recipe-operator-decision) map outputs of the step before the previous one, without `Carry_thru`.
+The designer has a narrower rule: the mapping list of a step offers only the outputs of the steps linked to it, the variables they carry through, and the global parameters (`WhiteboardsController#input_mappings`).
+There, `Carry_thru` is the way to offer an output to the step after the next one.
+In a file, map the output directly.
 
 Output `Step_information` is a `hash` with keys `step_id`, `step_name`, `step_status`, `step_status_details`, `attempts`, `processingTime`, `elapsedTime`, `completionTime`.
 
@@ -497,8 +504,8 @@ Rules:
 - A parameter that is not linked to `Start` or to a step does not exist after publish: inputs mapped to it are silently not created.
 - Runtime parameters are the inputs of the workflow: `workflow_inputs_spec` lists them, and `initiate` receives them as `external_parameters`.
 - A **step parameter** is a parameter linked to a step instead of (or in addition to) `Start`.
-  Linking a parameter to a step does not change its value or scope: inputs of the step still map to the parameter by name.
-  The designer uses step parameter links only to display the parameter node near the step on the canvas; the execution engine does not use the link.
+  Linking a parameter to a step does not change its value or scope: the engine sets all parameters when the work order starts (`Variable.generate_all`), and an input of any step maps to the parameter by name.
+  The designer uses step parameter links to draw the parameter node near the step, and offers a step parameter only in the mappings of the steps it is linked to.
   In practice, link a parameter to `Start` and map the input directly.
 
 ### Value types
@@ -562,6 +569,9 @@ These forms create inputs:
 
 Any other Ruby code in `<%= ... %>` runs, but creates no input: in `<%= file_name.upcase %>`, `file_name` is not an input of the step, unless another placeholder declares it.
 Write `<%= var(file_name).upcase %>`.
+A function call creates inputs only when the placeholder is the call alone and all its arguments are names (`Payload#parse_payload`): `<%= File.join(dir, 'sub') %>` (a literal), `<%= File.join(File.dirname(path), name) %>` (a nested call) and `<%= File.basename(path).upcase %>` create no input.
+Write `<%= File.join(var(dir), 'sub') %>`.
+At run time, a variable that is not an input is `nil`, and the code fails, for example with `no implicit conversion of nil into String`.
 `var` is only for expressions: `<%= var(file_name) %>` alone fails, write `<%= file_name %>`.
 
 The input created by a placeholder:
@@ -651,6 +661,12 @@ A work order is `Complete`, `Failed` or `Error` when it reaches `End`, `Fail` or
 
 When a step ends with `Error` (or `Failed`) and a branch with that status leaves it, the step can be retried before that branch is followed: up to `Error_attempts` (or `Failed_attempts`) attempts, within `Error_retryFor` x `Error_retryForUnit` seconds, waiting `Error_retryDelay` seconds between attempts.
 
+Rules (`Prerequisite.retry_needed?`):
+
+- `0` means no limit, for the attempts and for the period.
+- Both limits apply: retries stop at the first one reached.
+- With `Error_attempts` `1`, or with neither attempts nor period, the step is not retried.
+
 ### Processing code
 
 Ruby code can be attached to a step, an input or an output.
@@ -677,6 +693,7 @@ If the template enables continuous monitoring (for example attribute `allow_mult
   Its `comments` are `Derived from WorkOrder <id>, forked at '<step name>' (<step id>)`, and its `derived_from` and `master_id` are the id of the first work order.
 
 So the work order that waits is always the last one, and its id changes after each event.
+The work steps of the clones keep the group of the first work order (`WorkStep#group`): with the default history scope `by workorder group`, all the clones share the history of past triggers (see [LocalFileWatcher](#localfilewatcher)).
 To stop the monitoring, cancel that work order: `ascli orchestrator workflows workorders <workflow id>` lists the work orders, the waiting one is `In Progress` on the trigger step.
 When the trigger step ends with `Error`, no clone is created, and the monitoring stops.
 
@@ -796,7 +813,7 @@ Inputs and outputs are declared in the template.
 
 Contract of `execute_code`:
 
-- Input values are in the map `@inputs`, for example `@inputs['person']`.
+- Input values are in the map `@inputs` (also `inputs`), for example `@inputs['person']`.
   An input can also be read as a method with its name, unless that name is also a method of the template: `name` returns the template name, not an input named `name`.
   Prefer `@inputs[...]`.
 - Set outputs in the map `outputs` (or `@outputs`): `outputs['greeting'] = 'Hello'`.
@@ -804,7 +821,11 @@ Contract of `execute_code`:
 - Optionally set `@status` to `Complete` (default), `Failed` or `Error`, and `@status_details` to a message.
   Any other status becomes `Error`.
   The message is also kept with `Complete`: it is the `step_status_details` of output `Step_information`.
+- `return <status>, <message>, @outputs` ends the code at once, for example `return STATUS_FAILED, "not a .tar file", @outputs` (constants `STATUS_COMPLETE`, `STATUS_FAILED`, `STATUS_ERROR`).
+  The code runs with `eval` inside the method of the plugin, so `return` leaves that method: the status is not checked, and without the third value the outputs are not stored.
 - An exception ends the step with `Error`.
+- Write to the Orchestrator log with `Rails.logger.info`.
+  No method `debug` is defined: calling it raises an exception.
 - `JSON` is loaded: `JSON.parse` and `JSON.generate` work without `require`.
 
 Available in `execute_code` and in processing code (`Pre_processing`, `Post_processing`, `Input/Processing`, `Output/Processing`):
@@ -820,14 +841,23 @@ Available in `execute_code` and in processing code (`Pre_processing`, `Post_proc
 
 ### Filter
 
-Evaluates a Ruby expression.
-The step ends with `Complete` if the result is true, `Failed` otherwise, and output `FilterResult` (`flag`) holds the result.
+Evaluates Ruby code.
+The step ends with `Complete` if the result is true (any value other than `false` and `nil`), `Failed` otherwise, and `Error` if the code raises an exception.
+Output `FilterResult` (`flag`) holds the result.
 
 | Attribute | Content |
 |-----------|---------|
-| `command` | Ruby expression. [Placeholders](#placeholders) create required `string` inputs, unless declared in `mandatory_inputs` or `optional_inputs`. They are replaced by text before the expression runs: quote a string value, as in `'<%= Status %>' == 'ok'`. |
+| `command` | Ruby code: an expression, or several lines, whose last value, or the value given to `return`, is the result. `@status_details` set in the code replaces the message of the step. |
 | `mandatory_inputs`, `optional_inputs` | Additional inputs: type maps. |
 | `filter_outputs` | Additional outputs: type map. |
+
+The code reads its inputs in two ways:
+
+- `inputs['name']`, for an input declared in `mandatory_inputs` or `optional_inputs`: the value keeps its type, and needs no quoting.
+  For example `!inputs['asset_list'].blank?`.
+- [Placeholders](#placeholders): each creates a required `string` input, unless declared.
+  They are replaced by text before the code runs: quote a string value, as in `'<%= Status %>' == 'ok'`.
+  A value that contains a quote breaks the code.
 
 ### LocalFileWatcher
 
@@ -839,18 +869,24 @@ Output `FileName` is the full path of the file (`string`), or the list of paths 
 | `directory` | Directory to watch. Blank: becomes input `directory`. |
 | `file_name` | File name pattern (glob, or regular expression if `use_regex_matching`). Blank: becomes input `File_name`. |
 | `allow_multiple` | Continuous monitoring: keep watching after a detection (see [Triggers](#triggers)). |
-| `remove_file` | Delete the file once detected. |
-| `archive_directory`, `archive_with_timestamp`, `keep_timestamps` | Move the file to an archive directory once detected. |
+| `remove_file` | `1`: delete the file once detected (move it, with `archive_directory`). `0`: keep it, and remember it (see below). |
+| `archive_directory`, `archive_with_timestamp`, `keep_timestamps` | Archive directory: the file is moved there with `remove_file` `1`, copied there otherwise. Output `FileName` is then the path in the archive. |
 | `cool_off` | Seconds a file must stay unchanged to be considered stable. |
 | `polling_frequency` | Seconds between scans (default 5). |
 | `partial_file` | Trigger on files still being written. |
 | `return_all` | Return all matching files at once. |
-| `trigger_type` | Persistence of past triggers: `by workorder group` (default), `by workflow`, `by action template`, `by step`, `none`. |
+| `trigger_type` | Scope of the history of past triggers: `by workorder group` (default, also when blank), `by workflow`, `by action template`, `by step`, `absolute`, `none`. |
 | `exclusions`, `fullpath_exclusions`, `ignore_zero_bytes`, `ignore_readlocked` | Filters. |
 
-Pitfall: with `remove_file` (and no archive directory) not set, a detected file stays in the directory.
-Past triggers are remembered per work order group by default, and each new work order is a new group: each new work order detects the same file again at once.
-Set `remove_file`, or `archive_directory`, so that a file is processed once.
+History of past triggers: the watcher remembers the files it has detected, with their modification time, only when `remove_file` is `0` and `trigger_type` is not `none` (`LocalFileWatcher#some_persistence?`).
+
+- `remove_file` `0`: a file is detected once per scope of `trigger_type`, and again when its modification time changes.
+  With the default scope, the clones of a continuous monitoring share the history, and a new start (a new work order) detects again the files left in the directory.
+- `remove_file` `1`: the file leaves the directory, no history is needed.
+- `remove_file` blank (the database default; in plain format, also when written `false`): **no history**.
+  A file left in the directory is detected again at each scan, by each new clone: with `allow_multiple`, a file that the processing does not remove starts a new processing every polling period.
+
+Write `remove_file` explicitly: `1` to remove the file, `0` to keep it.
 
 ### SimpleParameterLookup
 
@@ -919,6 +955,29 @@ Starts a transfer on a node with the Node API, then checks its status every `pol
   They are required also with `remote_node`.
   With wrong credentials, the step ends with `Failed`: `Transfer failed: 401 Unauthorized`.
 - `destination_root` of the transfer spec is a path in the docroot of the node user, or in the storage root of the access key.
+
+### WorkflowLauncher
+
+Starts a workflow in a new, independent work order.
+
+| Attribute | Content |
+|-----------|---------|
+| `workflow_id` | Id of the workflow to start (see [Referring to existing entities](#referring-to-existing-entities)). Each runtime parameter of that workflow is an input of the step, with the same name, required unless the parameter is optional. Blank: input `Workflow_ID` (or the portable id, with `use_portable_id`), and input `Workflow_Parameters`, a hash of runtime parameters. |
+| `wait_for_completion` | `1`: the step waits for the end of the launched work order. It polls: no worker is held. |
+| `fail_if_failure` | `1`: with `wait_for_completion`, the step ends with `Failed` when the launched work order is `Failed`. |
+| `work_order_name`, `master_id` | Label of the launched work order, and its master id, which groups work orders in the work order view. Blank: optional inputs `WorkOrder_Description` and `Master_id`. |
+
+Outputs: `WorkOrder_ID` (`int`), the id of the launched work order, and, when waiting, `WorkOrder_Status` (`string`), its status.
+
+Status of the step (`WorkflowLauncher#execute` and `#check_status`):
+
+| `wait_for_completion` | Launched work order | Step |
+|-----------------------|---------------------|------|
+| blank or `0` | Started | `Complete` |
+| any | Could not be started | `Error` |
+| `1` | `Complete` | `Complete` |
+| `1` | `Failed` | `Failed` with `fail_if_failure` `1`, else `Complete` |
+| `1` | `Error`, `Canceled`, rolled back, deleted | `Failed`, whatever `fail_if_failure` |
 
 ### ArrayFanout and Funnelin
 
@@ -1204,6 +1263,7 @@ The import of `parent` sets `workflow_portable_id` of the template to the portab
 Workflow `watch_folder` watches the folder `/tmp/doc_test_watch/` of the Orchestrator host, and starts workflow `per_file` once per file found:
 
 - `Detect files` (`LocalFileWatcher`): continuous monitoring (`allow_multiple`, see [Triggers](#triggers)), all files found at once (`return_all`): output `FileName` is an array.
+  The files are left in the folder and remembered (`remove_file` `0`): `per_file` deletes them.
 - `Each file` (`ArrayFanout`): runs the next step once per element of input `all_files`, with the element as output `file`.
 - `Process file` (`WorkflowLauncher`): starts `per_file` with `file_path` set to `file`, waits for its end (`wait_for_completion`), and ends with `Failed` if it fails (`fail_if_failure`).
 - `Wait all` (`Funnelin`): runs once all executions of `Process file` have ended, and gathers their values.
@@ -1283,6 +1343,7 @@ Workflow `watch_folder` watches the folder `/tmp/doc_test_watch/` of the Orchest
       directory: /tmp/doc_test_watch/
       file_name: "*.txt"
       allow_multiple: 1
+      remove_file: 0
       return_all: 1
       cool_off: 2
   ArrayFanout__2: !ruby/object:ArrayFanout
@@ -1322,7 +1383,8 @@ ascli orchestrator workflows import watch_folder.yml @json:'{"publish":true}'
 ascli orchestrator workflows start <id of watch_folder> @json:'{}'
 ```
 
-Observed with the files `a_ok.txt`, `b_ok.txt` and `c_locked.txt`, the last one made impossible to delete (`chattr +i`):
+Observed with the files `a_ok.txt`, `b_ok.txt` and `c_locked.txt`, the last one made impossible to delete (`chattr +i`).
+The folder belongs to the user that runs Orchestrator (`aspweb`), so that `per_file` can delete the files:
 
 - One work order of `per_file` per file.
   The executions of the fanned step are named `Process file (0)`, `Process file (1)`, ... in `Step_information`.
@@ -1331,6 +1393,7 @@ Observed with the files `a_ok.txt`, `b_ok.txt` and `c_locked.txt`, the last one 
 - `Wait all` ends with `Failed` (`fail_if_failures`: `Funneled in 3 work steps with 1 failures`), and the work order goes to `Fail`.
   When all files are processed, it goes to `End`.
 - The work order that detected the files continues; a clone waits for the next files: cancel it to stop the monitoring.
+- `c_locked.txt` stays in the folder, and the clone does not detect it again: it shares the history of the first work order.
 
 Rules of this pattern (source of `ArrayFanout` and `Funnelin`, and tests):
 
@@ -1338,8 +1401,11 @@ Rules of this pattern (source of `ArrayFanout` and `Funnelin`, and tests):
   For more processing, use a `SubWorkflow` or `WorkflowLauncher` step, as here.
 - Connect `Funnelin` to each end status of that step (`Complete`, `Failed`, `Error`), with `Synch_factor` 1: `ArrayFanout` replaces 1 by the number of elements, so `Funnelin` waits for all executions, whatever their status.
   With a link on `Complete` only, a failed execution has no next step, and the work order fails at once (`No behavior defined for step status change to Failed - in Process file (1)`).
-- A file still in the folder is detected again by the next clone (each work order is a new group for the default `trigger_type`, see [LocalFileWatcher](#localfilewatcher)): with `c_locked.txt` left in the folder, each new clone started `per_file` on it again.
-  Remove or move each file, also when its processing fails.
+- Write `remove_file` `0` (or `1`).
+  Left blank, the watcher keeps no history (see [LocalFileWatcher](#localfilewatcher)): a file still in the folder is detected again by each clone.
+  This was observed with this recipe without `remove_file`: with `c_locked.txt` left in the folder, each new clone started `per_file` on it again.
+- A new start of `watch_folder` has an empty history: it processes again the files left in the folder.
+  Move a file whose processing fails to an error folder.
 
 ### Recipe: queue and resource pool
 
@@ -1641,6 +1707,7 @@ File:
 - `error_free: true` in the whiteboard.
 - Each template key `<StepType>__<N>` matches the `Step_type` and `Action_id` of its steps.
 - Embedded templates named `W0__<step name>`.
+- `LocalFileWatcher` templates have `remove_file` `0` or `1`, not blank (else no trigger history).
 - No secret in the file: secrets are given by runtime `pwd` parameters, or by remote nodes (see [Secrets](#secrets)).
 
 Graph:
@@ -1800,6 +1867,7 @@ Observed in Orchestrator 4.1.6:
 - When a `Synch_factor` other than `0` has no attributes `x` and `y`, the designer opened from the list of workflows generates `workflow.addFigure(<join>, , );` (`WhiteboardsHelper#draw_operator`): the JavaScript does not parse, and the canvas is empty.
   The **Revisions** tab (`draw_xmlconnections`) skips the join symbol and shows the graph.
 - `find_constraints` returns empty constraints for a file that does not exist.
+- `LocalFileWatcher` keeps a history of past triggers only when `remove_file` is `false`, not when it is null (the database default): a template that leaves it blank detects the same files again at each scan, whatever `trigger_type`.
 - `export_workflow` exports dependencies for any non-empty value of `export_with_dependencies`, including `false`.
 - `import_workflow` and `import_with_constraints` should refuse a file whose element 4 lists dependencies when element 5 is empty, but the test also requires element 5 to be non-empty: such a file is imported, with template attributes as written.
 - `import_workflow` does not import the remote nodes of a `.wkf` package.
