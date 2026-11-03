@@ -30,6 +30,8 @@ Related documents:
 The source of the shipped portlets is the best set of examples: folder `/opt/aspera/orchestrator/portlets` of an Orchestrator server, one folder per portlet.
 `orchestrator_information` is the simplest, `user_tasks` has parameters and a permission check, `csv_editor` has uploads, a modal dialog and several actions, `queue_management` has pagination and `helper_method`.
 
+The repository [`aspera-orchestrator-secret-reference`](https://github.com/IBM/aspera-orchestrator-secret-reference) contains the portlet `secret_dashboard` as a worked example: it uses a plugin (`SecretCore`), has four sections with AJAX actions, an admin-only check in every action, and a full RSpec test suite that runs outside Rails with stubs of `Portlet`, `PortletsController`, `Workflow`, `WorkStep` and `User`.
+
 ### Terminology
 
 | Term | Meaning |
