@@ -8,7 +8,7 @@ common:
 # Aspera Orchestrator 4.1.6 Action Template Reference
 
 > Generated from the Orchestrator `actions` directory: do not edit.
-> See the [Workflow Authoring Guide](workflow-authoring-guide.md) for how to use this reference.
+> See the [Aspera Orchestrator Development Guide](orchestrator-development-guide.md), chapter Workflow authoring, for how to use this reference.
 
 For each action plugin, this reference lists:
 

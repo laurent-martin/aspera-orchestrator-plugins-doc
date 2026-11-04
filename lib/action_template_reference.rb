@@ -52,7 +52,7 @@ class ActionTemplateReference
   YAML_HEADER = <<~HEADER
     # Aspera Orchestrator %<version>s action plugins: template attributes, inputs and outputs.
     # Generated from Orchestrator: do not edit.
-    # How to use it in a workflow file: see workflow-authoring-guide.md.
+    # How to use it in a workflow file: see the Workflow authoring chapter of orchestrator-development-guide.md.
     #
     # <PluginClass>:          Step_type of a step, and class of its action template (key <PluginClass>__<N>)
     #   attributes:           fields of the action template (element 3 of a workflow file), besides name and comments
@@ -71,7 +71,7 @@ class ActionTemplateReference
     #       hint:             placeholder text in the template editor
     #       format:           language of the value (code editor)
     #       placeholders:     true: placeholders in the value create inputs: <%%= variable %%>, <%%= function(variable, ...) %%>,
-    #                         or var(variable) in an expression, create input `variable` (see Placeholders in workflow-authoring-guide.md);
+    #                         or var(variable) in an expression, create input `variable` (see Placeholders in the Workflow authoring chapter of orchestrator-development-guide.md);
     #                         not set: placeholders are not scanned, even if the attribute gives an input when blank
     #       declares:         the value declares inputs or outputs of the step (required_inputs, optional_inputs, outputs),
     #                         as {'name'=>'type'} (type_map) or ['name'] (list)
@@ -179,7 +179,7 @@ class ActionTemplateReference
     out << "# Aspera Orchestrator #{version} Action Template Reference"
     out << ''
     out << '> Generated from the Orchestrator `actions` directory: do not edit.'
-    out << '> See the [Workflow Authoring Guide](workflow-authoring-guide.md) for how to use this reference.'
+    out << '> See the [Aspera Orchestrator Development Guide](orchestrator-development-guide.md), chapter Workflow authoring, for how to use this reference.'
     out << ''
     out << 'For each action plugin, this reference lists:'
     out << ''

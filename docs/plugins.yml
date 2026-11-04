@@ -1,6 +1,6 @@
 # Aspera Orchestrator 4.1.6 action plugins: template attributes, inputs and outputs.
 # Generated from Orchestrator: do not edit.
-# How to use it in a workflow file: see workflow-authoring-guide.md.
+# How to use it in a workflow file: see the Workflow authoring chapter of orchestrator-development-guide.md.
 #
 # <PluginClass>:          Step_type of a step, and class of its action template (key <PluginClass>__<N>)
 #   attributes:           fields of the action template (element 3 of a workflow file), besides name and comments
@@ -19,7 +19,7 @@
 #       hint:             placeholder text in the template editor
 #       format:           language of the value (code editor)
 #       placeholders:     true: placeholders in the value create inputs: <%= variable %>, <%= function(variable, ...) %>,
-#                         or var(variable) in an expression, create input `variable` (see Placeholders in workflow-authoring-guide.md);
+#                         or var(variable) in an expression, create input `variable` (see Placeholders in the Workflow authoring chapter of orchestrator-development-guide.md);
 #                         not set: placeholders are not scanned, even if the attribute gives an input when blank
 #       declares:         the value declares inputs or outputs of the step (required_inputs, optional_inputs, outputs),
 #                         as {'name'=>'type'} (type_map) or ['name'] (list)
@@ -4062,11 +4062,10 @@ FileJournalLogEntry:
     Step_information: {type: hash}
   notes:
   - 'Allowed values for processing_status (and the File_processing_status input): Complete, Error, Failed, In Progress. These map to the standard Journal statuses defined in Journal::PREDEFINED_STATUS.'
-  - Journal books must exist before the step runs. A missing book is NOT created at execution time (unlike a workflow import, which creates the book automatically). Create the book in Engine > Journaling before deploying the workflow.
-  - When journal_book is set to "--Runtime--", the "Journal Book" input becomes required.
   - 'Journal books must exist before the step runs. A missing book is NOT created at execution time: the entry is logged without a book. A workflow import creates only the books of inline journals (step menu Journal), not those of this plugin. Create the book in Workflows > Journals before deploying the workflow (checked on 4.1.6).'
   - 'Journaling must be on (Journal On in Engine > Configuration, Journal & Cleanup): otherwise the step ends with Error.'
   - milestone is the progress of the file in percent (it replaces the previous value, it is not added). Map the outputs journal_file_ID and actual_package_ID of a first entry to the inputs file_ID and package_ID of later steps to append to the same file entry; without file_ID, a later step appends to the entry of the same file name in the same package and book, unless new_file is set.
+  - When journal_book is set to "--Runtime--", the "Journal Book" input becomes required.
 Filter:
   display_name: Filter
   category: System

@@ -1,6 +1,6 @@
 # IBM Aspera Orchestrator plugin documentation
 
-This repository generates the plugin (action) documentation for IBM Aspera Orchestrator, and holds the guides for plugin developers and workflow authors.
+This repository generates the plugin (action) documentation for IBM Aspera Orchestrator, and holds the development guide for plugin developers and workflow authors.
 
 The plugin documentation is generated from the Orchestrator RPM: the `actions` folder and some library files are extracted from it, then the metadata and help page of each plugin are rendered to HTML, Markdown and PDF.
 
@@ -15,15 +15,13 @@ Generated documents and guides are in folder `docs`:
 | [`Orchestrator_Plugin_Banner.pdf`](docs/Orchestrator_Plugin_Banner.pdf)                  | Icons and names of plugins, by category (landscape)            | `pdf_banner`                   |
 | [`action-template-reference.md`](docs/action-template-reference.md)                      | Template attributes, inputs and outputs of each action plugin  | `doc:template_reference`       |
 | [`plugins.yml`](docs/plugins.yml)                                                        | Same, as data, with allowed values and conditions              | `doc:plugin_specs`             |
-| [`plugin-development-guide.md`](docs/plugin-development-guide.md) and `.pdf`             | How to develop a plugin                                        | `doc:guide` (PDF and diagrams) |
-| [`workflow-authoring-guide.md`](docs/workflow-authoring-guide.md) and `.pdf`             | How to write workflows                                         | `doc:authoring` (PDF only)     |
-| [`workflow-development-practices.md`](docs/workflow-development-practices.md) and `.pdf` | How to design workflows: rules and practices                   | `doc:practices` (PDF only)     |
-| [`portlet-development-guide.md`](docs/portlet-development-guide.md) and `.pdf`           | How to develop a dashboard portlet                             | `doc:portlets` (PDF only)      |
+| [`orchestrator-development-guide.md`](docs/orchestrator-development-guide.md) and `.pdf`  | Development guide: workflow practices, workflow authoring, plugins and portlets | `doc:guide` (PDF and diagrams) |
 
-The four guides are written by hand (the task generates their PDF), the other documents are generated: do not edit them.
-The screenshots of the workflow development practices are in `docs/images/practices`.
+The Aspera Orchestrator Development Guide is written by hand (the task generates its PDF), the other documents are generated: do not edit them.
+[`workflow-authoring-guide.md`](docs/workflow-authoring-guide.md) is only a pointer to the guide, for old versions of `ascli`.
+The screenshots of the practices chapter are in `docs/images/practices`.
 
-Diagrams of the guides are drawn in [`docs/images/diagrams.drawio`](docs/images/diagrams.drawio), one tab per image: `rake doc:diagrams` exports each tab to `docs/images/<tab>.svg` (for GitHub) and `.pdf` (used in the PDF), with draw.io desktop, when the `.drawio` file is newer.
+Diagrams of the guide are drawn in [`docs/images/diagrams.drawio`](docs/images/diagrams.drawio), one tab per image: `rake doc:diagrams` exports each tab to `docs/images/<tab>.svg` (for GitHub) and `.pdf` (used in the PDF), with draw.io desktop, when the `.drawio` file is newer.
 
 Intermediate HTML files (`rake html`) are in `build/<VERSION>/out`.
 
@@ -88,9 +86,6 @@ rake doc:template_reference
 rake doc:plugin_specs
 rake doc:diagrams
 rake doc:guide
-rake doc:authoring
-rake doc:practices
-rake doc:portlets
 ```
 
 `doc:plugin_specs` generates `plugins.yml`, for tools and AI assistants: for each plugin, the template attributes (label, allowed values, defaults) and the inputs and outputs, with the template settings they depend on.

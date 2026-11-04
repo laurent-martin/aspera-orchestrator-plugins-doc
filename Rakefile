@@ -242,38 +242,11 @@ namespace :doc do
   desc 'Export the diagrams of docs/images/diagrams.drawio (SVG and PDF)'
   task diagrams: DRAWIO_IMAGES
 
-  desc 'Generate PDF from plugin development guide'
+  desc 'Generate PDF from the Aspera Orchestrator Development Guide'
   task guide: :diagrams do
     markdown_to_pdf(
-      md: PATH_DOCS / 'plugin-development-guide.md',
-      pdf: PATH_DOCS / 'plugin-development-guide.pdf',
-      theme: PDF_THEME
-    )
-  end
-
-  desc 'Generate PDF from workflow authoring guide'
-  task :authoring do
-    markdown_to_pdf(
-      md: PATH_DOCS / 'workflow-authoring-guide.md',
-      pdf: PATH_DOCS / 'workflow-authoring-guide.pdf',
-      theme: PDF_THEME
-    )
-  end
-
-  desc 'Generate PDF from portlet development guide'
-  task :portlets do
-    markdown_to_pdf(
-      md: PATH_DOCS / 'portlet-development-guide.md',
-      pdf: PATH_DOCS / 'portlet-development-guide.pdf',
-      theme: PDF_THEME
-    )
-  end
-
-  desc 'Generate PDF from workflow development practices'
-  task :practices do
-    markdown_to_pdf(
-      md: PATH_DOCS / 'workflow-development-practices.md',
-      pdf: PATH_DOCS / 'workflow-development-practices.pdf',
+      md: PATH_DOCS / 'orchestrator-development-guide.md',
+      pdf: PATH_DOCS / 'orchestrator-development-guide.pdf',
       theme: PDF_THEME
     )
   end
