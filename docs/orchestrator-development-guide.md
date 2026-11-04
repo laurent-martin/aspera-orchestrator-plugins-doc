@@ -36,6 +36,7 @@ A workflow can be valid and still be a poor design.
 If the two chapters differ on how Orchestrator behaves, follow Workflow authoring: it is derived from Orchestrator 4.1.6 and its examples were executed on 4.1.6.
 
 Workflow development practices describes the graphical designer.
+The designer and the operation of Orchestrator (monitors, journals, dashboards, direct start pages) are described only there.
 Workflow authoring shows the same objects as XML (for example `Synch_factor` for the OR operator).
 
 #### How each chapter was verified
@@ -2186,103 +2187,6 @@ The attribute `trigger_type` (**persistency scope** in the designer) sets who sh
 - The history is stored on disk, or in the database with the server setting `persistence_mode: db`.
 - A plugin can also decide when it keeps a history: see [LocalFileWatcher](#localfilewatcher).
 
-### Secrets
-
-Orchestrator has no secret store for workflows.
-A secret (password, API key, token, passphrase) reaches a step from a template attribute, from an input mapped to a value or to a parameter, or from an entity of the server, such as a remote node.
-These ways differ in where the value is stored in clear, and in who can read it.
-With the plugin `SecretReference`, a workflow holds a reference to a secret of an external store instead of the secret, see [Secret references](#secret-references).
-The rules that follow from this are in [Using secrets](#using-secrets).
-
-#### Where a secret is stored
-
-| Source of the secret | Storage on the server | In an export (`export_workflow`, export in the web UI) |
-| --- | --- | --- |
-| Template attribute, for example with widget `password` in [plugins.yml](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/plugins.yml) | Clear, in the template. | Clear. |
-| `Map_to` of type `value` | Clear, in the graph XML of each revision. | Clear. |
-| `Value` of a parameter of type `pwd` | Clear, in the graph XML of each revision. Encrypted in the published workflow. | Clear. |
-| Runtime parameter of type `pwd`, given when starting the workflow | Encrypted, in the variables of the work order. | Not exported. |
-| Output of type `pwd` | Encrypted, in the variables of the work order. | Not exported. |
-| Remote node, referred to by name (see [Referring to existing entities](#referring-to-existing-entities)) | Encrypted, in the remote node. | The name only. A `.wkf` package contains the node, with its password encrypted with the key of the exporting server. |
-| [Secret reference](#secret-references) `secret://...`, in any of the above | The reference only. The secret is in its store: HashiCorp Vault, an encrypted file, or a remote node. | The reference only. |
-
-Encrypted values are prefixed with `~p:`: AES-256-GCM, with a key derived from the `secret_key_base` of the server (`OrchCipher`).
-The designer hides the value of a `pwd` parameter, but sends it to the browser: any user who can open the workflow in the designer, or export it, can read it.
-
-**Push to Git** (Orchestrator 4.1.7 and later): option **Protect Passwords on Push** of the Git settings replaces, in the pushed file, the `Value` of `pwd` parameters and the `Map_to` values of inputs of type `pwd`.
-The replacement is the value encrypted with the export token of the Git settings (prefix `~gx:`), or an empty string when no token is set.
-An import, of any kind, on a server with the same export token decrypts them.
-Template attributes are pushed in clear, and `export_workflow` does not use this option.
-
-#### Where a secret is displayed
-
-The work step page of the web UI masks:
-
-- Inputs and outputs of type `pwd`.
-  The type of an input is the one declared by the plugin, not the type of the parameter mapped to it.
-  In `CustomRuby`, the author of the step declares this type, and a `pwd` input accepts a `string` value.
-- Inputs, outputs and carry-throughs whose name contains `password` (any case), when the server option `mask_password_variables` is set (the default).
-  Orchestrator 3.x and 4.0 also had the option `password_field_definition_regex`, which added name patterns (`pwd`, `secret`, `key`); 4.1.6 no longer has it.
-
-Other values are displayed in clear, even when they come from a `pwd` parameter.
-For example, inputs `Aws_secret` (Amazon plugins), `Files_client_secret`, `Api_token` and `Apikey` are of type `string`: check the type and the name of an input in [plugins.yml](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/plugins.yml).
-
-The API does not mask: it returns the decrypted values to the users who can view the workflow.
-
-| Endpoint | `ascli` command | Values |
-| --- | --- | --- |
-| `work_step_status` | `ascli orchestrator workstep status <WORK_STEP_ID>` | Inputs, outputs and carry-throughs of a work step. |
-| `work_order_output` | `ascli orchestrator workorders output <WORK_ORDER_ID>` | Outputs of a work order. |
-| `workflow_inputs_spec` | `ascli orchestrator workflows inputs <WORKFLOW_ID>` | `Value` of the optional runtime parameters. |
-
-Logs:
-
-- The request log of Orchestrator writes `[FILTERED]` instead of the value of a request parameter whose name contains `passw`, `secret`, `token`, `_key`, `crypt`, `salt`, `certificate`, `login`, `email`, `otp` or `ssn` (`config/initializers/filter_parameter_logging.rb`).
-  This applies to the runtime parameters in `external_parameters`.
-- The access log of the web server (nginx) records the URL, with its query string.
-
-#### Secret references
-
-The plugin `SecretReference` (repository `aspera-orchestrator-secret-reference`, for Orchestrator 4.1.6) lets a workflow keep a reference instead of a secret:
-
-```text
-secret://<STORE>/<PATH>[?<OPTIONS>][#<FIELD>]
-```
-
-- A reference is the whole value of a Password parameter, a step input or a template attribute.
-  In a text, a placeholder such as `<%= Db_password %>` adds the input `Db_password` to the step: with a reference as its value, the placeholder is replaced by the secret.
-- When a step runs, the plugin reads the secret from its store: the step gets the value, and variables, outputs and saved states keep the reference.
-  A secret rotated in the store is used by the next run of a step.
-- Stores are named in a configuration file on each server.
-  Types: `vault` (HashiCorp Vault KV v2), `file` (encrypted file made by `ascli`), `node` (`login`, `password` or `certificate_passphrase` of a remote node).
-- The step **Secret reference** checks that a secret can be read, and gives its reference (output `Reference`) and its version, never its value.
-
-Installation, configuration and the dashboard are described in the README of the repository.
-
-#### Secret given at run time
-
-`DatabaseQuery`, with attribute `database_password` left blank, has a required input `DB_password` of type `pwd`.
-Map it to a required runtime parameter:
-
-```xml
-<Start x="100" y="50" id="start"><Parameters><Parameter id="p_db_password"/></Parameters></Start>
-...
-<Inputs><Input name="DB_password"><Map_to type="parameter" name="db_password"/></Input></Inputs>
-...
-<Parameters>
-  <Parameter x="100" y="200" id="p_db_password">
-    <Name>db_password</Name><Value></Value><Value_type>pwd</Value_type>
-    <Runtime_override>true</Runtime_override><Runtime_optional>false</Runtime_optional>
-  </Parameter>
-</Parameters>
-```
-
-Start it with the parameters read from a file that only its owner can read (`chmod 600`), containing `{"db_password":"<PASSWORD>"}`:
-
-```shell
-ascli orchestrator workflows start <WORKFLOW_ID> @json:@file:<PARAMS_FILE>
-```
-
 ### Main action plugins
 
 The [Action Template Reference](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/action-template-reference.md) lists the attributes, inputs and outputs of all plugins.
@@ -2486,6 +2390,320 @@ Status of the step (`WorkflowLauncher#execute` and `#check_status`):
   Output `Hash_by_state_id` maps each work step id to its value; each additional input `x` gives an output `x_hash`.
 
 Exactly one step can be between them, and `Funnelin` must be linked to each end status of that step: see [Recipe: one work order per file](#recipe-one-work-order-per-file).
+
+### Secrets
+
+Orchestrator has no secret store for workflows.
+A secret (password, API key, token, passphrase) reaches a step from a template attribute, from an input mapped to a value or to a parameter, or from an entity of the server, such as a remote node.
+These ways differ in where the value is stored in clear, and in who can read it.
+With the plugin `SecretReference`, a workflow holds a reference to a secret of an external store instead of the secret, see [Secret references](#secret-references).
+The rules that follow from this are in [Using secrets](#using-secrets).
+
+#### Where a secret is stored
+
+| Source of the secret | Storage on the server | In an export (`export_workflow`, export in the web UI) |
+| --- | --- | --- |
+| Template attribute, for example with widget `password` in [plugins.yml](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/plugins.yml) | Clear, in the template. | Clear. |
+| `Map_to` of type `value` | Clear, in the graph XML of each revision. | Clear. |
+| `Value` of a parameter of type `pwd` | Clear, in the graph XML of each revision. Encrypted in the published workflow. | Clear. |
+| Runtime parameter of type `pwd`, given when starting the workflow | Encrypted, in the variables of the work order. | Not exported. |
+| Output of type `pwd` | Encrypted, in the variables of the work order. | Not exported. |
+| Remote node, referred to by name (see [Referring to existing entities](#referring-to-existing-entities)) | Encrypted, in the remote node. | The name only. A `.wkf` package contains the node, with its password encrypted with the key of the exporting server. |
+| [Secret reference](#secret-references) `secret://...`, in any of the above | The reference only. The secret is in its store: HashiCorp Vault, an encrypted file, or a remote node. | The reference only. |
+
+Encrypted values are prefixed with `~p:`: AES-256-GCM, with a key derived from the `secret_key_base` of the server (`OrchCipher`).
+The designer hides the value of a `pwd` parameter, but sends it to the browser: any user who can open the workflow in the designer, or export it, can read it.
+
+**Push to Git** (Orchestrator 4.1.7 and later): option **Protect Passwords on Push** of the Git settings replaces, in the pushed file, the `Value` of `pwd` parameters and the `Map_to` values of inputs of type `pwd`.
+The replacement is the value encrypted with the export token of the Git settings (prefix `~gx:`), or an empty string when no token is set.
+An import, of any kind, on a server with the same export token decrypts them.
+Template attributes are pushed in clear, and `export_workflow` does not use this option.
+
+#### Where a secret is displayed
+
+The work step page of the web UI masks:
+
+- Inputs and outputs of type `pwd`.
+  The type of an input is the one declared by the plugin, not the type of the parameter mapped to it.
+  In `CustomRuby`, the author of the step declares this type, and a `pwd` input accepts a `string` value.
+- Inputs, outputs and carry-throughs whose name contains `password` (any case), when the server option `mask_password_variables` is set (the default).
+  Orchestrator 3.x and 4.0 also had the option `password_field_definition_regex`, which added name patterns (`pwd`, `secret`, `key`); 4.1.6 no longer has it.
+
+Other values are displayed in clear, even when they come from a `pwd` parameter.
+For example, inputs `Aws_secret` (Amazon plugins), `Files_client_secret`, `Api_token` and `Apikey` are of type `string`: check the type and the name of an input in [plugins.yml](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/plugins.yml).
+
+The API does not mask: it returns the decrypted values to the users who can view the workflow.
+
+| Endpoint | `ascli` command | Values |
+| --- | --- | --- |
+| `work_step_status` | `ascli orchestrator workstep status <WORK_STEP_ID>` | Inputs, outputs and carry-throughs of a work step. |
+| `work_order_output` | `ascli orchestrator workorders output <WORK_ORDER_ID>` | Outputs of a work order. |
+| `workflow_inputs_spec` | `ascli orchestrator workflows inputs <WORKFLOW_ID>` | `Value` of the optional runtime parameters. |
+
+Logs:
+
+- The request log of Orchestrator writes `[FILTERED]` instead of the value of a request parameter whose name contains `passw`, `secret`, `token`, `_key`, `crypt`, `salt`, `certificate`, `login`, `email`, `otp` or `ssn` (`config/initializers/filter_parameter_logging.rb`).
+  This applies to the runtime parameters in `external_parameters`.
+- The access log of the web server (nginx) records the URL, with its query string.
+
+#### Secret references
+
+The plugin `SecretReference` (repository `aspera-orchestrator-secret-reference`, for Orchestrator 4.1.6) lets a workflow keep a reference instead of a secret:
+
+```text
+secret://<STORE>/<PATH>[?<OPTIONS>][#<FIELD>]
+```
+
+- A reference is the whole value of a Password parameter, a step input or a template attribute.
+  In a text, a placeholder such as `<%= Db_password %>` adds the input `Db_password` to the step: with a reference as its value, the placeholder is replaced by the secret.
+- When a step runs, the plugin reads the secret from its store: the step gets the value, and variables, outputs and saved states keep the reference.
+  A secret rotated in the store is used by the next run of a step.
+- Stores are named in a configuration file on each server.
+  Types: `vault` (HashiCorp Vault KV v2), `file` (encrypted file made by `ascli`), `node` (`login`, `password` or `certificate_passphrase` of a remote node).
+- The step **Secret reference** checks that a secret can be read, and gives its reference (output `Reference`) and its version, never its value.
+
+Installation, configuration and the dashboard are described in the README of the repository.
+
+#### Secret given at run time
+
+`DatabaseQuery`, with attribute `database_password` left blank, has a required input `DB_password` of type `pwd`.
+Map it to a required runtime parameter:
+
+```xml
+<Start x="100" y="50" id="start"><Parameters><Parameter id="p_db_password"/></Parameters></Start>
+...
+<Inputs><Input name="DB_password"><Map_to type="parameter" name="db_password"/></Input></Inputs>
+...
+<Parameters>
+  <Parameter x="100" y="200" id="p_db_password">
+    <Name>db_password</Name><Value></Value><Value_type>pwd</Value_type>
+    <Runtime_override>true</Runtime_override><Runtime_optional>false</Runtime_optional>
+  </Parameter>
+</Parameters>
+```
+
+Start it with the parameters read from a file that only its owner can read (`chmod 600`), containing `{"db_password":"<PASSWORD>"}`:
+
+```shell
+ascli orchestrator workflows start <WORKFLOW_ID> @json:@file:<PARAMS_FILE>
+```
+
+### REST API
+
+Base URL: `https://<HOST>/aspera/orchestrator/api/`.
+The response format is chosen with query parameter `format` (`xml`, the default, or `json`).
+
+Authentication depends on the option **Use Secure JWT API Auth** (`use_secure_jwt_api_auth`, set by default):
+
+| Option | Authentication |
+| --- | --- |
+| Set | Header `Authorization: Bearer <TOKEN>`. `POST api/login`, with `username` and either `password` or `api_key` (the API key of the user), returns the token in `token`. **API JWT Token Expiry** (`api_jwt_token_expiry_seconds`) sets its lifetime, 24 hours by default. |
+| Not set | HTTP Basic, or query parameters `login` with `password` or `api_key`. `POST api/login` answers with status 403. |
+
+The pages of the web interface, such as a [direct start](#direct-start) page, do not read these query parameters: with the option **Inline Auth Allowed** (`inline_auth_allowed`, not set by default), they accept HTTP Basic.
+
+Routes: each endpoint below has a route with the given method.
+In addition, any endpoint can be called as `api/<ENDPOINT>/<ID>`, with any HTTP method, where `<ID>` is the main identifier (workflow or work order).
+Some endpoints have no other route (for example `export_workflow`, `list_monitors`, `journal_files`, `pool_status`): when they do not use `<ID>`, any value works, for example `0`.
+The [OpenAPI description](https://github.com/IBM/aspera-cli/blob/main/lib/aspera/schema/IBM%20Aspera%20Orchestrator%20API-v1-enhanced.yaml) lists all endpoints and their parameters, checked against Orchestrator with `rake doc:api_check` of this repository.
+**Swagger API**, in the help pages of the web interface (`https://<HOST>/aspera/orchestrator/api-docs`), shows the description delivered with Orchestrator, and can try calls.
+
+Errors are returned with the exception message and stack trace in the response body.
+
+#### import_workflow
+
+`POST api/import_workflow`, body `multipart/form-data`:
+
+| Field | Required | Content |
+| --- | --- | --- |
+| `import_file` | yes | The workflow file (file part). |
+| `import_file_name` | yes | File name, ending with `yml` or `wkf`. The upload is stored under this name in `<RUN_DIR>/workflows/import/`. |
+| `folder_id` | no | Folder of the new workflow. |
+| `link_to_subworkflows` | no | `true`: in a `.wkf` package, use the sub-workflows already imported from the same files instead of importing them again. See [Referring to existing entities](#referring-to-existing-entities). |
+| `publish_workflow` | no | `true` or `1`: publish after import. The server option `publish_api_imported_workflow` sets the default. |
+
+Response: the new workflow as JSON (`{"workflow": {"id": ..., "name": ..., ...}}`), in both formats.
+Other responses with status 200:
+
+- `{"plugins": [...], "missing_deps": [...]}`: plugins that could not be enabled; nothing is imported.
+
+Orchestrator also has a response `{"dependencies": ..., "file": ..., "workflow": ...}` for dependencies that are not packed, but its condition is never met (see [Known issues](#known-issues)).
+
+On error: status 500 with `{"error": ..., "message": ..., "details": ...}`.
+
+#### export_workflow
+
+`GET api/export_workflow/<ID_OR_PORTABLE_ID>` (no route without the id in the path)
+
+Returns the workflow file (`.yml`, Rails format).
+With parameter `export_with_dependencies`, returns a `.wkf` package with sub-workflows and remote nodes.
+Any non-empty value of `export_with_dependencies`, including `false`, enables it.
+
+#### publish_workflow
+
+`POST api/publish_workflow?id=<ID_OR_PORTABLE_ID>`, or `api/publish_workflow/<ID_OR_PORTABLE_ID>` with any method.
+The id can also be given in a JSON body `{"id": ...}`.
+
+Publishes the last whiteboard revision.
+Response: `true` or `false` (JSON), or `<WorkflowPublish><Success>true</Success></WorkflowPublish>` (XML).
+`false` means the whiteboard has no `error_free` value.
+
+#### find_constraints
+
+`GET api/find_constraints?file=<PATH>[&wf_id=<WORKFLOW_ID>]`
+
+Analyzes a workflow file present on the Orchestrator host and returns the list expected by `import_with_constraints`, with the possible choices for each conflict:
+
+```json
+[{"filename": "<PATH>"}, {"add as revision": null}, {"subwf constraints": {}},
+ {"action template constraints": {}}, {"remote node constraints": {}},
+ {"missing plugins": null, "Auto-enable missing plugins?": null}]
+```
+
+It does not check that the file exists: a wrong path returns the same empty lists.
+
+#### import_with_constraints
+
+`POST api/import_with_constraints`, JSON body: an **array** of six objects, in this order:
+
+```json
+[{"filename": "/opt/aspera/orchestrator/var/run/orchestrator/workflows/import/my_workflow.yml"},
+ {"add as revision": 239},
+ {"subwf constraints": {}},
+ {"action template constraints": {"Search Files": "Map to the existing Global Template"}},
+ {"remote node constraints": {"Baton": "Map to the existing Remote Node"}},
+ {"Auto-enable missing plugins?": "true"}]
+```
+
+| Item | Content |
+| --- | --- |
+| `filename` | Path of the file on the Orchestrator host. |
+| `add as revision` | Id of an existing workflow to add a revision to, or `null` to create a new workflow. |
+| `subwf constraints` | Sub-workflow name to choice: `Map to the Existing Sub-Workflow`, `Create a new Sub-Workflow with a unique name`, `Add a new revision to the existing Sub-Workflow`. |
+| `action template constraints` | Global template name to choice: `Map to the existing Global Template`, `Create a new Global Template with a different name`, `Override the existing Global Template with this new template`. |
+| `remote node constraints` | Remote node name to choice: `Map to the existing Remote Node`, `Create a new Remote Node with a different name`, `Override the Existing Remote Node with this importing node`. |
+| `Auto-enable missing plugins?` | `true` or `false`. |
+
+Response: the workflow as JSON.
+The workflow is not published.
+
+#### initiate
+
+`POST api/initiate?format=json`, JSON body `{"workflow_id": <ID>, "external_parameters": {"<NAME>": <VALUE>, ...}}`.
+Query parameters:
+
+| Parameter | Content |
+| --- | --- |
+| `synchronous` | `true`: wait for the end of the work order. |
+| `timeout` | With `synchronous`: maximum wait, in seconds. |
+| `explicit_output_step`, `explicit_output_variable` | With `synchronous`: return only this output. |
+| `explicit_output` | Same, as `<STEP_NAME>:<OUTPUT_NAME>`. |
+| `on_error_return_code`, `on_failed_return_code` | HTTP status to return when the work order ends `Error` or `Failed`. |
+| `tags` | Comma-separated tags of the work order. |
+
+Give the value of an `array` or `hash` parameter as a string, in JSON: `{"files": "[\"/a.mxf\", \"/b.mxf\"]"}`.
+A JSON array as value fails with status 500 (`undefined method 'gsub' for an instance of Array`, `MultiType.convert_value_array`), observed on 4.1.6.
+
+#### Other workflow endpoints
+
+| Endpoint | Content |
+| --- | --- |
+| `GET api/workflows_list` | All workflows: id, name, portable id, published and latest revision. |
+| `GET api/workflow_inputs_spec/<ID>` | Runtime parameters: name, type, optional, default value. |
+| `GET api/workflow_outputs_spec/<ID>` | Outputs: `<STEP_NAME>:<OUTPUT_NAME>`, type. |
+| `GET api/work_orders_list/<WORKFLOW_ID>` | Work orders of a workflow, or of all workflows with `all`. Filters: `status`, `priority`, `from_date`, `to_date`, `tag`, `max_results`. |
+| `GET api/work_order_status/<ID>` | Status of a work order and of its work steps. For a sub-workflow, only its status, not its steps. |
+| `GET api/work_order_output/<ID>` | Output values of a work order (XML: one `variable` element per output). |
+| `GET api/work_order_cancel/<ID>` | Cancel a work order. |
+| `GET api/work_order_reset/<WORK_ORDER_ID>` | Reset a work order. |
+| `GET api/work_step_status/<WORK_STEP_ID>` | Status, inputs and outputs of a work step. Parameters such as `set_status` change its status. |
+| `GET api/resource_online/0?pool_name=<POOL_NAME>&resource_name=<RESOURCE_NAME>` | Take a resource of a pool online. `api/resource_offline` takes the same parameters. |
+
+#### ascli commands
+
+| Operation | Command |
+| --- | --- |
+| Import | `ascli orchestrator workflows import <FILE>` |
+| Import with constraints, or as a revision | `ascli orchestrator workflows import_with_constraints @json:'{"filename":"<SERVER_PATH>","add_as_revision":<ID>}'` |
+| Export | `ascli orchestrator workflows export <ID> --out.file=<FILE>` |
+| Export with dependencies (`.wkf`) | `ascli orchestrator workflows export <ID> @json:'{"dependencies":true}' --to-folder=<FOLDER>` |
+| Publish | `ascli orchestrator workflows publish <ID>` |
+| Inputs, outputs | `ascli orchestrator workflows inputs <ID>`, `ascli orchestrator workflows outputs <ID>` |
+| Start | `ascli orchestrator workflows start <ID> [<PARAMETERS>] [<EXECUTION>]`, where execution is `{"synchronous":true}` or `{"step":"<STEP_NAME>","variable":"<OUTPUT_NAME>"}` |
+| Work orders of a workflow | `ascli orchestrator workflows workorders <ID>` |
+| Work order | `ascli orchestrator workorders status <ID>`, `ascli orchestrator workorders output <ID>`, `ascli orchestrator workorders cancel <ID>` |
+| Journal, monitors, queues, resource pools | `ascli orchestrator journal files <BOOK>`, `ascli orchestrator monitors list <TYPE>`, `ascli orchestrator queues list`, `ascli orchestrator pools status <NAME>` |
+| Query parameters of an API call | `--query=@json:'{...}'`; `--query=help` lists them, from the OpenAPI description |
+
+### Inline validation
+
+An Aspera transfer server calls a workflow for each file it receives, at start, after a number of bytes (threshold) and at end, and rejects the file when the work order does not end with `Complete`.
+A server does not call for the files it sends, or when a transfer falls back to HTTP.
+For when to use it, see [Using inline validation](#using-inline-validation).
+
+4.1.5 and 4.1.6 refuse the call: see [Known issues](#known-issues).
+
+#### Validation settings
+
+In the `aspera.conf` of the server:
+
+| Setting | Content |
+| --- | --- |
+| `validation_file_start`, `validation_threshold`, `validation_file_stop` | `uri` to call at this event. Default: `none`. |
+| `validation_uri` | The URL of the call. |
+| `validation_threshold_kb` | The threshold, in KB. Required by `validation_threshold`. |
+| `validation_threads` | Calls in parallel, 5 by default. |
+| `validation_secure` | `true` checks the certificate of Orchestrator. Not checked by default. |
+| `session_timeout_sec` | Time limit of a call, 60 seconds by default. |
+
+The session fails at start with `Validator initialization error` when an event is set to `uri` without `validation_uri`, when `validation_uri` is set with no event set to `uri`, or when `validation_threshold` is set without `validation_threshold_kb`.
+
+#### Validation call
+
+`POST https://<ORCHESTRATOR_HOST>/aspera/orchestrator/external_calls/validate?id=<WORKFLOW_ID>`, once per file and per event.
+The user needs the run permission on the workflow.
+
+`ascp` adds no authentication header of its own, so it cannot give a token: the call works only when **Use Secure JWT API Auth** is not set (see [REST API](#rest-api)).
+Give the credentials in `validation_uri`: `ascp` sends `https://<USER>:<PASSWORD>@<ORCHESTRATOR_HOST>/...` as HTTP Basic.
+
+The work order gets two runtime parameters, which the workflow declares:
+
+| Parameter | Content |
+| --- | --- |
+| `File` | The request of `ascp`, a hash. `startstop` is `start`, `running` at the threshold, or `stop`. `file` is the path of the file. Other keys include `size`, `start_byte`, `user`, `user_id`, `host`, `direction`, `session_id`, `xfer_id`, `cookie` and `tags`. |
+| `File_path` | The path of the file, same as `file`. |
+
+Test the event with a `Filter`: `inputs['File']['startstop'] == 'start'`.
+
+**IFV Skip Start Event** (Orchestrator configuration, `ifv_skip_start_event`, not set by default) answers a start event without starting a work order.
+
+#### Validation answer
+
+Orchestrator answers when the work order ends, and checks its status every second: the request stays open until then.
+
+| Work order | HTTP status | File |
+| --- | --- | --- |
+| `Complete` | 200 | Accepted. |
+| `Failed`, `Error` | 400 | Rejected. |
+| Other final status, such as `Canceled` | 500 | Rejected. |
+
+The reason shown to the user is the status message of the work order, set with `ExitStatus`.
+
+`ascp` takes any answer other than HTTP 200 as a rejection, such as a redirection or a refused authentication.
+So does a call with no answer after `session_timeout_sec`, and the work order then goes on.
+
+#### Validation and the transfer
+
+| Event | Effect on the transfer |
+| --- | --- |
+| Start | The file does not start before the answer. |
+| Threshold | The call comes once `validation_threshold_kb` of the file are written; a smaller file gets no call. The transfer does not pause: a rejection stops it when the answer arrives. If the last block is written by then, the file stays complete, and the user still gets the error. |
+| End | The file does not end before the answer. |
+
+The other files of the transfer go on during a call.
+A rejection ends the whole transfer session, not only the file: the files not yet received are not transferred.
+`ascp` does not delete a rejected file: after a rejection at the end, the complete file stays under its final name.
+With a partial file suffix (`partial_file_suffix`), the calls give the final name, but during the transfer the file is on disk with the suffix.
 
 ### Recipes
 
@@ -3322,223 +3540,6 @@ Graph:
 - Each `Synch_factor` other than `0` has attributes `x` and `y`, else the designer shows an empty canvas.
 - Each `router`, when present, is one of the four `draw2d.*ConnectionRouter` values: Manhattan on step prerequisites (Bezier only where the graph reads better), Bezier on parameter links.
 - Retry settings (`Error_*`, `Failed_*`) only on steps that have an outgoing branch with that status.
-
-### REST API
-
-Base URL: `https://<HOST>/aspera/orchestrator/api/`.
-The response format is chosen with query parameter `format` (`xml`, the default, or `json`).
-
-Authentication depends on the option **Use Secure JWT API Auth** (`use_secure_jwt_api_auth`, set by default):
-
-| Option | Authentication |
-| --- | --- |
-| Set | Header `Authorization: Bearer <TOKEN>`. `POST api/login`, with `username` and either `password` or `api_key` (the API key of the user), returns the token in `token`. **API JWT Token Expiry** (`api_jwt_token_expiry_seconds`) sets its lifetime, 24 hours by default. |
-| Not set | HTTP Basic, or query parameters `login` with `password` or `api_key`. `POST api/login` answers with status 403. |
-
-The pages of the web interface, such as a [direct start](#direct-start) page, do not read these query parameters: with the option **Inline Auth Allowed** (`inline_auth_allowed`, not set by default), they accept HTTP Basic.
-
-Routes: each endpoint below has a route with the given method.
-In addition, any endpoint can be called as `api/<ENDPOINT>/<ID>`, with any HTTP method, where `<ID>` is the main identifier (workflow or work order).
-Some endpoints have no other route (for example `export_workflow`, `list_monitors`, `journal_files`, `pool_status`): when they do not use `<ID>`, any value works, for example `0`.
-The [OpenAPI description](https://github.com/IBM/aspera-cli/blob/main/lib/aspera/schema/IBM%20Aspera%20Orchestrator%20API-v1-enhanced.yaml) lists all endpoints and their parameters, checked against Orchestrator with `rake doc:api_check` of this repository.
-**Swagger API**, in the help pages of the web interface (`https://<HOST>/aspera/orchestrator/api-docs`), shows the description delivered with Orchestrator, and can try calls.
-
-Errors are returned with the exception message and stack trace in the response body.
-
-#### import_workflow
-
-`POST api/import_workflow`, body `multipart/form-data`:
-
-| Field | Required | Content |
-| --- | --- | --- |
-| `import_file` | yes | The workflow file (file part). |
-| `import_file_name` | yes | File name, ending with `yml` or `wkf`. The upload is stored under this name in `<RUN_DIR>/workflows/import/`. |
-| `folder_id` | no | Folder of the new workflow. |
-| `link_to_subworkflows` | no | `true`: in a `.wkf` package, use the sub-workflows already imported from the same files instead of importing them again. See [Referring to existing entities](#referring-to-existing-entities). |
-| `publish_workflow` | no | `true` or `1`: publish after import. The server option `publish_api_imported_workflow` sets the default. |
-
-Response: the new workflow as JSON (`{"workflow": {"id": ..., "name": ..., ...}}`), in both formats.
-Other responses with status 200:
-
-- `{"plugins": [...], "missing_deps": [...]}`: plugins that could not be enabled; nothing is imported.
-
-Orchestrator also has a response `{"dependencies": ..., "file": ..., "workflow": ...}` for dependencies that are not packed, but its condition is never met (see [Known issues](#known-issues)).
-
-On error: status 500 with `{"error": ..., "message": ..., "details": ...}`.
-
-#### export_workflow
-
-`GET api/export_workflow/<ID_OR_PORTABLE_ID>` (no route without the id in the path)
-
-Returns the workflow file (`.yml`, Rails format).
-With parameter `export_with_dependencies`, returns a `.wkf` package with sub-workflows and remote nodes.
-Any non-empty value of `export_with_dependencies`, including `false`, enables it.
-
-#### publish_workflow
-
-`POST api/publish_workflow?id=<ID_OR_PORTABLE_ID>`, or `api/publish_workflow/<ID_OR_PORTABLE_ID>` with any method.
-The id can also be given in a JSON body `{"id": ...}`.
-
-Publishes the last whiteboard revision.
-Response: `true` or `false` (JSON), or `<WorkflowPublish><Success>true</Success></WorkflowPublish>` (XML).
-`false` means the whiteboard has no `error_free` value.
-
-#### find_constraints
-
-`GET api/find_constraints?file=<PATH>[&wf_id=<WORKFLOW_ID>]`
-
-Analyzes a workflow file present on the Orchestrator host and returns the list expected by `import_with_constraints`, with the possible choices for each conflict:
-
-```json
-[{"filename": "<PATH>"}, {"add as revision": null}, {"subwf constraints": {}},
- {"action template constraints": {}}, {"remote node constraints": {}},
- {"missing plugins": null, "Auto-enable missing plugins?": null}]
-```
-
-It does not check that the file exists: a wrong path returns the same empty lists.
-
-#### import_with_constraints
-
-`POST api/import_with_constraints`, JSON body: an **array** of six objects, in this order:
-
-```json
-[{"filename": "/opt/aspera/orchestrator/var/run/orchestrator/workflows/import/my_workflow.yml"},
- {"add as revision": 239},
- {"subwf constraints": {}},
- {"action template constraints": {"Search Files": "Map to the existing Global Template"}},
- {"remote node constraints": {"Baton": "Map to the existing Remote Node"}},
- {"Auto-enable missing plugins?": "true"}]
-```
-
-| Item | Content |
-| --- | --- |
-| `filename` | Path of the file on the Orchestrator host. |
-| `add as revision` | Id of an existing workflow to add a revision to, or `null` to create a new workflow. |
-| `subwf constraints` | Sub-workflow name to choice: `Map to the Existing Sub-Workflow`, `Create a new Sub-Workflow with a unique name`, `Add a new revision to the existing Sub-Workflow`. |
-| `action template constraints` | Global template name to choice: `Map to the existing Global Template`, `Create a new Global Template with a different name`, `Override the existing Global Template with this new template`. |
-| `remote node constraints` | Remote node name to choice: `Map to the existing Remote Node`, `Create a new Remote Node with a different name`, `Override the Existing Remote Node with this importing node`. |
-| `Auto-enable missing plugins?` | `true` or `false`. |
-
-Response: the workflow as JSON.
-The workflow is not published.
-
-#### initiate
-
-`POST api/initiate?format=json`, JSON body `{"workflow_id": <ID>, "external_parameters": {"<NAME>": <VALUE>, ...}}`.
-Query parameters:
-
-| Parameter | Content |
-| --- | --- |
-| `synchronous` | `true`: wait for the end of the work order. |
-| `timeout` | With `synchronous`: maximum wait, in seconds. |
-| `explicit_output_step`, `explicit_output_variable` | With `synchronous`: return only this output. |
-| `explicit_output` | Same, as `<STEP_NAME>:<OUTPUT_NAME>`. |
-| `on_error_return_code`, `on_failed_return_code` | HTTP status to return when the work order ends `Error` or `Failed`. |
-| `tags` | Comma-separated tags of the work order. |
-
-Give the value of an `array` or `hash` parameter as a string, in JSON: `{"files": "[\"/a.mxf\", \"/b.mxf\"]"}`.
-A JSON array as value fails with status 500 (`undefined method 'gsub' for an instance of Array`, `MultiType.convert_value_array`), observed on 4.1.6.
-
-#### Other workflow endpoints
-
-| Endpoint | Content |
-| --- | --- |
-| `GET api/workflows_list` | All workflows: id, name, portable id, published and latest revision. |
-| `GET api/workflow_inputs_spec/<ID>` | Runtime parameters: name, type, optional, default value. |
-| `GET api/workflow_outputs_spec/<ID>` | Outputs: `<STEP_NAME>:<OUTPUT_NAME>`, type. |
-| `GET api/work_orders_list/<WORKFLOW_ID>` | Work orders of a workflow, or of all workflows with `all`. Filters: `status`, `priority`, `from_date`, `to_date`, `tag`, `max_results`. |
-| `GET api/work_order_status/<ID>` | Status of a work order and of its work steps. For a sub-workflow, only its status, not its steps. |
-| `GET api/work_order_output/<ID>` | Output values of a work order (XML: one `variable` element per output). |
-| `GET api/work_order_cancel/<ID>` | Cancel a work order. |
-| `GET api/work_order_reset/<WORK_ORDER_ID>` | Reset a work order. |
-| `GET api/work_step_status/<WORK_STEP_ID>` | Status, inputs and outputs of a work step. Parameters such as `set_status` change its status. |
-| `GET api/resource_online/0?pool_name=<POOL_NAME>&resource_name=<RESOURCE_NAME>` | Take a resource of a pool online. `api/resource_offline` takes the same parameters. |
-
-#### ascli commands
-
-| Operation | Command |
-| --- | --- |
-| Import | `ascli orchestrator workflows import <FILE>` |
-| Import with constraints, or as a revision | `ascli orchestrator workflows import_with_constraints @json:'{"filename":"<SERVER_PATH>","add_as_revision":<ID>}'` |
-| Export | `ascli orchestrator workflows export <ID> --out.file=<FILE>` |
-| Export with dependencies (`.wkf`) | `ascli orchestrator workflows export <ID> @json:'{"dependencies":true}' --to-folder=<FOLDER>` |
-| Publish | `ascli orchestrator workflows publish <ID>` |
-| Inputs, outputs | `ascli orchestrator workflows inputs <ID>`, `ascli orchestrator workflows outputs <ID>` |
-| Start | `ascli orchestrator workflows start <ID> [<PARAMETERS>] [<EXECUTION>]`, where execution is `{"synchronous":true}` or `{"step":"<STEP_NAME>","variable":"<OUTPUT_NAME>"}` |
-| Work orders of a workflow | `ascli orchestrator workflows workorders <ID>` |
-| Work order | `ascli orchestrator workorders status <ID>`, `ascli orchestrator workorders output <ID>`, `ascli orchestrator workorders cancel <ID>` |
-| Journal, monitors, queues, resource pools | `ascli orchestrator journal files <BOOK>`, `ascli orchestrator monitors list <TYPE>`, `ascli orchestrator queues list`, `ascli orchestrator pools status <NAME>` |
-| Query parameters of an API call | `--query=@json:'{...}'`; `--query=help` lists them, from the OpenAPI description |
-
-### Inline validation
-
-An Aspera transfer server calls a workflow for each file it receives, at start, after a number of bytes (threshold) and at end, and rejects the file when the work order does not end with `Complete`.
-A server does not call for the files it sends, or when a transfer falls back to HTTP.
-For when to use it, see [Using inline validation](#using-inline-validation).
-
-4.1.5 and 4.1.6 refuse the call: see [Known issues](#known-issues).
-
-#### Validation settings
-
-In the `aspera.conf` of the server:
-
-| Setting | Content |
-| --- | --- |
-| `validation_file_start`, `validation_threshold`, `validation_file_stop` | `uri` to call at this event. Default: `none`. |
-| `validation_uri` | The URL of the call. |
-| `validation_threshold_kb` | The threshold, in KB. Required by `validation_threshold`. |
-| `validation_threads` | Calls in parallel, 5 by default. |
-| `validation_secure` | `true` checks the certificate of Orchestrator. Not checked by default. |
-| `session_timeout_sec` | Time limit of a call, 60 seconds by default. |
-
-The session fails at start with `Validator initialization error` when an event is set to `uri` without `validation_uri`, when `validation_uri` is set with no event set to `uri`, or when `validation_threshold` is set without `validation_threshold_kb`.
-
-#### Validation call
-
-`POST https://<ORCHESTRATOR_HOST>/aspera/orchestrator/external_calls/validate?id=<WORKFLOW_ID>`, once per file and per event.
-The user needs the run permission on the workflow.
-
-`ascp` adds no authentication header of its own, so it cannot give a token: the call works only when **Use Secure JWT API Auth** is not set (see [REST API](#rest-api)).
-Give the credentials in `validation_uri`: `ascp` sends `https://<USER>:<PASSWORD>@<ORCHESTRATOR_HOST>/...` as HTTP Basic.
-
-The work order gets two runtime parameters, which the workflow declares:
-
-| Parameter | Content |
-| --- | --- |
-| `File` | The request of `ascp`, a hash. `startstop` is `start`, `running` at the threshold, or `stop`. `file` is the path of the file. Other keys include `size`, `start_byte`, `user`, `user_id`, `host`, `direction`, `session_id`, `xfer_id`, `cookie` and `tags`. |
-| `File_path` | The path of the file, same as `file`. |
-
-Test the event with a `Filter`: `inputs['File']['startstop'] == 'start'`.
-
-**IFV Skip Start Event** (Orchestrator configuration, `ifv_skip_start_event`, not set by default) answers a start event without starting a work order.
-
-#### Validation answer
-
-Orchestrator answers when the work order ends, and checks its status every second: the request stays open until then.
-
-| Work order | HTTP status | File |
-| --- | --- | --- |
-| `Complete` | 200 | Accepted. |
-| `Failed`, `Error` | 400 | Rejected. |
-| Other final status, such as `Canceled` | 500 | Rejected. |
-
-The reason shown to the user is the status message of the work order, set with `ExitStatus`.
-
-`ascp` takes any answer other than HTTP 200 as a rejection, such as a redirection or a refused authentication.
-So does a call with no answer after `session_timeout_sec`, and the work order then goes on.
-
-#### Validation and the transfer
-
-| Event | Effect on the transfer |
-| --- | --- |
-| Start | The file does not start before the answer. |
-| Threshold | The call comes once `validation_threshold_kb` of the file are written; a smaller file gets no call. The transfer does not pause: a rejection stops it when the answer arrives. If the last block is written by then, the file stays complete, and the user still gets the error. |
-| End | The file does not end before the answer. |
-
-The other files of the transfer go on during a call.
-A rejection ends the whole transfer session, not only the file: the files not yet received are not transferred.
-`ascp` does not delete a rejected file: after a rejection at the end, the complete file stays under its final name.
-With a partial file suffix (`partial_file_suffix`), the calls give the final name, but during the transfer the file is on disk with the suffix.
 
 ### Known issues
 
