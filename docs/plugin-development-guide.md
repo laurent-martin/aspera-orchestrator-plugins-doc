@@ -14,7 +14,7 @@ This guide explains how to write an action plugin for IBM Aspera Orchestrator: a
 It is written for people and for AI assistants.
 Each rule gives the exact name, method or value expected by Orchestrator.
 
-The content is derived from the Orchestrator 4.1.6 source code (Ruby 3.4, Rails 8.1).
+The content is derived from Orchestrator 4.1.6.
 The example plugin of [Quick start](#quick-start) was installed, enabled, and executed in a workflow on Orchestrator 4.1.6, and the steps of [Installing a plugin](#installing-a-plugin) and [Updating a plugin](#updating-a-plugin) were done on that server.
 
 Related documents:
@@ -25,7 +25,7 @@ Related documents:
 - [Plugin Manual](Orchestrator_Plugin_Manual.md): functional description of each shipped plugin.
 - [Portlet Development Guide](portlet-development-guide.md): the same for dashboard portlets, which share several mechanisms with plugins.
 
-The source of the shipped plugins is the best set of examples: folder `/opt/aspera/orchestrator/actions` of an Orchestrator server, one folder per plugin.
+The shipped plugins are the best set of examples: folder `/opt/aspera/orchestrator/actions` of an Orchestrator server, one folder per plugin.
 `HelloWorld` (`hello_worlds`) is a reference implementation with pause, resume, cancel, rollback and recovery.
 
 ### Terminology

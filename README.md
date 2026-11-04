@@ -2,7 +2,7 @@
 
 This repository generates the plugin (action) documentation for IBM Aspera Orchestrator, and holds the guides for plugin developers and workflow authors.
 
-The plugin documentation is generated from the Orchestrator RPM: the `actions` folder and some library files are extracted from it, then the metadata, source and help page of each plugin are rendered to HTML, Markdown and PDF.
+The plugin documentation is generated from the Orchestrator RPM: the `actions` folder and some library files are extracted from it, then the metadata and help page of each plugin are rendered to HTML, Markdown and PDF.
 
 ## Documents
 
@@ -31,11 +31,11 @@ Intermediate HTML files (`rake html`) are in `build/<VERSION>/out`.
 
 - Ruby
 - A clone of the `aspera-cli` repository, <https://github.com/IBM/aspera-cli>, with its gems installed (`bundle install` in that folder).
-  Its library is used for logging (`aspera/log`), and its PDF theme `build/doc/pdf_theme` for the look of the PDF documents
-  (cover and fonts): set env var `GFM2PDF_THEME` to use another theme.
-- A clone of the `gfm2pdf-toolchain` repository, version 1.x, <https://github.com/laurent-martin/gfm2pdf-toolchain>.
+  Its library is used for logging (`aspera/log`).
+- A clone of the `gfm2pdf-toolchain` repository, version 1.1 or later, <https://github.com/laurent-martin/gfm2pdf-toolchain>.
   Its library is used for PDF generation from Markdown with `pandoc`.
   The options of a document for PDF generation are in a comment `<!-- gfm2pdf` at the top of its Markdown file.
+  The look of the PDF documents (cover, last page and fonts) is in the theme [`pdf_theme`](pdf_theme/README.md).
 - Tools:
 
 | Tool            | Used for                                           |
@@ -48,7 +48,7 @@ Intermediate HTML files (`rake html`) are in `build/<VERSION>/out`.
 | `lualatex`      | PDF engine of `pandoc`                             |
 | draw.io desktop | Export the diagrams of the guides (`doc:diagrams`) |
 
-The PDF theme of `aspera-cli` uses fonts IBM Plex Sans and IBM Plex Mono.
+The PDF theme uses fonts IBM Plex Sans and IBM Plex Mono.
 
 On macOS, get them with `brew`:
 
@@ -64,18 +64,20 @@ The `Rakefile` requires these environment variables for any task (including `rak
 ```bash
 export ASPERA_CLI_HOME=<path to aspera-cli repo>
 export GFM2PDF_HOME=<path to gfm2pdf-toolchain repo>
-export VERSION=4.1.6
 ```
 
-`VERSION` is the Orchestrator version: it selects the build folder `build/<VERSION>` and appears in document titles.
+The optional environment variable `VERSION` is the Orchestrator version: it selects the build folder `build/<VERSION>` and appears in document titles.
+By default, it is the latest version already extracted in folder `build`, i.e. with a folder `build/<VERSION>/src/actions`.
+If no version is extracted yet, `VERSION` is required for any task.
 
 Extract the RPM once per version (the RPM is not in this repository, place it in folder `private`), then generate the plugin documents:
 
 ```bash
-export RPM=private/ibm-aspera-orchestrator-4.1.5.1917-1df786b.x86_64.rpm
-rake extract_rpm
+VERSION=4.1.5 RPM=private/ibm-aspera-orchestrator-4.1.5.1917-1df786b.x86_64.rpm rake extract_rpm
 rake
 ```
+
+`extract_rpm` always requires `VERSION`: it replaces the extract of that version.
 
 `rake` (task `pdf`) generates the plugin manual (Markdown and PDF), the plugin list and the banner.
 
@@ -96,15 +98,15 @@ It reads the edit form of each plugin, and calls methods `inputs_spec` and `outp
 It needs the library files extracted by `extract_rpm`: re-run `extract_rpm` if `build/<VERSION>/src/lib` contains only `action_tools.rb` and `actions_helper.rb`.
 Its intermediate result is `build/<VERSION>/out/plugin_probe.json`, generated again when the `actions` folder or the generator changes.
 
-`doc:template_reference` reads the extracted `actions` folder, or the folder given in env var `ACTIONS_DIR` (for example an Orchestrator source tree).
-`VERSION` must match that folder: it is the version shown in the title.
+`doc:template_reference` reads the extracted `actions` folder, or the folder given in env var `ACTIONS_DIR` (overriding the RPM extract).
+With `ACTIONS_DIR`, set `VERSION` to the version of that folder: it is the version shown in the title.
 The reference can also be generated without `rake` and `aspera-cli`:
 
 ```bash
 ruby lib/action_template_reference.rb <actions_dir> docs/action-template-reference.md <version>
 ```
 
-`doc:api_check` compares the REST API of the extracted Orchestrator (`config/routes.rb` and `ApiController`) with its OpenAPI description, and prints a report in Markdown: endpoints missing or not implemented, HTTP methods, endpoints routed only with an id in the path, default response format, and parameters read by the source and not declared, or declared and not read.
+`doc:api_check` compares the REST API of the extracted Orchestrator (`config/routes.rb` and `ApiController`) with its OpenAPI description, and prints a report in Markdown: endpoints missing or not implemented, HTTP methods, endpoints routed only with an id in the path, default response format, and parameters read by Orchestrator and not declared, or declared and not read.
 The OpenAPI file is the one of a clone of [aspera-api-examples](https://github.com/laurent-martin/aspera-api-examples) next to this repository, or the file given in env var `OPENAPI`.
 It needs the RPM extract of `extract_rpm` (`build/<VERSION>/rpmout`).
 

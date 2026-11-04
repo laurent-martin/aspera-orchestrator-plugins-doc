@@ -14,12 +14,12 @@ This guide explains how to write an Aspera Orchestrator workflow as a file, impo
 It is written for people and for AI assistants.
 Each rule gives the exact element, attribute or value expected by Orchestrator.
 
-The content is derived from the Orchestrator 4.1.6 source code.
+The content is derived from Orchestrator 4.1.6.
 The examples in [Recipes](#recipes) were imported, published and executed on Orchestrator 4.1.6.
 
 Related documents:
 
-- [Action Template Reference](action-template-reference.md): attributes, inputs and outputs of every action plugin (generated from the plugin source).
+- [Action Template Reference](action-template-reference.md): attributes, inputs and outputs of every action plugin (generated from Orchestrator).
 - [Plugin specifications](plugins.yml): the same as data (YAML), with the allowed values of attributes and the template settings each input and output depends on.
   Its header describes its fields.
   Read one plugin with [`yq`](https://github.com/mikefarah/yq): `yq '.AmazonS3Operation' plugins.yml`.
@@ -398,7 +398,7 @@ A `Prerequisite` element links a previous node to the current one:
 |-------|---------|
 | `0` | All prerequisites (AND). |
 | `N` > 0 | At least `N` prerequisites. `1` is OR: for example `End` after alternative branches. |
-| negative | Documented in the source as "all but N", but computed as "number of prerequisites + N": never met. Do not use. |
+| negative | Never met: do not use. For a value of `-N`, the engine requires the number of prerequisites **plus** `N`, which is more than exist, although "all but `N`" was intended. For "all but `N`", set the positive value: number of prerequisites minus `N`. The designer refuses negative values. |
 
 When `Synch_factor` is not `0`, the designer draws a join symbol, at the position given by attributes `x` and `y` of `Synch_factor`.
 Write them, on steps and on `End`, `Fail` and `Error`: `<Synch_factor x="920" y="70">1</Synch_factor>`.
@@ -1422,7 +1422,7 @@ The folder belongs to the user that runs Orchestrator (`aspweb`), so that `per_f
 - The work order that detected the files continues; a clone waits for the next files: cancel it to stop the monitoring.
 - `c_locked.txt` stays in the folder, and the clone does not detect it again: it shares the history of the first work order.
 
-Rules of this pattern (source of `ArrayFanout` and `Funnelin`, and tests):
+Rules of this pattern (from `ArrayFanout` and `Funnelin`, and tests):
 
 - Exactly one step between `ArrayFanout` and `Funnelin`.
   `ArrayFanout` ends with `Error` when its `Complete` exit leads to more than one step ("Only one step is supported between fan-out and funnel-in"), or when the `Complete` exit of that step leads to more than one step ("Funneled-step should only exit complete in the funnel-in step").
@@ -1860,7 +1860,7 @@ The response format is chosen with query parameter `format` (`xml`, the default,
 Routes: each endpoint below has a route with the given method.
 In addition, any endpoint can be called as `api/<endpoint>/<id>`, with any HTTP method, where `<id>` is the main identifier (workflow or work order).
 Some endpoints have no other route (for example `export_workflow`, `list_monitors`, `journal_files`, `pool_status`): when they do not use `<id>`, any value works, for example `0`.
-The [OpenAPI description](https://github.com/laurent-martin/aspera-api-examples/blob/main/openapi/IBM%20Aspera%20Orchestrator%20API-v1-enhanced.yaml) lists all endpoints and their parameters, checked against the source code with `rake doc:api_check` of this repository.
+The [OpenAPI description](https://github.com/laurent-martin/aspera-api-examples/blob/main/openapi/IBM%20Aspera%20Orchestrator%20API-v1-enhanced.yaml) lists all endpoints and their parameters, checked against Orchestrator with `rake doc:api_check` of this repository.
 
 Errors are returned with the exception message and stack trace in the response body.
 
@@ -1881,7 +1881,7 @@ Other responses with status 200:
 
 - `{"plugins": [...], "missing_deps": [...]}`: plugins that could not be enabled; nothing is imported.
 
-The source also has a response `{"dependencies": ..., "file": ..., "workflow": ...}` for dependencies that are not packed, but its condition is never met (see [Known issues](#known-issues)).
+Orchestrator also has a response `{"dependencies": ..., "file": ..., "workflow": ...}` for dependencies that are not packed, but its condition is never met (see [Known issues](#known-issues)).
 
 On error: status 500 with `{"error": ..., "message": ..., "details": ...}`.
 
@@ -1998,7 +1998,7 @@ Observed in Orchestrator 4.1.6:
 - `export_workflow` exports dependencies for any non-empty value of `export_with_dependencies`, including `false`.
 - `import_workflow` and `import_with_constraints` should refuse a file whose element 4 lists dependencies when element 5 is empty, but the test also requires element 5 to be non-empty: such a file is imported, with template attributes as written.
 - `import_workflow` does not import the remote nodes of a `.wkf` package.
-- `export_workflow` has no route without the workflow id in the path, although its source comment documents `?id=`.
+- `export_workflow` has no route without the workflow id in the path, although its comment documents `?id=`.
 - The `.wkf` package produced by `export_workflow` with dependencies contains an empty copy of itself (the archive is built in the folder it packs).
 - API errors return the exception stack trace, and often status 404 or 500 regardless of the cause.
 - The example files of the product (`docs/workflow_examples`) contain `<Failed_retry_for_unit>`, while the parser reads `<Failed_retryForUnit>`: that setting is ignored.

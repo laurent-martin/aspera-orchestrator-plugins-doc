@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Generates the reference of Orchestrator action templates (plugins), in Markdown and YAML,
-# from an Orchestrator `actions` directory (source tree or RPM extract).
+# from an Orchestrator `actions` directory (RPM extract).
 # No Rails needed: metadata, migrations and plugin classes are parsed as text.
 # The YAML file also uses the result of PluginProbe (lib/plugin_probe.rb), which evaluates plugin code.
 #
@@ -9,6 +9,7 @@
 
 require 'yaml'
 require 'json'
+require_relative 'doc_sanitizer'
 
 class ActionTemplateReference
   # MultiType constants used in plugin code
@@ -50,7 +51,7 @@ class ActionTemplateReference
 
   YAML_HEADER = <<~HEADER
     # Aspera Orchestrator %<version>s action plugins: template attributes, inputs and outputs.
-    # Generated from the plugin source code: do not edit.
+    # Generated from Orchestrator: do not edit.
     # How to use it in a workflow file: see workflow-authoring-guide.md.
     #
     # <PluginClass>:          Step_type of a step, and class of its action template (key <PluginClass>__<N>)
@@ -186,7 +187,7 @@ class ActionTemplateReference
     out << '  Built from the database migrations of the plugin.'
     out << '  For a text field left blank in the template, the column **Input if blank** gives the name of the step input that replaces it (see `default_inputs_spec`).'
     out << '- **Inputs** and **Outputs**: names and types given by methods `inputs_spec` and `outputs_spec` of the plugin class, called on sample templates.'
-    out << '  When the plugin cannot be evaluated, they are extracted from source text, and a note says so.'
+    out << '  When the plugin cannot be evaluated, they are extracted from plugin text, and a note says so.'
     out << '  A name in angle brackets (`<attribute>`) is made from the value of that template attribute: a note explains how, when known.'
     out << '  Every step also has output `Step_information` (`hash`).'
     out << '- **Default**: the database default of the attribute, or, marked `(code)`, the value used by the plugin when the attribute is blank.'
@@ -232,7 +233,7 @@ class ActionTemplateReference
       attribute['widget'] = widget if widget && widget != DEFAULT_WIDGETS[col[:type]]
       attribute['values'] = info['values'] if info['values']
       attribute['dynamic_values'] = true if info['dynamic_values'] && !info['values']
-      %w[run_time_value action_type format hint].each { |key| attribute[key] = info[key] if info[key] }
+      %w[run_time_value action_type format hint].each { |key| attribute[key] = key == 'hint' ? DocSanitizer.sanitize(info[key]) : info[key] if info[key] }
       attribute['default'] = typed_default(col[:default], col[:type]) unless col[:default].nil?
       code_default = code_default(probe, name, col)
       attribute['code_default'] = code_default unless code_default.nil?
@@ -249,7 +250,7 @@ class ActionTemplateReference
     if probed
       notes = notes.grep_v(PROBED_NOTES)
     else
-      notes << "Inputs and outputs found in source text only (the plugin could not be evaluated: #{probe['errors']&.first || 'no probe'}): conditions and required flags may be missing."
+      notes << "Inputs and outputs found in plugin text only (the plugin could not be evaluated: #{probe['errors']&.first || 'no probe'}): conditions and required flags may be missing."
     end
     spec['notes'] = notes.map { |note| note.delete('`') } unless notes.empty?
     spec
@@ -357,7 +358,7 @@ class ActionTemplateReference
         out << "| `#{name}` | #{col[:type]} | #{default} | #{col[:input] ? "`#{col[:input]}`" : ''} |"
       end
       formats = (extra['attributes'] || {}).filter_map do |name, info|
-        text = [info['values'] && "Allowed values: #{info['values'].map { |v| "`#{v}`" }.join(', ')}.", info['hint'] && code_spans(info['hint'])].compact
+        text = [info['values'] && "Allowed values: #{info['values'].map { |v| "`#{v}`" }.join(', ')}.", info['hint'] && code_spans(DocSanitizer.sanitize(info['hint']))].compact
         "- `#{name}`: #{text.join(' ')}" unless text.empty?
       end
       out.push('', *formats) unless formats.empty?
@@ -389,7 +390,7 @@ class ActionTemplateReference
   end
 
   def io_list(items)
-    return ['- None found in source.'] if items.empty?
+    return ['- None found.'] if items.empty?
     items.map do |name, info|
       types = info[:types].map { |t| "`#{t}`" }.join(' or ')
       qualifier = [types.empty? ? nil : types, info[:required].nil? ? nil : (info[:required] ? 'required' : 'optional')].compact.join(', ')

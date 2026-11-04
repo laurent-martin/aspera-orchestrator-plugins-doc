@@ -22,6 +22,7 @@ Encoding.default_external = Encoding::UTF_8
 
 # Load stub classes and modules for missing dependencies
 require_relative 'erb_stubs'
+require_relative 'doc_sanitizer'
 
 # Generate documentation for Aspera Orchestrator plugins
 class AsperaOrchestratorDocGenerator
@@ -36,32 +37,6 @@ class AsperaOrchestratorDocGenerator
   # regex to represent a string (inside quotes, could be : /[^'"]+/)
   RE_STRING_BODY = /.+?/
   RE_STRING_ARGUMENT = /['"](#{RE_STRING_BODY})['"]\s*/
-
-  # A value that is a generic word, not an example password (scanners do not flag it)
-  RE_PASSWORD_WORD = /(?:password|passwd|pwd|pass)\b/i
-  # Example values in plugin help that secret scanners (Vault Radar) flag: [regex, placeholder]
-  # Placeholders must contain "_": a tag name cannot, so Markdown shows <A_B> as text, but would take <AB> as an HTML tag
-  # Words may be separated by non-breaking spaces, hence [[:space:]]
-  SECRET_PLACEHOLDERS = [
-    # PEM private key: full block on one line, or header followed by "..."
-    [/-----BEGIN[[:space:]](?:[A-Z]+[[:space:]])*PRIVATE[[:space:]]KEY-----(?:.*?-----END[[:space:]](?:[A-Z]+[[:space:]])*PRIVATE[[:space:]]KEY-----|[[:space:]]*\.\.\.)?/, '<PEM_PRIVATE_KEY>'],
-    # AWS access key ID
-    [/\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/, '<AWS_ACCESS_KEY_ID>'],
-    # Slack token
-    [/\bxox[abposr]-[0-9A-Za-z-]{10,}/, '<SLACK_TOKEN>'],
-    # HTTP Authorization value: token has a digit or base64 padding, unlike words such as "Bearer token"
-    [%r{\bBearer([[:space:]]+)(?=[^[:space:]"]*[0-9=])[A-Za-z0-9._~+/=-]{8,}}, 'Bearer\1<ACCESS_TOKEN>'],
-    [%r{\bBasic([[:space:]]+)(?=[^[:space:]"]*[0-9=])[A-Za-z0-9+/=]{8,}}, 'Basic\1<BASE64_CREDENTIALS>'],
-    # XML element with a secret value (an example payload): the placeholder is text, so that the XML stays well-formed
-    # Not <%= ... %>, which would create an input in an Orchestrator payload
-    [%r{<(Token|AccessToken|Secret)>(?![<$])[^<]+</\1>}, '<\1>${ACCESS_TOKEN}</\1>'],
-    [%r{<(Password|Passphrase|KeyPassphrase)>(?![<$])[^<]+</\1>}, '<\1>${PASSWORD}</\1>'],
-    # Password in a URL: user information, or query parameter (not a word that already says "password")
-    [%r{\b([a-z][a-z0-9+.-]*://[^:/[:space:]@]+:)(?!<|#{RE_PASSWORD_WORD})[^@[:space:]/]+@}, '\1<YOUR_PASSWORD>@'],
-    [/([?&](?:password|passwd|pwd)=)(?!<|#{RE_PASSWORD_WORD})[^&[:space:]`'")]+/i, '\1<YOUR_PASSWORD>'],
-    # Password in a connection string: Pwd=...;
-    [/\b((?:Pwd|Password)=)(?!<)[^;[:space:]]+(?=;)/i, '\1<YOUR_PASSWORD>']
-  ].freeze
 
   def initialize
     @cat_const_to_name = {}
@@ -93,8 +68,8 @@ class AsperaOrchestratorDocGenerator
     source_folder = Pathname.new(source_folder)
     out_folder = Pathname.new(out_folder)
     raise 'source folder must exist' unless source_folder.exist?
-    raise 'dest folder must exist' unless out_folder.exist?
 
+    out_folder.mkpath
     actions_folder = source_folder / DIRNAME_ACTIONS
     icons_folder = out_folder / DIRNAME_ICONS
     icons_folder.mkpath
@@ -119,7 +94,7 @@ class AsperaOrchestratorDocGenerator
         long_name: entry.gsub(/s$/, '')
       }
 
-      # check source code
+      # check plugin file
       one_plugin[:source_path] = one_plugin[:folder] / "#{one_plugin[:long_name]}.rb"
       next unless one_plugin[:source_path].exist?
 
@@ -248,7 +223,7 @@ class AsperaOrchestratorDocGenerator
   # the category in metadata.yml is not always good.
   # categories are listed in: lib/action_tools.rb, like this: CATEGORY_<CONST_NAME> = '<Display Name>'
   def set_plugin_category(one_plugin)
-    # get first category from source file
+    # get first category from plugin file
     match_cat_method = one_plugin[:source_path].read.match(/def\s+category.*?end/m)
     raise "ERROR: category method not found in #{one_plugin[:source_path]}" if match_cat_method.nil?
 
@@ -259,7 +234,7 @@ class AsperaOrchestratorDocGenerator
     category_alias = match_categories[1]
     # save category read from meta file
     category_meta = one_plugin[:meta][:category]
-    # replace with category from plugin source
+    # replace with category from plugin definition
     one_plugin[:meta][:category] = @cat_const_to_name[category_alias]
     raise 'no category found' if one_plugin[:meta][:category].nil?
     return if category_meta.eql?(one_plugin[:meta][:category])
@@ -287,7 +262,7 @@ class AsperaOrchestratorDocGenerator
     nil
   end
 
-  # Returns the binding for ERB evaluation with plugin source code
+  # Returns the binding for ERB evaluation with plugin code
   # @param src_file [Pathname] Path to plugin source file
   def get_binding(src_file)
     # extracted in `lib` directory
@@ -415,8 +390,7 @@ class AsperaOrchestratorDocGenerator
     content.gsub!(%r{<img\s+src="([^"]+)"[^>]*alt="([^"]*)"[^>]*/?>}, '![\\2](\\1)')
     content.gsub!("\n|----|----|\n",
                   "\n|-------|---------------------------------------------------|\n")
-    # Replace example secrets with placeholders
-    SECRET_PLACEHOLDERS.each { |re, placeholder| content.gsub!(re, placeholder) }
+    content = DocSanitizer.code_placeholders(DocSanitizer.sanitize(content))
     # Fix heading levels: document title should be H1, categories H2, plugin names H3
     lines = content.split("\n")
     if lines.first && !lines.first.start_with?('#')

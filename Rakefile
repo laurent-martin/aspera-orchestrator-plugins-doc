@@ -22,16 +22,21 @@ $LOAD_PATH.unshift(Pathname.new(ENV[ENV_VAR_DOC_TOOL]) / 'lib')
 require 'pandoc'
 include Gfm2Pdf
 
-# Toolchain with themes and options of documents in a comment `<!-- gfm2pdf`
-Gfm2Pdf.check_version('>= 1.0.0.pre, < 2')
-# IBM look of the PDF documents: theme of aspera-cli, unless env var GFM2PDF_THEME is set
-PDF_THEME = ENV.fetch('GFM2PDF_THEME') { (Pathname.new(ENV[ENV_VAR_ASPERA_CLI]) / 'build' / 'doc' / 'pdf_theme').to_s }
-
-raise 'Set env var VERSION' unless ENV.key?('VERSION')
-
-BUILD_VERSION = ENV['VERSION']
+# Toolchain with themes that set the last page background and the cover text, and options of documents in a comment `<!-- gfm2pdf`
+Gfm2Pdf.check_version('>= 1.1.0.pre, < 2')
 
 TOP = Pathname.new(__dir__)
+
+# Orchestrator version: env var VERSION, else the latest one extracted in folder build
+# Only extracts count: loading this file creates folders in build/<VERSION> for any value of VERSION
+extracted_versions = TOP.glob('build/*/src/actions').map { |actions| actions.parent.parent.basename.to_s }.select { |version| Gem::Version.correct?(version) }
+BUILD_VERSION = ENV['VERSION'] || extracted_versions.max_by { |version| Gem::Version.new(version) }
+raise 'No version extracted in folder build: set env vars VERSION and RPM, then do: rake extract_rpm' if BUILD_VERSION.nil?
+
+$stderr.puts "Orchestrator version: #{BUILD_VERSION} (latest in folder build, set env var VERSION for another one)" unless ENV.key?('VERSION')
+
+# Look of the PDF documents, not from env var GFM2PDF_THEME: it may be set for other projects
+PDF_THEME = (TOP / 'pdf_theme').to_s
 PATH_DOCS = TOP / 'docs'
 PATH_MANUAL_MD = PATH_DOCS / 'Orchestrator_Plugin_Manual.md'
 PATH_MANUAL_PDF = PATH_DOCS / 'Orchestrator_Plugin_Manual.pdf'
@@ -84,7 +89,7 @@ desc 'Generate Plugin Banner PDF'
 task pdf_banner: PATH_BANNER_PDF
 
 # Generate Plugin Manual Markdown from HTML
-file PATH_MANUAL_MD => PATH_HTML_DOC do
+file PATH_MANUAL_MD => [PATH_HTML_DOC, TOP / 'lib/doc_sanitizer.rb'] do
   generator = AsperaOrchestratorDocGenerator.new
   generator.generate_markdown_from_html(
     html_path: PATH_HTML_DOC,
@@ -179,11 +184,15 @@ file PATH_PROBE_JSON => [PATH_BUILD_ACTIONS, TOP / 'lib/plugin_probe.rb', TOP / 
   require 'open3'
   json, status = Open3.capture2(RbConfig.ruby, (TOP / 'lib/plugin_probe.rb').to_s, PATH_BUILD_ACTIONS.to_s, PATH_BUILD_LIB.to_s)
   raise "Plugin probe failed: #{status}" unless status.success?
+  PATH_PROBE_JSON.dirname.mkpath
   File.write(PATH_PROBE_JSON, json)
 end
 
 desc 'Extract RPM package'
 task :extract_rpm do
+  # No default version here: this task replaces the extract of that version
+  raise 'set VERSION env var to the version of the RPM' unless ENV.key?('VERSION')
+
   rpm = ENV['RPM']
   raise 'set RPM env var' if rpm.nil? || rpm.empty?
 

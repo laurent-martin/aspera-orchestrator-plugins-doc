@@ -16,7 +16,7 @@ For each action plugin, this reference lists:
   Built from the database migrations of the plugin.
   For a text field left blank in the template, the column **Input if blank** gives the name of the step input that replaces it (see `default_inputs_spec`).
 - **Inputs** and **Outputs**: names and types given by methods `inputs_spec` and `outputs_spec` of the plugin class, called on sample templates.
-  When the plugin cannot be evaluated, they are extracted from source text, and a note says so.
+  When the plugin cannot be evaluated, they are extracted from plugin text, and a note says so.
   A name in angle brackets (`<attribute>`) is made from the value of that template attribute: a note explains how, when known.
   Every step also has output `Step_information` (`hash`).
 - **Default**: the database default of the attribute, or, marked `(code)`, the value used by the plugin when the attribute is blank.
@@ -3182,7 +3182,7 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- None found in source.
+- None found.
 
 ### Outputs
 
@@ -3312,7 +3312,7 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- None found in source.
+- None found.
 
 ### Outputs
 
@@ -5058,7 +5058,7 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- None found in source.
+- None found.
 
 ### Outputs
 
@@ -6024,7 +6024,7 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- None found in source.
+- None found.
 
 ### Outputs
 
@@ -6352,7 +6352,7 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- None found in source.
+- None found.
 
 ### Outputs
 
@@ -6596,7 +6596,7 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- None found in source.
+- None found.
 
 ### Outputs
 
@@ -8585,7 +8585,7 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- None found in source.
+- None found.
 
 ### Outputs
 
@@ -9355,7 +9355,7 @@ For each action plugin, this reference lists:
 
 ### Inputs
 
-- None found in source.
+- None found.
 
 ### Outputs
 

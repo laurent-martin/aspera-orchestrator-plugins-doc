@@ -1,5 +1,5 @@
 # Aspera Orchestrator 4.1.6 action plugins: template attributes, inputs and outputs.
-# Generated from the plugin source code: do not edit.
+# Generated from Orchestrator: do not edit.
 # How to use it in a workflow file: see workflow-authoring-guide.md.
 #
 # <PluginClass>:          Step_type of a step, and class of its action template (key <PluginClass>__<N>)
@@ -1322,7 +1322,7 @@ AsperaNodeApi:
   description: This action plug-in provides the ability to perform file system operations such as search, rename, and delete. It also supports retrieving node information (e.g., token, SSH user, and port) and checking node availability through status queries (ping).
   attributes:
     server_node: {type: string, label: Aspera node, widget: remote_node}
-    server_address: {type: string, label: Aspera node ip address (or hostname), hint: 'e.g., 10.0.103.85 or aspera.enterprise.com'}
+    server_address: {type: string, label: Aspera node ip address (or hostname), hint: 'e.g., 10.0.103.85 or aspera.example.com'}
     node_api_port: {type: integer, label: Node api port (optional), hint: Defaulted to 9091 (HTTP) or 9092 (HTTPS), code_default: 9091}
     operation: {type: string, widget: select, values: [Ping, Info, Search, Rename, Delete]}
     use_ssl: {type: boolean, label: 'Use ssl?', code_default: false}
@@ -1372,7 +1372,7 @@ AsperaNodeApiTransferMonitor:
   attributes:
     auth_type: {type: string, widget: select, values: [Basic, Bearer], code_default: Basic, placeholders: true}
     remote_node: {type: string, widget: remote_node, placeholders: true}
-    service_node_ip: {type: string, label: Remote node address, hint: 'e.g., 10.0.103.85 or aspera.enterprise.com', placeholders: true}
+    service_node_ip: {type: string, label: Remote node address, hint: 'e.g., 10.0.103.85 or aspera.example.com', placeholders: true}
     service_node_port: {type: string, label: Node api port, hint: Enter node API port, placeholders: true}
     user_login: {type: string, label: Node api user login, hint: Enter user login, placeholders: true}
     user_password:
@@ -1476,7 +1476,7 @@ AsperaNodeApiTransferOperation:
       widget: password
       hint: Enter encryption passphrase
       placeholders: true
-    proxy: {type: string, label: Fasp proxy, hint: 'dnats://nodeuser:nodepassword@proxy_address:9092/', placeholders: true}
+    proxy: {type: string, label: Fasp proxy, hint: 'dnats://nodeuser:<YOUR_PASSWORD>@proxy_address:9092/', placeholders: true}
     httpproxy: {type: string, label: Http proxy, hint: 'http(s)://proxy:port/', placeholders: true}
     verbose: {type: boolean, label: 'Verbose logging?', default: false}
     src_base: {type: string, hint: Enter source base path, placeholders: true}
@@ -1551,7 +1551,7 @@ AsperaNodeFileWatcher:
     watch_directory: {type: string, hint: Enter directory path to watch, placeholders: true}
     file_pattern: {type: string, hint: 'Enter file pattern (e.g., *.mp4)', placeholders: true}
     remote_node: {type: string, label: Aspera node, widget: remote_node}
-    server_address: {type: string, label: Aspera node ip address (or hostname), hint: 'e.g., 10.0.103.85 or aspera.enterprise.com', placeholders: true}
+    server_address: {type: string, label: Aspera node ip address (or hostname), hint: 'e.g., 10.0.103.85 or aspera.example.com', placeholders: true}
     node_api_port: {type: integer, label: Node api port (optional), widget: number, hint: 'Default: 9091 (HTTP) or 9092 (HTTPS)'}
     node_user_name: {type: string, hint: Enter node username, placeholders: true}
     node_password:
@@ -1602,7 +1602,7 @@ AsperaNodeSearch:
   description: This action plug-in provides the ability to perform file system operations (search, rename, delete) through the Aspera Node API.
   attributes:
     server_node: {type: string, label: Aspera node, widget: remote_node}
-    server_address: {type: string, label: Aspera node ip address (or hostname), hint: 'e.g., 10.0.103.85 or aspera.enterprise.com'}
+    server_address: {type: string, label: Aspera node ip address (or hostname), hint: 'e.g., 10.0.103.85 or aspera.example.com'}
     node_api_port: {type: integer, label: Node api port (optional), hint: Defaulted to 9091 (HTTP) or 9092 (HTTPS)}
     use_ssl: {type: boolean, label: 'Use ssl?', code_default: false}
     node_user_name: {type: string, hint: Enter node username}
@@ -1694,7 +1694,7 @@ AsperaOtfv:
   min_orchestrator: 4.1.6
   description: This plugin provides the ability to retrieve the list of files to validate and update the file status during validation.
   attributes:
-    node_ip_address: {type: string, label: Node ip address (or hostname), hint: 'e.g., 10.0.103.85 or aspera.enterprise.com', placeholders: true}
+    node_ip_address: {type: string, label: Node ip address (or hostname), hint: 'e.g., 10.0.103.85 or aspera.example.com', placeholders: true}
     remote_node: {type: string, widget: remote_node, placeholders: true}
     use_remote_node: {type: boolean, label: 'Use remote node?', default: false}
     use_ssl: {type: boolean, label: 'Use ssl?', default: true}
@@ -1857,7 +1857,7 @@ AtemeTranscoding:
   description: This action plugin provides the ability to transcode video files via Ateme Titan File. It implements the Ateme Titan 3.7 REST API 1.7.
   attributes:
     remote_node: {type: string, label: Ateme node, widget: remote_node}
-    server_address: {type: string, label: Ateme server ip address (or hostname), hint: 'e.g., 10.0.103.85 or ateme.enterprise.com'}
+    server_address: {type: string, label: Ateme server ip address (or hostname), hint: 'e.g., 10.0.103.85 or ateme.example.com'}
     polling_frequency: {type: integer, label: Polling frequency (optional), code_default: 10}
     preset_name: {type: string, label: Ateme presets, widget: select, dynamic_values: true, placeholders: true}
     source: {type: string, label: Source file path, hint: Enter source file path, placeholders: true}
@@ -1991,7 +1991,7 @@ BatonFileCorrection:
   attributes:
     server_node: {type: string, label: Baton server node, widget: remote_node}
     baton_port: {type: integer, label: Baton rpc port, code_default: 8080}
-    server: {type: string, label: Server address, hint: 'e.g., baton-server.enterprise.com or 10.0.0.1'}
+    server: {type: string, label: Server address, hint: 'e.g., baton-server.example.com or 10.0.0.1'}
     user: {type: string, label: Baton user, hint: Enter Baton username, placeholders: true}
     password:
       type: string
@@ -2037,7 +2037,7 @@ BatonFileVerification:
   min_orchestrator: 4.1.6
   description: This Action plug-ins enables the submission of a file verification request to an Interra Baton Server
   attributes:
-    server: {type: string, label: Server address, hint: 'e.g., baton-server.enterprise.com or 10.0.0.1'}
+    server: {type: string, label: Server address, hint: 'e.g., baton-server.example.com or 10.0.0.1'}
     user: {type: string, label: Baton user, hint: Enter Baton username, placeholders: true}
     password:
       type: string
@@ -2106,7 +2106,7 @@ BatonXmlReport:
   min_orchestrator: 4.1.6
   description: This Action plug-ins enables the retrieval of XML Report from Baton
   attributes:
-    server: {type: string, label: Server address, hint: 'e.g., baton-server.enterprise.com or 10.0.0.1'}
+    server: {type: string, label: Server address, hint: 'e.g., baton-server.example.com or 10.0.0.1'}
     user: {type: string, label: Baton user, hint: Enter Baton username, placeholders: true}
     password:
       type: string
@@ -2491,10 +2491,10 @@ CorbaOperation:
   min_orchestrator: 4.1.6
   description: This plugin is used to make a CORBA call to the Arris CMM (Content Management and Metadata server) using the JacORB utility.
   attributes:
-    corba_ip: {type: string, label: CORBA IP Address, hint: 'e.g., 124.142.220.1', placeholders: true}
+    corba_ip: {type: string, label: CORBA IP Address, hint: 'e.g., 192.0.2.1', placeholders: true}
     port: {type: integer, hint: 'e.g., 5000'}
     name_service: {type: string, label: Name Service, hint: 'e.g., NameService', placeholders: true}
-    ftp_url: {type: text, label: FTP URL, widget: multiline_text, hint: 'e.g., ftp://username:password@16.231.12.8/test/avc/ADI_1234.xml', placeholders: true}
+    ftp_url: {type: text, label: FTP URL, widget: multiline_text, hint: 'e.g., ftp://username:password@192.0.2.8/test/avc/ADI_1234.xml', placeholders: true}
     factory_name: {type: string, label: Factory Name, hint: 'e.g., Default', placeholders: true}
     package_name: {type: string, label: Package Name, hint: 'e.g., ADI_1234', placeholders: true}
     log_file_path: {type: text, label: Log File Path, hint: 'e.g., /tmp/log1.log', placeholders: true}
@@ -2859,7 +2859,7 @@ DivaArchive:
   description: This action plug-in provides the ability to archive or restore files to/from the DIVArchive system. It implements the DIVA REST WEB services API 1.0, 2.1 and 2.2
   attributes:
     remote_node: {type: string, label: Diva node, widget: remote_node}
-    server_address: {type: string, label: Diva server ip address (or hostname), hint: e.g. 10.0.103.85 or diva.enterprise.com, placeholders: true}
+    server_address: {type: string, label: Diva server ip address (or hostname), hint: e.g. 10.0.103.85 or diva.example.com, placeholders: true}
     server_port: {type: integer, label: Diva web service port, code_default: 9763}
     operation: {type: string, widget: select, values: [archiveObject, restoreObject, partialRestore, deleteObject, getObjectInfo]}
     polling_frequency: {type: integer, code_default: 10}
@@ -2993,7 +2993,7 @@ ElementalTranscoding:
   description: This action plugin provides the ability to submit file transcoding jobs to an Elemental server.
   attributes:
     server_node: {type: string, label: Elemental server node, widget: remote_node}
-    server_address: {type: string, label: Elemental ip address (or hostname), hint: 'e.g., 10.0.103.85 or elemental.server.com'}
+    server_address: {type: string, label: Elemental ip address (or hostname), hint: 'e.g., 10.0.103.85 or elemental.example.com'}
     api_port: {type: string, label: Elemental api port (optional), code_default: '443', placeholders: true}
     user_name: {type: string, code_default: admin}
     source: {type: string, hint: 'e.g., s3://bucket/input/video.mp4 or /mnt/media/input.mp4', placeholders: true}
@@ -3003,7 +3003,7 @@ ElementalTranscoding:
     authentication: {type: boolean, label: Enable authentication, code_default: false}
     polling_frequency: {type: integer, label: Status polling frequency, code_default: 5}
     xml_payload: {type: mediumtext, label: Custom xml payload, widget: multiline_text, code_default: '<?xml version="1.0" encoding="UTF-8"?><job><input><file_input><uri><%= Source %></uri></file_input></input><profile><%= Profile_Id %></profile></job>', placeholders: true}
-    proxy_address: {type: string, label: Proxy ip address (or hostname), hint: 'e.g., 10.0.0.1 or proxy.server.com'}
+    proxy_address: {type: string, label: Proxy ip address (or hostname), hint: 'e.g., 10.0.0.1 or proxy.example.com'}
     proxy_port: {type: integer, hint: 'e.g., 8080'}
     use_ssl: {type: boolean, label: 'Use ssl?'}
     authenticate_for_s3: {type: boolean, label: 'Use s3 authentication?'}
@@ -3709,7 +3709,7 @@ Faspstream:
   description: This action plug-in provides the ability to start, monitor and cancel a stream to stream between 2 Aspera transfer servers using faspstream.
   attributes:
     initiating_node: {type: string, widget: remote_node, placeholders: true}
-    initiating_host: {type: string, label: Initiating node ip address (or hostname), hint: 'e.g., 10.0.103.85 or xxx.enterprise.com', placeholders: true}
+    initiating_host: {type: string, label: Initiating node ip address (or hostname), hint: 'e.g., 10.0.103.85 or xxx.example.com', placeholders: true}
     initiating_ssh_user_name: {type: string, label: Initiating node username, hint: Enter SSH username, placeholders: true}
     initiating_ssh_password:
       type: string
@@ -3719,7 +3719,7 @@ Faspstream:
     initiating_ssh_key_file_path: {type: string, label: Initiating node ssh key path, hint: Path to SSH private key file, placeholders: true}
     initiating_ssh_port: {type: integer, label: Initiating node ssh port, code_default: 33001}
     serving_node: {type: string, widget: remote_node, placeholders: true}
-    serving_host: {type: string, label: Serving node ip address (or hostname), hint: 'e.g., 10.0.103.85 or xxx.enterprise.com', placeholders: true}
+    serving_host: {type: string, label: Serving node ip address (or hostname), hint: 'e.g., 10.0.103.85 or xxx.example.com', placeholders: true}
     serving_ssh_user_name: {type: string, label: Serving node username, hint: Enter SSH username, placeholders: true}
     serving_ssh_password:
       type: string
@@ -4675,7 +4675,7 @@ IbmMqIntegration:
   min_orchestrator: 4.1.6
   description: This plugin is used to send/receive MQ messages to/from an IBM MQ system.
   attributes:
-    mq_ip_address: {type: string, label: MQ IP Address, hint: 'e.g., 192.168.1.100 or mq.enterprise.com', placeholders: true}
+    mq_ip_address: {type: string, label: MQ IP Address, hint: 'e.g., 192.168.1.100 or mq.example.com', placeholders: true}
     mq_port: {type: string, label: MQ Port, hint: Default port is 1414, code_default: 1414, placeholders: true}
     mq_channel_name: {type: string, label: MQ Channel Name, hint: Enter channel name, placeholders: true}
     mq_queue_name: {type: string, label: MQ Queue Name, hint: Enter queue name, placeholders: true}
@@ -4735,7 +4735,7 @@ IbmMqMftTransfer:
   min_orchestrator: 4.1.6
   description: This plugin is used to send a file via IBM MQ MFT.
   attributes:
-    mq_ip_address: {type: string, label: MQ IP Address, hint: 'e.g., 192.168.1.100 or mq.enterprise.com', placeholders: true}
+    mq_ip_address: {type: string, label: MQ IP Address, hint: 'e.g., 192.168.1.100 or mq.example.com', placeholders: true}
     mq_port: {type: string, label: MQ Port, hint: Default port is 1414, code_default: 1414, placeholders: true}
     mq_channel_name: {type: string, label: MQ Channel Name, hint: Enter channel name, placeholders: true}
     mq_queue_name: {type: string, label: MQ Queue Name, hint: Enter queue name, placeholders: true}
@@ -6721,7 +6721,7 @@ SharesTransferSetup:
   description: This plugin returns the transfer specification to be used for Node API-based transfers to/from a Share defined with Aspera Shares.
   attributes:
     remote_node: {type: string, widget: remote_node, placeholders: true}
-    server_address: {type: string, label: Remote server ip address (or hostname), hint: 'e.g., 10.0.103.85 or shares.enterprise.com', placeholders: true}
+    server_address: {type: string, label: Remote server ip address (or hostname), hint: 'e.g., 10.0.103.85 or shares.example.com', placeholders: true}
     server_port: {type: integer, label: Remote service port, code_default: 443}
     source: {type: string, label: Source filepath, hint: Enter the source file or folder path, placeholders: true}
     destination_folder: {type: string, hint: Enter the destination folder path, placeholders: true}
@@ -7569,7 +7569,7 @@ VantageTranscoding:
   description: This action plugin provides the ability to submit file transcoding jobs to a Vantage server.
   attributes:
     server_node: {type: string, label: Vantage server node, widget: remote_node, placeholders: true}
-    server_address: {type: string, label: Vantage ip address or hostname, hint: e.g. 10.0.103.85 or vantage.server.com}
+    server_address: {type: string, label: Vantage ip address or hostname, hint: e.g. 10.0.103.85 or vantage.example.com}
     api_port: {type: string, label: Vantage api port (optional), code_default: 8676}
     source_file: {type: string, hint: Path to the source media file, placeholders: true}
     workflow_id: {type: string, label: Vantage workflow, widget: select, dynamic_values: true, placeholders: true}
@@ -7614,7 +7614,7 @@ VidcheckerVerification:
   attributes:
     server_node: {type: string, label: Vidchecker server node, widget: remote_node}
     server_port: {type: string, label: Vidchecker api port (optional), code_default: 51060, placeholders: true}
-    server_address: {type: string, label: Vidchecker ip address (or hostname), hint: 'e.g., 10.0.103.85 or vidchecker.enterprise.com'}
+    server_address: {type: string, label: Vidchecker ip address (or hostname), hint: 'e.g., 10.0.103.85 or vidchecker.example.com'}
     template_id: {type: string, hint: Enter the VidChecker template ID, placeholders: true}
     file_path: {type: string, hint: Enter the full path of the file to verify, placeholders: true}
     should_write_report: {type: boolean, label: Should generate report file, default: false}

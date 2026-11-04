@@ -15,13 +15,13 @@ It is written for people and for AI assistants.
 Most rules are stated as **do** or **do not**, followed by the reason.
 
 The rules come from field experience of workflow design on Orchestrator 3.x and 4.x.
-A few facts were checked against the Orchestrator 4.1.6 source code; they are marked *(4.1.6)*.
+A few facts were checked against Orchestrator 4.1.6; they are marked *(4.1.6)*.
 
 Version notes:
 
 - The screenshots show Orchestrator 4.1.6: the user interface and some option names differ in other versions.
   The concepts and rules do not.
-- When this guide and the [Workflow Authoring Guide](workflow-authoring-guide.md) differ, the Authoring Guide prevails: it is derived from the 4.1.6 source code and its examples were executed on 4.1.6.
+- When this guide and the [Workflow Authoring Guide](workflow-authoring-guide.md) differ, the Authoring Guide prevails: it is derived from Orchestrator 4.1.6 and its examples were executed on 4.1.6.
 - This guide describes the graphical designer.
   The Authoring Guide shows the same objects as XML (for example `Synch_factor` for the OR operator).
 

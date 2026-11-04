@@ -15,19 +15,19 @@ A portlet is a widget of the Orchestrator dashboard.
 It is written for people and for AI assistants.
 Each rule gives the exact name, method or value expected by Orchestrator.
 
-The content is derived from the Orchestrator 4.1.6 source code (build 2036, Ruby 3.4, Rails 8.1).
+The content is derived from Orchestrator 4.1.6.
 
 How it was verified:
 
 - On an Orchestrator 4.1.6.2036 server: the example portlet of [Quick start](#quick-start) was imported with **Import Portlet**, chosen and configured in a dashboard frame, displayed, and its action called with GET and POST. In Chrome, the **Ping** link (`ajaxUpdate`) and the automatic refresh worked with no JavaScript error. The behaviors of import (file name, collision), enable, disable, restart, the version API and the CSRF token described below were reproduced on this server.
-- From the source code only: the security notes, the custom portlets, the legacy upgrade script, and the counts of the [Annex](#annex).
+- From Orchestrator: the security notes, the custom portlets, the legacy upgrade script, and the counts of the [Annex](#annex).
 
 Related documents:
 
 - [Plugin Development Guide](plugin-development-guide.md): the same for action plugins. Portlets and plugins share several mechanisms, listed in [Comparison with plugins](#comparison-with-plugins).
 - [Workflow Authoring Guide](workflow-authoring-guide.md): how to write workflows, whose work orders a portlet can display.
 
-The source of the shipped portlets is the best set of examples: folder `/opt/aspera/orchestrator/portlets` of an Orchestrator server, one folder per portlet.
+The shipped portlets are the best set of examples: folder `/opt/aspera/orchestrator/portlets` of an Orchestrator server, one folder per portlet.
 `orchestrator_information` is the simplest, `user_tasks` has parameters and a permission check, `csv_editor` has uploads, a modal dialog and several actions, `queue_management` has pagination and `helper_method`.
 
 The repository [`aspera-orchestrator-secret-reference`](https://github.com/IBM/aspera-orchestrator-secret-reference) contains the portlet `secret_dashboard` as a worked example: it uses a plugin (`SecretCore`), has four sections with AJAX actions, an admin-only check in every action, and a full RSpec test suite that runs outside Rails with stubs of `Portlet`, `PortletsController`, `Workflow`, `WorkStep` and `User`.

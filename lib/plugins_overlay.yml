@@ -1,6 +1,6 @@
 # Hand-authored enrichments applied on top of the generated plugins.yml.
 # This file is the source of truth for metadata that the plugin probe cannot discover:
-# - hints and notes that require reading source code or live testing
+# - hints and notes that require testing or Orchestrator details
 # - allowed values for dynamic-values selects
 # - format documentation for complex Hash/text attributes
 #

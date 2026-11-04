@@ -323,7 +323,7 @@ This plugin enables management of media assets within Sony Ci cloud platform thr
 
 | Parameter           | Example Value                                 |
 |---------------------|-----------------------------------------------|
-| **Username**        | user@company.com                              |
+| **Username**        | user@example.com                              |
 | **Password**        | \*\*\*\*\*\*\*\*                              |
 | **Client id**       | sony-api-client-123                           |
 | **Client secret**   | \*\*\*\*\*\*\*\*                              |
@@ -1959,7 +1959,7 @@ This action plug-in is used to create a file using dynamic content provided from
 
 **Example using embedded Ruby code**
 
-If an input `recipients` contains *bob@ac.com; bill@ac.com; doug@ac.com*, the following template:
+If an input `recipients` contains *bob@example.com; bill@example.com; doug@example.com*, the following template:
 
 \
 \<destinations\>\
@@ -1973,9 +1973,9 @@ Will be rendered as:
 
 \
 \<destinations\>\
-  \<to\>bob@ac.com\</to\>\
-  \<to\>bill@ac.com\</to\>\
-  \<to\>doug@ac.com\</to\>\
+  \<to\>bob@example.com\</to\>\
+  \<to\>bill@example.com\</to\>\
+  \<to\>doug@example.com\</to\>\
 \</destinations\>\
 
 #### *Same example with suppression marked linefeeds*
@@ -1992,9 +1992,9 @@ Will be rendered without extra blank lines:
 
 \
 \<destinations\>\
-  \<to\>bob@ac.com\</to\>\
-  \<to\>bill@ac.com\</to\>\
-  \<to\>doug@ac.com\</to\>\
+  \<to\>bob@example.com\</to\>\
+  \<to\>bill@example.com\</to\>\
+  \<to\>doug@example.com\</to\>\
 \</destinations\>\
 
 **Behavior:** With this configuration, the workflow generates the file using the provided template, required/optional inputs, and target file path. Outputs are available if enabled.
@@ -3904,7 +3904,7 @@ This action plugin provides the ability to initiate and monitor server-to-server
 | **EAR operation** | Encryption at rest operation: none, encrypt, decrypt, or --Runtime--. |
 | **EAR passphrase** | Passphrase for encryption at rest operations. |
 | **Payload** | Custom JSON payload when 'submit transfer using payload' operation is chosen. |
-| **FASP Proxy** | FASP Forward Proxy setting (format: dnats://node_user:<YOUR_PASSWORD>@proxy_addr:9092/). |
+| **FASP Proxy** | FASP Forward Proxy setting (format: dnats://node_user:`<YOUR_PASSWORD>`@proxy_addr:9092/). |
 | **HTTP Proxy** | HTTP proxy for Node API server calls (format: https://proxy:port/). |
 | **Verbose logging?** | Enable detailed request/response logging to Node API (use only for debugging). |
 | **Polling frequency** | Frequency in seconds for polling job status during monitoring. |
@@ -3956,8 +3956,8 @@ This action plugin provides the ability to initiate and monitor server-to-server
 {\
   "direction":"send",\
   "remote_user":"root",\
-  "remote_host":"testchris5.aspera.cloud",\
-  "ssh_private_key":"<PEM_PRIVATE_KEY>",\
+  "remote_host":"aspera.example.com",\
+  "ssh_private_key":"`<PEM_PRIVATE_KEY>`",\
   "destination_root":"/",\
   "fasp_port":33001,\
   "ssh_port":33001,\
@@ -3974,9 +3974,9 @@ This action plugin provides the ability to initiate and monitor server-to-server
 \
 {\
   "direction": "send",\
-  "remote_host": "w.demo.aspera.org",\
+  "remote_host": "demo.example.com",\
   "remote_access_key": "ABCDEFGH",\
-  "token": "Basic <BASE64_CREDENTIALS>",\
+  "token": "Basic `<BASE64_CREDENTIALS>`",\
   "target_rate_kbps": "",\
   "create_dir": false,\
   "ssh_port": "33001",\
@@ -3993,8 +3993,8 @@ This action plugin provides the ability to initiate and monitor server-to-server
 \
 {\
   "direction": "send",\
-  "remote_host": "testchris5.aspera.cloud",\
-  "token": "Bearer <ACCESS_TOKEN>",\
+  "remote_host": "aspera.example.com",\
+  "token": "Bearer `<ACCESS_TOKEN>`",\
   "target_rate_kbps": 1000000,\
   "create_dir": true,\
   "ssh_port": "33001",\
@@ -4370,7 +4370,7 @@ This action plug-in provides the ability to control and modify the parameters of
 | **Wait until end** | Keep step in progress as long as session and job are in progress. |
 | **Polling frequency** | Interval in seconds for polling Central server for session and job status (default: 5 seconds). |
 | **Controlled Aspera node** | Remote node to connect to for monitoring or canceling Aspera transfers. |
-| **Central address** | IP address or hostname of the Aspera Transfer server (format: lala.com or 10.0.200.202). |
+| **Central address** | IP address or hostname of the Aspera Transfer server (format: example.com or 10.0.200.202). |
 | **Service uri root** | Optional SOAP URI part of WSDL URL to Central server (defaults to expected value). |
 | **Node user** | Node API username required for authentication. |
 | **Node password** | Node API password required for authentication. |
@@ -4473,7 +4473,7 @@ Enable both HTTP and HTTPS for Node API in `/opt/aspera/etc/aspera.conf`:
 
 \
 \<server\>\
-    \<server_name\>test.sl.dev.asperacloud.net\</server_name\>\
+    \<server_name\>test.example.com\</server_name\>\
     \<http_port\>9091\</http_port\>\
     \<https_port\>9092\</https_port\>\
     \<enable_http\>true\</enable_http\>\
@@ -5550,9 +5550,9 @@ This plugin integrates with Faspex5 servers to manage file processing workflows 
 | Parameter                 | Example Value                       |
 |---------------------------|-------------------------------------|
 | **Faspex Node**           | faspex5-server                      |
-| **Faspex Server Address** | https://faspex5.company.com         |
-| **Ssh Private key**       | <PEM_PRIVATE_KEY> |
-| **Faspex User**           | orchestrator@company.com            |
+| **Faspex Server Address** | https://faspex5.example.com         |
+| **Ssh Private key**       | `<PEM_PRIVATE_KEY>` |
+| **Faspex User**           | orchestrator@example.com            |
 | **Faspex API Client ID**  | orchestrator-client-12345           |
 | **Operation**             | Retrieve the list of files          |
 | **Max Result**            | 50                                  |
@@ -7062,7 +7062,7 @@ This action enables uploading or downloading files and directories to or from a 
 | Name                | `New ScpTransfer Step`                              |
 | Comments            | Upload `releaseversion.txt` to remote FTP directory |
 | Remote node         | `-Select Node-`                                     |
-| Remote address      | `9.46.236.152`                                      |
+| Remote address      | `192.0.2.152`                                      |
 | Remote port         | `22`                                                |
 | Remote user         | `ftpuser`                                           |
 | Remote password     | `<password>`                                        |
@@ -7236,7 +7236,7 @@ This plugin provides secure file transfer functionality to SFTP servers, support
 | **Preserve timestamp** | If set, tries to preserve the source file timestamps when performing the operation. This behavior is server dependent. |
 | **Remove source after transfer** | If set, the source file (local or remote) will be deleted after successful transfer. |
 | **Reporting frequency** | How often progress will be reported. Default is 5 seconds. |
-| **Proxy host** | Optional: if an HTTP proxy is used to get to the SFTP server, the host name (or IP address) needs to be provided for the proxy. The host name is entered as proxy.lala.com or 10.0.200.202. |
+| **Proxy host** | Optional: if an HTTP proxy is used to get to the SFTP server, the host name (or IP address) needs to be provided for the proxy. The host name is entered as proxy.example.com or 10.0.200.202. |
 | **Proxy port** | Optional: if an HTTP proxy is used, the port the proxy server is listening for requests on. |
 | **Proxy user** | Optional: if an HTTP proxy is used and the proxy server requires authentication, the logon ID for the user. |
 | **Proxy password** | Optional: if an HTTP proxy is used and the proxy server requires authentication, the password for the proxy user. |
@@ -8393,7 +8393,7 @@ This is an example configuration for the AmazonDynamoDBOperations plugin retriev
 |-------|---------------------------------------------------|
 | Name | Get Customer Record |
 | Comments | Retrieve a single customer item from DynamoDB by partition key |
-| Aws key | <AWS_ACCESS_KEY_ID> |
+| Aws key | `<AWS_ACCESS_KEY_ID>` |
 | Aws secret | (stored securely) |
 | Aws region | us-east-1 |
 | Verify SSL? | Checked |
@@ -8587,7 +8587,7 @@ This is an example configuration for the AmazonGlacierOperation plugin archiving
 |---------------------|---------------------------------------------------|
 | Name                | Archive Monthly Report                            |
 | Comments            | Archive end-of-month report file to Glacier vault |
-| Amazon access Key   | <AWS_ACCESS_KEY_ID>                              |
+| Amazon access Key   | `<AWS_ACCESS_KEY_ID>`                              |
 | Amazon secret key   | (stored securely)                                 |
 | Region              | us-east-1                                         |
 | Proxy url           | (blank)                                           |
@@ -8774,7 +8774,7 @@ This is an example configuration for the AmazonMediaConvertOperation plugin subm
 |-------|---------------------------------------------------|
 | Name | Transcode VOD Asset |
 | Comments | Start a MediaConvert transcoding job for a new VOD asset |
-| Aws key | <AWS_ACCESS_KEY_ID> |
+| Aws key | `<AWS_ACCESS_KEY_ID>` |
 | Aws secret | (stored securely) |
 | Aws region | us-east-1 |
 | API Endpoint | https://abc123.mediaconvert.us-east-1.amazonaws.com |
@@ -8975,7 +8975,7 @@ This action plug-in provides the ability to execute file and bucket operations (
 | Parameter | Example Value |
 |-------|---------------------------------------------------|
 | **Operations** | Upload to a Bucket |
-| **AWS key** | <AWS_ACCESS_KEY_ID> |
+| **AWS key** | `<AWS_ACCESS_KEY_ID>` |
 | **AWS secret** | \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\* |
 | **AWS region** | us-east-1 |
 | **Verify SSL?** | checked |
@@ -9271,7 +9271,7 @@ This is an example configuration for the AmazonSNSOperation plugin publishing a 
 |---------------|-------------------------------------------------------|
 | Name          | Publish Order Notification                            |
 | Comments      | Publish order confirmation message to SNS topic       |
-| AWS Key       | <AWS_ACCESS_KEY_ID>                                  |
+| AWS Key       | `<AWS_ACCESS_KEY_ID>`                                  |
 | AWS Secret    | (stored securely)                                     |
 | AWS Region    | us-east-1                                             |
 | Verify SSL?   | Checked                                               |
@@ -9488,7 +9488,7 @@ This is a minimal setup configuration for the AmazonSqsOperation plug-in.
 |-------|---------------------------------------------------|
 | Name | Amazon SQS Operation |
 | Comments | Send a message to an Amazon SQS queue |
-| AWS key | <AWS_ACCESS_KEY_ID> |
+| AWS key | `<AWS_ACCESS_KEY_ID>` |
 | AWS secret | \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\* |
 | AWS region | us-east-1 |
 | Verify SSL? | Selected |
@@ -10105,7 +10105,7 @@ A plugin to perform Aspera On Cloud management operations including shared inbox
     - **Name**: Enter a descriptive name for the step.
     - **AoC client id**: Client ID from Organization → Integrations in AoC GUI.
     - **AoC client secret**: Client secret for OAuth authentication.
-    - **AoC organization name**: Organization name (e.g., 'sedemo' for sedemo.ibmaspera.com).
+    - **AoC organization name**: Organization name (e.g., 'myorg' for myorg.ibmaspera.com).
     - **AoC user name**: User email address with organization admin privileges.
 3.  Set up authentication and operation details:
     - **Private key filepath**: Path to SSH private key on Orchestrator machine.
@@ -10120,8 +10120,8 @@ A plugin to perform Aspera On Cloud management operations including shared inbox
 | **Name**                  | AoC Management Operation               |
 | **AoC client id**         | 12345678-1234-1234-1234-123456789abc   |
 | **AoC client secret**     | \*\*\*\*\*\*\*\*                       |
-| **AoC organization name** | sedemo                                 |
-| **AoC user name**         | admin@company.com                      |
+| **AoC organization name** | myorg                                 |
+| **AoC user name**         | admin@example.com                      |
 | **Private key filepath**  | /opt/aspera/keys/aoc_private_key       |
 | **Workspace name**        | Marketing Team                         |
 | **Operation**             | Create Shared Inbox                    |
@@ -10137,7 +10137,7 @@ A plugin to perform Aspera On Cloud management operations including shared inbox
 | **Comments** | Notes or description for this step. |
 | **AoC client id** | Aspera On Cloud client ID obtained from Organization → Integrations → select an integration in the AoC GUI. |
 | **AoC client secret** | Aspera On Cloud client secret for OAuth authentication. |
-| **AoC organization name** | AoC organization name. Extract from login domain (e.g., 'sedemo' from sedemo.ibmaspera.com). |
+| **AoC organization name** | AoC organization name. Extract from login domain (e.g., 'myorg' from myorg.ibmaspera.com). |
 | **AoC user name** | AoC user email address for authentication. Must be organization admin with SSH public key configured in Users → select user → Public key. |
 | **Private key filepath** | File path to SSH private key on Orchestrator machine, corresponding to the public key configured for the AoC user. |
 | **Http proxy** | HTTP proxy URL for accessing Aspera On Cloud APIs (requires Orchestrator 4.0.1+ or capsule). |
@@ -10206,24 +10206,24 @@ The shared inbox member list can be specified in two formats:
 **Newline-separated email list:**
 
 \
-john@corp.com\
-alex@corp.com\
+john@example.com\
+alex@example.com\
 
 For runtime input with newlines, use \n format:
 
 \
-john@corp.com\nalex@corp.com\
+john@example.com\nalex@example.com\
 
 **JSON structure with permissions:**
 
 \
 \[\
   {\
-    "email_address": "john@corp.com",\
+    "email_address": "john@example.com",\
     "permissions": "send,receive"\
   },\
   {\
-    "email_address": "alex@corp.com", \
+    "email_address": "alex@example.com", \
     "permissions": "send"\
   }\
 \]\
@@ -10748,7 +10748,7 @@ This is a minimal configuration example for the AzureServiceBusOperation plug-in
 | Azure key name      | \<sample_key_name\>                    |
 | Azure key           | \<sample_key\>                         |
 | Queue or Topic name | topic1                                 |
-| Proxy url           | https://test-source.azure-bus.com/bus1 |
+| Proxy url           | https://test-source.example.com/bus1 |
 | Operation           | Message_send                           |
 | Message body        | \<contents to send\>                   |
 
@@ -10800,7 +10800,7 @@ None
 2.  Specify the Azure Service Bus namespace, access key name, and access key.
 3.  Specify the queue or topic name.
 4.  Specify the subscription name only when retrieving messages from a topic.
-5.  Specify a proxy URL (e.g., https://myproxy.com:8443) if direct Internet access is not available. Without a proxy, Orchestrator must be able to reach .servicebus.windows.net on port 443.
+5.  Specify a proxy URL (e.g., https://proxy.example.com:8443) if direct Internet access is not available. Without a proxy, Orchestrator must be able to reach .servicebus.windows.net on port 443.
 6.  Enter the operation to execute (Message_get_from_queue, Message_get_from_topic, or Message_send). Only one message can be retrieved using Message_get_from_queue or Message_get_from_topic. Only one message can be sent using Message_send. Enter the message body when using the Message_send operation.
 7.  Message_get_from_queue and Message_get_from_topic are get-and-delete operations. If no message is available, the step information will report "no message in the queue" and the Message_body output will be empty.
 
@@ -10849,7 +10849,7 @@ This plugin provides capability to perform REST operations on CatDV server.
 
 | Parameter               | Example Value                                 |
 |-------------------------|-----------------------------------------------|
-| **Service url**         | http://catdvserverone.aspera.com:8080/api/4/  |
+| **Service url**         | http://catdv.example.com:8080/api/4/  |
 | **Login**               | catdv_user                                    |
 | **Basic Auth Password** | \*\*\*\*\*\*\*\*\*\*                          |
 | **Endpoint**            | clips                                         |
@@ -10914,7 +10914,7 @@ This plugin provides capability to perform REST operations on CatDV server.
 - **Plugin Purpose:** This action provides capability for performing RESTful operations like GET, PUT, POST, and DELETE for media content on CatDV servers. This plugin requires access to a CatDV server and valid login credentials for accessing the same.
 - **Response Processing:** Responses are returned as JSON strings which are automatically converted to hash format and stored in the plugin outputs for easy access by downstream workflow steps.
 - **Authentication Handling:** The plugin automatically handles session authentication by creating a session with the provided credentials and managing the session ID (jsessionid) for subsequent API calls.
-- **Example Request Formation:** Using the sample configuration (Service URL: http://catdvserverone.aspera.com:8080/api/4/, Endpoint: clips, Operation: get, Selector: 12, Query parameters: filter=and((clip.userFields\[U23\])eq(12345))), the plugin forms a GET request URL like: http://catdvserverone.aspera.com:8080/api/4/clips;jsessionid=9F441C9E62E68812BEAA64F7B2F7297F?filter=and((clip.userFields\[U23\])eq(12345))
+- **Example Request Formation:** Using the sample configuration (Service URL: http://catdv.example.com:8080/api/4/, Endpoint: clips, Operation: get, Selector: 12, Query parameters: filter=and((clip.userFields\[U23\])eq(12345))), the plugin forms a GET request URL like: http://catdv.example.com:8080/api/4/clips;jsessionid=9F441C9E62E68812BEAA64F7B2F7297F?filter=and((clip.userFields\[U23\])eq(12345))
 - **Session Management:** The jsessionid is automatically obtained after successful authentication with the credentials provided in the login and password fields, and is appended to subsequent API requests for authorization.
 - **API Documentation:** Complete REST API documentation is available at: <a href="http://www.squarebox.com/server7-rest-api-introduction/" target="_blank">http://www.squarebox.com/server7-rest-api-introduction/</a> for detailed endpoint specifications and advanced usage patterns.
 
@@ -10987,9 +10987,9 @@ This plugin is used to make a CORBA call to the Arris CMM (Content Management an
 
 | Parameter | Example Value |
 |-------|---------------------------------------------------|
-| **Corba Ip** | 124.142.220.1 |
+| **Corba Ip** | 192.0.2.1 |
 | **Port** | 5000 |
-| **FTP Url** | ftp://username:password@16.231.12.8/test/avc/ADI_1234.xml |
+| **FTP Url** | ftp://username:password@192.0.2.8/test/avc/ADI_1234.xml |
 | **Name Service** | NameService |
 | **Factory Name** | Default |
 | **Package Name** | ADI_1234 |
@@ -11171,7 +11171,7 @@ This plugin provides basic curl functionality with two operation modes.
 
 - Remote Node: Linux host
 - Operation: Enter Command to Execute
-- Command: `curl -X POST -u "user1:password1" quiet-waters-1228.herokuapp.com/login > /tmp/results.txt`
+- Command: `curl -X POST -u "user1:password1" media.example.com/login > /tmp/results.txt`
 
 #### Example 2: Pre-configured with Parameters
 
@@ -11180,7 +11180,7 @@ This plugin provides basic curl functionality with two operation modes.
 - Remote Node: Linux host
 - Operation: Execute the Preconfigured command
 - Request Type: POST
-- Service URL: `quiet-waters-1228.herokuapp.com/echo`
+- Service URL: `media.example.com/echo`
 - Parameters: `fname=Mark&lname=Bates`
 - Result Storage Location: `/usr/bin/output/test.txt`
 
@@ -11191,7 +11191,7 @@ This plugin provides basic curl functionality with two operation modes.
 - Remote Node: Linux host
 - Operation: Execute the Preconfigured command
 - Request Type: GET
-- Service URL: `http://quiet-waters-1228.herokuapp.com/assets/image.jpg`
+- Service URL: `http://media.example.com/assets/image.jpg`
 - Download Image: enabled
 - Image Location: `/tmp/myimage.png`
 - Result Storage Location: `/usr/bin/output/test.txt`
@@ -12616,8 +12616,8 @@ The list of inputs depends on the configuration of the JiraCreate action templat
 #### Outputs description
 
 - *Ticket_Id*: ID of the created ticket.
-- *Create_Ticket_Response*: Response of the ticket creation such as: { "id" =\> "275075", "key" =\> "VODT-3688", "self" =\> "https://jira.xxx.net/rest/api/2/issue/275075" }
-- *Ticket_JSON_Info*: URL of the created ticket such as: https://jira.xxx.net/rest/api/2/issue/275075
+- *Create_Ticket_Response*: Response of the ticket creation such as: { "id" =\> "275075", "key" =\> "VODT-3688", "self" =\> "https://jira.example.com/rest/api/2/issue/275075" }
+- *Ticket_JSON_Info*: URL of the created ticket such as: https://jira.example.com/rest/api/2/issue/275075
 - *Error_Message*: Error message returned by the Jira server
 
 #### Supported Actions
@@ -12630,7 +12630,7 @@ None
 
 #### Operating Instructions
 
-The JIRA URL must be like https://jira.xxx.net
+The JIRA URL must be like https://jira.example.com
 
 Don't add a forward slash at the end of the URL.
 
@@ -13254,7 +13254,7 @@ This action plugin enables interaction with MongoDB databases, supporting docume
 
 | Parameter            | Example Value                               |
 |----------------------|---------------------------------------------|
-| **Connection uri**   | mongodb://dbuser:<YOUR_PASSWORD>@203.0.113.100:27017 |
+| **Connection uri**   | mongodb://dbuser:`<YOUR_PASSWORD>`@203.0.113.100:27017 |
 | **Database name**    | inventory_demo                              |
 | **Operation**        | Document_find                               |
 | **Collection name**  | products                                    |
@@ -16060,8 +16060,8 @@ The step has *name* available in the input mappings and *email* exported as outp
 |          |                        |
 |----------|------------------------|
 | **name** | **email**              |
-| John Doe | john.doe@mycompany.com |
-| Jane Doe | jane.doe@mycompany.com |
+| John Doe | john.doe@example.com |
+| Jane Doe | jane.doe@example.com |
 
 At run time the step tries to match the value of the input variable *name* with values in the first column: if there is a match, the *email* output gets the second column value.
 
@@ -17217,7 +17217,7 @@ This is a minimal setup configuration for the BatonFileVerification plug-in.
 
 | Parameter | Value |
 |-------|---------------------------------------------------|
-| Baton Server Address | http://test-server.baton-server.com/example1 |
+| Baton Server Address | http://test-server.example.com/example1 |
 | Baton port | 8080 |
 | Baton user | root |
 | Baton password | \<password\> |
@@ -17542,7 +17542,7 @@ The plug-in supports the latest API release. An example of a QC job is given bel
 
 #### An example of a QC workflow below
 
-a\) Provide remote node or remote server IP and port (example: 10.0.103.85 or transcode.lala.com)
+a\) Provide remote node or remote server IP and port (example: 10.0.103.85 or transcode.example.com)
 
 b\) Click the button Get Profiles and Media Locations. This provides dropdowns with profiles and media locations obtained from the provided Cerify server
 
@@ -17819,7 +17819,7 @@ The plug-in supports the latest API release. An example of a QC job is given bel
 
 #### An example of a QC workflow below
 
-a\) Provide remote node or remote server IP and port (example: 10.0.103.85 or transcode.lala.com)
+a\) Provide remote node or remote server IP and port (example: 10.0.103.85 or transcode.example.com)
 
 b\) Click the button Get Templats. This provides dropdowns with templates obtained from the provided Pulsar server
 
@@ -21193,7 +21193,7 @@ An example of a transcode job is given below. Currently only a single source fil
 
 #### An example of a transcode
 
-a\) Provide remote node or remote server IP and port (example: 10.0.103.85 or transcode.lala.com)
+a\) Provide remote node or remote server IP and port (example: 10.0.103.85 or transcode.example.com)
 
 b\) Decide what operation is needed - Repurpose or Transcode
 
@@ -21602,7 +21602,7 @@ When using WFS API 1.4.6 the workflow template must be
 
 **API Version 1.2 and API Version 1.4.6 Legacy**
 
-a\) Provide remote node or remote server IP and port (example: 10.0.103.85 or transcode.lala.com)
+a\) Provide remote node or remote server IP and port (example: 10.0.103.85 or transcode.example.com)
 
 b\) Provide transcode payload (either custom or select from payload drop down)
 
@@ -21616,7 +21616,7 @@ e\) Carbon server takes these inputs and assigns a priority to the job and perfo
 
 **API Version 1.4.6**
 
-a\) Provide remote node or remote server IP and port (example: 10.0.103.85 or transcode.lala.com)
+a\) Provide remote node or remote server IP and port (example: 10.0.103.85 or transcode.example.com)
 
 b\) Select workflow id from the dropdown
 
@@ -21628,7 +21628,7 @@ e\) WFS server takes these inputs and assigns a priority to the job and performs
 
 **API Version 1.4.6 but using Transcoding Payload**
 
-a\) Provide remote node or remote server IP and port (example: 10.0.103.85 or transcode.lala.com)
+a\) Provide remote node or remote server IP and port (example: 10.0.103.85 or transcode.example.com)
 
 b\) Provide a Transcoding payload that needs to be submitted to Rhozet. The Transcoding payload are usually the PCP files obtained from Rhozet/Carbon. c) WFS server takes these inputs and assigns a priority to the job and performs the transcode
 
@@ -21708,7 +21708,7 @@ The mandatory inputs are listed above.
 
 #### An example of a transcode
 
-a\) Provide remote node or remote server IP and port (example: 10.0.103.85 or transcode.lala.com)
+a\) Provide remote node or remote server IP and port (example: 10.0.103.85 or transcode.example.com)
 
 b\) Provide transcode payload (either custom or select from project drop down)
 
@@ -21808,7 +21808,7 @@ If you want to pass project and group as inputs, you need to pass Project_path +
 
 #### An example of a transcode
 
-a\) Provide remote node or remote server IP and port (example: 10.0.103.85 or transcode.lala.com)
+a\) Provide remote node or remote server IP and port (example: 10.0.103.85 or transcode.example.com)
 
 b\) Click the button "Get Projects and Groups". This provides 2 dropdowns with projects and groups from the Digital Rapids server
 
@@ -21866,12 +21866,12 @@ This action plugin provides the ability to invoke Dolby VM600/DP600 API operatio
 
 | Parameter                | Example Value                                   |
 |--------------------------|-------------------------------------------------|
-| **URL**                  | http://dolby-server.domain.com:8080/api/v1      |
+| **URL**                  | http://dolby-server.example.com:8080/api/v1      |
 | **API Operation**        | Submitting a Work Order                         |
 | **Work Order Name**      | AudioProcessing_001                             |
 | **Work Order Type**      | SWO                                             |
-| **Source Filename**      | smb://user:pass@fileserver.com/audio/input.wav  |
-| **Destination Filename** | smb://user:pass@fileserver.com/audio/output.wav |
+| **Source Filename**      | smb://user:pass@example.com/audio/input.wav  |
+| **Destination Filename** | smb://user:pass@example.com/audio/output.wav |
 | **Workflow Profile**     | Standard_Audio_Processing                       |
 | **Work Order Priority**  | 5                                               |
 | **Delete on Cancel**     | checked                                         |
@@ -22012,7 +22012,7 @@ This Action plugin provides the ability to submit a file transcoding job to the 
 | **Secret key** | \*\*\*\*\*\*\*\*\*\* |
 | **Region** | EU (Ireland) |
 | **Job templates** | Standard_HD_Transcode |
-| **Endpoint** | po21umhx.mediaconvert.eu-west-1.amazonaws.com |
+| **Endpoint** | abc123.mediaconvert.eu-west-1.amazonaws.com |
 | **Role** | arn:aws:iam::123456789931:role/MediaConvert3 |
 | **Input file path** | s3://aspmediaconvert/test.mxf |
 | **Output path** | s3://aspmediaconvert/outputs/ |
@@ -22028,7 +22028,7 @@ This Action plugin provides the ability to submit a file transcoding job to the 
 | **Secret key** | The AWS secret key used for authentication to access MediaConvert services. |
 | **Region** | The AWS region where MediaConvert jobs will be processed (e.g., EU Ireland, US East). |
 | **Job templates** | The list of defined MediaConvert job templates retrieved from the AWS account. |
-| **Endpoint** | The AWS account-specific endpoint where API requests are sent (e.g., po21umhx.mediaconvert.eu-west-1.amazonaws.com). |
+| **Endpoint** | The AWS account-specific endpoint where API requests are sent (e.g., abc123.mediaconvert.eu-west-1.amazonaws.com). |
 | **Role** | The IAM role ARN that MediaConvert will assume to access S3 resources and perform transcoding operations. |
 | **Input file path** | The S3 path to the source file that will be transcoded. |
 | **Output path** | The S3 path to the destination folder where transcoded files will be stored. |
@@ -22247,7 +22247,7 @@ All parameters are available as inputs at runtime if not specified by the templa
 #### Operating Instructions
 
 - **Plugin Purpose:** This plugin allows users to provide the inputs required by an Elemental server to perform a transcode job. The plugin supports authentication as requested by the Elemental Server in the latest API release. Currently only a single source file can be specified.
-- **Basic Transcode Setup:** Provide remote node or remote server IP and port (e.g., 10.0.103.85 or transcode.lala.com). Decide if authentication should be enabled - if yes, check the Enable Authentication box, otherwise leave it unchecked.
+- **Basic Transcode Setup:** Provide remote node or remote server IP and port (e.g., 10.0.103.85 or transcode.example.com). Decide if authentication should be enabled - if yes, check the Enable Authentication box, otherwise leave it unchecked.
 - **Profile Configuration:** Click 'Get Elemental Profiles' button to retrieve available profiles from the Elemental server. Select a profile from the dropdown - the profile ID will be submitted along with the source file path to the Elemental server.
 - **File Processing:** Provide the source file name (e.g., '/data/input/expendables.avi'). The Elemental server takes these inputs, assigns a priority (default is 50) to the job, and performs the transcode operation.
 - **Custom XML Payload:** A custom XML payload can be sent to Elemental for advanced configurations. When using custom payloads, source, username, password, and profile ID are typically defined as runtime inputs. However, if source and profile ID are also defined in the configuration, they take precedence.
@@ -22718,7 +22718,7 @@ An example of a transcode job is given below. Currently only a single source fil
 
 #### An example of a transcode
 
-a\) Provide remote node port (example: 10.0.103.85 or transcode.lala.com)
+a\) Provide remote node port (example: 10.0.103.85 or transcode.example.com)
 
 b\) Provide input file name (Ex: "/data/input/expendables.avi") and a output file path "/data/output/"
 
@@ -23857,7 +23857,7 @@ All parameters are available as inputs at runtime if not specified by the templa
 
 A single source file can be specified. Target can be specified during the workflow setup on the Vantage server.
 
-1.  Provide remote node or remote server IP and port (example: 10.0.103.85 or transcode.lala.com)
+1.  Provide remote node or remote server IP and port (example: 10.0.103.85 or transcode.example.com)
 2.  Click the button Get Vantage Workflows. This provides a dropdown with workflows from the provided Vantage server
 3.  Select a workflow from the dropdown
 4.  Beside each Variable and Item a text box is provided to enter values. Ignore these and enter source file
@@ -23869,7 +23869,7 @@ A single source file can be specified. Target can be specified during the workfl
 
 Multiple items and variables can be submitted. Target can be specified during the workflow setup on the Vantage server.
 
-1.  Provide remote node or remote server IP and port (example: 10.0.103.85 or transcode.lala.com)
+1.  Provide remote node or remote server IP and port (example: 10.0.103.85 or transcode.example.com)
 2.  Click the button Get Vantage Workflows. This provides a dropdown with workflows from the provided Vantage server
 3.  Select a workflow from the dropdown
 4.  Upon each selection of a Vantage workflow, its variables and items will be displayed if they exist
@@ -24814,7 +24814,7 @@ In most cases, all the inputs are optional. The exception being when the node to
 
 - **Central_node**: Optional runtime specification of the remote node name when not defined in template.
 - **transfer_direction**: Optional override for the template parameter. Valid values are 'send' and 'receive' to be provided as string.
-- **central_address**: Runtime central address specification when using \<%= central_address %\> notation in the Central address field. The central or node API port can be specified with colon notation (e.g., 172.12.45.67:9092).
+- **central_address**: Runtime central address specification when using \<%= central_address %\> notation in the Central address field. The central or node API port can be specified with colon notation (e.g., 192.0.2.67:9092).
 
 #### Outputs Description
 
@@ -24829,12 +24829,12 @@ In most cases, all the inputs are optional. The exception being when the node to
 - **Compatibility:** This plugin works against Enterprise Server, Connect Server, and Point to Point as they all use Aspera Central to expose the transfer sessions.
 - **Server Configuration:** The reliable API must be enabled on the Aspera Server being polled, and the IP address polling needs to be enabled with the following configuration in aspera.conf: \<central_server\> \<address\>0.0.0.0\</address\> \<port\>40001\</port\> \<persistent_store\>enable\</persistent_store\> \</central_server\>
 - **Node API Authentication:** If a node user and password are specified, there is no need to change the address to 0.0.0.0 since the requests will not go directly to central (via port 40001) but to NodeAPI.
-- **Runtime Address Input:** If you want to enter a central address in runtime input rather than a remote node, use the \<%= central_address %\> notation within the Central address field. The central or node API port can be specified in this input with the colon notation after the address such as 172.12.45.67:9092.
+- **Runtime Address Input:** If you want to enter a central address in runtime input rather than a remote node, use the \<%= central_address %\> notation within the Central address field. The central or node API port can be specified in this input with the colon notation after the address such as 192.0.2.67:9092.
 - **Async Activity Logging:** If you are using async, in the default section of the aspera.conf file, the tag \<async_activity_logging\>true\</async_activity_logging\> must be specified for async activity to be reported to Aspera Central.
 - **Filter Examples:** If the central watcher needs to find files only from the folder '/tmp/server1/' then the File Filter can be set as '^/tmp/server1/.\*'. Similarly, if even 1 file from the session contains 'hdfs//', then apply the session filter as '(^hdfs//.\*)' to filter out the entire session.
 - **Filter Updates:** After adding/updating/removing a filter, restart the workorder. It's not sufficient to reset the workorder as you may get a Filter Changed Error.
 - **WSDL Configuration:** The WSDL found at asperacentral:40001/console/services/soap/FASPSession.wsdl cannot be used as is. It assumes web service calls to be local and thus would not work if orchestrator is running on a different machine than the enterprise server. Use the Orchestrator WSDL generator (don't put anything in the central service WSDL address) or save a local copy of the WSDL and edit the IP address to reflect the address at which the Enterprise Server is actually found.
-- **WSDL Generator:** The central service WSDL address is by default built out of /opt/aspera/orchestrator/config/orchestrator/actions/aspera_central_watchers/wsdl/FASPSession200911.wsdl.erb, shipped with Orchestrator. The IP address (127.0.0.1) is replaced at runtime by the actual central address. The built WSDL address path looks like file:///opt/aspera/var/run/orchestrator/aspera_central_watchers/wsdl/37.58.115.131_40001\_\_gen_FASPSession200911.wsdl.
+- **WSDL Generator:** The central service WSDL address is by default built out of /opt/aspera/orchestrator/config/orchestrator/actions/aspera_central_watchers/wsdl/FASPSession200911.wsdl.erb, shipped with Orchestrator. The IP address (127.0.0.1) is replaced at runtime by the actual central address. The built WSDL address path looks like file:///opt/aspera/var/run/orchestrator/aspera_central_watchers/wsdl/192.0.2.131_40001\_\_gen_FASPSession200911.wsdl.
 
 #### Dependencies
 
@@ -24933,7 +24933,7 @@ This plugin can be used to trigger workflows on new packages uploaded to Aspera 
 | **AoC Client Secret** | \*\*\*\*\*\*\*\* |
 | **AoC Organization Name** | mycompany |
 | **Scope** | user:all |
-| **AoC User Name** | monitor@company.com |
+| **AoC User Name** | monitor@example.com |
 | **Private key filepath** | /opt/aspera/keys/aoc_private_key |
 | **AoC Packages Folder** | /workspaces/ws123/packages/ |
 | **Keep Ongoing** | checked |
@@ -25511,7 +25511,7 @@ This is a minimal configuration example for the AzureServiceBusTrigger plug-in.
 | Azure key name      | \<sample_key_name\>                    |
 | Azure key           | \<sample_key\>                         |
 | Queue or Topic name | topic1                                 |
-| Proxy url           | https://test-source.azure-bus.com/bus1 |
+| Proxy url           | https://test-source.example.com/bus1 |
 | Operation           | Message_get_from_queue                 |
 
 #### Saved Parameters Description
@@ -25564,7 +25564,7 @@ None
 2.  Specify the Azure Service Bus **namespace, access key name, and access key**.
 3.  Specify the **queue or topic name**.
 4.  Specify the **subscription name** only when retrieving messages from a topic.
-5.  Specify a **proxy URL** (e.g., https://myproxy.com:8443) if direct Internet access is not available. Without a proxy, Orchestrator must be able to reach .servicebus.windows.net on port 443.
+5.  Specify a **proxy URL** (e.g., https://proxy.example.com:8443) if direct Internet access is not available. Without a proxy, Orchestrator must be able to reach .servicebus.windows.net on port 443.
 6.  Enter the operation to execute **(Message_get_from_queue or Message_get_from_topic)**. Only one message can be retrieved with either operation.
 7.  Message_get_from_queue and Message_get_from_topic are **get-and-delete operations**.
 8.  Select **Continue Monitoring** to continue monitoring for new messages indefinitely.
@@ -25782,11 +25782,11 @@ hostname:1521/ORCLPDB1
 
 **ODBC-Style Example (Canonical):**
 
-Driver={ODBC Driver 17 for SQL Server};Server=10.10.1.10,1433;Database=mydb;Uid=user;Pwd=<YOUR_PASSWORD>;
+Driver={ODBC Driver 17 for SQL Server};Server=10.10.1.10,1433;Database=mydb;Uid=user;Pwd=`<YOUR_PASSWORD>`;
 
 **TinyTDS Alternative Syntax:**
 
-server=10.10.1.10;port=1433;database=mydb;username=user;password=<YOUR_PASSWORD>;
+server=10.10.1.10;port=1433;database=mydb;username=user;password=`<YOUR_PASSWORD>`;
 
 #### Connection Precedence
 
@@ -26093,7 +26093,7 @@ Not using SSL when it is mandated (or vice versa) usually results in errors for 
 
 **Some supported filter expressions:**
 
-- FROM alex@ibm.com
+- FROM alex@example.com
 - SUBJECT "hello"
 
 
@@ -26163,10 +26163,10 @@ This plugin monitors Faspex5 server mailboxes for incoming packages matching spe
 | Parameter                     | Example Value                       |
 |-------------------------------|-------------------------------------|
 | **Faspex Node**               | faspex5-server                      |
-| **Faspex Service Address**    | https://faspex5.company.com         |
-| **Private key**               | <PEM_PRIVATE_KEY> |
+| **Faspex Service Address**    | https://faspex5.example.com         |
+| **Private key**               | `<PEM_PRIVATE_KEY>` |
 | **Packages root**             | /opt/aspera/var/packages            |
-| **Faspex User**               | orchestrator@company.com            |
+| **Faspex User**               | orchestrator@example.com            |
 | **API Client ID**             | orchestrator-client-12345           |
 | **General Search**            | urgent OR priority                  |
 | **Limit**                     | 20                                  |
@@ -26360,7 +26360,7 @@ Provides the capability to monitor Faspex 5 package uploads, downloads, and comp
 | **Name**                      | Package Upload Monitor             |
 | **Comments**                  | Monitors package upload completion |
 | **Faspex Node**               | faspex-server-01                   |
-| **SSH Private key**           | <PEM_PRIVATE_KEY>     |
+| **SSH Private key**           | `<PEM_PRIVATE_KEY>`     |
 | **Faspex User**               | monitor_user                       |
 | **Faspex API Client ID**      | orchestrator-client-id             |
 | **Polling frequency**         | 30                                 |
@@ -27953,7 +27953,7 @@ Enables hot folder functionality on a remote server using SFTP for automated fil
     - **Name**: The name used to identify a saved SftpTrigger configuration instance.
     - **Comments**: Comments related to the SftpTrigger template.
     - **Remote Node**<span style="color: red;">\*</span>: The remote node to connect to.
-    - **Remote Address**<span style="color: red;">\*</span>: IP address or hostname of the SFTP server (e.g., lala.com or 10.0.200.202).
+    - **Remote Address**<span style="color: red;">\*</span>: IP address or hostname of the SFTP server (e.g., example.com or 10.0.200.202).
     - **Remote Port**<span style="color: red;">\*</span>: The port on which the SFTP server listens for requests.
     - **Remote User**<span style="color: red;">\*</span>: The login ID required for authentication on the SFTP server.
     - **Remote Password**<span style="color: red;">\*</span>: The password associated with the user for authentication.
@@ -27990,11 +27990,11 @@ This configuration checks for the creation of files with a .txt extension in the
 | **Name** | The name used to identify a saved SftpTrigger configuration instance. |
 | **Comments** | Comments related to the SftpTrigger template. |
 | **Remote Node** | The remote node to connect to. |
-| **Remote Address** | IP address or hostname of the SFTP server (e.g., lala.com or 10.0.200.202). |
+| **Remote Address** | IP address or hostname of the SFTP server (e.g., example.com or 10.0.200.202). |
 | **Remote Port** | The port on which the SFTP server listens for requests. |
 | **Remote User** | The login ID required for authentication on the SFTP server. |
 | **Remote Password** | The password associated with the user for authentication. |
-| **Proxy Host (Optional)** | If an HTTP proxy is used to access the SFTP server, provide the hostname or IP address (e.g., proxy.lala.com or 10.0.200.202). |
+| **Proxy Host (Optional)** | If an HTTP proxy is used to access the SFTP server, provide the hostname or IP address (e.g., proxy.example.com or 10.0.200.202). |
 | **Proxy Port (Optional)** | The port on which the proxy server listens for requests. |
 | **Proxy User (Optional)** | The login ID for authentication if the proxy server requires it. |
 | **Proxy Password (Optional)** | The password for the proxy user if authentication is required. |
@@ -28236,7 +28236,7 @@ This plugin monitors Sony Ci folders for new files matching specified patterns a
 
 | Parameter                     | Example Value                    |
 |-------------------------------|----------------------------------|
-| **Username**                  | user@company.com                 |
+| **Username**                  | user@example.com                 |
 | **Password**                  | \*\*\*\*\*\*\*\*                 |
 | **Client id**                 | abc123def456                     |
 | **Client secret**             | \*\*\*\*\*\*\*\*                 |
@@ -28578,7 +28578,7 @@ Provide an XML template describing how to build the email. Minimal fields are *D
 
 \
   \<MessageDefinition\>\
-  \<Destinations\>\<To\>orchestrator@asperasoft.com\</To\>\</Destinations\>\
+  \<Destinations\>\<To\>orchestrator@example.com\</To\>\</Destinations\>\
   \<Subject\>New notification\</Subject\>\
   \<Message\>You have received a new notification.\</Message\>\
   \</MessageDefinition\>\
@@ -28845,7 +28845,7 @@ This action plug-in provides the ability to interact with Slack
 |-------|---------------------------------------------------|
 | **Name** | Workflow Completion Notification |
 | **Comments** | Sends notification when workflow completes |
-| **token** | <SLACK_TOKEN> |
+| **token** | `<SLACK_TOKEN>` |
 | **slack url** | https://slack.com/ |
 | **operation** | Send a Message |
 | **channel** | \#my-channel |
@@ -29106,7 +29106,7 @@ This plugin provides an interactive way to present information and collect data 
 | **On-going trigger** | unchecked |
 | **Provide all user informations in outputs?** | checked |
 | **Send notification email** | checked |
-| **Mail server** | smtp.company.com |
+| **Mail server** | smtp.example.com |
 | **Subject** | Media Review Required - Workflow Task |
 | **Email body** | Review the transcoded media file and provide approval. |
 | **Users** | john.doe, jane.smith |

@@ -1,0 +1,43 @@
+% Cover and last pages, for PDF with LuaLaTeX, see README.md
+% Positions are in pixels of cover.jpg, 1086 pixels wide, so that they follow the picture.
+\definecolor{covertext}{HTML}{00000E}
+\definecolor{coverrule}{HTML}{03B8F8}
+\newcommand{\coverpx}[1]{\dimexpr\paperwidth*#1/1086\relax}
+% Arguments: left, first baseline, width, text
+\newcommand{\coverput}[4]{\AtPageUpperLeft{\hspace*{\coverpx{#1}}\raisebox{-\coverpx{#2}}{\parbox[t]{\coverpx{#3}}{\raggedright #4}}}}
+% The picture is 3:4, it goes past the bottom of a Letter page
+\renewcommand{\gfmcoverbackground}{\AddToShipoutPictureBG*{
+    \AtPageUpperLeft{\raisebox{-\height}{\includegraphics[width=\paperwidth]{cover.jpg}}}
+  }}
+\renewcommand{\gfmlastbackground}{\AddToShipoutPictureBG*{
+    \AtPageUpperLeft{\raisebox{-\height}{\includegraphics[width=\paperwidth]{back_top.jpg}}}
+    \AtPageLowerLeft{\includegraphics[width=\paperwidth]{back_bottom.jpg}}
+  }}
+% Title of the document without the first words, shown apart in bold
+\ExplSyntaxOn
+\NewDocumentCommand{\coverdocumenttitle}{}{
+  \tl_set_eq:Nc \l_tmpa_tl {@title}
+  \tl_remove_once:Nn \l_tmpa_tl {Aspera~Orchestrator~}
+  \tl_use:N \l_tmpa_tl
+}
+\ExplSyntaxOff
+\makeatletter
+\renewcommand{\maketitle}{%
+  \begin{titlepage}%
+    \AddToShipoutPictureFG*{%
+      \color{covertext}%
+      \coverput{75}{465}{745}{%
+        \fontsize{38}{44}\selectfont
+        {\bfseries Aspera Orchestrator\par}%
+        \coverdocumenttitle\par
+        \vspace{23pt}%
+        \fontsize{17}{30}\selectfont
+        \@author\par
+        \@date\par}%
+      \coverput{72}{1296}{93}{\color{coverrule}\rule{\coverpx{93}}{3pt}}%
+      \coverput{72}{1344}{800}{\color{white}\fontsize{11.5}{14}\selectfont\addfontfeatures{LetterSpace=18}BUILD\hspace{1em}•\hspace{1em}AUTOMATE\hspace{1em}•\hspace{1em}ORCHESTRATE\par}%
+    }%
+    \null
+  \end{titlepage}%
+}
+\makeatother
