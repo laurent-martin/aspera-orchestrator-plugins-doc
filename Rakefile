@@ -263,10 +263,10 @@ namespace :doc do
     File.write(PATH_DOCS / 'action-template-reference.md', ActionTemplateReference.new(actions_dir, probe).markdown(BUILD_VERSION, overlay))
   end
 
-  desc 'Compare the REST API of Orchestrator (RPM extract) with its OpenAPI description (env var OPENAPI, default: clone of aspera-api-examples next to this one)'
+  desc 'Compare the REST API of Orchestrator (RPM extract) with its OpenAPI description (env var OPENAPI, default: clone of aspera-cli next to this one)'
   task :api_check do
     require_relative 'lib/api_check'
-    openapi = ENV['OPENAPI'] || (TOP.parent / 'aspera-api-examples' / 'openapi' / 'IBM Aspera Orchestrator API-v1-enhanced.yaml').to_s
+    openapi = ENV['OPENAPI'] || (TOP.parent / 'aspera-cli' / 'lib' / 'aspera' / 'schema' / 'IBM Aspera Orchestrator API-v1-enhanced.yaml').to_s
     puts ApiCheck.new((PATH_RPM_OUT / 'opt' / 'aspera' / 'orchestrator').to_s, openapi).markdown
   end
 

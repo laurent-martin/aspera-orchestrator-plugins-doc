@@ -481,7 +481,7 @@ A workflow must be configurable: IP addresses, credentials, folders, e-mail list
 | Values that depend on a key (source folder, customer, variant, server) | `SimpleParameterLookup` (lookup table), as a template. |
 | Address and credentials of a server | A remote node. |
 | Values that differ between test and production servers | Environment variables in `MassParameterSetter` ([below](#stored-parameter-set)). |
-| A secret | See [Secrets](#secrets) in the Authoring Guide. |
+| A secret | A runtime parameter of type `pwd`, a remote node or a secret reference: see [Using secrets](#using-secrets). |
 
 #### Stored parameter set
 
@@ -540,11 +540,29 @@ Steps and lookup tables refer to the node, not to its address: when the address 
 - With Windows nodes, the health check of balancing can leave SSH connections in `CLOSE_WAIT` until the SSH server refuses new ones: set the keep-alive port to `0`.
 - In a high-availability setup, check connectivity (TCP, SSH, FASP) from both Orchestrator nodes.
 
-#### Values in step settings
+#### Using secrets
 
-- Password masking: the work order view masks values according to type and name; see [Where a secret is displayed](#where-a-secret-is-displayed).
-  In Orchestrator 3.x and 4.0, `password_field_definition_regex` added name patterns (`pwd`, `secret`, `key`).
+Where a secret is stored and displayed depends on how it reaches the step: see [Secrets](#secrets).
+
+- Do not write a secret in a workflow file, in a template attribute, or in a `Map_to` of type `value`: it stays in clear on the server and in exports.
+  Leave the attribute blank: it becomes an input of the step (see [Inputs of a step](#inputs-of-a-step)), and map this input to a parameter.
 - Do not put credentials in a JSON body or a payload file: map them from a remote node or a runtime parameter.
+- Give the secret when starting the workflow: a runtime parameter of type `pwd`, required, without `Value` (see [Secret given at run time](#secret-given-at-run-time)).
+  The secret is then in no revision, export or Git push, and `workflow_inputs_spec` does not return it.
+- For the credentials of a server defined as a remote node, refer to the remote node by name.
+  For email, refer to a mail server configuration (`mailer_name`).
+- To keep a secret in an external store, write a [secret reference](#secret-references) instead of its value.
+- Name a runtime parameter that carries a secret so that the request log filters it: with `password`, `secret` or `token` in its name, for example `db_password`.
+- In `CustomRuby`, declare the inputs and outputs that carry a secret with type `pwd`: they are masked on the work step page, and a `pwd` output is stored encrypted.
+- Pass the secret in the JSON body of `POST api/initiate`, never in the URL: the access log of the web server records the URL.
+  `ascli orchestrator workflows start` sends the parameters in the body.
+  Do not type the secret on the command line (shell history, process list): read the parameters from a file, or from an environment variable, with `@json:@file:<PARAMS_FILE>` or `@json:@env:<VARIABLE>`.
+- Do not put a secret in an output, in `@status_details`, in an exception message or in a log (`Rails.logger`, `puts`).
+  Outputs are returned by the API, and the status details of a step are in its output `Step_information`.
+- Do not count on masking to protect a secret: the web UI masks values only according to their type and name, and the API does not mask.
+- Give the permission to view the workflow only to the users who may read its secrets: the API returns them decrypted.
+- With Git, enable **Protect Passwords on Push** and set an export token (Orchestrator 4.1.7 and later).
+  It protects `pwd` values, not template attributes.
 
 ### Control flow
 
@@ -1259,7 +1277,7 @@ The page shows these fields after the standard ones (description, comments, exec
 - The page is opened at `https://<ORCHESTRATOR_HOST>/aspera/orchestrator/work_orders/direct_start/<WORKFLOW_ID>`, from the work order creation, from a dashboard, or from a link in a custom portlet.
 - It starts the work order and does not report its result.
   For a page that starts and follows work orders (a "fast track" page for editors, for example), write a portlet that calls the API ([Portlet Development Guide](#portlet-development)).
-- Avoid credentials in URLs (`login=`, `password=`, with `inline_auth_allowed: true`): URLs are logged.
+- Do not put credentials in a link to this page (`login=`, `password=`): URLs are logged (see [Where a secret is displayed](#where-a-secret-is-displayed)), and the page does not read them (see [REST API](#rest-api)).
 
 ### Monitoring and operations
 
@@ -1372,14 +1390,12 @@ An **asynchronous** worker starts a job and polls its status, serving many steps
 
 ### Integration API
 
-An external application can start and follow work orders through the REST API, with XML or JSON responses: no watcher needed, which saves polling.
+An external application can start and follow work orders through the [REST API](#rest-api): no watcher needed, which saves polling.
 
-- `initiate` starts a work order, with runtime parameters as `external_parameters[name]`, synchronously or asynchronously.
-- Other calls list work orders of a workflow (by status and date), return the status, steps and outputs of a work order, cancel or reset work orders, import workflows, and take resources online or offline.
-- **Workflows > API tutorial** in the user interface tests the calls.
 - Encode special characters in URLs.
-- Pass credentials in the `Authorization` header, never in the URL, and parameters that hold secrets in the body: see [REST API](#rest-api) and [Secrets](#secrets) in the Authoring Guide.
-- `ascli` wraps the API: `ascli orchestrator workflows start <WORKFLOW_ID> @json:'{"file_path":"<FILE_PATH>"}'`.
+- Pass credentials in the `Authorization` header, never in the URL, even when query parameters `login` and `password` are accepted: URLs are logged (see [Where a secret is displayed](#where-a-secret-is-displayed)).
+  For a parameter that holds a secret, see [Using secrets](#using-secrets).
+- `ascli` wraps the API, which saves writing the calls: see [ascli commands](#ascli-commands).
 - With several Orchestrator servers, call them through one address (load balancer or DNS).
 
 #### Inline validation
@@ -2178,6 +2194,7 @@ Orchestrator has no secret store for workflows.
 A secret (password, API key, token, passphrase) reaches a step from a template attribute, from an input mapped to a value or to a parameter, or from an entity of the server, such as a remote node.
 These ways differ in where the value is stored in clear, and in who can read it.
 With the plugin `SecretReference`, a workflow holds a reference to a secret of an external store instead of the secret, see [Secret references](#secret-references).
+The rules that follow from this are in [Using secrets](#using-secrets).
 
 #### Where a secret is stored
 
@@ -2187,6 +2204,7 @@ With the plugin `SecretReference`, a workflow holds a reference to a secret of a
 | `Map_to` of type `value` | Clear, in the graph XML of each revision. | Clear. |
 | `Value` of a parameter of type `pwd` | Clear, in the graph XML of each revision. Encrypted in the published workflow. | Clear. |
 | Runtime parameter of type `pwd`, given when starting the workflow | Encrypted, in the variables of the work order. | Not exported. |
+| Output of type `pwd` | Encrypted, in the variables of the work order. | Not exported. |
 | Remote node, referred to by name (see [Referring to existing entities](#referring-to-existing-entities)) | Encrypted, in the remote node. | The name only. A `.wkf` package contains the node, with its password encrypted with the key of the exporting server. |
 | [Secret reference](#secret-references) `secret://...`, in any of the above | The reference only. The secret is in its store: HashiCorp Vault, an encrypted file, or a remote node. | The reference only. |
 
@@ -2204,7 +2222,9 @@ The work step page of the web UI masks:
 
 - Inputs and outputs of type `pwd`.
   The type of an input is the one declared by the plugin, not the type of the parameter mapped to it.
+  In `CustomRuby`, the author of the step declares this type, and a `pwd` input accepts a `string` value.
 - Inputs, outputs and carry-throughs whose name contains `password` (any case), when the server option `mask_password_variables` is set (the default).
+  Orchestrator 3.x and 4.0 also had the option `password_field_definition_regex`, which added name patterns (`pwd`, `secret`, `key`); 4.1.6 no longer has it.
 
 Other values are displayed in clear, even when they come from a `pwd` parameter.
 For example, inputs `Aws_secret` (Amazon plugins), `Files_client_secret`, `Api_token` and `Apikey` are of type `string`: check the type and the name of an input in [plugins.yml](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/plugins.yml).
@@ -2241,27 +2261,9 @@ secret://<STORE>/<PATH>[?<OPTIONS>][#<FIELD>]
 
 Installation, configuration and the dashboard are described in the README of the repository.
 
-#### Recommendations
+#### Secret given at run time
 
-1. Do not write a secret in a workflow file, in a template attribute, or in a `Map_to` of type `value`.
-   Leave the attribute blank: it becomes an input of the step (see [Inputs of a step](#inputs-of-a-step)), and map this input to a parameter.
-2. Give the secret when starting the workflow: a runtime parameter of type `pwd`, required, without `Value`.
-   The secret is then in no revision, export or Git push, and `workflow_inputs_spec` does not return it.
-3. For the credentials of a server defined as a remote node, refer to the remote node by name.
-   For email, refer to a mail server configuration (`mailer_name`).
-4. Name a runtime parameter that carries a secret so that the request log filters it: with `password`, `secret` or `token` in its name, for example `db_password`.
-5. In `CustomRuby`, declare the inputs and outputs that carry a secret with type `pwd`: they are masked on the work step page, and a `pwd` output is stored encrypted.
-   A `pwd` input accepts a `string` value.
-6. Pass the secret in the JSON body of `POST api/initiate`, never in the URL.
-   `ascli orchestrator workflows start` sends the parameters in the body.
-   Do not type the secret on the command line (shell history, process list): read the parameters from a file, or from an environment variable, with `@json:@file:<PARAMS_FILE>` or `@json:@env:<VARIABLE>`.
-7. Do not put a secret in an output, in `@status_details`, in an exception message or in a log (`Rails.logger`, `puts`).
-   Outputs are returned by the API, and the status details of a step are in its output `Step_information`.
-8. Give the permission to view the workflow only to the users who may read its secrets: the API returns them decrypted.
-9. With Git, enable **Protect Passwords on Push** and set an export token (Orchestrator 4.1.7 and later).
-   It protects `pwd` values, not template attributes.
-
-Example: `DatabaseQuery`, with attribute `database_password` left blank, has a required input `DB_password` of type `pwd`.
+`DatabaseQuery`, with attribute `database_password` left blank, has a required input `DB_password` of type `pwd`.
 Map it to a required runtime parameter:
 
 ```xml
@@ -3302,7 +3304,7 @@ File:
 - Each template key `<StepType>__<N>` matches the `Step_type` and `Action_id` of its steps.
 - Embedded templates named `W0__<step name>`.
 - `LocalFileWatcher` templates have `remove_file` `0` or `1`, not blank (else no trigger history).
-- No secret in the file: secrets are given by runtime `pwd` parameters, or by remote nodes (see [Secrets](#secrets)).
+- No secret in the file: secrets are given by runtime `pwd` parameters, or by remote nodes (see [Using secrets](#using-secrets)).
 
 Graph:
 
@@ -3324,13 +3326,22 @@ Graph:
 ### REST API
 
 Base URL: `https://<host>/aspera/orchestrator/api/`.
-Authentication: a JWT obtained with `POST api/login`, or query parameters `login` and `password` when JWT authentication is disabled.
 The response format is chosen with query parameter `format` (`xml`, the default, or `json`).
+
+Authentication depends on the option **Use Secure JWT API Auth** (`use_secure_jwt_api_auth`, set by default):
+
+| Option | Authentication |
+|--------|----------------|
+| Set | Header `Authorization: Bearer <TOKEN>`. `POST api/login`, with `username` and either `password` or `api_key` (the API key of the user), returns the token in `token`. **API JWT Token Expiry** (`api_jwt_token_expiry_seconds`) sets its lifetime, 24 hours by default. |
+| Not set | HTTP Basic, or query parameters `login` with `password` or `api_key`. `POST api/login` answers with status 403. |
+
+The pages of the web interface, such as a [direct start](#direct-start) page, do not read these query parameters: with the option **Inline Auth Allowed** (`inline_auth_allowed`, not set by default), they accept HTTP Basic.
 
 Routes: each endpoint below has a route with the given method.
 In addition, any endpoint can be called as `api/<endpoint>/<id>`, with any HTTP method, where `<id>` is the main identifier (workflow or work order).
 Some endpoints have no other route (for example `export_workflow`, `list_monitors`, `journal_files`, `pool_status`): when they do not use `<id>`, any value works, for example `0`.
-The [OpenAPI description](https://github.com/laurent-martin/aspera-api-examples/blob/main/openapi/IBM%20Aspera%20Orchestrator%20API-v1-enhanced.yaml) lists all endpoints and their parameters, checked against Orchestrator with `rake doc:api_check` of this repository.
+The [OpenAPI description](https://github.com/IBM/aspera-cli/blob/main/lib/aspera/schema/IBM%20Aspera%20Orchestrator%20API-v1-enhanced.yaml) lists all endpoints and their parameters, checked against Orchestrator with `rake doc:api_check` of this repository.
+**Swagger API**, in the help pages of the web interface (`https://<host>/aspera/orchestrator/api-docs`), shows the description delivered with Orchestrator, and can try calls.
 
 Errors are returned with the exception message and stack trace in the response body.
 
@@ -3435,10 +3446,13 @@ A JSON array as value fails with status 500 (`undefined method 'gsub' for an ins
 | `GET api/workflows_list` | All workflows: id, name, portable id, published and latest revision. |
 | `GET api/workflow_inputs_spec/<id>` | Runtime parameters: name, type, optional, default value. |
 | `GET api/workflow_outputs_spec/<id>` | Outputs: `<step name>:<output name>`, type. |
-| `GET api/work_orders_list/<workflow id>` | Work orders of a workflow. |
-| `GET api/work_order_status/<id>` | Status of a work order. |
+| `GET api/work_orders_list/<workflow id>` | Work orders of a workflow, or of all workflows with `all`. Filters: `status`, `priority`, `from_date`, `to_date`, `tag`, `max_results`. |
+| `GET api/work_order_status/<id>` | Status of a work order and of its work steps. For a sub-workflow, only its status, not its steps. |
 | `GET api/work_order_output/<id>` | Output values of a work order (XML: one `variable` element per output). |
 | `GET api/work_order_cancel/<id>` | Cancel a work order. |
+| `GET api/work_order_reset/<WORK_ORDER_ID>` | Reset a work order. |
+| `GET api/work_step_status/<WORK_STEP_ID>` | Status, inputs and outputs of a work step. Parameters such as `set_status` change its status. |
+| `GET api/resource_online/0?pool_name=<POOL_NAME>&resource_name=<RESOURCE_NAME>` | Take a resource of a pool online. `api/resource_offline` takes the same parameters. |
 
 #### ascli commands
 
