@@ -7,6 +7,62 @@ common:
 
 # Aspera Orchestrator Development Guide
 
+## Concepts
+
+### Terminology
+
+This table is the only definition of the terms used in the chapters.
+The last column gives the label that the web interface shows, when it differs.
+
+| Term | Meaning | In the web interface |
+|------|---------|----------------------|
+| Workflow | A named process definition: steps, links and conditions, identified by an integer `id` and a `portable_id` (UUID). Like a class in object-oriented programming. | Workflow |
+| Whiteboard | One revision of the design of a workflow: the graph, stored as XML in attribute `xml_export`. | Revision |
+| Publish | Build the runnable workflow (steps, inputs, outputs, parameters, branches) from a whiteboard. Only a published revision runs. | **Publish** |
+| Work order | One execution of a published workflow. Like an object, an instance of the class. | Work order |
+| Step | A node of the graph that executes an action. | Step |
+| Work step | One execution of a step in a work order. | Work step |
+| Action plugin, plugin | The type of a step, for example `CustomRuby` (step type, action type). In development, a Ruby class that includes module `Action`, and its folder. The designer shows display names, listed in [Practices introduction](#practices-introduction). | Action |
+| Action template, template | A configured instance of an action plugin: a database record holding the plugin settings (its attributes). Each step references one template by `Step_type` and `Action_id`. | Template |
+| Embedded template | A template that belongs to one workflow, named `W<workflow id>__<step name>`. | Configuration (**New configuration**) |
+| Global template | A template shared by several workflows, identified by its name. It is created in **Workflows > Workflow Actions**. | Template |
+| Attribute | A setting of a template: a column of the plugin table, edited in the template form. | Field of the form |
+| Input, Output | Named values consumed and produced by a step, as declared by the action plugin (`inputs_spec`, `outputs_spec`). | Inputs, Outputs tabs |
+| Parameter | A named value of the workflow. A runtime parameter can be set when starting the workflow. Linked to **Start**, it is global. | Parameter |
+| Carry through | Option of a step output that passes it to the step after the next one. | Carry Thru? |
+| Trigger, watcher | A step that waits for an event (file, transfer, message, schedule) and starts the processing. | Trigger |
+| Work order group | The work orders cloned from one trigger started with **Continue monitoring**. | History scope: by workorder group |
+| Worker | A process of Orchestrator that executes steps: synchronous (busy until the step ends) or asynchronous (polls). | - |
+| Stock folder | The source of a plugin (`/opt/aspera/orchestrator/actions/<folder>`) or of a portlet (`/opt/aspera/orchestrator/portlets/<id>`). | - |
+| Load folder | `<config_dir>/actions/<folder>`, by default `/opt/aspera/var/config/orchestrator/actions/<folder>`: the copy of the stock folder made when the plugin is enabled, from which Orchestrator loads it. | - |
+| Portlet | A Ruby class that inherits from `Portlet`, for example `HelloBanner`, and its folder. Displays one widget. | Portlet |
+| Portlet ID | The folder name in snake_case, for example `hello_banner`. The class name is `portlet_id.camelize`. | - |
+| User folder | `<config_dir>/portlets/<id>`, by default `/opt/aspera/var/config/orchestrator/portlets/<id>`: portlets written or imported by the user. | - |
+| Frame | A zone of a dashboard page. A frame shows one portlet, or is split horizontally or vertically into sub-frames. Stored in table `frames`. | Frame |
+| Dashboard | The frames of a user or of a group. | Menu **Dashboard** |
+| Portlet parameter | A named, typed setting of a portlet, edited in the configuration of the frame and stored in the frame, not in the portlet. Not a workflow parameter. | Frame configuration |
+| Runtime value | The value of a portlet parameter during one display: the frame value, or the default. | - |
+| Portlet action | A public method of the portlet controller, called from the view with an HTTP request, for example to load a table page. | - |
+| Custom portlet | A portlet defined in the web interface (Ruby and ERB text in the database) instead of files. See [Custom portlets](#custom-portlets). | Custom portlet |
+
+Template wording: the Authoring Guide says *embedded template* and *global template* where the Practices Guide, which follows the designer, says *configuration* and *template*.
+Plugin development says *template* for both.
+Where a text only says *template*, it means either kind.
+
+
+### Statuses
+
+A work step ends with one of the following statuses, which are matched by the `status` of prerequisites:
+
+| Status | Meaning |
+|--------|---------|
+| `Complete` | Success. |
+| `Failed` | Functional failure (for example a filter evaluated to false). |
+| `Error` | Technical error (exception, timeout with `On_timeout` set to `Error`). |
+
+While running, a work step can also be `Inactive`, `In Progress`, `Paused`, `Canceling`, and so on.
+A work order is `Complete`, `Failed` or `Error` when it reaches `End`, `Fail` or `Error`, and `Canceled` when canceled.
+
 ## Workflow development practices
 
 ### Practices introduction
@@ -33,22 +89,6 @@ Related documents:
 - [Action Template Reference](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/action-template-reference.md) and [plugins.yml](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/plugins.yml): attributes, inputs and outputs of every plugin.
 - [Plugin Manual](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/Orchestrator_Plugin_Manual.md): functional description of each plugin.
 - [Plugin Development Guide](#plugin-development) and [Portlet Development Guide](#portlet-development).
-
-#### Practices terminology
-
-| Term | Meaning |
-| ------ | --------- |
-| Workflow | The definition of a process: steps, links and conditions. Like a class in object-oriented programming. |
-| Work order | One execution of a workflow. Like an object, an instance of the class. |
-| Step, work step | A node of the workflow that runs one action plugin. A work step is the execution of a step in a work order. |
-| Plugin, action | The type of a step, for example `LocalFileWatcher`. Both words are used. |
-| Configuration | The settings of a step that belong to one workflow (embedded template, named `W<workflow id>__<step name>`). |
-| Template | Settings of a plugin shared by several workflows, created in **Workflows > Workflow Actions**. |
-| Trigger, watcher | A step that waits for an event (file, transfer, message, schedule) and starts the processing. |
-| Work order group | The work orders cloned from one trigger started with **Continue monitoring**. |
-| Worker | A process of Orchestrator that executes steps: synchronous (busy until the step ends) or asynchronous (polls). |
-| Parameter | An input of the workflow, given at start time (runtime parameter) or fixed. Linked to **Start**, it is global. |
-| Carry through | Option of a step output that passes it to the step after the next one. |
 
 The designer shows the plugin display names.
 This guide uses the plugin class names, as in [plugins.yml](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/plugins.yml):
@@ -349,7 +389,7 @@ A runtime parameter is given when the work order starts; it is optional when it 
   To change a value, produce a new output (for example in `CustomRuby`).
 - Give a default value when the parameter has the same value 99 % of the time.
 - For an empty default value, leave the field empty; do not write `""`.
-- Do not use parameter default values as constants shared by several workflows: use a [configuration template](#configuration).
+- Do not use parameter default values as constants shared by several workflows: use a global template ([Configuration](#configuration)).
 
 #### Practices placeholders
 
@@ -487,7 +527,7 @@ Steps and lookup tables refer to the node, not to its address: when the address 
 
 #### Exits and statuses
 
-Each step has one entry and three exits:
+Each step has one entry and three exits (the statuses are in [Statuses](#statuses)):
 
 | Exit | Status | Meaning | Example |
 | ------ | -------- | --------- | --------- |
@@ -1452,23 +1492,6 @@ Related documents:
 - [Plugin Manual](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/Orchestrator_Plugin_Manual.md): functional description of each action plugin.
 - [Plugin Development Guide](#plugin-development): how to write an action plugin.
 
-#### Terminology
-
-| Term | Meaning |
-|------|---------|
-| Workflow | A named process definition, identified by an integer `id` and a `portable_id` (UUID). |
-| Whiteboard | One revision of the design of a workflow: the graph, stored as XML in attribute `xml_export`. |
-| Publish | Build the runnable workflow (steps, inputs, outputs, parameters, branches) from a whiteboard. Only a published revision runs. |
-| Step | A node of the graph that executes an action. |
-| Action plugin | The type of a step, for example `CustomRuby`. Also called step type or action type. |
-| Action template | A configured instance of an action plugin: a database record holding the plugin settings (its attributes). Each step references one template by `Step_type` and `Action_id`. |
-| Embedded template | A template that belongs to one workflow. Its name is `W<workflow id>__<step name>`. |
-| Global template | A template shared by workflows, identified by its name. |
-| Parameter | A named value of the workflow. A runtime parameter can be set when starting the workflow. |
-| Input, Output | Named values consumed and produced by a step, as declared by the action plugin. |
-| Work order | One execution of a published workflow. |
-| Work step | One execution of a step in a work order. |
-
 ### Quick start
 
 The following file is a complete workflow with one step that returns a message.
@@ -2066,19 +2089,6 @@ Inputs and outputs (a name in angle brackets is the value of that template attri
 `if_blank`, `if_set` and `when` must all match, unless `conditional` is `true`.
 
 ### Execution
-
-#### Statuses
-
-A work step ends with one of the following statuses, which are matched by the `status` of prerequisites:
-
-| Status | Meaning |
-|--------|---------|
-| `Complete` | Success. |
-| `Failed` | Functional failure (for example a filter evaluated to false). |
-| `Error` | Technical error (exception, timeout with `On_timeout` set to `Error`). |
-
-While running, a work step can also be `Inactive`, `In Progress`, `Paused`, `Canceling`, and so on.
-A work order is `Complete`, `Failed` or `Error` when it reaches `End`, `Fail` or `Error`, and `Canceled` when canceled.
 
 #### Retries
 
@@ -3456,19 +3466,6 @@ Related documents:
 The shipped plugins are the best set of examples: folder `/opt/aspera/orchestrator/actions` of an Orchestrator server, one folder per plugin.
 `HelloWorld` (`hello_worlds`) is a reference implementation with pause, resume, cancel, rollback and recovery.
 
-#### Plugin terminology
-
-| Term | Meaning |
-| --- | --- |
-| Plugin | A Ruby class that includes module `Action`, for example `MyGreeting`, and its folder. Also called action plugin, action type or step type. |
-| Template | A configured instance of a plugin: one row of the plugin table, holding its settings (attributes). Also called action template. |
-| Attribute | A column of the plugin table: a setting of the template, edited in the template form. |
-| Step | A node of a workflow that runs a template. |
-| Work step | One execution of a step, in a work order (one execution of a workflow). |
-| Input, Output | Named values received and produced by a work step, declared by the plugin (`inputs_spec`, `outputs_spec`). |
-| Stock folder | `/opt/aspera/orchestrator/actions/<folder>`: the source of a plugin. |
-| Load folder | `<config_dir>/actions/<folder>`, by default `/opt/aspera/var/config/orchestrator/actions/<folder>`: the copy of the stock folder made when the plugin is enabled, from which Orchestrator loads it. |
-
 ### Plugin quick start
 
 The following plugin `MyGreeting` builds a message from a template attribute with placeholders.
@@ -4565,21 +4562,6 @@ The shipped portlets are the best set of examples: folder `/opt/aspera/orchestra
 `orchestrator_information` is the simplest, `user_tasks` has parameters and a permission check, `csv_editor` has uploads, a modal dialog and several actions, `queue_management` has pagination and `helper_method`.
 
 The repository [`aspera-orchestrator-secret-reference`](https://github.com/IBM/aspera-orchestrator-secret-reference) contains the portlet `secret_dashboard` as a worked example: it uses a plugin (`SecretCore`), has four sections with AJAX actions, an admin-only check in every action, and a full RSpec test suite that runs outside Rails with stubs of `Portlet`, `PortletsController`, `Workflow`, `WorkStep` and `User`.
-
-#### Portlet terminology
-
-| Term | Meaning |
-| --- | --- |
-| Portlet | A Ruby class that inherits from `Portlet`, for example `HelloBanner`, and its folder. Displays one widget. |
-| Portlet ID | The folder name in snake_case, for example `hello_banner`. The class name is `portlet_id.camelize`. |
-| Frame | A zone of a dashboard page. A frame shows one portlet, or is split horizontally or vertically into sub-frames. Stored in table `frames`. |
-| Dashboard | The frames of a user or of a group, shown by menu **Dashboard**. |
-| Parameter | A named, typed setting of a portlet, edited in the configuration of the frame and stored in the frame, not in the portlet. |
-| Runtime value | The value of a parameter during one display: the frame value, or the default. |
-| Portlet action | A public method of the portlet controller, called from the view with an HTTP request, for example to load a table page. |
-| Custom portlet | A portlet defined in the web interface (Ruby and ERB text in the database) instead of files. See [Custom portlets](#custom-portlets). |
-| Stock folder | `/opt/aspera/orchestrator/portlets/<id>`: shipped portlets. |
-| User folder | `<config_dir>/portlets/<id>`, by default `/opt/aspera/var/config/orchestrator/portlets/<id>`: portlets written or imported by the user. |
 
 ### Portlet quick start
 
