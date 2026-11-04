@@ -69,7 +69,7 @@ This table is the only definition of the terms used in the chapters.
 The last column gives the label that the web interface shows, when it differs.
 
 | Term | Meaning | In the web interface |
-|------|---------|----------------------|
+| --- | --- | --- |
 | Workflow | A named process definition: steps, links and conditions, identified by an integer `id` and a `portable_id` (UUID). Like a class in object-oriented programming. | Workflow |
 | Whiteboard | One revision of the design of a workflow: the graph, stored as XML in attribute `xml_export`. | Revision |
 | Publish | Build the runnable workflow (steps, inputs, outputs, parameters, branches) from a whiteboard. Only a published revision runs. | **Publish** |
@@ -109,7 +109,7 @@ The designer shows the plugin display names.
 This guide uses the plugin class names, as in [plugins.yml](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/plugins.yml):
 
 | Display name | Plugin |
-| -------------- | -------- |
+| --- | --- |
 | Stored parameter set (formerly mass parameter set) | `MassParameterSetter` |
 | Lookup table | `SimpleParameterLookup` |
 | Array fan-out (+), funnel-in (−) | `ArrayFanout`, `Funnelin` |
@@ -126,7 +126,7 @@ This guide uses the plugin class names, as in [plugins.yml](https://github.com/l
 A work step ends with one of the following statuses, which are matched by the `status` of prerequisites:
 
 | Status | Meaning |
-|--------|---------|
+| --- | --- |
 | `Complete` | Success. |
 | `Failed` | Functional failure (for example a filter evaluated to false). |
 | `Error` | Technical error (exception, timeout with `On_timeout` set to `Error`). |
@@ -195,7 +195,7 @@ The other plugins wrap the same techniques with a simpler interface.
 #### Automation levels
 
 | Level | Description | Started by |
-| ------- | ------------- | ------------ |
+| --- | --- | --- |
 | Fully automated | No human interaction. Every foreseeable error has a way out, even if it is a clean failure. | A trigger. |
 | Semi-automated | Automatic, but asks an operator in some cases (decision, missing data, error). | A trigger. |
 | One-shot | Runs when called, does its job and ends: maintenance, fix of one file, call from another system. | An operator, another workflow or an application. |
@@ -234,7 +234,7 @@ A `SubWorkflow` step inside the trigger workflow does not separate the **trigger
 #### Sub-workflow or workflow launcher
 
 | | `SubWorkflow` | `WorkflowLauncher` |
-| - | --------------- | -------------------- |
+| --- | --- | --- |
 | Waits for the called workflow | Yes: blocking, like a function call. | No: fire and forget (an option can wait for completion). |
 | Outputs | The outputs of the called workflow that you expose in the step configuration. | The id of the launched work order; its status when waiting. |
 | Status | Failure or error of the called workflow fails the step. | Success once launched, error if the launch fails. When waiting: a failure fails the step only with **Fail if launched work order fails**; an error or a cancel always fails it *(4.1.6)*. |
@@ -305,7 +305,7 @@ Step configurations and workflow revisions are versioned separately.
 A workflow revision shows the current values of its steps, not the values at the time of the revision; the history of a configuration or template is in its own **Revision log**.
 
 | What you changed | What to do |
-| ------------------ | ------------ |
+| --- | --- |
 | A value in a step configuration or a template | Save the step. Effective at the next execution of the step, without publishing. A running trigger uses the new value at its next clone; reset its work order to apply it at once. |
 | Steps, links, mappings, retries, timeouts, inputs or outputs | Save and publish. Run **new** work orders (new work order or relaunch). |
 | Custom inputs or outputs of a step (for example of `CustomRuby`) | Saved with the step, but the workflow does not know them until you publish. |
@@ -445,7 +445,7 @@ They are needed mostly between a single value and a list: a watcher returns a pa
 **Pre-processing** code on an input converts the value: the variable `input_value` holds the value and can be reassigned.
 
 | Conversion | Pre-processing |
-| ------------ | ---------------- |
+| --- | --- |
 | String to integer | `input_value = input_value.to_i` |
 | Value to array of one element | `input_value = [input_value]` |
 | First element of an array | `input_value = input_value[0]` |
@@ -479,7 +479,7 @@ A workflow must be configurable: IP addresses, credentials, folders, e-mail list
 **Never bury constants in step settings, in pre-processing or in Ruby code**: when a folder or a server changes, you must find every occurrence.
 
 | Need | Use |
-| ------ | ----- |
+| --- | --- |
 | Values identical for all executions (folders, e-mail addresses, URLs) | `MassParameterSetter` (stored parameter set), as a template. |
 | Values that depend on a key (source folder, customer, variant, server) | `SimpleParameterLookup` (lookup table), as a template. |
 | Address and credentials of a server | A remote node. |
@@ -574,7 +574,7 @@ Where a secret is stored and displayed depends on how it reaches the step: see [
 Each step has one entry and three exits (the statuses are in [Statuses](#statuses)):
 
 | Exit | Status | Meaning | Example |
-| ------ | -------- | --------- | --------- |
+| --- | --- | --- | --- |
 | Green | Complete | Success. | |
 | Yellow | Failed | Expected functional failure: the application says no. | Quality control rejects the file; transcoder cannot convert the format; filter returns false; no row in a lookup table. |
 | Red | Error | Unexpected technical error. | Server unreachable; required input missing; Ruby syntax error. |
@@ -658,7 +658,7 @@ Steps linked to the same exit start in parallel.
 "Parallel" means put in execution: the actual concurrency depends on the free workers.
 
 | Join | Success | Failure or error of a branch |
-| ------ | --------- | ------------------------------ |
+| --- | --- | --- |
 | AND (no operator) | Waits for all branches. | The first unhandled failure ends the work order. Other branches become obsolete. |
 | OR | The first branch to complete continues; the others become obsolete. | The first unhandled failure ends the work order, even if the other branch would succeed. |
 | OR "n of m" with all exits linked | Waits for all branches, whatever their result. | Same. Add a consolidation step that reads the step information of each branch. |
@@ -683,7 +683,7 @@ Steps linked to the same exit start in parallel.
 Alternatives:
 
 | Need | Use |
-| ------ | ----- |
+| --- | --- |
 | The same action on each element of a list | Fan-out and funnel-in ([below](#fan-out-and-funnel-in)). |
 | Repeat until a condition is met | A sub-workflow that ends **Failed** while the condition is not met, with retries on failure in the caller. |
 | Wait for a condition | A trigger without **Continue monitoring**, or `RestRequest` with a polling stop condition. |
@@ -868,7 +868,7 @@ The step information output of a step (`Step_information`) can be customized in 
 ![Modify Work Order: status Cleared, with the resolution in the comment](images/practices/4.1.6/change-work-order-status.png)
 
 | Status | Use |
-| -------- | ----- |
+| --- | --- |
 | Cleared | The failure was handled manually; write the resolution in the comment. This is the status used in almost all cases. Do not set Complete when not all steps ran: it is misleading. |
 | Flagged | Keep the work order: it is never purged, even with a workflow purge of 0 days. Use it rarely and write down why: thousands of old flagged work orders made a database slow. |
 | Rolled-back | The action was undone (for example the file was moved back to the watch folder to be detected again). Rarely used. |
@@ -897,7 +897,7 @@ The persistency scope sets the memory of a trigger: which elements it has alread
 [History of past triggers](#history-of-past-triggers) gives what each scope shares; this table gives when to use it:
 
 | Scope | Use |
-| ------- | ----- |
+| --- | --- |
 | by workorder group (default) | Files moved out of the watched folder after detection. To reprocess the files left in the folder (after a failure), restart the trigger. |
 | by workflow | Files that stay in the folder. Touch a file to detect it again. |
 | by step | Two watchers on the same folder in one workflow, with separate histories. |
@@ -942,7 +942,7 @@ In one real case, 15 000 work orders were created for one file within an hour; t
 #### Choosing a watcher
 
 | Watcher | Requirements | Notes |
-| --------- | -------------- | ------- |
+| --- | --- | --- |
 | `LocalFileWatcher` | The folder is local or mounted on Orchestrator (mount manager, `/etc/fstab`). | Glob by default (`**` for subfolders), regular expressions optional; one file by default; multi-folder search. The user that runs Orchestrator (`aspweb` in 4.1.6) must be able to read the folder, and to delete or move the files. |
 | `RemoteFileWatcher` | SSH access and the Aspera transfer software (`ascmd`), no transfer license needed. | Regular expressions; **Descend in sub directories**; returns a list; multi-folder search. Paths are relative to the docroot of the SSH user. One SSH connection per scan and per folder. |
 | `AsperaNodeFileWatcher` | Node API user on a licensed, running HSTS (HTTPS). | No SSH port to open; REST calls. In 4.0, one folder only. Paths relative to the docroot of the node user. |
@@ -966,7 +966,7 @@ In one real case, 15 000 work orders were created for one file within an hour; t
 #### File operations
 
 | Method | Requirements | Notes |
-| -------- | -------------- | ------- |
+| --- | --- | --- |
 | `LocalFileOperation` | Source and target visible on Orchestrator (mounted). | Synchronous, no progress. |
 | `RemoteFileOperation` | SSH and `ascmd` (Aspera transfer software) on the remote host. | Paths relative to the docroot of the SSH user. |
 | `AsperaNodeApi` operations | Node API user. | Application-level authentication, REST, no SSH: preferred. |
@@ -975,7 +975,7 @@ In one real case, 15 000 work orders were created for one file within an hour; t
 | `ArchiveManager` | | Delete files older than a period in a folder. |
 
 | Remote plugin | Authentication | Shell | Docroot applies to paths | Uses `ascmd` | Aspera software on the host | Aspera license |
-| --------------- | ---------------- | ------- | -------------------------- | -------------- | ----------------------------- | ---------------- |
+| --- | --- | --- | --- | --- | --- | --- |
 | Remote file or folder watcher | SSH | `/bin/bash` or `/bin/aspshell` | Yes | Yes | Yes | No |
 | Remote file operation | SSH | `/bin/bash` or `/bin/aspshell` | Yes | Yes | Yes | No |
 | Remote execution | SSH | `/bin/bash` | No | No | No | No |
@@ -1165,7 +1165,7 @@ The legacy layout with `ResourceManager` is the same:
 #### Timeouts and capacity
 
 | Setting | Meaning | Use |
-| --------- | --------- | ----- |
+| --- | --- | --- |
 | Wait timeout | Maximum wait for a slot; then the step passes (more parallel work than the capacity) or fails (**On wait timeout action**). | Service level: after 50 minutes without a local transcoder, use an expensive cloud transcoder. |
 | Hold timeout | The slot returns to the pool after this time, even if not released. The work goes on. | Protection against forgotten releases (cancelled or destroyed work orders). Set it above the longest possible hold (for example twice that time), or more work runs in parallel than allowed. |
 | Allocation block size | Number of slots to reserve. | Big files reserve 2 slots, small files 1. |
@@ -1321,7 +1321,7 @@ Do not use the Orchestrator database for heavy external monitoring.
 #### Monitors
 
 | Monitor | Checks | Action |
-| --------- | -------- | -------- |
+| --- | --- | --- |
 | Workflow | Whether a work order of the workflow runs. | Auto-start the workflow, with given runtime parameters; call a notification workflow. |
 | Work order | Work orders of a workflow that complete, fail, end in error or are canceled. | Call a workflow for each (for example to send an e-mail). |
 | Folder | Age and number of files (local, mounted, or on a remote node). | Call a workflow (for example to delete old files). Does not detect a missing folder. |
@@ -1571,7 +1571,7 @@ Rules:
 #### File types
 
 | Extension | Content |
-|-----------|---------|
+| --- | --- |
 | `.yml` | One workflow, as described in this guide. |
 | `.wkf` | A gzipped tar archive containing a manifest file `<NAME>.txt` and the files it lists. The manifest is a YAML list of file names: the first one is the main workflow (`.yml`), the others are its dependencies: sub-workflows (`Workflow_*.yml`) and remote nodes (`Remote_node*.node`). `export_workflow` produces this format when dependencies are exported. |
 
@@ -1582,7 +1582,7 @@ The file name given to `import_workflow` must end with `yml` or `wkf`.
 A workflow file is a YAML sequence of exactly six elements, in this order:
 
 | # | Element | Content |
-|---|---------|---------|
+| --- | --- | --- |
 | 1 | Workflow | Workflow attributes: name, description, ... See [Workflow attributes](#workflow-attributes). |
 | 2 | Whiteboard | The graph (`xml_export`) and its state. See [Whiteboard attributes](#whiteboard-attributes). |
 | 3 | Action templates | A map: key `<STEP_TYPE>__<N>`, value the template object. See [Action templates](#action-templates). |
@@ -1653,7 +1653,7 @@ To write a workflow, prefer the plain format.
 Columns of a workflow, and how `import_workflow` uses them:
 
 | Attribute | Type | On import |
-|-----------|------|-----------|
+| --- | --- | --- |
 | `name` | string | Used. Suffixed with a space and `(import_N)` if already used. |
 | `description` | text | Used. |
 | `run_as` | string | Used. One of `SYSTEM`, `CREATOR`, `OPERATOR`. |
@@ -1675,7 +1675,7 @@ The minimum is `name`, and `run_as` is recommended.
 #### Whiteboard attributes
 
 | Attribute | Type | Rule |
-|-----------|------|------|
+| --- | --- | --- |
 | `xml_export` | text | **Required.** The graph. See [Graph XML](#graph-xml). |
 | `error_free` | boolean | **Required to publish.** Publish returns `false` if it is null. Set it to `true`: it is not computed on import. |
 | `revision_id` | integer | Optional. Defaults to 1. |
@@ -1709,7 +1709,7 @@ In a `.yml` file, element 4 is ignored (see [Structure](#structure)): the import
 So write the reference in the attribute, as the entity is known on the target server, and leave element 4 empty.
 
 | Entity | Template attribute | Value |
-|--------|--------------------|-------|
+| --- | --- | --- |
 | Workflow | `SubWorkflow`: `workflow_id`, `workflow_portable_id` | Id of the workflow (see below for the portable id). |
 | Workflow | `WorkflowLauncher`: `workflow_id` | Id of the workflow. Or `workflow_id` blank, `use_portable_id` set to `1`, and `portable_id`: the portable id of the workflow, looked up at execution. |
 | Remote node | `remote_node`, and other attributes with widget `remote_node` in the plugin specification | Name of the node. |
@@ -1783,7 +1783,7 @@ General rules:
 #### Terminal nodes
 
 | Element | Required children | Meaning |
-|---------|-------------------|---------|
+| --- | --- | --- |
 | `Start` | none (`Parameters` optional) | Entry point. Its `Parameters` links declare the global parameters (see [Parameters](#parameters)). |
 | `End` | `Synch_factor`, `Prerequisites` | Reached: the work order is `Complete`. |
 | `Fail` | `Synch_factor`, `Prerequisites` | Reached: the work order is `Failed`. |
@@ -1801,7 +1801,7 @@ The reason of the failure is in key `step_status_details` of output `<STEP_NAME>
 Each `Step` element has attributes `id`, `x`, `y`, and these children:
 
 | Child | Required | Content |
-|-------|----------|---------|
+| --- | --- | --- |
 | `Action_id` | yes | Number `<N>` of the template key `<STEP_TYPE>__<N>`. |
 | `Step_name` | yes | Name of the step, unique in the workflow. Used to name outputs (`<STEP_NAME>:<OUTPUT>`) and in `Map_to` of type `output`. |
 | `Step_type` | yes | Plugin class name, for example `CustomRuby`. |
@@ -1835,7 +1835,7 @@ A `Prerequisite` element links a previous node to the current one:
 ```
 
 | Attribute | Content |
-|-----------|---------|
+| --- | --- |
 | `id` | `id` of the previous node. |
 | `status` | Status of the previous node that activates the link. `true` for a link from `Start`. Otherwise the final status of the previous step: `Complete`, `Failed` or `Error` (compared case-insensitively). |
 | `router` | Line style of the link in the designer (no effect on execution), chosen with a right-click on the link: `draw2d.ManhattanConnectionRouter` (right angles, the default when the attribute is absent), `draw2d.BezierConnectionRouter` (curve), `draw2d.NullConnectionRouter` (straight line), `draw2d.FanConnectionRouter` (straight lines spread apart when several links join the same two nodes). The designer uses the value as a JavaScript class name: no other value. Use Manhattan for step prerequisites and Bezier for parameter links; use Bezier on a step prerequisite only where the graph reads better, for example when a Manhattan line would cross a step. |
@@ -1843,7 +1843,7 @@ A `Prerequisite` element links a previous node to the current one:
 `Synch_factor` sets how many prerequisites must be met:
 
 | Value | Meaning |
-|-------|---------|
+| --- | --- |
 | `0` | All prerequisites (AND). |
 | `N` > 0 | At least `N` prerequisites. `1` is OR: for example `End` after alternative branches. |
 | negative | Never met: do not use. For a value of `-N`, the engine requires the number of prerequisites **plus** `N`, which is more than exist, although "all but `N`" was intended. For "all but `N`", set the positive value: number of prerequisites minus `N`. The designer refuses negative values. |
@@ -1875,7 +1875,7 @@ An `Input` whose name is not declared by the template is **silently ignored**.
 `Map_to` gives the source of the value:
 
 | `type` | Other attributes | Source |
-|--------|------------------|--------|
+| --- | --- | --- |
 | `value` | `name`: the literal value | A constant. For an input of type `array`, a value not starting with `[` is wrapped into a one-element array. |
 | `parameter` | `name`: parameter name | A parameter (see [Parameters](#parameters)). |
 | `global` | `name`: parameter name | Same as `parameter`. |
@@ -1901,7 +1901,7 @@ The `Outputs` element only adds settings:
 ```
 
 | Element | Content |
-|---------|---------|
+| --- | --- |
 | `Output` | Attribute `name`. Optional children: `Processing` (Ruby code transforming the value), `Global` (name of a global variable that also receives the value). |
 | `Carry_thru` | Makes a variable available as an input of this step without the plugin declaring it: at run time, the value is in `@inputs` under `<NAME>` and `<STEP_NAME>/<NAME>`. Attributes: `type` (`output` or `parameter`), `name`, and for `output`: `step_name`, `step_type`, `action_id`. |
 
@@ -1931,7 +1931,7 @@ A parameter is defined once in the top-level `Parameters` element, and linked to
 Definition (`Parameter` with attributes `id`, `x`, `y`):
 
 | Child | Content |
-|-------|---------|
+| --- | --- |
 | `Name` | Name, used in `Map_to` of type `parameter` and when starting the workflow. |
 | `Value` | Value at design time, or default value of a runtime parameter. Use JSON for `array` and `hash`, for example `["/tmp/a", "/tmp/b"]`. |
 | `Value_type` | One of the [value types](#value-types). |
@@ -1953,7 +1953,7 @@ Rules:
 #### Value types
 
 | Type | Content |
-|------|---------|
+| --- | --- |
 | `string` | Text. |
 | `int` | Integer. |
 | `float` | Floating point number. |
@@ -2004,7 +2004,7 @@ This is the case of some attributes that give an input when left blank.
 These forms create inputs:
 
 | Placeholder | Creates input | Replaced by |
-|-------------|---------------|-------------|
+| --- | --- | --- |
 | `<%= name %>` | `name` | The value of input `name`. |
 | `<%= function(a, b) %>` | `a`, `b` | The result of `function` called with the values of inputs `a` and `b`. Arguments are input names, not literal values. `function` is a method of the plugin (for example `proxy_tag` of `ItunesTransporter`), `xml` (a hash as XML elements: `{'v'=>[1, 2]}` gives `<v>1</v><v>2</v>`), or a method with its class (for example `File.basename`). |
 | `var(name)` in an expression | `name` | `var(name)` returns the value of input `name`, for example `<%= var(file_count).to_i + 1 %>`. |
@@ -2061,7 +2061,7 @@ AmazonS3Operation:
 Attributes (besides `name` and `comments`, common to all templates):
 
 | Field | Content |
-|-------|---------|
+| --- | --- |
 | `type` | Database column type. In plain format, write a boolean as `1` or `0`. |
 | `label` | Label in the template editor, when it is not the attribute name (`aws_key`: `Aws key`). |
 | `widget` | When not text or boolean: `select`, `multiline_text`, `password`, `number`, `remote_node` (name of a remote node), `type_map` (`{'name'=>'type'}`), `list`, `hash`, `file`, `action_template` (name of a template). |
@@ -2078,7 +2078,7 @@ Attributes (besides `name` and `comments`, common to all templates):
 Inputs and outputs (a name in angle brackets is the value of that template attribute):
 
 | Field | Content |
-|-------|---------|
+| --- | --- |
 | `type` | [Value type](#value-types). |
 | `required` | Inputs: `true`, `false`, or the condition for which the input is required (`{if_blank: ...}`, `{if_set: ...}`, `{when: ...}`). |
 | `if_blank` | Exists only when this attribute is blank (for an input: it replaces the attribute), or when all attributes of the list are blank. |
@@ -2097,7 +2097,7 @@ When a step ends with `Error` (or `Failed`) and a branch with that status leaves
 The designer has one retry tab for failure and one for error:
 
 | Designer | Element | Content |
-|----------|---------|---------|
+| --- | --- | --- |
 | Maximum number of attempts | `Error_attempts`, `Failed_attempts` | Attempts, the first one included. |
 | Retry duration (retry for) | `Error_retryFor` x `Error_retryForUnit`, `Failed_retryFor` x `Failed_retryForUnit` | Total time for retries. |
 | Delay between attempts | `Error_retryDelay`, `Failed_retryDelay` | Minimum delay, in seconds. |
@@ -2119,7 +2119,7 @@ For a watcher, one execution is one scan of the folder: the timeout fires only i
 For the calls of a plugin, see [Plugin timeouts](#plugin-timeouts).
 
 | Value of `Timeout` | Effect |
-|--------------------|--------|
+| --- | --- |
 | blank | Timeout of the plugin, else the engine setting `default_step_timeout` (60 seconds by default). |
 | `0` | No timeout. |
 | positive | Timeout in seconds, restarted by each status update. |
@@ -2133,7 +2133,7 @@ Ruby code can be attached to a step, an input or an output.
 It runs inside Orchestrator: it has full access to the server.
 
 | Location | Runs | Variables |
-|----------|------|-----------|
+| --- | --- | --- |
 | `Input/Processing` | When the input value is read. | `input_name` (read-only), `input_value` (set it to change the value). |
 | `Step/Pre_processing` | Before the action. | `@inputs`: map of all input values, modifiable. `@work_order_id`, `@state_id` (work step id). |
 | `Step/Post_processing` | After the action. | `outputs`: map of output values, modifiable. `@status`, `@status_details`: set them to change the step result. `@work_order_id`, `@state_id`. |
@@ -2174,7 +2174,7 @@ The history is keyed by the element, for example the file path: a file with the 
 The attribute `trigger_type` (**persistency scope** in the designer) sets who shares the history:
 
 | Scope | History shared by |
-|-------|-------------------|
+| --- | --- |
 | `by workorder group` (default) | The work orders cloned from one start of the trigger. A new start (new work order, relaunch) has an empty history. |
 | `by workflow` | All the work orders of the workflow. A restart does not detect again. |
 | `by step` | One step. |
@@ -2197,7 +2197,7 @@ The rules that follow from this are in [Using secrets](#using-secrets).
 #### Where a secret is stored
 
 | Source of the secret | Storage on the server | In an export (`export_workflow`, export in the web UI) |
-|----------------------|-----------------------|--------------------------------------------------------|
+| --- | --- | --- |
 | Template attribute, for example with widget `password` in [plugins.yml](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/plugins.yml) | Clear, in the template. | Clear. |
 | `Map_to` of type `value` | Clear, in the graph XML of each revision. | Clear. |
 | `Value` of a parameter of type `pwd` | Clear, in the graph XML of each revision. Encrypted in the published workflow. | Clear. |
@@ -2230,7 +2230,7 @@ For example, inputs `Aws_secret` (Amazon plugins), `Files_client_secret`, `Api_t
 The API does not mask: it returns the decrypted values to the users who can view the workflow.
 
 | Endpoint | `ascli` command | Values |
-|----------|-----------------|--------|
+| --- | --- | --- |
 | `work_step_status` | `ascli orchestrator workstep status <WORK_STEP_ID>` | Inputs, outputs and carry-throughs of a work step. |
 | `work_order_output` | `ascli orchestrator workorders output <WORK_ORDER_ID>` | Outputs of a work order. |
 | `workflow_inputs_spec` | `ascli orchestrator workflows inputs <WORKFLOW_ID>` | `Value` of the optional runtime parameters. |
@@ -2294,7 +2294,7 @@ Runs Ruby code.
 Inputs and outputs are declared in the template.
 
 | Attribute | Content |
-|-----------|---------|
+| --- | --- |
 | `execute_code` | Ruby code of the action. |
 | `mandatory_inputs` | Required inputs: type map, for example `{'person'=>'string'}`. |
 | `optional_inputs` | Optional inputs: type map. |
@@ -2324,7 +2324,7 @@ Contract of `execute_code`:
 Available in `execute_code` and in processing code (`Pre_processing`, `Post_processing`, `Input/Processing`, `Output/Processing`):
 
 | Available | Notes |
-|-----------|-------|
+| --- | --- |
 | Full Ruby stdlib | `require 'net/http'`, `require 'fileutils'`, etc. |
 | `File.nakedname(path)` | Orchestrator extension: basename without the last extension. `File.nakedname("/tmp/file.avi")` → `"file"`. `File.nakedname("/tmp/file.avi.old")` → `"file.avi"`. |
 | `File.nakeddir(path)` | Orchestrator extension: immediate directory name. `File.nakeddir("/tmp/big/file.avi")` → `"big"`. |
@@ -2339,7 +2339,7 @@ The step ends with `Complete` if the result is true (any value other than `false
 Output `FilterResult` (`flag`) holds the result.
 
 | Attribute | Content |
-|-----------|---------|
+| --- | --- |
 | `command` | Ruby code: an expression, or several lines, whose last value, or the value given to `return`, is the result. `@status_details` set in the code replaces the message of the step. |
 | `mandatory_inputs`, `optional_inputs` | Additional inputs: type maps. |
 | `filter_outputs` | Additional outputs: type map. |
@@ -2358,7 +2358,7 @@ Waits for files matching a pattern in a directory of the Orchestrator host.
 Output `FileName` is the full path of the file (`string`), or the list of paths (`array`) if `return_all` is set; `FileContent` holds the file content if `read_file` is set.
 
 | Attribute | Content |
-|-----------|---------|
+| --- | --- |
 | `directory` | Directory to watch. Blank: becomes input `directory`. |
 | `file_name` | File name pattern (glob, or regular expression if `use_regex_matching`). Blank: becomes input `File_name`. |
 | `allow_multiple` | Continuous monitoring: keep watching after a detection (see [Triggers](#triggers)). |
@@ -2386,7 +2386,7 @@ Write `remove_file` explicitly: `1` to remove the file, `0` to keep it.
 Looks up a row in a table set in the template, and returns its values.
 
 | Attribute | Content |
-|-----------|---------|
+| --- | --- |
 | `parameters_associations` | The table: one row per line (LF or CR LF), columns separated by `:::`. The first line is the header: the names of the columns. |
 | `param_file_name` | Instead of `parameters_associations`: path of a file on the Orchestrator host, with the same format, or CSV if its name ends with `.csv`. |
 | `case_sensitive` | Compare values with case (default: ignore case). |
@@ -2421,7 +2421,7 @@ Waits for packages in a Faspex 5 mailbox.
 Each event is one package: the oldest one not seen yet.
 
 | Attribute | Content |
-|-----------|---------|
+| --- | --- |
 | `server` | URL of Faspex, for example `https://faspex.example.com/aspera/faspex`. |
 | `user`, `client_id`, `private_key` | JWT authentication: the user whose mailbox is watched, the id of a Faspex API client with JWT enabled, and the RSA private key (PEM) whose public key is registered for that client. No client secret is used. |
 | `mailbox` | `all` ("Global All", used when blank), `inbox` ("My Packages": packages received by the user), `inbox_all` ("All packages"), `shared_inbox` (with `shared_inbox_name`). |
@@ -2458,7 +2458,7 @@ Starts a transfer on a node with the Node API, then checks its status every `pol
 Starts a workflow in a new, independent work order.
 
 | Attribute | Content |
-|-----------|---------|
+| --- | --- |
 | `workflow_id` | Id of the workflow to start (see [Referring to existing entities](#referring-to-existing-entities)). Each runtime parameter of that workflow is an input of the step, with the same name, required unless the parameter is optional. Blank: input `Workflow_ID` (or the portable id, with `use_portable_id`), and input `Workflow_Parameters`, a hash of runtime parameters. |
 | `wait_for_completion` | `1`: the step waits for the end of the launched work order. It polls: no worker is held. |
 | `fail_if_failure` | `1`: with `wait_for_completion`, the step ends with `Failed` when the launched work order is `Failed`. |
@@ -2469,7 +2469,7 @@ Outputs: `WorkOrder_ID` (`int`), the id of the launched work order, and, when wa
 Status of the step (`WorkflowLauncher#execute` and `#check_status`):
 
 | `wait_for_completion` | Launched work order | Step |
-|-----------------------|---------------------|------|
+| --- | --- | --- |
 | blank or `0` | Started | `Complete` |
 | any | Could not be started | `Error` |
 | `1` | `Complete` | `Complete` |
@@ -3198,7 +3198,7 @@ The name must start with `_`.
 The designer lists the files of this folder in **View template**.
 
 | In the file | Meaning |
-|-------------|---------|
+| --- | --- |
 | `received_parameters['<NAME>']` | Value of the input `<NAME>` of the step. |
 | `requested_user_inputs` | The requested data: a map of name to type. |
 | `active_assignment` | The task. |
@@ -3331,7 +3331,7 @@ The response format is chosen with query parameter `format` (`xml`, the default,
 Authentication depends on the option **Use Secure JWT API Auth** (`use_secure_jwt_api_auth`, set by default):
 
 | Option | Authentication |
-|--------|----------------|
+| --- | --- |
 | Set | Header `Authorization: Bearer <TOKEN>`. `POST api/login`, with `username` and either `password` or `api_key` (the API key of the user), returns the token in `token`. **API JWT Token Expiry** (`api_jwt_token_expiry_seconds`) sets its lifetime, 24 hours by default. |
 | Not set | HTTP Basic, or query parameters `login` with `password` or `api_key`. `POST api/login` answers with status 403. |
 
@@ -3350,7 +3350,7 @@ Errors are returned with the exception message and stack trace in the response b
 `POST api/import_workflow`, body `multipart/form-data`:
 
 | Field | Required | Content |
-|-------|----------|---------|
+| --- | --- | --- |
 | `import_file` | yes | The workflow file (file part). |
 | `import_file_name` | yes | File name, ending with `yml` or `wkf`. The upload is stored under this name in `<RUN_DIR>/workflows/import/`. |
 | `folder_id` | no | Folder of the new workflow. |
@@ -3411,7 +3411,7 @@ It does not check that the file exists: a wrong path returns the same empty list
 ```
 
 | Item | Content |
-|------|---------|
+| --- | --- |
 | `filename` | Path of the file on the Orchestrator host. |
 | `add as revision` | Id of an existing workflow to add a revision to, or `null` to create a new workflow. |
 | `subwf constraints` | Sub-workflow name to choice: `Map to the Existing Sub-Workflow`, `Create a new Sub-Workflow with a unique name`, `Add a new revision to the existing Sub-Workflow`. |
@@ -3428,7 +3428,7 @@ The workflow is not published.
 Query parameters:
 
 | Parameter | Content |
-|-----------|---------|
+| --- | --- |
 | `synchronous` | `true`: wait for the end of the work order. |
 | `timeout` | With `synchronous`: maximum wait, in seconds. |
 | `explicit_output_step`, `explicit_output_variable` | With `synchronous`: return only this output. |
@@ -3442,7 +3442,7 @@ A JSON array as value fails with status 500 (`undefined method 'gsub' for an ins
 #### Other workflow endpoints
 
 | Endpoint | Content |
-|----------|---------|
+| --- | --- |
 | `GET api/workflows_list` | All workflows: id, name, portable id, published and latest revision. |
 | `GET api/workflow_inputs_spec/<ID>` | Runtime parameters: name, type, optional, default value. |
 | `GET api/workflow_outputs_spec/<ID>` | Outputs: `<STEP_NAME>:<OUTPUT_NAME>`, type. |
@@ -3457,7 +3457,7 @@ A JSON array as value fails with status 500 (`undefined method 'gsub' for an ins
 #### ascli commands
 
 | Operation | Command |
-|-----------|---------|
+| --- | --- |
 | Import | `ascli orchestrator workflows import <FILE>` |
 | Import with constraints, or as a revision | `ascli orchestrator workflows import_with_constraints @json:'{"filename":"<SERVER_PATH>","add_as_revision":<ID>}'` |
 | Export | `ascli orchestrator workflows export <ID> --out.file=<FILE>` |
@@ -3483,7 +3483,7 @@ For when to use it, see [Using inline validation](#using-inline-validation).
 In the `aspera.conf` of the server:
 
 | Setting | Content |
-|---------|---------|
+| --- | --- |
 | `validation_file_start`, `validation_threshold`, `validation_file_stop` | `uri` to call at this event. Default: `none`. |
 | `validation_uri` | The URL of the call. |
 | `validation_threshold_kb` | The threshold, in KB. Required by `validation_threshold`. |
@@ -3504,7 +3504,7 @@ Give the credentials in `validation_uri`: `ascp` sends `https://<USER>:<PASSWORD
 The work order gets two runtime parameters, which the workflow declares:
 
 | Parameter | Content |
-|-----------|---------|
+| --- | --- |
 | `File` | The request of `ascp`, a hash. `startstop` is `start`, `running` at the threshold, or `stop`. `file` is the path of the file. Other keys include `size`, `start_byte`, `user`, `user_id`, `host`, `direction`, `session_id`, `xfer_id`, `cookie` and `tags`. |
 | `File_path` | The path of the file, same as `file`. |
 
@@ -3517,7 +3517,7 @@ Test the event with a `Filter`: `inputs['File']['startstop'] == 'start'`.
 Orchestrator answers when the work order ends, and checks its status every second: the request stays open until then.
 
 | Work order | HTTP status | File |
-|------------|-------------|------|
+| --- | --- | --- |
 | `Complete` | 200 | Accepted. |
 | `Failed`, `Error` | 400 | Rejected. |
 | Other final status, such as `Canceled` | 500 | Rejected. |
@@ -3530,7 +3530,7 @@ So does a call with no answer after `session_timeout_sec`, and the work order th
 #### Validation and the transfer
 
 | Event | Effect on the transfer |
-|-------|------------------------|
+| --- | --- |
 | Start | The file does not start before the answer. |
 | Threshold | The call comes once `validation_threshold_kb` of the file are written; a smaller file gets no call. The transfer does not pause: a rejection stops it when the answer arrives. If the last block is written by then, the file stays complete, and the user still gets the error. |
 | End | The file does not end before the answer. |
