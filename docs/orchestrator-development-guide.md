@@ -9,28 +9,36 @@ common:
 
 ## Concepts
 
-This chapter gives what the other chapters rely on: what the guide covers, the terms, the server folders, the plugin display names and the statuses.
+This chapter gives what the other chapters rely on: where to start for each goal, how Orchestrator works, the terms, the server folders, the plugin display names and the statuses.
 Read it first: the other chapters use these terms, and explain further only those that have a section of their own.
 
 ### Introduction
+
+This guide applies to Orchestrator 4.1.6: [About this guide](#about-this-guide) says how each chapter was verified.
+Its source is at [github.com/laurent-martin/aspera-orchestrator-plugins-doc](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc).
 
 This guide explains how to develop for IBM Aspera Orchestrator: how to design and write workflows, and how to extend Orchestrator with action plugins and portlets.
 
 It is written for people and for AI assistants.
 
-#### Chapters
+#### Where to start
 
-- [Concepts](#concepts): the terms and statuses used in all chapters.
-- [Workflow development practices](#workflow-development-practices): the rules and pitfalls of workflow development, most stated as **do** or **do not** with the reason.
-- [Workflow authoring](#workflow-authoring): writing, importing, publishing and running a workflow as a file, with the exact elements, attributes and values.
-- [Extending Orchestrator](#extending-orchestrator): how action plugins and portlets compare, and what they share on installation, testing and security.
-- [Plugin development](#plugin-development): writing, installing, testing and updating an action plugin, with the exact names, methods and values.
-- [Portlet development](#portlet-development): writing, installing, testing and updating a portlet, with the exact names, methods and values.
+Any reader can begin with [How Orchestrator works](#how-orchestrator-works) and [Terminology](#terminology), then go on by goal:
+
+| Goal | Read |
+| --- | --- |
+| Build a workflow in the designer | [First workflow in the designer](#first-workflow-in-the-designer), [Rules at a glance](#rules-at-a-glance), [Practices checklist](#practices-checklist) |
+| Write or generate a workflow file (also for AI assistants) | [Quick start](#quick-start), [Recipes](#recipes), [Authoring checklist](#authoring-checklist) |
+| Find why a work order does not end or fails | [AND and OR](#and-and-or), [Work order view](#work-order-view), [Known issues](#known-issues) |
+| Start or follow workflows from another application | [Integration API](#integration-api), [REST API](#rest-api), [ascli commands](#ascli-commands) |
+| Look up a shipped plugin | The [reference documents](#reference-documents), [Main action plugins](#main-action-plugins) |
+| Add a step type | [Plugins and portlets compared](#plugins-and-portlets-compared), [Plugin quick start](#plugin-quick-start) |
+| Add a dashboard widget | [Plugins and portlets compared](#plugins-and-portlets-compared), [Portlet quick start](#portlet-quick-start) |
 
 #### Valid and wise
 
-Workflow authoring says what is valid: what Orchestrator accepts and how it behaves.
-Workflow development practices says what is wise: among the valid choices, which one to make and why.
+[Workflow authoring](#workflow-authoring) says what is valid: what Orchestrator accepts and how it behaves.
+[Workflow development practices](#workflow-development-practices) says what is wise: among the valid choices, which one to make and why.
 A workflow can be valid and still be a poor design.
 
 If the two chapters differ on how Orchestrator behaves, follow Workflow authoring: it is derived from Orchestrator 4.1.6 and its examples were executed on 4.1.6.
@@ -38,21 +46,6 @@ If the two chapters differ on how Orchestrator behaves, follow Workflow authorin
 Workflow development practices describes the graphical designer.
 The designer and the operation of Orchestrator (monitors, journals, dashboards, direct start pages) are described only there.
 Workflow authoring shows the same objects as XML (for example `Synch_factor` for the OR operator).
-
-#### How each chapter was verified
-
-- **Workflow development practices:** the rules come from field experience of workflow design on Orchestrator 3.x and 4.x.
-  A few facts were checked against Orchestrator 4.1.6; they are marked *(4.1.6)*.
-  The screenshots show Orchestrator 4.1.6: the user interface and some option names differ in other versions.
-  The concepts and rules do not.
-- **Workflow authoring:** the content is derived from Orchestrator 4.1.6.
-  The examples in [Recipes](#recipes) were imported, published and executed on Orchestrator 4.1.6.
-- **Extending Orchestrator:** the content comes from Plugin development and Portlet development, and was verified in the same way.
-- **Plugin development:** the content is derived from Orchestrator 4.1.6.
-  The example plugin of [Plugin quick start](#plugin-quick-start) was installed, enabled, and executed in a workflow on Orchestrator 4.1.6, and the steps of [Installing a plugin](#installing-a-plugin) and [Updating a plugin](#updating-a-plugin) were done on that server.
-- **Portlet development:** the content is derived from Orchestrator 4.1.6.
-  - On an Orchestrator 4.1.6.2036 server: the example portlet of [Portlet quick start](#portlet-quick-start) was imported with **Import Portlet**, chosen and configured in a dashboard frame, displayed, and its action called with GET and POST. In Chrome, the **Ping** link (`ajaxUpdate`) and the automatic refresh worked with no JavaScript error. The behaviors of import (file name, collision), enable, disable, restart, the version API and the CSRF token described in that chapter were reproduced on this server.
-  - From Orchestrator: the security notes, the custom portlets, the legacy upgrade script, and the counts of the [Portlet annex](#portlet-annex).
 
 #### Reference documents
 
@@ -63,6 +56,22 @@ These documents are separate from this guide:
   Its header describes its fields.
   Read one plugin with [`yq`](https://github.com/mikefarah/yq): `yq '.AmazonS3Operation' plugins.yml`.
 - [Plugin Manual](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/Orchestrator_Plugin_Manual.md): functional description of each shipped action plugin.
+
+### How Orchestrator works
+
+![Orchestrator, from the design of a workflow to the end of a work order](images/orchestrator-overview.svg)
+
+A workflow is a graph of steps and links, designed in the designer or written as a file; one revision of this design is a whiteboard.
+Publishing a revision builds the runnable workflow: only a published revision runs.
+Each start of a published workflow creates a work order, one execution of that workflow.
+The engine activates the steps whose links are met.
+A worker runs each step: synchronous, until the step ends, or asynchronous, starting a job and then polling its status ([Workers and capacity](#workers-and-capacity), [Plugin execution](#plugin-execution)).
+A work step ends with a [status](#statuses), and the links of that status lead to the next steps.
+The first terminal node reached ends the work order; a `Failed` or `Error` status with no link reaches one implicitly ([Terminal nodes](#terminal-nodes)).
+A [trigger](#triggers) waits for an event; with **Continue monitoring**, the work order is cloned at the trigger step each time this step ends with a status other than `Error`: the work order goes on with the next steps, and the clone waits for the next event.
+
+An action plugin is the type of a step: a worker runs its code ([Plugin development](#plugin-development)).
+A portlet displays a widget of the dashboard: it is loaded only in the web process, not in the engine or the workers ([Portlet development](#portlet-development)).
 
 ### Terminology
 
@@ -5359,3 +5368,22 @@ Counts in the 23 portlets of Orchestrator 4.1.6 (versions 0.0.2 to 0.1.2, all wi
 | `ModuleSSHTools` | 2 |
 
 Shipped portlets: `aspera_service`, `assigned_tasks`, `csv_editor`, `custom_portlet`, `file_browser`, `filter_work_orders`, `inline_journals`, `load_utilization`, `lookup_editor`, `monitors_dashboard`, `orchestrator_information`, `processes_view`, `queue_management`, `resource_management`, `step_activity`, `step_performance_stats`, `step_stats`, `table_details_viewer`, `transfer_console`, `user_tasks`, `workflow_performance_stats`, `workflow_stats`, `workorder_activities`.
+
+## About this guide
+
+This chapter says how the content of each chapter was checked, for a reader who wants to know how far to rely on it.
+
+### How each chapter was verified
+
+- **Workflow development practices:** the rules come from field experience of workflow design on Orchestrator 3.x and 4.x.
+  A few facts were checked against Orchestrator 4.1.6; they are marked *(4.1.6)*.
+  The screenshots show Orchestrator 4.1.6: the user interface and some option names differ in other versions.
+  The concepts and rules do not.
+- **Workflow authoring:** the content is derived from Orchestrator 4.1.6.
+  The examples in [Recipes](#recipes) were imported, published and executed on Orchestrator 4.1.6.
+- **Extending Orchestrator:** the content comes from Plugin development and Portlet development, and was verified in the same way.
+- **Plugin development:** the content is derived from Orchestrator 4.1.6.
+  The example plugin of [Plugin quick start](#plugin-quick-start) was installed, enabled, and executed in a workflow on Orchestrator 4.1.6, and the steps of [Installing a plugin](#installing-a-plugin) and [Updating a plugin](#updating-a-plugin) were done on that server.
+- **Portlet development:** the content is derived from Orchestrator 4.1.6.
+  - On an Orchestrator 4.1.6.2036 server: the example portlet of [Portlet quick start](#portlet-quick-start) was imported with **Import Portlet**, chosen and configured in a dashboard frame, displayed, and its action called with GET and POST. In Chrome, the **Ping** link (`ajaxUpdate`) and the automatic refresh worked with no JavaScript error. The behaviors of import (file name, collision), enable, disable, restart, the version API and the CSRF token described in that chapter were reproduced on this server.
+  - From Orchestrator: the security notes, the custom portlets, the legacy upgrade script, and the counts of the [Portlet annex](#portlet-annex).

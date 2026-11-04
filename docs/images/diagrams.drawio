@@ -194,4 +194,74 @@
       </root>
     </mxGraphModel>
   </diagram>
+  <diagram id='orchestrator-overview' name='orchestrator-overview'>
+    <mxGraphModel arrows='1' connect='1' dx='1200' dy='900' fold='1' grid='1' gridSize='10' guides='1' math='0' page='1' pageHeight='820' pageScale='1' pageWidth='900' shadow='0' tooltips='1'>
+      <root>
+        <mxCell id='ov0'/>
+        <mxCell id='ov1' parent='ov0'/>
+        <mxCell id='ov-design' parent='ov1' style='rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;' value='&lt;b&gt;Design&lt;/b&gt;&lt;br&gt;a whiteboard: one revision of the workflow' vertex='1'>
+          <mxGeometry as='geometry' height='50' width='290' x='190' y='20'/>
+        </mxCell>
+        <mxCell id='ov-published' parent='ov1' style='rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;' value='&lt;b&gt;Published workflow&lt;/b&gt;&lt;br&gt;only a published revision runs' vertex='1'>
+          <mxGeometry as='geometry' height='50' width='290' x='190' y='110'/>
+        </mxCell>
+        <mxCell id='ov-workorder' parent='ov1' style='rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;' value='&lt;b&gt;Work order&lt;/b&gt;&lt;br&gt;one execution of the published workflow' vertex='1'>
+          <mxGeometry as='geometry' height='50' width='290' x='190' y='200'/>
+        </mxCell>
+        <mxCell id='ov-engine' parent='ov1' style='rounded=1;whiteSpace=wrap;html=1;fillColor=#1f649e;fontColor=#ffffff;strokeColor=none;fontSize=12;' value='&lt;b&gt;Engine&lt;/b&gt;&lt;br&gt;activates the steps whose links are met' vertex='1'>
+          <mxGeometry as='geometry' height='50' width='290' x='190' y='280'/>
+        </mxCell>
+        <mxCell id='ov-worker' parent='ov1' style='rounded=1;whiteSpace=wrap;html=1;fillColor=#1f649e;fontColor=#ffffff;strokeColor=none;fontSize=12;' value='&lt;b&gt;Worker&lt;/b&gt; runs the work step&lt;br&gt;synchronous, or asynchronous with polling' vertex='1'>
+          <mxGeometry as='geometry' height='60' width='290' x='190' y='360'/>
+        </mxCell>
+        <mxCell id='ov-status' parent='ov1' style='rhombus;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;' value='Work step ends&lt;br&gt;Complete, Failed or Error' vertex='1'>
+          <mxGeometry as='geometry' height='90' width='280' x='195' y='450'/>
+        </mxCell>
+        <mxCell id='ov-terminal' parent='ov1' style='rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;' value='&lt;b&gt;Terminal node&lt;/b&gt;&lt;br&gt;the first one reached ends the work order,&lt;br&gt;which is Complete, Failed or Error' vertex='1'>
+          <mxGeometry as='geometry' height='60' width='290' x='190' y='600'/>
+        </mxCell>
+        <mxCell id='ov-clone' parent='ov1' style='rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;' value='&lt;b&gt;Clone of the work order&lt;/b&gt;&lt;br&gt;waits for the next event,&lt;br&gt;the work order goes on' vertex='1'>
+          <mxGeometry as='geometry' height='70' width='240' x='610' y='460'/>
+        </mxCell>
+        <mxCell id='ov-plugin' parent='ov1' style='shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#ffffff;strokeColor=#999999;align=left;spacingLeft=8;fontSize=11;' value='&lt;b&gt;Action plugin&lt;/b&gt;: the type of a step.&lt;br&gt;The worker runs its code.' vertex='1'>
+          <mxGeometry as='geometry' height='60' width='240' x='610' y='360'/>
+        </mxCell>
+        <mxCell id='ov-portlet' parent='ov1' style='shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#ffffff;strokeColor=#999999;align=left;spacingLeft=8;fontSize=11;' value='&lt;b&gt;Portlet&lt;/b&gt;: a widget of the dashboard,&lt;br&gt;loaded only in the web process.' vertex='1'>
+          <mxGeometry as='geometry' height='60' width='240' x='610' y='20'/>
+        </mxCell>
+        <mxCell edge='1' id='ov-e1' parent='ov1' source='ov-design' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;' target='ov-published' value='Publish'>
+          <mxGeometry as='geometry' relative='1'/>
+        </mxCell>
+        <mxCell edge='1' id='ov-e2' parent='ov1' source='ov-published' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;' target='ov-workorder' value='Start'>
+          <mxGeometry as='geometry' relative='1'/>
+        </mxCell>
+        <mxCell edge='1' id='ov-e3' parent='ov1' source='ov-workorder' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;' target='ov-engine'>
+          <mxGeometry as='geometry' relative='1'/>
+        </mxCell>
+        <mxCell edge='1' id='ov-e4' parent='ov1' source='ov-engine' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;' target='ov-worker'>
+          <mxGeometry as='geometry' relative='1'/>
+        </mxCell>
+        <mxCell edge='1' id='ov-e5' parent='ov1' source='ov-worker' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;' target='ov-status'>
+          <mxGeometry as='geometry' relative='1'/>
+        </mxCell>
+        <mxCell edge='1' id='ov-e6' parent='ov1' source='ov-status' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;' target='ov-engine' value='links of that status&lt;br&gt;to the next steps'>
+          <mxGeometry as='geometry' relative='1'>
+            <Array as='points'>
+              <mxPoint x='130' y='495'/>
+              <mxPoint x='130' y='305'/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell edge='1' id='ov-e7' parent='ov1' source='ov-status' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;' target='ov-terminal' value='link to a terminal node,&lt;br&gt;or Failed or Error with no link'>
+          <mxGeometry as='geometry' relative='1'/>
+        </mxCell>
+        <mxCell edge='1' id='ov-e8' parent='ov1' source='ov-status' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;' target='ov-clone' value='trigger with&lt;br&gt;Continue monitoring'>
+          <mxGeometry as='geometry' relative='1'/>
+        </mxCell>
+        <mxCell edge='1' id='ov-e9' parent='ov1' source='ov-worker' style='edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;strokeColor=#999999;dashed=1;' target='ov-plugin'>
+          <mxGeometry as='geometry' relative='1'/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
 </mxfile>
