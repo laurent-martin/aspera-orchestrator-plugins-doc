@@ -78,7 +78,7 @@ The last column gives the label that the web interface shows, when it differs.
 | Work step | One execution of a step in a work order. | Work step |
 | Action plugin, plugin | The type of a step, for example `CustomRuby` (step type, action type). In development, a Ruby class that includes module `Action`, and its folder. The designer shows display names, listed in [Plugin display names](#plugin-display-names). | Action |
 | Action template, template | A configured instance of an action plugin: a database record holding the plugin settings (its attributes). Each step references one template by `Step_type` and `Action_id`. | Template |
-| Embedded template | A template that belongs to one workflow, named `W<workflow id>__<step name>`. | Configuration (**New configuration**) |
+| Embedded template | A template that belongs to one workflow, named `W<WORKFLOW_ID>__<STEP_NAME>`. | Configuration (**New configuration**) |
 | Global template | A template shared by several workflows, identified by its name. It is created in **Workflows > Workflow Actions**. | Template |
 | Attribute | A setting of a template: a column of the plugin table, edited in the template form. | Field of the form |
 | Input, Output | Named values consumed and produced by a step, as declared by the action plugin (`inputs_spec`, `outputs_spec`). | Inputs, Outputs tabs |
@@ -1083,7 +1083,7 @@ Rules:
 - `return STATUS_FAILED, "File #{inputs['file_path']} is not a .tar file", outputs` ends the step as failed with a message; use input variables, not placeholders, in the code.
   Without `outputs` as third value, the outputs set before are lost *(4.1.6)*.
 - Add `rescue` to expressions that may fail: `outputs['serie'] = xml['Content'][0]['Series'][0]['SeriesTitle'][0] rescue ''`.
-- `Rails.logger.info "#{myhash.inspect}"` writes to `orchestrator.log`.
+- `Rails.logger.info "#{myhash.inspect}"` writes to `/opt/aspera/orchestrator/log/production.log`.
   There is no method `debug` in 4.1.6: calling it ends the step in error.
 - Do not name a variable with a capital letter: `WorkOrder = WorkOrder.find(...)` replaces the class.
 - A class defined in one step is not available in another step (different workers): define shared code in a capsule (**Engine > Capsules > Import**).
@@ -1262,9 +1262,7 @@ Split into two workflows:
 - Do not leave tasks open for long: each open task is a waiting work order.
   Set a timeout.
 - A task can be completed through the REST API.
-- A custom form is an `.html.erb` file named `_<NAME>.html.erb` in `/opt/aspera/var/config/orchestrator/actions_config/user_inputs/`.
-  It is part of an HTML form that already has the submit and cancel buttons.
-  Read displayed data from `received_parameters['name']`, and write requested data as `outputs[name]` fields, or with the helpers `draw_input('outputs', 'name', 'string', 'default')`, `draw_input_string`, `draw_input_flag` (types flag, int, string, date, attachment).
+- For another layout, a custom form replaces the default content of the task form: see [Custom form](#custom-form).
 
 ![A custom form: logo, file name from the inputs, video preview; target, description, profile, source, paths and offer times requested (video: Big Buck Bunny, © Blender Foundation, CC BY 3.0)](images/practices/4.1.6/user-input-form.png)
 
@@ -1543,7 +1541,7 @@ The same operations with the REST API are described in [REST API](#rest-api).
 1. **Write** a workflow file (`.yml`), or a package (`.wkf`) that also contains sub-workflows and remote nodes.
 2. **Import** it: Orchestrator creates a new workflow with a new `id`.
    Each step's action template is created (or mapped to an existing global template).
-   Whether the workflow is created in draft state or as a published revision depends on the server option `publish_api_imported_workflow` (default: published, `revision_id = 1`).
+   The workflow is published when field `publish_workflow` of the request is `true` or `1`, or, without this field, when the server option `publish_api_imported_workflow` is set, which it is not by default.
 3. **Publish** it: Orchestrator builds the runnable workflow from the last whiteboard revision.
 4. **Start** it: Orchestrator creates a work order.
    Runtime parameters are given at this point.
@@ -1693,7 +1691,7 @@ Element 3 maps each key `<STEP_TYPE>__<N>` to an action template.
 - The value holds the template attributes: the plugin settings.
   The attribute names of each plugin are listed in the [Action Template Reference](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/action-template-reference.md).
 - Attribute `name` decides how the template is imported:
-  - `W<any number>__<step name>`: **embedded** template. It is created for the new workflow and renamed `W<new workflow id>__<step name>`.
+  - `W<ANY_NUMBER>__<STEP_NAME>`: **embedded** template. It is created for the new workflow and renamed `W<NEW_WORKFLOW_ID>__<STEP_NAME>`.
     Use this form, with `W0__` and the step name.
   - Any other name: **global** template.
     If a template of the same class and name exists and has the same attributes, it is reused.
@@ -1795,8 +1793,8 @@ The first of these nodes reached ends the work order: the steps still running on
 
 `Fail` and `Error` are also reached **implicitly**: when a work step ends with status `Failed` (or `Error`) and no step is connected to it for that status, the work order goes to `Fail` (or `Error`).
 So only success paths need to be connected to `End`; failures do not need explicit links.
-The status details of the work order are then `No behavior defined for step status change to <STATUS> - in <step name>`.
-The reason of the failure is in key `step_status_details` of output `<step name>:Step_information`: `ascli orchestrator workorders output <work order id>` shows it.
+The status details of the work order are then `No behavior defined for step status change to <STATUS> - in <STEP_NAME>`.
+The reason of the failure is in key `step_status_details` of output `<STEP_NAME>:Step_information`: `ascli orchestrator workorders output <WORK_ORDER_ID>` shows it.
 
 #### Step
 
@@ -1804,7 +1802,7 @@ Each `Step` element has attributes `id`, `x`, `y`, and these children:
 
 | Child | Required | Content |
 |-------|----------|---------|
-| `Action_id` | yes | Number `<N>` of the template key `<Step_type>__<N>`. |
+| `Action_id` | yes | Number `<N>` of the template key `<STEP_TYPE>__<N>`. |
 | `Step_name` | yes | Name of the step, unique in the workflow. Used to name outputs (`<STEP_NAME>:<OUTPUT>`) and in `Map_to` of type `output`. |
 | `Step_type` | yes | Plugin class name, for example `CustomRuby`. |
 | `Synch_factor` | yes | Number of prerequisites to meet. See [Prerequisites and branches](#prerequisites-and-branches). When it is not `0`, attributes `x` and `y` (position of the join symbol) are needed by the designer. |
@@ -1891,7 +1889,7 @@ Every required input of the template must have an `Input` element.
 
 The outputs of a step are those declared by its action template, plus `Step_information`.
 They all exist, whether or not the `Outputs` element lists them.
-Each output is a variable named `<Step_name>:<output name>`.
+Each output is a variable named `<STEP_NAME>:<OUTPUT_NAME>`.
 
 The `Outputs` element only adds settings:
 
@@ -2154,11 +2152,11 @@ If the template enables continuous monitoring (**Continue monitoring** in the de
 
 - The work order that detected the event continues with the next steps, with the outputs of the trigger.
 - The clone is a new work order that waits for the next event.
-  Its `comments` are `Derived from WorkOrder <ID>, forked at '<step name>' (<step id>)`, and its `derived_from` and `master_id` are the id of the first work order.
+  Its `comments` are `Derived from WorkOrder <ID>, forked at '<STEP_NAME>' (<STEP_ID>)`, and its `derived_from` and `master_id` are the id of the first work order.
 
 So the work order that waits is always the last one, and its id changes after each event.
 The work steps of the clones keep the group of the first work order (`WorkStep#group`), and form a work order group: with the default history scope `by workorder group`, all the clones share the history of past triggers (see [History of past triggers](#history-of-past-triggers)).
-To stop the monitoring, cancel that work order: `ascli orchestrator workflows workorders <workflow id>` lists the work orders, the waiting one is `In Progress` on the trigger step.
+To stop the monitoring, cancel that work order: `ascli orchestrator workflows workorders <WORKFLOW_ID>` lists the work orders, the waiting one is `In Progress` on the trigger step.
 If a workflow monitor auto-starts the workflow (**Monitors**), turn the monitor off first: otherwise it starts a new work order at its next check.
 When the trigger step ends with `Error`, no clone is created, and the monitoring stops.
 
@@ -2400,7 +2398,7 @@ Inputs and outputs come from the header:
 
 - Each column name is an optional `string` input, and a `string` output.
 - The inputs that have a value select the row: the first row whose cells, in those columns, match the input values.
-  A cell matches if it is equal to the value, if it is a glob pattern that matches it (`File.fnmatch`), or if it is written `/<regular expression>/` and matches it.
+  A cell matches if it is equal to the value, if it is a glob pattern that matches it (`File.fnmatch`), or if it is written `/<REGULAR_EXPRESSION>/` and matches it.
 - The outputs are the cells of that row, for all columns.
 - If no row matches, the step ends with `Failed`: `No configuration match for data set: <COLUMN>:<VALUE>`.
   With no input value (no key), no row matches.
@@ -2480,7 +2478,7 @@ Status of the step (`WorkflowLauncher#execute` and `#check_status`):
 
 #### ArrayFanout and Funnelin
 
-`ArrayFanout` runs the next steps once per element of an array; `Funnelin` waits for all those executions and gathers their results.
+`ArrayFanout` runs the next step once per element of an array; `Funnelin` waits for all those executions and gathers their results.
 
 - `ArrayFanout`: attribute `fanout_variable` is the name of the input (`array`), `fanned_as` the name of the output holding the current element, `variable_type` its type, `serialize` to run sequentially.
   Output `Fanout_Size` is the number of elements.
@@ -2666,7 +2664,7 @@ Import and publish `child` first, and write its id in `workflow_id` of the `SubW
 The inputs and outputs of the step come from the published `child`:
 
 - One input per runtime parameter of `child`, with the same name: here `text`, required because `Runtime_optional` is `false` in `child`.
-- One output per entry of `workflow_outputs`, `{'<output name>'=>'<step name>:<output name in child>'}`, with the type of that output in `child`.
+- One output per entry of `workflow_outputs`, `{'<OUTPUT_NAME>'=>'<STEP_NAME>:<CHILD_OUTPUT_NAME>'}`, with the type of that output in `child`.
 
 ```yaml
 ---
@@ -2733,7 +2731,7 @@ The inputs and outputs of the step come from the published `child`:
 - SubWorkflow__1: !ruby/object:SubWorkflow
     attributes:
       name: W0__Call child
-      workflow_id: <id of child>
+      workflow_id: <CHILD_ID>
       workflow_outputs: "{'upper'=>'Upper:result'}"
   CustomRuby__2: !ruby/object:CustomRuby
     attributes:
@@ -2751,7 +2749,7 @@ The inputs and outputs of the step come from the published `child`:
 ```shell
 ascli orchestrator workflows import child.yml @json:'{"publish":true}'
 ascli orchestrator workflows import parent.yml @json:'{"publish":true}'
-ascli orchestrator workflows start <id of parent> @json:'{"text":"abc"}' @json:'{"step":"Use result","variable":"result"}'   # child returned ABC
+ascli orchestrator workflows start <PARENT_ID> @json:'{"text":"abc"}' @json:'{"step":"Use result","variable":"result"}'   # child returned ABC
 ```
 
 `child` runs in a work order of its own.
@@ -2854,7 +2852,7 @@ Workflow `watch_folder` watches the folder `/tmp/doc_test_watch/` of the Orchest
   WorkflowLauncher__3: !ruby/object:WorkflowLauncher
     attributes:
       name: W0__Process file
-      workflow_id: <id of per_file>
+      workflow_id: <PER_FILE_ID>
       wait_for_completion: 1
       fail_if_failure: 1
   Funnelin__4: !ruby/object:Funnelin
@@ -2879,7 +2877,7 @@ Workflow `watch_folder` watches the folder `/tmp/doc_test_watch/` of the Orchest
 ```shell
 ascli orchestrator workflows import per_file.yml @json:'{"publish":true}'
 ascli orchestrator workflows import watch_folder.yml @json:'{"publish":true}'
-ascli orchestrator workflows start <id of watch_folder> @json:'{}'
+ascli orchestrator workflows start <WATCH_FOLDER_ID> @json:'{}'
 ```
 
 Observed with the files `a_ok.txt`, `b_ok.txt` and `c_locked.txt`, the last one made impossible to delete (`chattr +i`).
@@ -3206,6 +3204,8 @@ The designer lists the files of this folder in **View template**.
 | `active_assignment` | The task. |
 | A field named `outputs[<NAME>]` | Value of the output `<NAME>` of the step. |
 | `draw_input('outputs', '<NAME>', '<TYPE>', <DEFAULT_VALUE>, '<HTML_ATTRIBUTES>')` | Draws a field for the type: `flag`, `int`, `float`, `string`, `pwd`, `array`, `hash`, `object`, `date` or `attachment`. The last two arguments are optional. |
+| `draw_input_string('outputs', '<NAME>', <DEFAULT_VALUE>, '<HTML_ATTRIBUTES>')` | Same as `draw_input` with type `string`. |
+| `draw_input_flag('outputs', '<NAME>', <DEFAULT_VALUE>, '<HTML_ATTRIBUTES>')` | Same as `draw_input` with type `flag`: a check box. |
 
 This form shows a file name and a video, and asks for a target, a path, a date with time, and a description.
 It is a shorter version of the form in the figure of the [Workflow development practices chapter](#user-input).
@@ -3282,7 +3282,7 @@ To add a revision to an existing workflow, the file must be on the Orchestrator 
    The response is the workflow; its last revision is the imported one.
 3. Publish the workflow: the new revision becomes the running one.
 
-The new revision has its own action templates: an embedded template is named `W<workflow id>__<step name>_1`, because the name `W<workflow id>__<step name>` is used by the template of the previous revision.
+The new revision has its own action templates: an embedded template is named `W<WORKFLOW_ID>__<STEP_NAME>_1`, because the name `W<WORKFLOW_ID>__<STEP_NAME>` is used by the template of the previous revision.
 
 With `ascli`:
 
@@ -3302,7 +3302,7 @@ File:
 - Plain format: no line matching `concise_attributes:`; booleans of templates written `1` and `0`.
 - `error_free: true` in the whiteboard.
 - Each template key `<STEP_TYPE>__<N>` matches the `Step_type` and `Action_id` of its steps.
-- Embedded templates named `W0__<step name>`.
+- Embedded templates named `W0__<STEP_NAME>`.
 - `LocalFileWatcher` templates have `remove_file` `0` or `1`, not blank (else no trigger history).
 - No secret in the file: secrets are given by runtime `pwd` parameters, or by remote nodes (see [Using secrets](#using-secrets)).
 
@@ -3368,7 +3368,7 @@ On error: status 500 with `{"error": ..., "message": ..., "details": ...}`.
 
 #### export_workflow
 
-`GET api/export_workflow/<id or portable id>` (no route without the id in the path)
+`GET api/export_workflow/<ID_OR_PORTABLE_ID>` (no route without the id in the path)
 
 Returns the workflow file (`.yml`, Rails format).
 With parameter `export_with_dependencies`, returns a `.wkf` package with sub-workflows and remote nodes.
@@ -3376,7 +3376,7 @@ Any non-empty value of `export_with_dependencies`, including `false`, enables it
 
 #### publish_workflow
 
-`POST api/publish_workflow?id=<id or portable id>`, or `api/publish_workflow/<id or portable id>` with any method.
+`POST api/publish_workflow?id=<ID_OR_PORTABLE_ID>`, or `api/publish_workflow/<ID_OR_PORTABLE_ID>` with any method.
 The id can also be given in a JSON body `{"id": ...}`.
 
 Publishes the last whiteboard revision.
@@ -3385,7 +3385,7 @@ Response: `true` or `false` (JSON), or `<WorkflowPublish><Success>true</Success>
 
 #### find_constraints
 
-`GET api/find_constraints?file=<PATH>[&wf_id=<workflow id>]`
+`GET api/find_constraints?file=<PATH>[&wf_id=<WORKFLOW_ID>]`
 
 Analyzes a workflow file present on the Orchestrator host and returns the list expected by `import_with_constraints`, with the possible choices for each conflict:
 
@@ -3432,7 +3432,7 @@ Query parameters:
 | `synchronous` | `true`: wait for the end of the work order. |
 | `timeout` | With `synchronous`: maximum wait, in seconds. |
 | `explicit_output_step`, `explicit_output_variable` | With `synchronous`: return only this output. |
-| `explicit_output` | Same, as `<step name>:<output name>`. |
+| `explicit_output` | Same, as `<STEP_NAME>:<OUTPUT_NAME>`. |
 | `on_error_return_code`, `on_failed_return_code` | HTTP status to return when the work order ends `Error` or `Failed`. |
 | `tags` | Comma-separated tags of the work order. |
 
@@ -3445,8 +3445,8 @@ A JSON array as value fails with status 500 (`undefined method 'gsub' for an ins
 |----------|---------|
 | `GET api/workflows_list` | All workflows: id, name, portable id, published and latest revision. |
 | `GET api/workflow_inputs_spec/<ID>` | Runtime parameters: name, type, optional, default value. |
-| `GET api/workflow_outputs_spec/<ID>` | Outputs: `<step name>:<output name>`, type. |
-| `GET api/work_orders_list/<workflow id>` | Work orders of a workflow, or of all workflows with `all`. Filters: `status`, `priority`, `from_date`, `to_date`, `tag`, `max_results`. |
+| `GET api/workflow_outputs_spec/<ID>` | Outputs: `<STEP_NAME>:<OUTPUT_NAME>`, type. |
+| `GET api/work_orders_list/<WORKFLOW_ID>` | Work orders of a workflow, or of all workflows with `all`. Filters: `status`, `priority`, `from_date`, `to_date`, `tag`, `max_results`. |
 | `GET api/work_order_status/<ID>` | Status of a work order and of its work steps. For a sub-workflow, only its status, not its steps. |
 | `GET api/work_order_output/<ID>` | Output values of a work order (XML: one `variable` element per output). |
 | `GET api/work_order_cancel/<ID>` | Cancel a work order. |
@@ -3459,12 +3459,12 @@ A JSON array as value fails with status 500 (`undefined method 'gsub' for an ins
 | Operation | Command |
 |-----------|---------|
 | Import | `ascli orchestrator workflows import <FILE>` |
-| Import with constraints, or as a revision | `ascli orchestrator workflows import_with_constraints @json:'{"filename":"<path on server>","add_as_revision":<ID>}'` |
+| Import with constraints, or as a revision | `ascli orchestrator workflows import_with_constraints @json:'{"filename":"<SERVER_PATH>","add_as_revision":<ID>}'` |
 | Export | `ascli orchestrator workflows export <ID> --out.file=<FILE>` |
 | Export with dependencies (`.wkf`) | `ascli orchestrator workflows export <ID> @json:'{"dependencies":true}' --to-folder=<FOLDER>` |
 | Publish | `ascli orchestrator workflows publish <ID>` |
 | Inputs, outputs | `ascli orchestrator workflows inputs <ID>`, `ascli orchestrator workflows outputs <ID>` |
-| Start | `ascli orchestrator workflows start <ID> [<PARAMETERS>] [<EXECUTION>]`, where execution is `{"synchronous":true}` or `{"step":"<step name>","variable":"<output name>"}` |
+| Start | `ascli orchestrator workflows start <ID> [<PARAMETERS>] [<EXECUTION>]`, where execution is `{"synchronous":true}` or `{"step":"<STEP_NAME>","variable":"<OUTPUT_NAME>"}` |
 | Work orders of a workflow | `ascli orchestrator workflows workorders <ID>` |
 | Work order | `ascli orchestrator workorders status <ID>`, `ascli orchestrator workorders output <ID>`, `ascli orchestrator workorders cancel <ID>` |
 | Journal, monitors, queues, resource pools | `ascli orchestrator journal files <BOOK>`, `ascli orchestrator monitors list <TYPE>`, `ascli orchestrator queues list`, `ascli orchestrator pools status <NAME>` |
@@ -3786,7 +3786,7 @@ end
 :category: Other Utilities
 :help: "Builds a greeting message from a pattern with placeholders."
 :plugin_name: MyGreeting
-:description: Example plugin of the plugin development guide.
+:description: Example plugin of the Aspera Orchestrator Development Guide.
 ```
 
 `edit.html.erb`:
@@ -3923,7 +3923,7 @@ Names that end with an irregular plural (`Data`, `Media`) or that contain an acr
 
 | File | Required | Content |
 | --- | --- | --- |
-| `<folder singular>.rb` | yes | The plugin class. |
+| `<FOLDER_SINGULAR>.rb` | yes | The plugin class. |
 | `metadata.yml` | yes | Versions, display name, category: see [metadata.yml](#plugin-metadata-file). |
 | `<VERSION>_<DESCRIPTION>.rb` | yes | Migrations: they create the table, see [Migrations](#migrations). |
 | `edit.html.erb` | yes | Template form: see [Template form](#template-form). |
@@ -4295,7 +4295,7 @@ Instance variables must be serializable: no open connection, file, thread or `Pr
 Reconnect in each call of `check_status`.
 
 The serialized object includes `@inputs`, where the values of `pwd` inputs are decrypted, and the values cached by `default_get` (`@<ATTRIBUTE>`).
-`SharedState` stores it according to the server setting `persistence_mode`: file `state_<work step id>.prst` of the state folder (`disk`), a row of the database (`db`), or a Redis key (`redis`).
+`SharedState` stores it according to the server setting `persistence_mode`: file `state_<WORK_STEP_ID>.prst` of the state folder (`disk`), a row of the database (`db`), or a Redis key (`redis`).
 Do not keep a secret in another instance variable.
 
 #### Plugin triggers
@@ -4419,7 +4419,7 @@ Modules to include for common integrations:
 | Module | Content |
 | --- | --- |
 | `ModuleTriggerTools` | Persistence of past events, see [Triggers](#plugin-triggers). |
-| `ModuleSshTools` | Commands on a remote node with SSH: `remote_execute_and_close!(remote_node, command_line)`, `initialize_connection`, `remote_execute`. |
+| `ModuleSSHTools` | Commands on a remote node with SSH: `remote_execute_and_close!(remote_node, command_line)`, `initialize_connection`, `remote_execute`. |
 | `ModuleSoapTools` | SOAP clients from a WSDL: `savon_client(wsdl_uri)`, `list_services`, `list_parameters`. |
 
 #### Dependencies
@@ -4451,7 +4451,7 @@ Variables:
 
 | Variable | Content |
 | --- | --- |
-| `@<class in snake case>`, `@action` | The template, for example `@my_greeting`. A new, unsaved one for a new template. |
+| `@<SNAKE_CASE_CLASS>`, `@action` | The template, for example `@my_greeting`. A new, unsaved one for a new template. |
 | `@view` | `new`, `edit` or `show` (read only: all fields are disabled). |
 | `@action_type` | The class name. |
 | `@workflow` | Id of the workflow when the template belongs to a workflow (embedded template), else `nil`. |
@@ -4508,8 +4508,8 @@ The form can contain any HTML5, CSS and JavaScript:
 
 #### Server data for the form
 
-To fill the form with data from the server or from an external system (lists of profiles, of folders), add a controller to the plugin: file `<NAME>_controller.rb`, class `<Name>Controller < ApplicationController`.
-Orchestrator routes `GET <WEB_ROOT>/<NAME>/<ACTION>[/<ID>]` to the method `<ACTION>` of `<Name>Controller` (routes `:controller/:action/:id`, `GET` only), with the session of the user.
+To fill the form with data from the server or from an external system (lists of profiles, of folders), add a controller to the plugin: file `<NAME>_controller.rb`, class `<CLASS>Controller < ApplicationController`.
+Orchestrator routes `GET <WEB_ROOT>/<NAME>/<ACTION>[/<ID>]` to the method `<ACTION>` of `<CLASS>Controller` (routes `:controller/:action/:id`, `GET` only), with the session of the user.
 
 ```ruby
 class MyGreetingController < ApplicationController
@@ -4553,12 +4553,12 @@ The help topics also show `:description` of `metadata.yml`.
 Without the Plugins page, the same as user `aspweb`, in `/opt/aspera/orchestrator`:
 
 ```shell
-sudo -u aspweb env PATH=<ruby bin folder>:/usr/bin:/bin RAILS_ENV=production bin/rails runner \
+sudo -u aspweb env PATH=<RUBY_BIN_FOLDER>:/usr/bin:/bin RAILS_ENV=production bin/rails runner \
   'Plugin.load_available_plugins; Plugin.deferred_load_plugins(Plugin.where(action_type: "MyGreeting", is_loaded: false).pluck(:id))'
 ```
 
-where `<ruby bin folder>` is the one of the service, given by `systemctl cat orchestrator_server`.
-The result of the job is in `log/production.log`: `Migrating to <migration class>`, `Initiating install of plugin <CLASS>`, then `Worker <N> reloading plugin <CLASS>`.
+where `<RUBY_BIN_FOLDER>` is the one of the service, given by `systemctl cat orchestrator_server`.
+The result of the job is in `log/production.log`: `Migrating to <MIGRATION_CLASS>`, `Initiating install of plugin <CLASS>`, then `Worker <N> reloading plugin <CLASS>`.
 
 #### Plugin importing and exporting
 
@@ -4601,7 +4601,7 @@ Programs used by the plugin (for example `ffmpeg`, `python3`) are declared in `:
 
 For the log, see [Testing and debugging](#testing-and-debugging).
 
-- Check the inputs and outputs of a plugin without a server, with the probe of this repository: `ruby lib/plugin_probe.rb <folder containing plugin folders> build/<VERSION>/src/lib` prints, as JSON, the fields of the form, the inputs and outputs for several template settings, and the errors.
+- Check the inputs and outputs of a plugin without a server, with the probe of this repository: `ruby lib/plugin_probe.rb <PLUGINS_FOLDER> build/<VERSION>/src/lib` prints, as JSON, the fields of the form, the inputs and outputs for several template settings, and the errors.
   It needs the library files extracted by `rake extract_rpm`.
 - On the server, open a template and click **Test template**: the action tester runs it with the input values you give.
 - Run it in a workflow: see the [Workflow authoring chapter](#workflow-authoring), for example with `ascli orchestrator workflows start <ID> @json:'{"who":"Laurent"}'`.
@@ -4633,7 +4633,7 @@ The rules for inputs are in [Security](#security).
 ### Plugin checklist
 
 1. Choose the class name, and check `"<CLASS>".tableize.classify == "<CLASS>"`.
-2. Create the folder `<FOLDER>` with `<folder singular>.rb`, `metadata.yml`, one migration and `edit.html.erb`.
+2. Create the folder `<FOLDER>` with `<FOLDER_SINGULAR>.rb`, `metadata.yml`, one migration and `edit.html.erb`.
 3. Give the migration a version not used by any other migration: the current date and time.
 4. Write `self.version` as in the [Quick start](#plugin-quick-start), `category`, `inputs_spec`, `outputs_spec` and `execute`.
 5. Prefer `default_inputs_spec` and `<ATTRIBUTE>_get`, with constants `VAR_` and `DEFAULT_`.
@@ -4757,7 +4757,7 @@ class HelloBanner < Portlet
   before_save      :set_portlet_name_and_desc
   def set_portlet_name_and_desc
     self.name = "Hello banner"
-    self.description = "Example portlet of the portlet development guide."
+    self.description = "Example portlet of the Aspera Orchestrator Development Guide."
   end
 
   def parameters_spec
@@ -4837,7 +4837,7 @@ end
 
 #### Portlet install and run
 
-1. Pack the folder as `hello_banner.portlet`: `tar -czf hello_banner.portlet hello_banner`. The file name must be exactly `<portlet id>.portlet` (see [Importing and exporting](#portlet-importing-and-exporting)).
+1. Pack the folder as `hello_banner.portlet`: `tar -czf hello_banner.portlet hello_banner`. The file name must be exactly `<ID>.portlet` (see [Importing and exporting](#portlet-importing-and-exporting)).
 2. In the web interface, open **Engine > Portlets**, click **Import Portlet**, and select the file. Alternatively, copy the folder to `/opt/aspera/var/config/orchestrator/portlets/hello_banner` and use the slider of the portlet.
 3. Enable the portlet with its slider, if the import did not already do so.
 4. Open **Dashboard**, select a frame, choose **Hello banner** in **Choose Portlet**, set the parameters, and click **Save Configuration**.
@@ -4980,7 +4980,7 @@ If `refresh` is not in the link of the frame, the frame uses `defaulted_paramete
 
 How a portlet is shown:
 
-1. A user opens a frame in **Dashboard** and selects a portlet in **Choose Portlet**, which sends the portlet name. `Frame#select` finds the row by name and stores `portlet_name`, `portlet_id`, `link = portlets/view?id=<ID>` and `configuration_link = <portlet folder>/<ID>`, for example `.../portlets/hello_banner/hello_banner`.
+1. A user opens a frame in **Dashboard** and selects a portlet in **Choose Portlet**, which sends the portlet name. `Frame#select` finds the row by name and stores `portlet_name`, `portlet_id`, `link = portlets/view?id=<ID>` and `configuration_link = <PORTLET_FOLDER>/<ID>`, for example `.../portlets/hello_banner/hello_banner`.
 2. **Save Configuration** stores `link_parameters` (a Ruby hash as text, for example `{"greeting" => "Bonjour", "uppercase" => "true"}`) and appends `&<NAME>=<%= CGI::escape(<NAME>) %>` to the link for each saved parameter.
 3. The page requests `FramesController#display`, which redirects to the expanded URL, with `frame_id` and `frame_html_id`, for example `portlets/view?id=hello_banner&greeting=Bonjour&uppercase=true&max_orders=3&refresh=30&frame_id=2&frame_html_id=dashboard_2`.
 4. `PortletsController#view` merges `params` and `link_parameters`, calls `Portlet.generate`, and renders `view_template` in layout `individual_portlet`.
@@ -5171,7 +5171,7 @@ The rules for parameters and `params` values are in [Security](#security).
 
 #### Permissions
 
-Each portlet has entitlements with principals `Aspera:Orchestrator:Portlet:<row id>:run`, `:view` and `:edit`, edited with **Edit permissions** in **Engine > Portlets**. Administrators see all portlets.
+Each portlet has entitlements with principals `Aspera:Orchestrator:Portlet:<ROW_ID>:run`, `:view` and `:edit`, edited with **Edit permissions** in **Engine > Portlets**. Administrators see all portlets.
 
 Limits of 4.1.6:
 
