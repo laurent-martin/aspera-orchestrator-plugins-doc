@@ -9,6 +9,9 @@ common:
 
 ## Concepts
 
+This chapter gives what the other chapters rely on: what the guide covers, the terms, the plugin display names and the statuses.
+Read it first: the other chapters use these terms without defining them.
+
 ### Introduction
 
 This guide explains how to develop for IBM Aspera Orchestrator: how to design and write workflows, and how to extend Orchestrator with action plugins and portlets.
@@ -17,16 +20,12 @@ It is written for people and for AI assistants.
 
 #### Chapters
 
-- [Concepts](#concepts) defines the terms and statuses used in all chapters.
-- [Workflow development practices](#workflow-development-practices) collects the rules and pitfalls of workflow development: how to design a workflow, how to use the designer, how to pass data, how to branch, handle errors, detect files, limit concurrency, interact with operators and monitor executions.
-  Most rules are stated as **do** or **do not**, followed by the reason.
-- [Workflow authoring](#workflow-authoring) explains how to write a workflow as a file, import it, publish it and run it, without the graphical designer and without exporting an existing workflow first.
-  Each rule gives the exact element, attribute or value expected by Orchestrator.
-- [Extending Orchestrator](#extending-orchestrator) compares action plugins and portlets, and gives what they share on installation, testing and security.
-- [Plugin development](#plugin-development) explains how to write an action plugin (a Ruby class, its database table, its template form and its metadata), and how to install, test and update it.
-  Each rule gives the exact name, method or value expected by Orchestrator.
-- [Portlet development](#portlet-development) explains how to write a portlet, a widget of the Orchestrator dashboard (a Ruby class, a view, a configuration partial and a metadata file), and how to install, test and update it.
-  Each rule gives the exact name, method or value expected by Orchestrator.
+- [Concepts](#concepts): the terms and statuses used in all chapters.
+- [Workflow development practices](#workflow-development-practices): the rules and pitfalls of workflow development, most stated as **do** or **do not** with the reason.
+- [Workflow authoring](#workflow-authoring): writing, importing, publishing and running a workflow as a file, with the exact elements, attributes and values.
+- [Extending Orchestrator](#extending-orchestrator): how action plugins and portlets compare, and what they share on installation, testing and security.
+- [Plugin development](#plugin-development): writing, installing, testing and updating an action plugin, with the exact names, methods and values.
+- [Portlet development](#portlet-development): writing, installing, testing and updating a portlet, with the exact names, methods and values.
 
 #### Valid and wise
 
@@ -136,6 +135,10 @@ While running, a work step can also be `Inactive`, `In Progress`, `Paused`, `Can
 A work order is `Complete`, `Failed` or `Error` when it reaches `End`, `Fail` or `Error`, and `Canceled` when canceled.
 
 ## Workflow development practices
+
+This chapter gives the rules for designing workflows that are reliable and easy to operate: among the choices that Orchestrator accepts, which one to make and why.
+Read it before designing a workflow, and use the [Practices checklist](#practices-checklist) to review one.
+For the exact elements and values, see [Workflow authoring](#workflow-authoring).
 
 ### Rules at a glance
 
@@ -1483,6 +1486,10 @@ Tests and changes:
 - [ ] External files and plugin versions are deployed with the workflow.
 
 ## Workflow authoring
+
+This chapter is the reference for what Orchestrator accepts and how it runs a workflow.
+Read it to write a workflow as a file, without the designer, or to check the exact behavior of a step, a link or a setting.
+For which choice to make among the valid ones, see [Workflow development practices](#workflow-development-practices).
 
 ### Quick start
 
@@ -3645,6 +3652,9 @@ The details are in [Plugin security](#plugin-security) and [Portlet security](#p
 
 ## Plugin development
 
+This chapter explains how to add a step type to workflows by writing an action plugin.
+Read it when no shipped plugin does the job and a [`CustomRuby` step](#custom-code) is not enough, or to change an existing plugin.
+
 The shipped plugins are the best set of examples: folder `/opt/aspera/orchestrator/actions` of an Orchestrator server, one folder per plugin.
 `HelloWorld` (`hello_worlds`) is a reference implementation with pause, resume, cancel, rollback and recovery.
 
@@ -4714,6 +4724,9 @@ orchestrator restart
 ```
 
 ## Portlet development
+
+This chapter explains how to add a widget to the Orchestrator dashboard by writing a portlet.
+Read it when users need a view or an action that no shipped portlet offers, or to change an existing portlet.
 
 The shipped portlets are the best set of examples: folder `/opt/aspera/orchestrator/portlets` of an Orchestrator server, one folder per portlet.
 `orchestrator_information` is the simplest, `user_tasks` has parameters and a permission check, `csv_editor` has uploads, a modal dialog and several actions, `queue_management` has pagination and `helper_method`.
