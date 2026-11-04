@@ -205,7 +205,7 @@ A workflow can be started:
 - by a monitor (auto-start of a workflow that stopped);
 - from a dashboard page or a direct start page ([Human interaction](#human-interaction));
 - by the REST API ([Integration API](#integration-api));
-- by Aspera inline validation, during a transfer ([Inline validation](#inline-validation)).
+- by Aspera inline validation, during a transfer ([Using inline validation](#using-inline-validation)).
 
 One-shot workflows are often forgotten but useful: a "fix" workflow that reruns one part of the processing on one file avoids resubmitting the file through the whole chain.
 
@@ -1398,34 +1398,26 @@ An external application can start and follow work orders through the [REST API](
 - `ascli` wraps the API, which saves writing the calls: see [ascli commands](#ascli-commands).
 - With several Orchestrator servers, call them through one address (load balancer or DNS).
 
-#### Inline validation
+#### Using inline validation
 
-An Aspera transfer server can call a workflow for each file it receives, at start, after a number of bytes (threshold) and at end, and reject the file with a message shown to the user.
+An Aspera transfer server can call a workflow for each file it receives, and reject the file with a message shown to the user: see [Inline validation](#inline-validation).
 
 ![Pattern - inline validation: the event of the call selects the check (file type at start, video codec of the first bytes at the threshold, antivirus at the end); each rejection sets the message for the user](images/practices/4.1.6/inline-validation-workflow.png)
 
-- The validation URL is `https://<ORCHESTRATOR_HOST>/aspera/orchestrator/external_calls/validate?id=<WORKFLOW_ID>`, with the credentials of a user who has the run permission on the workflow (basic authentication).
-- The work order gets two runtime parameters: `File`, the request of `ascp` (a hash: `startstop` is `start`, `running` at the threshold, or `stop`; `file`, `size`, `user`...), and `File_path`, the path of the file.
-  Declare them as runtime parameters of the workflow, and test the event with a `Filter` (`inputs['File']['startstop'] == 'start'`).
-- The answer is the status message of the work order: set it with `ExitStatus` before **Failed** (the reason of the rejection).
-  A work order that ends in error also rejects the file.
-- **IFV Skip Start Event** (Orchestrator configuration) answers the start events without starting a work order, when the workflow does nothing at start.
-- **4.1.5 and 4.1.6 refuse the call**: the request of `ascp` has no CSRF token, and Orchestrator answers with a redirection to the logon page instead of starting the work order (checked on 4.1.6).
-  `ascp` takes any answer other than HTTP 200 as a rejection: with `validation_uri` set, every upload fails.
-  On these versions, validate after the transfer instead (`AsperaOtfv`, or a trigger workflow).
-- Configure it in the `aspera.conf` of the server: `validation_file_start`, `validation_threshold`, `validation_file_stop` set to `uri`, `validation_uri` set to the validation URL of the workflow, `validation_threshold_kb`.
-- The user sees the transfer at 99 % until the validation ends: a slow workflow looks like a stuck transfer.
-  Without an answer after `session_timeout_sec` (`aspera.conf`, default 60 seconds), the call fails and `ascp` rejects the file: increase it for long checks such as antivirus.
+- **4.1.5 and 4.1.6 refuse the call** ([Known issues](#known-issues)), and `ascp` cannot authenticate while **Use Secure JWT API Auth** is set, an option that applies to the whole REST API.
+  In these cases, validate after the transfer instead (`AsperaOtfv`, or a trigger workflow).
 - Each file of each transfer creates up to three work orders: tune Orchestrator for the HTTP load, or validate after the transfer instead (`AsperaOtfv`), which does not block `ascp`.
-- A file does not start before the answer to its start call, and does not end before the answer to its end call; the other files of the transfer go on (`validation_threads` parallel calls, default 5).
-- The threshold call does not pause the transfer: a rejection stops it only when the answer arrives.
-  If the last block is already written by then, the file stays complete, and the user still gets the error.
-  A file smaller than `validation_threshold_kb` gets no threshold call.
-- A rejection ends the whole transfer session, not only the file: the files not yet received are not transferred.
-- `ascp` does not delete a rejected file: after a rejection at the end, the complete file stays under its final name, and the workflow must move or delete it.
-- Rejecting at start (for example on the file name) saves the bandwidth and storage of a file that would be refused.
-- Not available with HTTP fallback.
-- With a partial file suffix (`partial_file_suffix`), the calls give the final name, but during the transfer the file is on disk with the suffix: at the threshold, a step that reads the file adds the suffix to `File_path`.
+- Reject at the earliest event that can decide: rejecting at start (for example on the file name) saves the bandwidth and storage of a file that would be refused.
+- Set the reason of the rejection with `ExitStatus` before **Failed**: it is the message the user sees.
+- Set **IFV Skip Start Event** when the workflow does nothing at start.
+- Keep the workflow short: the user sees the transfer at 99 % until the validation ends, and a slow workflow looks like a stuck transfer.
+  For long checks such as antivirus, increase `session_timeout_sec`: after this time, `ascp` rejects the file.
+- Do not rely on a threshold rejection to stop a file: the transfer does not pause, and the file may be complete when the answer arrives.
+- A rejection also stops the files not yet received: if one bad file must not block the others, validate after the transfer instead.
+- Have the workflow move or delete a file that it rejects at the end: `ascp` leaves the complete file under its final name.
+- With a partial file suffix, a step that reads the file at the threshold adds the suffix to `File_path`.
+- Do not count on it for clients that fall back to HTTP, which are not validated.
+- `validation_uri` holds a password: use a user who has only the run permission on the workflow, and set `validation_secure`, so that `ascp` checks the certificate of Orchestrator.
 
 ### Deploying and changing workflows
 
@@ -3471,6 +3463,76 @@ A JSON array as value fails with status 500 (`undefined method 'gsub' for an ins
 | Journal, monitors, queues, resource pools | `ascli orchestrator journal files <BOOK>`, `ascli orchestrator monitors list <TYPE>`, `ascli orchestrator queues list`, `ascli orchestrator pools status <NAME>` |
 | Query parameters of an API call | `--query=@json:'{...}'`; `--query=help` lists them, from the OpenAPI description |
 
+### Inline validation
+
+An Aspera transfer server calls a workflow for each file it receives, at start, after a number of bytes (threshold) and at end, and rejects the file when the work order does not end with `Complete`.
+A server does not call for the files it sends, or when a transfer falls back to HTTP.
+For when to use it, see [Using inline validation](#using-inline-validation).
+
+4.1.5 and 4.1.6 refuse the call: see [Known issues](#known-issues).
+
+#### Validation settings
+
+In the `aspera.conf` of the server:
+
+| Setting | Content |
+|---------|---------|
+| `validation_file_start`, `validation_threshold`, `validation_file_stop` | `uri` to call at this event. Default: `none`. |
+| `validation_uri` | The URL of the call. |
+| `validation_threshold_kb` | The threshold, in KB. Required by `validation_threshold`. |
+| `validation_threads` | Calls in parallel, 5 by default. |
+| `validation_secure` | `true` checks the certificate of Orchestrator. Not checked by default. |
+| `session_timeout_sec` | Time limit of a call, 60 seconds by default. |
+
+The session fails at start with `Validator initialization error` when an event is set to `uri` without `validation_uri`, when `validation_uri` is set with no event set to `uri`, or when `validation_threshold` is set without `validation_threshold_kb`.
+
+#### Validation call
+
+`POST https://<ORCHESTRATOR_HOST>/aspera/orchestrator/external_calls/validate?id=<WORKFLOW_ID>`, once per file and per event.
+The user needs the run permission on the workflow.
+
+`ascp` adds no authentication header of its own, so it cannot give a token: the call works only when **Use Secure JWT API Auth** is not set (see [REST API](#rest-api)).
+Give the credentials in `validation_uri`: `ascp` sends `https://<USER>:<PASSWORD>@<ORCHESTRATOR_HOST>/...` as HTTP Basic.
+
+The work order gets two runtime parameters, which the workflow declares:
+
+| Parameter | Content |
+|-----------|---------|
+| `File` | The request of `ascp`, a hash. `startstop` is `start`, `running` at the threshold, or `stop`. `file` is the path of the file. Other keys include `size`, `start_byte`, `user`, `user_id`, `host`, `direction`, `session_id`, `xfer_id`, `cookie` and `tags`. |
+| `File_path` | The path of the file, same as `file`. |
+
+Test the event with a `Filter`: `inputs['File']['startstop'] == 'start'`.
+
+**IFV Skip Start Event** (Orchestrator configuration, `ifv_skip_start_event`, not set by default) answers a start event without starting a work order.
+
+#### Validation answer
+
+Orchestrator answers when the work order ends, and checks its status every second: the request stays open until then.
+
+| Work order | HTTP status | File |
+|------------|-------------|------|
+| `Complete` | 200 | Accepted. |
+| `Failed`, `Error` | 400 | Rejected. |
+| Other final status, such as `Canceled` | 500 | Rejected. |
+
+The reason shown to the user is the status message of the work order, set with `ExitStatus`.
+
+`ascp` takes any answer other than HTTP 200 as a rejection, such as a redirection or a refused authentication.
+So does a call with no answer after `session_timeout_sec`, and the work order then goes on.
+
+#### Validation and the transfer
+
+| Event | Effect on the transfer |
+|-------|------------------------|
+| Start | The file does not start before the answer. |
+| Threshold | The call comes once `validation_threshold_kb` of the file are written; a smaller file gets no call. The transfer does not pause: a rejection stops it when the answer arrives. If the last block is written by then, the file stays complete, and the user still gets the error. |
+| End | The file does not end before the answer. |
+
+The other files of the transfer go on during a call.
+A rejection ends the whole transfer session, not only the file: the files not yet received are not transferred.
+`ascp` does not delete a rejected file: after a rejection at the end, the complete file stays under its final name.
+With a partial file suffix (`partial_file_suffix`), the calls give the final name, but during the transfer the file is on disk with the suffix.
+
 ### Known issues
 
 Observed in Orchestrator 4.1.6:
@@ -3492,7 +3554,7 @@ Observed in Orchestrator 4.1.6:
   The designer writes these elements: opened from the list of workflows, it draws the retry settings of the published revision with properties `Failed_retry_for` and `Failed_retry_for_unit` (`WhiteboardsHelper#set_retry_for_branch`), while its retry tab and the parser use `Failed_retryFor` and `Failed_retryForUnit`.
   So the retry tab shows **Retry Duration** empty, and a save writes `<Failed_retry_for>` and `<Failed_retry_for_unit>`: the retry period is lost; attempts and delay are kept (observed with the serializer of the designer).
   The **Revisions** tab draws from the XML and shows the period.
-- The inline validation endpoint `POST external_calls/validate?id=<workflow id>` (`ExternalCallsController#aspera_call`, called by `ascp` for each file) is not exempt from the CSRF protection enabled in 4.1.5: the request, without CSRF token, is answered with a redirection to the logon page (HTTP 302), and no work order starts.
+- The inline validation endpoint `POST external_calls/validate?id=<WORKFLOW_ID>` (`ExternalCallsController#aspera_call`, called by `ascp` for each file) is not exempt from the CSRF protection enabled in 4.1.5: the request, without CSRF token, is answered with a redirection to the logon page (HTTP 302), and no work order starts.
   4.0.1 had the protection off.
   The workflow itself can be tested by starting it with runtime parameters `File` (a JSON string) and `File_path`.
 - `OrchestratorAlertEntry` does not save its header (`execute` passes only the category and the message).
