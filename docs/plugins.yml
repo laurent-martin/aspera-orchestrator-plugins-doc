@@ -495,7 +495,7 @@ AmazonS3Operation:
     File_Uploaded: {type: string, when: {operation: {in: [upload]}}}
     Object_Key: {type: string, when: {operation: {in: [upload]}}}
     Location: {type: string, when: {operation: {in: [upload, createbucket, download, Head Object]}}}
-    Bucket: {type: string, if_blank: bucket, when: {operation: {in: [upload, createbucket]}}}
+    Bucket: {type: string, when: {operation: {in: [upload, createbucket]}}}
     Bucket_List: {type: array, when: {operation: {in: [list]}}}
     Aws_Response: {type: hash, when: {operation: {in: [download, Head Object]}}}
     Pre-signed_Url: {type: string, when: {operation: {in: [generate pre-signed url]}}}
@@ -992,7 +992,7 @@ AmqpTrigger:
     Queue_vhost: {type: string, required: false, if_blank: [queue_vhost, queue_host, queue_node]}
   outputs:
     Message_payload: {type: string}
-    Queue_name: {type: string, if_blank: queue_name}
+    Queue_name: {type: string}
     Messages_left_count: {type: int}
     Message_response: {type: string}
     Message_headers: {type: string}
@@ -1953,7 +1953,7 @@ AzureServiceBusOperation:
   outputs:
     Error_message: {type: string}
     Step_information: {type: hash}
-    Message_body: {type: string, if_blank: message_body, when: {operation: {not_in: [Message_send]}}}
+    Message_body: {type: string, when: {operation: {not_in: [Message_send]}}}
 AzureServiceBusTrigger:
   display_name: Azure Service Bus Trigger
   category: Integration
@@ -3217,7 +3217,7 @@ EnvivioVodEncoding:
     Additional_parameters: {type: string, required: false, if_blank: additional_parameters}
   outputs:
     Output_file_name: {type: string}
-    Job_name: {type: string, if_blank: job_name}
+    Job_name: {type: string}
     Job_ID: {type: string}
     Step_information: {type: hash}
 EolementheWorkflowManager:
@@ -4064,6 +4064,9 @@ FileJournalLogEntry:
   - 'Allowed values for processing_status (and the File_processing_status input): Complete, Error, Failed, In Progress. These map to the standard Journal statuses defined in Journal::PREDEFINED_STATUS.'
   - Journal books must exist before the step runs. A missing book is NOT created at execution time (unlike a workflow import, which creates the book automatically). Create the book in Engine > Journaling before deploying the workflow.
   - When journal_book is set to "--Runtime--", the "Journal Book" input becomes required.
+  - 'Journal books must exist before the step runs. A missing book is NOT created at execution time: the entry is logged without a book. A workflow import creates only the books of inline journals (step menu Journal), not those of this plugin. Create the book in Workflows > Journals before deploying the workflow (checked on 4.1.6).'
+  - 'Journaling must be on (Journal On in Engine > Configuration, Journal & Cleanup): otherwise the step ends with Error.'
+  - milestone is the progress of the file in percent (it replaces the previous value, it is not added). Map the outputs journal_file_ID and actual_package_ID of a first entry to the inputs file_ID and package_ID of later steps to append to the same file entry; without file_ID, a later step appends to the entry of the same file name in the same package and book, unless new_file is set.
 Filter:
   display_name: Filter
   category: System
@@ -5557,7 +5560,7 @@ MediabinAssetManagement:
   outputs:
     Step_information: {type: hash}
     Assets: {type: array, when: {operation: {in: [List assets]}}}
-    Local_path: {type: string, if_blank: local_path, when: {operation: {in: [Download asset]}}}
+    Local_path: {type: string, when: {operation: {in: [Download asset]}}}
 MergePoint:
   display_name: Merge point
   category: System
@@ -5695,7 +5698,7 @@ MongodbOperation:
     Response: {type: hash, when: {operation: {in: [Database_command, Document_map_reduce, Document_remove, Document_update]}}}
     Results: {type: array, when: {operation: {in: [Document_aggregate, Document_distinct, Document_find, Document_group]}}}
     Count: {type: int, when: {operation: {in: [Document_count]}}}
-    Document: {type: hash, if_blank: document, when: {operation: {in: [Document_find_and_modify, Document_find_one]}}}
+    Document: {type: hash, when: {operation: {in: [Document_find_and_modify, Document_find_one]}}}
     Document_id: {type: string, when: {operation: {in: [Document_insert, Document_save]}}}
 MxFixer:
   display_name: Mx fixer
@@ -5819,6 +5822,9 @@ OrchestratorAlertEntry:
     Alert Entered: {type: flag}
     Alert Message: {type: string}
     Step_information: {type: hash}
+  notes:
+  - 'category_type is the id of the alert category: 1 WorkflowAlerts, 2 UserAlerts, 3 WorkorderAlerts, 4 MonitorAlerts, 5 PluginAlerts (AlertConfiguration::CATEGORY_LIST). The alert is added only if the category is enabled, and shown to the users subscribed to it (a new user is subscribed to all).'
+  - 'header is not saved in 4.1.6 (execute does not pass it to the alert): put everything in alert_message, which can contain placeholders.'
 OrionOttMonitor:
   display_name: Orion OTT Monitor
   category: Quality Control
@@ -5964,7 +5970,7 @@ QscanFileVerification:
     polling_frequency: {type: int, required: false, if_blank: polling_frequency}
     pdf_report_file_path: {type: string, required: true, if_blank: pdf_report_file_path, when: {save_pdf_report: {in: [true]}}}
   outputs:
-    job_name: {type: string, if_blank: job_name}
+    job_name: {type: string}
     events: {type: array}
     Step_information: {type: hash}
     pdf_file_size: {type: int, when: {save_pdf_report: {in: [true]}}}
@@ -6037,14 +6043,14 @@ QueueStager:
     Tags: {type: string, required: false, if_blank: tags, when: {operation: {in: [Add, Add_multiple, List_all, Get_next, Get_multiple]}}}
     Max_item_count: {type: int, required: true, if_blank: max_item_count, when: {operation: {in: [Get_multiple]}}}
   outputs:
-    Queue_ID: {type: string, if_blank: queue_name}
+    Queue_ID: {type: string}
     Step_information: {type: hash}
-    Queued_item: {type: string, if_blank: queued_item, when: {operation: {in: [Add, Wait_for, Remove, Get_next, Peek, Find]}}}
+    Queued_item: {type: string, when: {operation: {in: [Add, Wait_for, Remove, Get_next, Peek, Find]}}}
     Queued_item_description: {type: string, when: {operation: {in: [Add, Wait_for, Remove, Get_next, Peek, Find]}, omit_description: {in: [null, false]}}}
     Item_id: {type: int, when: {operation: {in: [Add, Remove]}}}
-    Tags: {type: string, if_blank: tags, when: {operation: {in: [Add, Wait_for, Remove, Get_next, Peek, Find]}}}
+    Tags: {type: string, when: {operation: {in: [Add, Wait_for, Remove, Get_next, Peek, Find]}}}
     Items added: {type: int, when: {operation: {in: [Add_multiple]}}}
-    Weight: {type: int, if_blank: weight, when: {operation: {in: [Wait_for, Get_next, Peek, Find]}}}
+    Weight: {type: int, when: {operation: {in: [Wait_for, Get_next, Peek, Find]}}}
     Queued_items: {type: [array, int], when: {operation: {in: [List_all, Get_multiple, Item_count]}}}
     Total_weight: {type: int, when: {operation: {in: [List_all, Get_multiple, Item_count]}}}
     Queue_status: {type: string, when: {operation: {in: [List_all, Clear, Pause, Resume, Item_count, Peek]}}}
@@ -6283,7 +6289,7 @@ RestRequest:
   description: This plugin allows you to make REST requests to web services, either as a one-time operation or with repeated polling at specified intervals.
   attributes:
     service_url: {type: string, hint: 'e.g., https://api.example.com/endpoint', placeholders: true}
-    rest_method: {type: string}
+    rest_method: {type: string, values: [get, post, delete, put, patch, __RUNTIME__], hint: 'Lower case. __RUNTIME__: the method is given by the required input Rest_Method.'}
     basic_auth_login: {type: string, hint: Enter login username, placeholders: true}
     basic_auth_password:
       type: string
@@ -6698,12 +6704,12 @@ SharedStateOperation:
   outputs:
     Step_information: {type: hash}
     id: {type: int, if_blank: operation}
-    path: {type: string, if_blank: [path, operation]}
+    path: {type: string, if_blank: operation}
     name: {type: string, if_blank: operation}
-    entry: {type: [hash, array, date, flag, string, int], if_blank: [entry, operation]}
+    entry: {type: [hash, array, date, flag, string, int], if_blank: operation}
     entry_type: {type: string, if_blank: operation}
-    aggregate_type: {type: string, if_blank: [aggregate_type, operation]}
-    aggregate_id: {type: int, if_blank: [aggregate_id, operation]}
+    aggregate_type: {type: string, if_blank: operation}
+    aggregate_id: {type: int, if_blank: operation}
     Shared state(s): {type: array, when: {operation_retrieve: {in: [true]}, retrieve_multiple: {in: [true]}}}
     Number of shared states retrieved: {type: int, when: {operation_retrieve: {in: [true]}, retrieve_multiple: {in: [true]}}}
     Errors: {type: array, when: {operation_retrieve: {in: [true]}, retrieve_multiple: {in: [true]}}}
@@ -6801,6 +6807,9 @@ SimpleParameterLookup:
     Step_information: {type: hash}
     "<parameters_associations>": {type: string}
     rows: {type: array, when: {return_array_of_rows: {in: [true]}}}
+  notes:
+  - 'A row is returned only if at least one column input has a value and all the inputs with a value match the row. With no key input, no row matches and the step ends with Failed (No configuration match for data set), unless return_array_of_rows is set: the step then completes with an empty rows output (checked on 4.1.6).'
+  - 'Input ColumnToListValueFrom (a column name) returns all the values of that column in output ColumnValues when the step completes: to list a column without a key, set return_array_of_rows.'
 SlackNotification:
   display_name: Slack notification
   category: User Interactions
@@ -7628,7 +7637,7 @@ VidcheckerVerification:
     Task_alerts: {type: array}
     Task_info: {type: hash}
     Job_id: {type: string}
-    Report_file_path: {type: string, if_blank: report_file_path}
+    Report_file_path: {type: string}
     Step_information: {type: hash}
 VqbifAnalyzer:
   display_name: VqbifAnalyzer
@@ -7739,8 +7748,8 @@ WatsonLanguageTranslator:
     Step_information: {type: hash}
     Result: {type: [hash, string]}
     Translations: {type: array, when: {operation: {in: [Translate]}}}
-    Document_id: {type: string, if_blank: document_id, when: {operation: {in: [Translate Document]}}}
-    Filename: {type: string, if_blank: filename, when: {operation: {in: [Translate Document]}}}
+    Document_id: {type: string, when: {operation: {in: [Translate Document]}}}
+    Filename: {type: string, when: {operation: {in: [Translate Document]}}}
     Status: {type: string, when: {operation: {in: [Translate Document, Get Document Status]}}}
 WatsonSpeechToText:
   display_name: Watson speech to text
@@ -7921,7 +7930,7 @@ WorkOrderMetaData:
     longest_steps: {type: array, when: {strict_label_and_tags: {in: [false]}}}
     shortest_steps: {type: array, when: {strict_label_and_tags: {in: [false]}}}
     work_order_url: {type: string, when: {strict_label_and_tags: {in: [false]}}}
-    tags: {type: array, if_blank: tags}
+    tags: {type: array}
     master_id: {type: int}
     previous_work_step_information: {type: array, when: {strict_label_and_tags: {in: [false]}}}
     initiated_by: {type: int, when: {strict_label_and_tags: {in: [false]}}}

@@ -697,7 +697,8 @@ class PluginProbe
           end
       end
       # attributes that must all be blank, or all set
-      lists = {'if_blank' => [if_blank[name]].compact, 'if_set' => []}
+      # (an output may have the name of the input given by a blank attribute: QueueStager Queue_ID, always an output)
+      lists = {'if_blank' => kind == :inputs ? [if_blank[name]].compact : [], 'if_set' => []}
       if present.size != pool.size
         condition = describe(present, index, tested, choices) { |ctx| items(ctx, kind).key?(name) }
         lists.each_key { |key| lists[key] |= condition[key] if condition[key] }

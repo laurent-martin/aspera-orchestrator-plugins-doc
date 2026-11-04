@@ -260,6 +260,15 @@ namespace :doc do
     )
   end
 
+  desc 'Generate PDF from workflow development practices'
+  task :practices do
+    markdown_to_pdf(
+      md: PATH_DOCS / 'workflow-development-practices.md',
+      pdf: PATH_DOCS / 'workflow-development-practices.pdf',
+      theme: PDF_THEME
+    )
+  end
+
   PATH_OVERLAY = TOP / 'lib' / 'plugins_overlay.yml'
 
   desc 'Generate action template reference (Markdown) from actions folder (env var ACTIONS_DIR overrides the RPM extract)'

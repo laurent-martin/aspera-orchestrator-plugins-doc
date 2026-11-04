@@ -5033,7 +5033,9 @@ For each action plugin, this reference lists:
 ### Notes
 
 - Allowed values for processing_status (and the File_processing_status input): Complete, Error, Failed, In Progress. These map to the standard Journal statuses defined in Journal::PREDEFINED_STATUS.
-- Journal books must exist before the step runs. A missing book is NOT created at execution time (unlike a workflow import, which creates the book automatically). Create the book in Engine > Journaling before deploying the workflow.
+- Journal books must exist before the step runs. A missing book is NOT created at execution time: the entry is logged without a book. A workflow import creates only the books of inline journals (step menu Journal), not those of this plugin. Create the book in Workflows > Journals before deploying the workflow (checked on 4.1.6).
+- Journaling must be on (Journal On in Engine > Configuration, Journal & Cleanup): otherwise the step ends with Error.
+- milestone is the progress of the file in percent (it replaces the previous value, it is not added). Map the outputs journal_file_ID and actual_package_ID of a first entry to the inputs file_ID and package_ID of later steps to append to the same file entry; without file_ID, a later step appends to the entry of the same file name in the same package and book, unless new_file is set.
 - When journal_book is set to "--Runtime--", the "Journal Book" input becomes required.
 
 ## Filter
@@ -7210,6 +7212,11 @@ For each action plugin, this reference lists:
 - `Alert Message` (`string`)
 - `Step_information` (`hash`)
 
+### Notes
+
+- category_type is the id of the alert category: 1 WorkflowAlerts, 2 UserAlerts, 3 WorkorderAlerts, 4 MonitorAlerts, 5 PluginAlerts (AlertConfiguration::CATEGORY_LIST). The alert is added only if the category is enabled, and shown to the users subscribed to it (a new user is subscribed to all).
+- header is not saved in 4.1.6 (execute does not pass it to the alert): put everything in alert_message, which can contain placeholders.
+
 ## OrionOttMonitor
 
 - **Display name**: Orion OTT Monitor
@@ -7823,6 +7830,8 @@ For each action plugin, this reference lists:
 | `post_body_file_path` | string |  |  |
 | `ssl_version` | string |  | `Ssl_version` |
 
+- `rest_method`: Allowed values: `get`, `post`, `delete`, `put`, `patch`, `__RUNTIME__`. Lower case. __RUNTIME__: the method is given by the required input Rest_Method.
+
 ### Inputs
 
 - `Service_url` (`string`, required)
@@ -8394,6 +8403,11 @@ For each action plugin, this reference lists:
 - `Step_information` (`hash`)
 - `<parameters_associations>` (`string`)
 - `rows` (`array`)
+
+### Notes
+
+- A row is returned only if at least one column input has a value and all the inputs with a value match the row. With no key input, no row matches and the step ends with Failed (No configuration match for data set), unless return_array_of_rows is set: the step then completes with an empty rows output (checked on 4.1.6).
+- Input ColumnToListValueFrom (a column name) returns all the values of that column in output ColumnValues when the step completes: to list a column without a key, set return_array_of_rows.
 
 ## SlackNotification
 

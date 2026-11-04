@@ -268,7 +268,7 @@ So write the reference in the attribute, as the entity is known on the target se
 | Workflow | `WorkflowLauncher`: `workflow_id` | Id of the workflow. Or `workflow_id` blank, `use_portable_id` set to `1`, and `portable_id`: the portable id of the workflow, looked up at execution. |
 | Remote node | `remote_node`, and other attributes with widget `remote_node` in the plugin specification | Name of the node. |
 | Journal book | Step element `Journaling` of the graph | Name of the book. The import creates it if missing. |
-| Journal book | `FileJournalLogEntry`: `journal_book` | Name of an existing book. It is not created. |
+| Journal book | `FileJournalLogEntry`: `journal_book` | Name of an existing book. It is not created: the entries are then written without a book. |
 | Mailer | `EmailNotification`, `UserInput`: `mailer_name` | Name of a mailer configuration. Blank: the first active one. |
 | Global action template | Element 3 | A template with the same class, name and attributes: see [Action templates](#action-templates). |
 
@@ -390,7 +390,7 @@ A `Prerequisite` element links a previous node to the current one:
 |-----------|---------|
 | `id` | `id` of the previous node. |
 | `status` | Status of the previous node that activates the link. `true` for a link from `Start`. Otherwise the final status of the previous step: `Complete`, `Failed` or `Error` (compared case-insensitively). |
-| `router` | Line style in the designer. Use `draw2d.ManhattanConnectionRouter` for step prerequisites and `draw2d.BezierConnectionRouter` for parameter links. Ignored by execution engine, but required by the Web UI canvas to render connector lines. |
+| `router` | Line style of the link in the designer (no effect on execution), chosen with a right-click on the link: `draw2d.ManhattanConnectionRouter` (right angles, the default when the attribute is absent), `draw2d.BezierConnectionRouter` (curve), `draw2d.NullConnectionRouter` (straight line), `draw2d.FanConnectionRouter` (straight lines spread apart when several links join the same two nodes). The designer uses the value as a JavaScript class name: no other value. Use Manhattan for step prerequisites and Bezier for parameter links; use Bezier on a step prerequisite only where the graph reads better, for example when a Manhattan line would cross a step. |
 
 `Synch_factor` sets how many prerequisites must be met:
 
@@ -592,6 +592,10 @@ At run time:
 - An array is written in Ruby notation: `[1, 2]`.
 - `<% ... %>` tags (code without output, for example `<% if ... %>`) run only when the value also contains an expression such as `<%= var(file_name).upcase %>`: do not rely on them.
 
+`FileGenerator` evaluates its whole template (`file_body_template`) as ERB, `<% ... %>` tags included, with the inputs declared in `required_inputs` and `optional_inputs`.
+An input is read through the missing-method mechanism of the plugin: an input named like a method that exists (of Ruby, or a global method of Orchestrator such as `md5`) calls that method instead, and the step fails, for example with "wrong number of arguments (given 0, expected 1..4)" (tested on 4.1.6).
+The form of 4.1.6 mentions a `{{variable_name}}` syntax: it is not supported.
+
 ### Plugin specifications
 
 The file [plugins.yml](plugins.yml) gives, for each plugin, its template attributes and the inputs and outputs of its steps, with the template settings they depend on.
@@ -695,6 +699,7 @@ If the template enables continuous monitoring (for example attribute `allow_mult
 So the work order that waits is always the last one, and its id changes after each event.
 The work steps of the clones keep the group of the first work order (`WorkStep#group`): with the default history scope `by workorder group`, all the clones share the history of past triggers (see [LocalFileWatcher](#localfilewatcher)).
 To stop the monitoring, cancel that work order: `ascli orchestrator workflows workorders <workflow id>` lists the work orders, the waiting one is `In Progress` on the trigger step.
+If a workflow monitor auto-starts the workflow (**Monitors**), turn the monitor off first: otherwise it starts a new work order at its next check.
 When the trigger step ends with `Error`, no clone is created, and the monitoring stops.
 
 ## Secrets
@@ -908,6 +913,10 @@ Inputs and outputs come from the header:
   A cell matches if it is equal to the value, if it is a glob pattern that matches it (`File.fnmatch`), or if it is written `/<regular expression>/` and matches it.
 - The outputs are the cells of that row, for all columns.
 - If no row matches, the step ends with `Failed`: `No configuration match for data set: <column>:<value>`.
+  With no input value (no key), no row matches.
+- With `return_array_of_rows`, the step completes even if no row matches: output `rows` is then empty (and stays empty without a key).
+- Input `ColumnToListValueFrom` (a column name) gives all the values of that column in output `ColumnValues` when the step completes:
+  to list a column without a key, set `return_array_of_rows`.
 
 Example: the step has input `Profile`, and outputs `FFMPEG Options` and `Target Extension` (plain format, rows separated by `\r\n` in a double-quoted value):
 
@@ -1397,7 +1406,9 @@ The folder belongs to the user that runs Orchestrator (`aspweb`), so that `per_f
 
 Rules of this pattern (source of `ArrayFanout` and `Funnelin`, and tests):
 
-- Exactly one step between `ArrayFanout` and `Funnelin`, otherwise `ArrayFanout` ends with `Error`.
+- Exactly one step between `ArrayFanout` and `Funnelin`.
+  `ArrayFanout` ends with `Error` when its `Complete` exit leads to more than one step ("Only one step is supported between fan-out and funnel-in"), or when the `Complete` exit of that step leads to more than one step ("Funneled-step should only exit complete in the funnel-in step").
+  A chain of two steps is not refused, but is wrong: observed with `ArrayFanout`, two `FileInfo` steps and `Funnelin`, on three files, the first step ran three times, the second one once (first file), and `Funnelin` reported `Funneled in 1 work steps`; the work order completed.
   For more processing, use a `SubWorkflow` or `WorkflowLauncher` step, as here.
 - Connect `Funnelin` to each end status of that step (`Complete`, `Failed`, `Error`), with `Synch_factor` 1: `ArrayFanout` replaces 1 by the number of elements, so `Funnelin` waits for all executions, whatever their status.
   With a link on `Complete` only, a failed execution has no next step, and the work order fails at once (`No behavior defined for step status change to Failed - in Process file (1)`).
@@ -1724,7 +1735,7 @@ Graph:
 - Each parameter has a `Name` and a `Value_type`; a parameter that is not a runtime parameter, or that is an optional runtime parameter, has a `Value`.
 - Join nodes after mutually exclusive / alternative branches have `Synch_factor` 1; join nodes after concurrent parallel nominal branches have `Synch_factor` 0.
 - Each `Synch_factor` other than `0` has attributes `x` and `y`, else the designer shows an empty canvas.
-- For optimal Web UI rendering, use `router="draw2d.ManhattanConnectionRouter"` on step prerequisites and `router="draw2d.BezierConnectionRouter"` on parameter links.
+- Each `router`, when present, is one of the four `draw2d.*ConnectionRouter` values: Manhattan on step prerequisites (Bezier only where the graph reads better), Bezier on parameter links.
 - Retry settings (`Error_*`, `Failed_*`) only on steps that have an outgoing branch with that status.
 
 ## REST API
@@ -1831,6 +1842,9 @@ Query parameters:
 | `on_error_return_code`, `on_failed_return_code` | HTTP status to return when the work order ends `Error` or `Failed`. |
 | `tags` | Comma-separated tags of the work order. |
 
+Give the value of an `array` or `hash` parameter as a string, in JSON: `{"files": "[\"/a.mxf\", \"/b.mxf\"]"}`.
+A JSON array as value fails with status 500 (`undefined method 'gsub' for an instance of Array`, `MultiType.convert_value_array`), observed on 4.1.6.
+
 ### Other workflow endpoints
 
 | Endpoint | Content |
@@ -1877,3 +1891,12 @@ Observed in Orchestrator 4.1.6:
 - The example files of the product (`docs/workflow_examples`) contain `<Failed_retry_for_unit>`, while the parser reads `<Failed_retryForUnit>`: that setting is ignored.
   The same applies to `<Error_retry_for_unit>` (correct: `<Error_retryForUnit>`).
   Such workflows also exist on servers when imported from a `.wkf` package of unknown origin: the retry period is silently ignored.
+  The designer writes these elements: opened from the list of workflows, it draws the retry settings of the published revision with properties `Failed_retry_for` and `Failed_retry_for_unit` (`WhiteboardsHelper#set_retry_for_branch`), while its retry tab and the parser use `Failed_retryFor` and `Failed_retryForUnit`.
+  So the retry tab shows **Retry Duration** empty, and a save writes `<Failed_retry_for>` and `<Failed_retry_for_unit>`: the retry period is lost; attempts and delay are kept (observed with the serializer of the designer).
+  The **Revisions** tab draws from the XML and shows the period.
+- The inline validation endpoint `POST external_calls/validate?id=<workflow id>` (`ExternalCallsController#aspera_call`, called by `ascp` for each file) is not exempt from the CSRF protection enabled in 4.1.5: the request, without CSRF token, is answered with a redirection to the logon page (HTTP 302), and no work order starts.
+  4.0.1 had the protection off.
+  The workflow itself can be tested by starting it with runtime parameters `File` (a JSON string) and `File_path`.
+- `OrchestratorAlertEntry` does not save its header (`execute` passes only the category and the message).
+- At publish, a designer note is looked up by its `note_id` in all workflows (`Note.find_by(note_id:)`): a note whose id is also used in another workflow updates the note of that workflow, and is not shown in this one.
+  The designer generates UUIDs; in a hand-written file, use a UUID too, not `note1`.
