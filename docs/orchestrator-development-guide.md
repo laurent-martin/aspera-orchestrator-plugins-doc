@@ -1672,8 +1672,8 @@ Rules:
 - To add a revision to an existing workflow instead, use `import_with_constraints` with `add as revision`.
   See [Update an existing workflow](#update-an-existing-workflow).
 - The API has no operation to delete a workflow: delete it in the user interface.
-- **Web UI**: opened from the list of workflows, the designer draws the published revision from the published steps and from the positions in its XML (`WorkflowsController#edit`).
-  The **Revisions** tab draws the XML of the chosen revision (`WhiteboardsController#show`).
+- **Web UI**: opened from the list of workflows, the designer draws the published revision from the published steps and from the positions in its XML.
+  The **Revisions** tab draws the XML of the chosen revision.
   If the designer shows an empty canvas, the graph is not lost, and importing again does not help: a `Synch_factor` other than `0` has no position (see [Prerequisites and branches](#prerequisites-and-branches)); the **Revisions** tab still shows the graph.
   **Never click "Publish" on an empty canvas**: this publishes an empty graph.
   A revision imported through the API is shown as created by *Unknown user*.
@@ -1715,7 +1715,7 @@ The plain format is the old (Orchestrator 4.0) format.
 It is the simplest to write, and the one used in this guide.
 
 A file is in plain format when **no line** matches `concise_attributes:`.
-On import, Orchestrator converts it to the current format, line by line, and then loads it (`Compatibility::WorkflowYmlUpdater`).
+On import, Orchestrator converts it to the current format, line by line, and then loads it.
 That converter is line-based, so the layout rules matter:
 
 - An optional first line `---`.
@@ -1838,7 +1838,7 @@ if it is the portable id of a workflow of the server, `workflow_id` is set to th
 otherwise, if `workflow_id` is the id of a workflow, `workflow_portable_id` is set to its portable id.
 `import_workflow` gives a new portable id to each workflow it creates (see [Workflow attributes](#workflow-attributes)): a portable id read on another server does not match.
 Write `workflow_id`, and leave `workflow_portable_id` blank.
-The import in the web UI and [import_with_constraints](#import_with_constraints) keep the portable id of the file, unless a workflow of the server already has it (`ImportExporter.import_new`): with them, a portable id written in the template matches the workflow imported from the same file.
+The import in the web UI and [import_with_constraints](#import_with_constraints) keep the portable id of the file, unless a workflow of the server already has it: with them, a portable id written in the template matches the workflow imported from the same file.
 
 Packages (`.wkf`): with dependencies, `export_workflow` lists in element 4 each entity a template uses, for example `{entity: Workflow, id_key: id, id_value: 4, dependent_field: workflow_id}`, and packs sub-workflows and remote nodes (element 5).
 On import, each packed sub-workflow is imported first, and the attribute named by `dependent_field` is set to the `id_key` of the new entity.
@@ -1901,7 +1901,7 @@ General rules:
 | `Fail` | `Synch_factor`, `Prerequisites` | Reached: the work order is `Failed`. |
 | `Error` | `Synch_factor`, `Prerequisites` | Reached: the work order is `Error`. |
 
-The first of these nodes reached ends the work order: the steps still running on other branches are cancelled (`WorkOrder#terminate_all_work_steps`).
+The first of these nodes reached ends the work order: the steps still running on other branches are cancelled.
 
 `Fail` and `Error` are also reached **implicitly**: when a work step ends with status `Failed` (or `Error`) and no step is connected to it for that status, the work order goes to `Fail` (or `Error`).
 So only success paths need to be connected to `End`; failures do not need explicit links.
@@ -2018,7 +2018,7 @@ The `Outputs` element only adds settings:
 | `Carry_thru` | Makes a variable available as an input of this step without the plugin declaring it: at run time, the value is in `@inputs` under `<NAME>` and `<STEP_NAME>/<NAME>`. Attributes: `type` (`output` or `parameter`), `name`, and for `output`: `step_name`, `step_type`, `action_id`. |
 
 An input can be mapped to an output of **any** step of the graph, not only of a step linked to it: the recipes [queue](#recipe-queue-and-resource-pool), [one work order per file](#recipe-one-work-order-per-file) and [operator decision](#recipe-operator-decision) map outputs of the step before the previous one, without `Carry_thru`.
-The designer has a narrower rule: the mapping list of a step offers only the outputs of the steps linked to it, the variables they carry through, and the global parameters (`WhiteboardsController#input_mappings`).
+The designer has a narrower rule: the mapping list of a step offers only the outputs of the steps linked to it, the variables they carry through, and the global parameters.
 There, `Carry_thru` is the way to offer an output to the step after the next one.
 A mapping to an output that the list does not offer, such as one set by a file, is kept when the step is edited in the designer, but the list then shows **[Select]**; choosing **[Select]** removes the mapping.
 In a file, map the output directly.
@@ -2058,7 +2058,7 @@ Rules:
 - A parameter that is not linked to `Start` or to a step does not exist after publish: inputs mapped to it are silently not created.
 - Runtime parameters are the inputs of the workflow: `workflow_inputs_spec` lists them, and `initiate` receives them as `external_parameters`.
 - A **step parameter** is a parameter linked to a step instead of (or in addition to) `Start`.
-  Linking a parameter to a step does not change its value or scope: the engine sets all parameters when the work order starts (`Variable.generate_all`), and an input of any step maps to the parameter by name.
+  Linking a parameter to a step does not change its value or scope: the engine sets all parameters when the work order starts, and an input of any step maps to the parameter by name.
   The designer uses step parameter links to draw the parameter node near the step, and offers a step parameter only in the mappings of the steps it is linked to.
   In practice, link a parameter to `Start` and map the input directly.
 
@@ -2087,13 +2087,13 @@ They do not change execution.
 The inputs of a step are declared by its action template, in method `inputs_spec` of the plugin: a map of required inputs and a map of optional inputs, each from name to [value type](#value-types).
 The [Action Template Reference](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/action-template-reference.md) lists them for each plugin.
 
-Many plugins derive inputs from some of their template attributes (`ActionTools#default_inputs_spec`):
+Many plugins derive inputs from some of their template attributes:
 
 - A text attribute **left blank** in the template becomes an input, so its value can come from the graph at run time.
   The [Action Template Reference](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/action-template-reference.md) gives its name in column **Input if blank**.
   - Input name: the value of the plugin constant `VAR_<ATTRIBUTE>` if it exists, else the attribute name with its first letter in upper case (for example `file_path` gives `File_path`).
   - The input is optional if the plugin defines a constant `DEFAULT_<ATTRIBUTE>`, else required.
-  - An attribute name ending with `_<TYPE>` (for example `delay_int`) gives an input of that type, named without the suffix.
+  - An attribute name ending with `_<TYPE>` (for example `delay_int`) gives an input of that type, named without the suffix (`Delay`).
 - A text attribute that is set can contain [placeholders](#placeholders) `<%= variable %>`: each one creates an input.
 - A non-text attribute left null becomes an input of the corresponding type.
 
@@ -2123,7 +2123,7 @@ These forms create inputs:
 
 Any other Ruby code in `<%= ... %>` runs, but creates no input: in `<%= file_name.upcase %>`, `file_name` is not an input of the step, unless another placeholder declares it.
 Write `<%= var(file_name).upcase %>`.
-A function call creates inputs only when the placeholder is the call alone and all its arguments are names (`Payload#parse_payload`): `<%= File.join(dir, 'sub') %>` (a literal), `<%= File.join(File.dirname(path), name) %>` (a nested call) and `<%= File.basename(path).upcase %>` create no input.
+A function call creates inputs only when the placeholder is the call alone and all its arguments are names: `<%= File.join(dir, 'sub') %>` (a literal), `<%= File.join(File.dirname(path), name) %>` (a nested call) and `<%= File.basename(path).upcase %>` create no input.
 Write `<%= File.join(var(dir), 'sub') %>`.
 At run time, a variable that is not an input is `nil`, and the code fails, for example with `no implicit conversion of nil into String`.
 `var` is only for expressions: `<%= var(file_name) %>` alone fails, write `<%= file_name %>`.
@@ -2214,7 +2214,7 @@ The designer has one retry tab for failure and one for error:
 | Retry duration (retry for) | `Error_retryFor` x `Error_retryForUnit`, `Failed_retryFor` x `Failed_retryForUnit` | Total time for retries. |
 | Delay between attempts | `Error_retryDelay`, `Failed_retryDelay` | Minimum delay, in seconds. |
 
-Rules (`Prerequisite.retry_needed?`):
+Rules:
 
 - `0` means no limit, for the attempts and for the period.
   So does a blank value, when the other one is set.
@@ -2260,14 +2260,14 @@ They do not hold a worker while waiting.
 
 Without continuous monitoring, the step waits for its condition, fires once, and the workflow continues.
 
-If the template enables continuous monitoring (**Continue monitoring** in the designer; for example attribute `allow_multiple` of `LocalFileWatcher`, or `keep_ongoing` of `Faspex5InboxWatcher`), the work order is cloned at the trigger step each time the step ends with a status other than `Error` (`WorkStep`, `WorkOrder.clone_at_step`):
+If the template enables continuous monitoring (**Continue monitoring** in the designer; for example attribute `allow_multiple` of `LocalFileWatcher`, or `keep_ongoing` of `Faspex5InboxWatcher`), the work order is cloned at the trigger step each time the step ends with a status other than `Error`:
 
 - The work order that detected the event continues with the next steps, with the outputs of the trigger.
 - The clone is a new work order that waits for the next event.
   Its `comments` are `Derived from WorkOrder <ID>, forked at '<STEP_NAME>' (<STEP_ID>)`, and its `derived_from` and `master_id` are the id of the first work order.
 
 So the work order that waits is always the last one, and its id changes after each event.
-The work steps of the clones keep the group of the first work order (`WorkStep#group`), and form a work order group: with the default history scope `by workorder group`, all the clones share the history of past triggers (see [History of past triggers](#history-of-past-triggers)).
+The work steps of the clones keep the group of the first work order, and form a work order group: with the default history scope `by workorder group`, all the clones share the history of past triggers (see [History of past triggers](#history-of-past-triggers)).
 To stop the monitoring, cancel that work order: `ascli orchestrator workflows workorders <WORKFLOW_ID>` lists the work orders, the waiting one is `In Progress` on the trigger step.
 If a workflow monitor auto-starts the workflow (**Monitors**), turn the monitor off first: otherwise it starts a new work order at its next check.
 When the trigger step ends with `Error`, no clone is created, and the monitoring stops.
@@ -2386,7 +2386,7 @@ Output `FileName` is the full path of the file (`string`), or the list of paths 
 | `trigger_type` | [Scope of the history of past triggers](#history-of-past-triggers): `by workorder group` (default, also when blank), `by workflow`, `by action template`, `by step`, `absolute`, `none`. |
 | `exclusions`, `fullpath_exclusions`, `ignore_zero_bytes`, `ignore_readlocked` | Filters. |
 
-History of past triggers: the watcher remembers the files it has detected, with their modification time, only when `remove_file` is `0` and `trigger_type` is not `none` (`LocalFileWatcher#some_persistence?`).
+History of past triggers: the watcher remembers the files it has detected, with their modification time, only when `remove_file` is `0` and `trigger_type` is not `none`.
 
 - `remove_file` `0`: a file is detected once per scope of `trigger_type`, and again when its modification time changes.
   With the default scope, the clones of a continuous monitoring share the history, and a new start (a new work order) detects again the files left in the directory.
@@ -2481,7 +2481,7 @@ Starts a workflow in a new, independent work order.
 
 Outputs: `WorkOrder_ID` (`int`), the id of the launched work order, and, when waiting, `WorkOrder_Status` (`string`), its status.
 
-Status of the step (`WorkflowLauncher#execute` and `#check_status`):
+Status of the step:
 
 | `wait_for_completion` | Launched work order | Step |
 | --- | --- | --- |
@@ -2616,7 +2616,7 @@ The pages of the web interface, such as a [direct start](#direct-start) page, do
 Routes: each endpoint below has a route with the given method.
 In addition, any endpoint can be called as `api/<ENDPOINT>/<ID>`, with any HTTP method, where `<ID>` is the main identifier (workflow or work order).
 Some endpoints have no other route (for example `export_workflow`, `list_monitors`, `journal_files`, `pool_status`): when they do not use `<ID>`, any value works, for example `0`.
-The [OpenAPI description](https://github.com/IBM/aspera-cli/blob/main/lib/aspera/schema/IBM%20Aspera%20Orchestrator%20API-v1-enhanced.yaml) lists all endpoints and their parameters, checked against Orchestrator with `rake doc:api_check` of this repository.
+The [OpenAPI description](https://github.com/IBM/aspera-cli/blob/main/lib/aspera/schema/IBM%20Aspera%20Orchestrator%20API-v1-enhanced.yaml) lists all endpoints and their parameters.
 **Swagger API**, in the help pages of the web interface (`https://<HOST>/aspera/orchestrator/api-docs`), shows the description delivered with Orchestrator, and can try calls.
 
 Errors are returned with the exception message and stack trace in the response body.
@@ -2713,7 +2713,7 @@ Query parameters:
 | `tags` | Comma-separated tags of the work order. |
 
 Give the value of an `array` or `hash` parameter as a string, in JSON: `{"files": "[\"/a.mxf\", \"/b.mxf\"]"}`.
-A JSON array as value fails with status 500 (`undefined method 'gsub' for an instance of Array`, `MultiType.convert_value_array`), observed on 4.1.6.
+A JSON array as value fails with status 500 (`undefined method 'gsub' for an instance of Array`), observed on 4.1.6.
 
 #### Other workflow endpoints
 
@@ -3628,7 +3628,7 @@ ascli orchestrator workflows publish 239
 ### Authoring checklist
 
 Import and publish do not check these rules.
-The designer checks most of them (`Whiteboard#parse_workflow`) before setting `error_free`.
+The designer checks most of them before setting `error_free`.
 
 `ascli orchestrator workflows check_import <FILE>` checks a part of them on a file, with no server, and reports errors and warnings with a rule code:
 
@@ -4292,20 +4292,13 @@ end
 
 Most plugins (186 of 205) let a template attribute come from an input when it is blank, with `default_inputs_spec`, and read it with `default_get`.
 
-`default_inputs_spec(fields, required_inputs, optional_inputs)` adds inputs for the attributes `fields` (default: all attributes except `name`, `comments`, `id` and timestamps) to the two maps, and returns them:
-
-- A text attribute left blank becomes an input.
-  Its name is the value of the constant `VAR_<ATTRIBUTE>` if it exists, else the attribute name with its first letter in upper case (`wait_seconds` gives `Wait_seconds`).
-  It is optional if the constant `DEFAULT_<ATTRIBUTE>` exists, else required.
-- A text attribute that is set gives one input per placeholder (`Payload.variables`): `<%= name %>`, arguments of `<%= function(a, b) %>`, `var(name)` in an expression.
-  The input is a `string`, or the type of a suffix `_<TYPE>` of its name, required unless the constant `DEFAULT_<NAME>` exists.
-  No input is created for a name that is a method of the template with a value (`name`, a set attribute).
-- A non-text attribute left null becomes an input of the corresponding type.
-- An attribute name ending with `_<TYPE>` (for example `delay_int`) gives an input of that type, named without the suffix (`Delay`).
+`default_inputs_spec(fields, required_inputs, optional_inputs)` adds inputs for the attributes `fields` (default: all attributes except `name`, `comments`, `id` and timestamps) to the two maps, and returns them.
+[Inputs of a step](#inputs-of-a-step) says which attributes give an input, its name, and whether it is required.
+[Placeholders](#placeholders) says the same for the placeholders of a text attribute that is set, found with `Payload.variables`.
 
 `default_get(:attribute)`, or `<ATTRIBUTE>_get` (handled by `method_missing`), returns the run time value of an attribute, the first of:
 
-1. The value of the input that replaces the attribute (name as above), if present.
+1. The value of the input that replaces the attribute (named as in [Inputs of a step](#inputs-of-a-step)), if present.
 2. The attribute value, if not blank.
 3. The value of the constant `DEFAULT_<ATTRIBUTE>`.
 
@@ -4332,15 +4325,14 @@ end
 ```
 
 An attribute handled by your own code (for example `required_inputs[VAR_SERVER] = TYPE_STRING if server.blank?`) gets no input for its placeholders: call `default_inputs_spec` for it, or scan it with `Payload.variables`.
-The documentation generator of this repository marks an attribute `placeholders: true` in `plugins.yml` only when `<%= variable %>` in its value gives an input `variable`.
-See [Placeholders](#placeholders) in the Workflow authoring chapter for the syntax as seen by workflow authors.
 
-Other constants read by Orchestrator:
+Constants read by Orchestrator:
 
 | Constant | Effect |
 | --- | --- |
 | `VAR_<ATTRIBUTE>` | Name of the input that replaces the attribute. |
 | `DEFAULT_<ATTRIBUTE>` | Value when the attribute is blank. Makes the input optional. |
+| `DEFAULT_<NAME>` | Makes the input of the placeholder `<NAME>` optional. |
 | `VALUES_<KEY>` | Allowed values of a key in the hash editor of a form (`constrained_values`). |
 | `SKIP_SANITIZATION_FIELDS` | Attributes whose value is saved without HTML sanitization, see [Saved values](#saved-values). |
 
@@ -4491,15 +4483,14 @@ end
 
 #### Plugin timeouts
 
-The timeout of a step, in seconds, is the timeout set on the step in the designer, else the value of the plugin method `timeout`, else the server setting `default_step_timeout` (default 60).
+[Timeouts](#timeouts) gives the values of the timeout of a step and their effect.
+When the value on the step is blank, the method `timeout` of the plugin gives it, in seconds.
 
-- It applies to each call of `execute` and of `check_status`, not to the whole duration of an asynchronous step.
+- The timeout applies to each call of `execute` and of `check_status`, not to the whole duration of an asynchronous step.
   An asynchronous step can wait longer, as long as each call returns in time.
-- It is an inactivity timeout: each call of `report_progress` restarts it.
-  A negative value is a hard limit, regardless of progress.
-  `0` disables it.
-- When it expires, the call is interrupted, and the step ends with `Failed`, or with the status chosen by `On_timeout` of the step (`Error`, `Complete`).
-- `timeout` is called when the step starts, possibly before `@inputs` is set: handle `@inputs` nil.
+- Each call of `report_progress` restarts a positive timeout.
+- When the timeout expires, the call is interrupted.
+- The method `timeout` is called when the step starts, possibly before `@inputs` is set: handle `@inputs` nil.
 
 #### Progress
 
@@ -4732,7 +4723,7 @@ Programs used by the plugin (for example `ffmpeg`, `python3`) are declared in `:
 
 For the log, see [Testing and debugging](#testing-and-debugging).
 
-- Check the inputs and outputs of a plugin without a server, with the probe of this repository: `ruby lib/plugin_probe.rb <PLUGINS_FOLDER> build/<VERSION>/src/lib` prints, as JSON, the fields of the form, the inputs and outputs for several template settings, and the errors.
+- Check the inputs and outputs of a plugin without a server, with the probe of the repository [`aspera-orchestrator-plugins-doc`](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc): `ruby lib/plugin_probe.rb <PLUGINS_FOLDER> build/<VERSION>/src/lib` prints, as JSON, the fields of the form, the inputs and outputs for several template settings, and the errors.
   It needs the library files extracted by `rake extract_rpm`.
 - On the server, open a template and click **Test template**: the action tester runs it with the input values you give.
 - Run it in a workflow: see the [Workflow authoring chapter](#workflow-authoring), for example with `ascli orchestrator workflows start <ID> @json:'{"who":"Laurent"}'`.
