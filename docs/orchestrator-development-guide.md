@@ -9,8 +9,8 @@ common:
 
 ## Concepts
 
-This chapter gives what the other chapters rely on: what the guide covers, the terms, the plugin display names and the statuses.
-Read it first: the other chapters use these terms without defining them.
+This chapter gives what the other chapters rely on: what the guide covers, the terms, the server folders, the plugin display names and the statuses.
+Read it first: the other chapters use these terms, and explain further only those that have a section of their own.
 
 ### Introduction
 
@@ -66,8 +66,12 @@ These documents are separate from this guide:
 
 ### Terminology
 
-This table is the only definition of the terms used in the chapters.
+These tables give the meaning of the terms used in all chapters.
+A term with a section of its own links to it for the details.
 The last column gives the label that the web interface shows, when it differs.
+A reader who only builds workflows can stop before [Extension terms](#extension-terms).
+
+#### Workflow terms
 
 | Term | Meaning | In the web interface |
 | --- | --- | --- |
@@ -83,11 +87,52 @@ The last column gives the label that the web interface shows, when it differs.
 | Global template | A template shared by several workflows, identified by its name. It is created in **Workflows > Workflow Actions**. | Template |
 | Attribute | A setting of a template: a column of the plugin table, edited in the template form. | Field of the form |
 | Input, Output | Named values consumed and produced by a step, as declared by the action plugin (`inputs_spec`, `outputs_spec`). | Inputs, Outputs tabs |
-| Parameter | A named value of the workflow. A runtime parameter can be set when starting the workflow. Linked to **Start**, it is global. | Parameter |
+| Parameter | A named value of the workflow, linked to **Start** (global parameter) or to a step (step parameter). See [Parameters](#parameters). | Parameter |
+| Global parameter | A parameter linked to **Start**: all steps see it, without carry through. See [Using parameters](#using-parameters). | - |
+| Runtime parameter | A parameter whose value can be given when starting the workflow: an input of the workflow. See [Parameters](#parameters). | - |
 | Carry through | Option of a step output that passes it to the step after the next one. | Carry Thru? |
 | Trigger, watcher | A step that waits for an event (file, transfer, message, schedule) and starts the processing. | Trigger |
-| Work order group | The work orders cloned from one trigger started with **Continue monitoring**. | History scope: by workorder group |
+| OR operator | A connector that starts the next node when one of its entries is activated, or `n` of them ("n of m"). Without it, several links into a node mean AND: all of them must be activated. See [AND and OR](#and-and-or). | OR, in palette **Connectors** |
+| Remote node | A server defined once, with its id, name, address and SSH or API credentials. Steps and lookup tables refer to the node, not to its address. See [Remote nodes](#remote-nodes). | **Workflows > Remote Nodes** |
+
+Template wording: Workflow authoring says *embedded template* and *global template* where Workflow development practices, which follows the designer, says *configuration* and *template*.
+Plugin development says *template* for both.
+Where a text only says *template*, it means either kind.
+
+#### Operation terms
+
+| Term | Meaning | In the web interface |
+| --- | --- | --- |
+| Work order group | The work orders cloned from one trigger started with **Continue monitoring**. | **Trigger Persistence Scope**: by workorder group |
 | Worker | A process of Orchestrator that executes steps: synchronous (busy until the step ends) or asynchronous (polls). | - |
+| Obsolete step | A step of a branch that is no longer followed, because another branch went on through an OR, or a failure ended the work order. See [Parallel branches](#parallel-branches). | - |
+| Starvation | A wait that never ends: a step waits on an AND of links that can never all be activated ([AND and OR](#and-and-or)), or work orders wait for a slot that is never released ([The pattern](#the-pattern)). | - |
+| Resource, resource pool | A pool has resources, each with a capacity (number of slots), and a request reserves slots. A resource is a ticket, not a machine: Orchestrator checks nothing on a server. See [Resource concepts](#resource-concepts). | **Workflows > Resources** |
+| Queue | A FIFO with priorities between the work and a resource pool, which shows what waits for a slot. An element is a string, for example a path, not the file. See [Queue](#queue). | **Queues** view |
+| Journal | A log of workflow activity for operators, in their language, grouped by file and package. A journal step or an inline journal writes the entries. See [Journals](#journals). | **Work Orders > Journals**; books in **Workflows > Journals** |
+| Monitor | A check of a workflow, of work orders, of a folder, of a script or of a remote node, with an action such as starting or calling a workflow. See [Monitors](#monitors). | **Monitors** |
+| Capsule | Code installed by hand on the server: a hot fix of Orchestrator, or code shared by several steps. Force maintenance after installing one. See [Deploying and changing workflows](#deploying-and-changing-workflows) and [Custom code](#custom-code). | **Engine > Capsules** |
+
+#### Designer and file names
+
+The designer and the workflow file give different names to the same objects.
+Workflow development practices uses the names of the designer, and Workflow authoring those of the file.
+
+| Designer | Workflow file | Details |
+| --- | --- | --- |
+| **Start**, **Complete**, **Failed**, **Error** nodes, in capitals on the canvas | `Start`, `End`, `Fail`, `Error`. The **Complete** node is not the status `Complete`: a step that ends `Complete` only follows its links, and the work order is `Complete` when it reaches this node. | [Terminal nodes](#terminal-nodes), [Statuses](#statuses) |
+| Link between nodes | `Prerequisite`, in the node at the end of the link | [Prerequisites and branches](#prerequisites-and-branches) |
+| OR, "n of m" | `Synch_factor` `n` of the node after the OR, `1` for a plain OR; AND is `0` | [Prerequisites and branches](#prerequisites-and-branches) |
+| **Carry Thru?** | `Carry_thru` | [Outputs](#outputs) |
+| **Continue monitoring** | `allow_multiple`, `keep_ongoing`, depending on the plugin: an attribute of the template | [Triggers](#triggers) |
+| **Trigger Persistence Scope**, called persistency scope in this guide | `trigger_type`, an attribute of the template | [History of past triggers](#history-of-past-triggers) |
+| Retry tabs | `Error_*`, `Failed_*` | [Retries](#retries) |
+| **On Timeout Action**, **Make Timeout Absolute** | `On_timeout`, negative `Timeout` | [Timeouts](#timeouts) |
+
+#### Extension terms
+
+| Term | Meaning | In the web interface |
+| --- | --- | --- |
 | Stock folder | The source of a plugin (`/opt/aspera/orchestrator/actions/<FOLDER>`) or of a portlet (`/opt/aspera/orchestrator/portlets/<ID>`). | - |
 | Load folder | `<CONFIG_DIR>/actions/<FOLDER>`, by default `/opt/aspera/var/config/orchestrator/actions/<FOLDER>`: the copy of the stock folder made when the plugin is enabled, from which Orchestrator loads it. | - |
 | Portlet | A Ruby class that inherits from `Portlet`, for example `HelloBanner`, and its folder. Displays one widget. | Portlet |
@@ -100,9 +145,23 @@ The last column gives the label that the web interface shows, when it differs.
 | Portlet action | A public method of the portlet controller, called from the view with an HTTP request, for example to load a table page. | - |
 | Custom portlet | A portlet defined in the web interface (Ruby and ERB text in the database) instead of files. See [Custom portlets](#custom-portlets). | Custom portlet |
 
-Template wording: Workflow authoring says *embedded template* and *global template* where Workflow development practices, which follows the designer, says *configuration* and *template*.
-Plugin development says *template* for both.
-Where a text only says *template*, it means either kind.
+### Server folders
+
+Orchestrator is installed in `/opt/aspera/orchestrator`, and runs as user `aspweb` in 4.1.6.
+The chapters write three of its folders with a placeholder, which stands for the setting `config_dir`, `run_dir` or `archive_dir`:
+
+| Placeholder | Default | Content |
+| --- | --- | --- |
+| `<CONFIG_DIR>` | `/opt/aspera/orchestrator/config/orchestrator`, a link to `/opt/aspera/var/config/orchestrator` | Load folders of plugins (`actions`), user folders of portlets (`portlets`), forms of user input (`actions_config/user_inputs`), direct start pages (`workflow_start_views`). |
+| `<RUN_DIR>` | `/opt/aspera/orchestrator/var/run/orchestrator` | Runtime files: uploaded workflows (`workflows/import`), files of a plugin (`<FOLDER>`), imports and exports of portlets (`portlet`). |
+| `<ARCHIVE_DIR>` | `/opt/aspera/orchestrator/archive` | Backups of plugins made at upgrade (`action_backups`). |
+
+The log of Orchestrator is `/opt/aspera/orchestrator/log/production.log`.
+
+To restart Orchestrator:
+
+- The web server: `systemctl restart orchestrator_server`.
+- All services: `orchestrator restart`.
 
 ### Plugin display names
 
@@ -2172,7 +2231,7 @@ A synchronous step that the restart interrupted ends with `Error`: "Recovery aft
 A trigger remembers the elements it has already detected, so that it does not detect them again.
 The history is keyed by the element, for example the file path: a file with the same name but a new modification date is detected again.
 
-The attribute `trigger_type` (**persistency scope** in the designer) sets who shares the history:
+The attribute `trigger_type` (**Trigger Persistence Scope** in the designer) sets who shares the history:
 
 | Scope | History shared by |
 | --- | --- |
@@ -2517,7 +2576,7 @@ Errors are returned with the exception message and stack trace in the response b
 | Field | Required | Content |
 | --- | --- | --- |
 | `import_file` | yes | The workflow file (file part). |
-| `import_file_name` | yes | File name, ending with `yml` or `wkf`. The upload is stored under this name in `<RUN_DIR>/workflows/import/`. |
+| `import_file_name` | yes | File name, ending with `yml` or `wkf`. The upload is stored under this name in `<RUN_DIR>/workflows/import/` (see [Server folders](#server-folders)). |
 | `folder_id` | no | Folder of the new workflow. |
 | `link_to_subworkflows` | no | `true`: in a `.wkf` package, use the sub-workflows already imported from the same files instead of importing them again. See [Referring to existing entities](#referring-to-existing-entities). |
 | `publish_workflow` | no | `true` or `1`: publish after import. The server option `publish_api_imported_workflow` sets the default. |
@@ -4570,7 +4629,7 @@ tar -czf MyGreeting_1.0.0.plugin my_greetings
 ```
 
 Imported plugins are stored in `/opt/aspera/orchestrator/actions_imported/<FOLDER>/<N>/`, and enabled like stock plugins.
-**Export** and the backups made at upgrade (`<ARCHIVE_DIR>/action_backups`) produce the same format.
+**Export** and the backups made at upgrade (`<ARCHIVE_DIR>/action_backups`, see [Server folders](#server-folders)) produce the same format.
 
 #### Updating a plugin
 
