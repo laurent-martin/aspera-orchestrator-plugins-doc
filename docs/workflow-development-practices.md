@@ -541,6 +541,11 @@ Rules:
 
 ![YES: one OR with 2 of 4 entries](images/practices/4.1.6/two-or-yes.png)
 
+Choose the join by the pattern of the incoming branches:
+
+- **Parallel branches, all of which run** (a fan-out where several tasks run at the same time): leave the join step as an AND (`Synch_factor` `0`). It waits until all the branches have completed.
+- **Mutually exclusive branches** (an if and else condition, a route decision between alternative lanes, a nominal branch and an error branch): only one branch runs per execution. An AND would wait forever for the branches that did not run and the work order would never end. Use an OR with `Synch_factor` `1` on the join step (or on `End` or `Fail`), so that it proceeds as soon as any one of the incoming branches completes.
+
 In XML, the OR and its setting are the `Synch_factor` of the following node: see [Prerequisites and branches](workflow-authoring-guide.md#prerequisites-and-branches).
 
 ### Conditions

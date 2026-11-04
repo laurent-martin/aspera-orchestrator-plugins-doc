@@ -412,13 +412,6 @@ To branch on a condition, make a step end with `Complete` or `Failed`, and conne
 The `Filter` plugin does exactly that with a Ruby expression; a `CustomRuby` step can set `@status`.
 See [Recipe: branch on a status](#recipe-branch-on-a-status).
 
-### Synchronization rules (AND vs OR)
-
-Choosing the correct `Synch_factor` on a join node depends on the execution pattern of incoming branches:
-
-- **Parallel nominal execution (`Synch_factor = 0` / AND)**: When two or more nominal branches execute simultaneously in parallel (e.g., a fan-out where several tasks run at the same time), set `Synch_factor` to `0` on the convergence step. The join node waits until **all** parallel branches have completed before proceeding.
-- **Mutually exclusive / Alternative branches (`Synch_factor = 1` / OR)**: When branches originate from mutually exclusive outcomes (e.g., an `if/else` condition, a route decision between alternative lanes, or a nominal branch vs an error/failure branch), only one branch runs per execution. Setting `0` deadlocks the workflow because it waits forever for the branches that were not executed. In this case, set `Synch_factor` to `1` on the join step (or `End`/`Fail`) so that it proceeds as soon as **any one** of the incoming branches completes.
-
 ### Inputs
 
 ```xml
