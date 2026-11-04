@@ -1195,9 +1195,9 @@ Split into two workflows:
   It is part of an HTML form that already has the submit and cancel buttons.
   Read displayed data from `received_parameters['name']`, and write requested data as `outputs[name]` fields, or with the helpers `draw_input('outputs', 'name', 'string', 'default')`, `draw_input_string`, `draw_input_flag` (types flag, int, string, date, attachment).
 
-![A custom form: file name and size from the inputs; target, delivery date and comment requested](images/practices/4.1.6/user-input-form.png)
+![A custom form: logo, file name from the inputs, video preview; target, description, profile, source, paths and offer times requested (video: Big Buck Bunny, © Blender Foundation, CC BY 3.0)](images/practices/4.1.6/user-input-form.png)
 
-See the recipe [operator decision](workflow-authoring-guide.md#recipe-operator-decision) in the Authoring Guide.
+See the recipe [operator decision](workflow-authoring-guide.md#recipe-operator-decision) and its [custom form](workflow-authoring-guide.md#custom-form), with a sample, in the Authoring Guide.
 
 ### Direct start
 

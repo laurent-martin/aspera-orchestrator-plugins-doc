@@ -753,6 +753,24 @@ Logs:
   This applies to the runtime parameters in `external_parameters`.
 - The access log of the web server (nginx) records the URL, with its query string.
 
+### Secret references
+
+The plugin `SecretReference` (repository `aspera-orchestrator-secret-reference`, for Orchestrator 4.1.6) lets a workflow keep a reference instead of a secret:
+
+```text
+secret://<STORE>/<PATH>[?<OPTIONS>][#<FIELD>]
+```
+
+- A reference is the whole value of a Password parameter, a step input or a template attribute.
+  In a text, a placeholder such as `<%= Db_password %>` adds the input `Db_password` to the step: with a reference as its value, the placeholder is replaced by the secret.
+- When a step runs, the plugin reads the secret from its store: the step gets the value, and variables, outputs and saved states keep the reference.
+  A secret rotated in the store is used by the next run of a step.
+- Stores are named in a configuration file on each server.
+  Types: `vault` (HashiCorp Vault KV v2), `file` (encrypted file made by `ascli`), `node` (`login`, `password` or `certificate_passphrase` of a remote node).
+- The step **Secret reference** checks that a secret can be read, and gives its reference (output `Reference`) and its version, never its value.
+
+Installation, configuration and the dashboard are described in the README of the repository.
+
 ### Recommendations
 
 1. Do not write a secret in a workflow file, in a template attribute, or in a `Map_to` of type `value`.
@@ -1590,7 +1608,7 @@ Two branches join in a `MergePoint` step:
 - `Check target` (`Filter`): `Complete` if `target` starts with `/data/`, `Failed` otherwise.
 - `Ask operator` (`UserInput`), after `Failed`: creates a task in the web interface (tab Tasks) for the user `admin` (`assigned_user_logins`), described as `Invalid target for <title>`.
   The task shows `title` and `target` (`mandatory_inputs`), and asks for `new_target` (required, `required_requested_data`) and `rejected` (optional, `user_outputs`): they become outputs of the step.
-  See [Plugin specifications](#plugin-specifications) of `UserInput` for custom forms (`view_template`).
+  For another layout of the task, see [Custom form](#custom-form).
 - `Check rejection` (`Filter`): `Failed` if the operator wrote `yes` in `rejected`: the work order goes to `Fail`.
 - `Merge target` (`MergePoint`), after `Complete` of `Check target` or of `Check rejection` (`Synch_factor` 1): output `target` is input `target` (mapped to `new_target` of `Ask operator`) when it has a value, and input `target_alternate` (mapped to the parameter `target`) otherwise.
   When `Ask operator` did not run, its outputs have no value.
@@ -1678,12 +1696,107 @@ ascli orchestrator workflows start <id> @json:'{"title":"clip 2","target":"bad/p
 ```
 
 The second work order waits on `Ask operator`.
-No API completes a task: in the web interface, the operator fills the form and clicks `Complete Task`.
+In the web interface, the operator fills the form and clicks `Complete Task`.
 Observed:
 
 - `new_target` `/data/fixed`, `rejected` empty: `delivered to /data/fixed`, work order `Complete`.
 - `rejected` `yes`: `Check rejection` ends with `Failed`, work order `Failed`.
 - Output `InputProvider` of `Ask operator` is the id of the user who completed the task (`1` for `admin`).
+
+The [REST API](#rest-api) can also complete a task:
+
+```text
+GET api/list_tasks/self                                         # the tasks of the current user: id, event, requested_user_inputs (name, required, value_type)
+GET api/task_details/<TASK_ID>                                  # the task, and the values shown to the operator in task_inputs
+GET api/submit_task/<TASK_ID>?outputs[new_target]=/data/fixed   # completes the task
+```
+
+Observed on 4.1.6:
+
+- Without a required output, `submit_task` refuses with `Missing data for <NAME>` (HTTP 404, in the error description), and the task stays open.
+- A step assigned to several groups has one task per group: when one is completed, the others end with status `Preempted`.
+
+#### Custom form
+
+`Ask operator` above uses the default form: the inputs, then one field per requested data.
+For another layout, write the content of the form in a file, and give its name in attribute `view_template`.
+The file replaces the default content.
+The buttons `Cancel` and `Complete Task` stay below it, in the same HTML form: do not add them.
+
+Install the file on the Orchestrator server, with owner `aspweb`: `/opt/aspera/var/config/orchestrator/actions_config/user_inputs/_<NAME>.html.erb`.
+The name must start with `_`.
+The designer lists the files of this folder in **View template**.
+
+| In the file | Meaning |
+|-------------|---------|
+| `received_parameters['<NAME>']` | Value of the input `<NAME>` of the step. |
+| `requested_user_inputs` | The requested data: a map of name to type. |
+| `active_assignment` | The task. |
+| A field named `outputs[<NAME>]` | Value of the output `<NAME>` of the step. |
+| `draw_input('outputs', '<NAME>', '<TYPE>', <DEFAULT_VALUE>, '<HTML_ATTRIBUTES>')` | Draws a field for the type: `flag`, `int`, `float`, `string`, `pwd`, `array`, `hash`, `object`, `date` or `attachment`. The last two arguments are optional. |
+
+This form shows a file name and a video, and asks for a target, a path, a date with time, and a description.
+It is a shorter version of the form in the figure of the [Development Practices](workflow-development-practices.md#user-input).
+
+`_external_delivery.html.erb`:
+
+```erb
+<%# Inside the task form: the buttons Cancel and Complete Task are already there. %>
+<style>
+  .delivery .bar { background: #00608f; color: #fff; padding: 0.15em 0.7em; }
+  .delivery video { width: 100%; margin: 0.6em 0; }
+  .delivery p { margin: 0.6em 0; }
+  .delivery label { margin-right: 2em; }
+</style>
+<div class="delivery">
+  <h3>External delivery</h3>
+  <div class="bar">File name</div>
+  <p><%= File.basename(received_parameters['media_file_path'].to_s) %></p>
+  <div class="bar">Preview</div>
+  <video controls preload="metadata" src="https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4"></video>
+  <div class="bar">Target</div>
+  <p>
+    <% ['VOD Distrib', 'CABLE Distrib', 'MOBILE Distrib'].each do |target| %>
+      <label><input type="radio" name="outputs[target]" value="<%= target %>" required> <%= target %></label>
+    <% end %>
+  </p>
+  <p><label>Media path <input type="text" name="outputs[final_media_path]" value="/export/cable/hi-res/"></label></p>
+  <p><label>Offer start <input type="datetime-local" name="outputs[date_start]"></label></p>
+  <p><label>Description <%= draw_input('outputs', 'description', requested_user_inputs['description']) %></label></p>
+</div>
+```
+
+Attributes of the `UserInput` template:
+
+```yaml
+view_template: _external_delivery.html.erb
+mandatory_inputs: "{'media_file_path'=>'string'}"
+required_requested_data: "{'target'=>'string'}"
+user_outputs: "{'final_media_path'=>'string','date_start'=>'string','description'=>'string'}"
+```
+
+Observed on 4.1.6:
+
+- The file is read each time the task opens: a change applies without a restart.
+  If the file is missing, the task does not open (HTTP 500).
+- A workflow export contains only the name of the file: copy the file to the target server.
+- The Ruby code runs on the server when the task opens.
+  The task page has no Content-Security-Policy: a `<script>` in the file runs, and an external video loads.
+- The video of this sample is a fixed test file.
+  In a real form, pass the URL in an input, for example the output `output_file_path` of a `ConvertPath` step: with `input_mount_point` `/data/ingest/media` and `output_mount_point` `https://<WEB_HOST>/media/`, the file `/data/ingest/media/clip1.mp4` gives `https://<WEB_HOST>/media/clip1.mp4`.
+  Use a web server that the browser of the operator can reach: `/aspera/orchestrator/images/` on the Orchestrator server gives HTTP 500.
+- Only the outputs declared in the template are stored: a field with another name is ignored.
+- A declared output with no field in the submitted form gets the text `nil`, not an empty value: for example `target` when no radio button is selected.
+  An empty text field gives an empty value.
+  An output not given to `api/submit_task` also gets the text `nil`.
+- When the form is submitted, the server does not check the required data: without `target`, the step ends with `Complete`.
+  Only the browser can refuse: set the HTML attribute `required`, as in this sample.
+  `api/submit_task` does check them.
+- `Cancel` only closes the dialog, and the task stays open.
+  To let the operator refuse, ask for it in a field, such as `rejected` in the recipe above.
+- `draw_input` with type `string` draws a field that is read-only until it has the focus.
+- `draw_input` with type `date` has no time.
+  For a date with time, use `<input type="datetime-local">` and requested data of type `string`: the value looks like `2026-12-01T08:00`.
 
 ### Update an existing workflow
 
