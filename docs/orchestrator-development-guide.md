@@ -1585,9 +1585,20 @@ It uses the [plain format](#plain-format), which is the simplest to write.
 - CustomRuby: 0.7.0
 ```
 
-Import, publish and run it with the [IBM Aspera CLI](https://github.com/IBM/aspera-cli) (`ascli`):
+Import, publish and run it with the [IBM Aspera CLI](https://github.com/IBM/aspera-cli) (`ascli`).
+First store the connection once, in a preset that becomes the default for command `orchestrator`:
 
 ```shell
+ascli config preset update orch --url=https://<HOST>/aspera/orchestrator --username=<USERNAME> --password=@secret:password
+ascli config preset set default orchestrator orch
+```
+
+`@secret:` asks for the password on the terminal, so that it stays out of the shell history (see [Using secrets](#using-secrets)).
+Option `--auth_style` chooses how `ascli` authenticates.
+The default, `token`, calls `api/login`, which answers with status 403 when **Use Secure JWT API Auth** is not set (see [REST API](#rest-api)): `ascli` then stops with an authentication error, and the preset needs `--auth_style=basic`.
+
+```shell
+ascli orchestrator workflows check_import hello.yml    # no server needed: prints "no problem found"
 ascli orchestrator workflows import hello.yml          # displays the new workflow, including its id, for example 239
 ascli orchestrator workflows publish 239
 ascli orchestrator workflows start 239 @json:'{}' @json:'{"step":"Say hello","variable":"message"}'
@@ -1599,20 +1610,21 @@ The same operations with the REST API are described in [REST API](#rest-api).
 ### Lifecycle
 
 1. **Write** a workflow file (`.yml`), or a package (`.wkf`) that also contains sub-workflows and remote nodes.
-2. **Import** it: Orchestrator creates a new workflow with a new `id`.
+2. **Check** it, with no server: `ascli orchestrator workflows check_import <FILE>` reports part of the rules of the [authoring checklist](#authoring-checklist), which Orchestrator does not check on import.
+3. **Import** it: Orchestrator creates a new workflow with a new `id`.
    Each step's action template is created (or mapped to an existing global template).
    The workflow is published when field `publish_workflow` of the request is `true` or `1`, or, without this field, when the server option `publish_api_imported_workflow` is set, which it is not by default.
-3. **Publish** it: Orchestrator builds the runnable workflow from the last whiteboard revision.
-4. **Start** it: Orchestrator creates a work order.
+4. **Publish** it: Orchestrator builds the runnable workflow from the last whiteboard revision.
+5. **Start** it: Orchestrator creates a work order.
    Runtime parameters are given at this point.
-5. **Read** the work order status and outputs.
+6. **Read** the work order status and outputs.
 
 Rules:
 
 - Import and publish do **not** validate the graph.
   Publish only requires the whiteboard attribute `error_free` to be set.
   An invalid graph is published and fails at run time, or never ends.
-  Use the [authoring checklist](#authoring-checklist).
+  Use `check_import` and the [authoring checklist](#authoring-checklist).
 - An import through `import_workflow` always creates a new workflow.
   If the name is already used, Orchestrator appends a space and `(import_1)`, `(import_2)`, and so on.
   The `portable_id` of the file is ignored and a new one is generated.
@@ -2682,7 +2694,9 @@ A JSON array as value fails with status 500 (`undefined method 'gsub' for an ins
 
 | Operation | Command |
 | --- | --- |
-| Import | `ascli orchestrator workflows import <FILE>` |
+| Check a file, with no server | `ascli orchestrator workflows check_import <FILE>` |
+| Import | `ascli orchestrator workflows import <FILE>`; with `@json:'{"publish":true}'` after the file, it also publishes |
+| Find the constraints of a file on the server | `ascli orchestrator workflows find_constraints <SERVER_PATH> [<ID>]`, before `import_with_constraints` |
 | Import with constraints, or as a revision | `ascli orchestrator workflows import_with_constraints @json:'{"filename":"<SERVER_PATH>","add_as_revision":<ID>}'` |
 | Export | `ascli orchestrator workflows export <ID> --out.file=<FILE>` |
 | Export with dependencies (`.wkf`) | `ascli orchestrator workflows export <ID> @json:'{"dependencies":true}' --to-folder=<FOLDER>` |
@@ -2690,8 +2704,11 @@ A JSON array as value fails with status 500 (`undefined method 'gsub' for an ins
 | Inputs, outputs | `ascli orchestrator workflows inputs <ID>`, `ascli orchestrator workflows outputs <ID>` |
 | Start | `ascli orchestrator workflows start <ID> [<PARAMETERS>] [<EXECUTION>]`, where execution is `{"synchronous":true}` or `{"step":"<STEP_NAME>","variable":"<OUTPUT_NAME>"}` |
 | Work orders of a workflow | `ascli orchestrator workflows workorders <ID>` |
+| Work step | `ascli orchestrator workstep status <WORK_STEP_ID>`: status, inputs and outputs |
 | Work order | `ascli orchestrator workorders status <ID>`, `ascli orchestrator workorders output <ID>`, `ascli orchestrator workorders cancel <ID>` |
 | Journal, monitors, queues, resource pools | `ascli orchestrator journal files <BOOK>`, `ascli orchestrator monitors list <TYPE>`, `ascli orchestrator queues list`, `ascli orchestrator pools status <NAME>` |
+| Specification of a plugin, with no server | `ascli orchestrator plugins spec [<PLUGIN_CLASS>]`, then `attributes`, `inputs` or `outputs` |
+| Read this guide, with no server (`ascli` 4.29 or later) | `ascli orchestrator workflows development guide toc` lists the sections and their anchors, `ascli orchestrator workflows development guide <ANCHOR>` shows one |
 | Query parameters of an API call | `--query=@json:'{...}'`; `--query=help` lists them, from the OpenAPI description |
 
 ### Inline validation
@@ -3572,6 +3589,20 @@ ascli orchestrator workflows publish 239
 
 Import and publish do not check these rules.
 The designer checks most of them (`Whiteboard#parse_workflow`) before setting `error_free`.
+
+`ascli orchestrator workflows check_import <FILE>` checks a part of them on a file, with no server, and reports errors and warnings with a rule code:
+
+| Group | Codes (prefix) |
+| --- | --- |
+| File and YAML layout | `file.*`, `yaml.*`, `package.*`, `workflow.name_missing`, `whiteboard.*` |
+| Templates | `template.*` (key, tag, attributes, booleans written `1` and `0`) |
+| Graph | `graph.*`: terminal nodes once (`graph.terminal_count`), at least one step, unique ids and step names, `Synch_factor` present, not negative, and with a position when not `0` (`graph.synch_factor_position`), prerequisites that exist, no orphan step (`graph.step_orphan`), a path to a terminal node (`graph.no_termination`), a template for each step, outputs and parameters that exist, each step is a prerequisite with status `Complete` of another step or of `End`, `Fail` or `Error` (`graph.step_no_output`) |
+| Inputs | `step.input_missing`, `step.input_unknown`, `step.output_unknown` |
+
+It checks the templates and inputs against the specifications of the shipped plugins (the ones of `ascli orchestrator plugins spec`): for another plugin it only warns (`template.plugin_unknown`).
+It does not know which plugins the server enables, and it does not run the code of a step.
+A file with no problem can still fail at run time, so read the lists below.
+`ascli orchestrator workflows import` runs the same check and prints its problems as warnings.
 
 File:
 
