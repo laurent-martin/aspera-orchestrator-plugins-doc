@@ -1911,6 +1911,7 @@ The `Outputs` element only adds settings:
 An input can be mapped to an output of **any** step of the graph, not only of a step linked to it: the recipes [queue](#recipe-queue-and-resource-pool), [one work order per file](#recipe-one-work-order-per-file) and [operator decision](#recipe-operator-decision) map outputs of the step before the previous one, without `Carry_thru`.
 The designer has a narrower rule: the mapping list of a step offers only the outputs of the steps linked to it, the variables they carry through, and the global parameters (`WhiteboardsController#input_mappings`).
 There, `Carry_thru` is the way to offer an output to the step after the next one.
+A mapping to an output that the list does not offer, such as one set by a file, is kept when the step is edited in the designer, but the list then shows **[Select]**; choosing **[Select]** removes the mapping.
 In a file, map the output directly.
 
 Output `Step_information` is a `hash` with keys `step_id`, `step_name`, `step_status`, `step_status_details`, `attempts`, `processingTime`, `elapsedTime`, `completionTime`.
