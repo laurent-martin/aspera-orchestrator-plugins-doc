@@ -9,6 +9,60 @@ common:
 
 ## Concepts
 
+### Introduction
+
+This guide explains how to develop for IBM Aspera Orchestrator: how to design and write workflows, and how to extend Orchestrator with action plugins and portlets.
+
+It is written for people and for AI assistants.
+
+#### Chapters
+
+- [Concepts](#concepts) defines the terms and statuses used in all chapters.
+- [Workflow development practices](#workflow-development-practices) collects the rules and pitfalls of workflow development: how to design a workflow, how to use the designer, how to pass data, how to branch, handle errors, detect files, limit concurrency, interact with operators and monitor executions.
+  Most rules are stated as **do** or **do not**, followed by the reason.
+- [Workflow authoring](#workflow-authoring) explains how to write a workflow as a file, import it, publish it and run it, without the graphical designer and without exporting an existing workflow first.
+  Each rule gives the exact element, attribute or value expected by Orchestrator.
+- [Plugin development](#plugin-development) explains how to write an action plugin (a Ruby class, its database table, its template form and its metadata), and how to install, test and update it.
+  Each rule gives the exact name, method or value expected by Orchestrator.
+- [Portlet development](#portlet-development) explains how to write a portlet, a widget of the Orchestrator dashboard (a Ruby class, a view, a configuration partial and a metadata file), and how to install, test and update it.
+  Each rule gives the exact name, method or value expected by Orchestrator.
+  Portlets and plugins share several mechanisms, listed in [Comparison with plugins](#comparison-with-plugins).
+
+#### Valid and wise
+
+Workflow authoring says what is valid: what Orchestrator accepts and how it behaves.
+Workflow development practices says what is wise: among the valid choices, which one to make and why.
+A workflow can be valid and still be a poor design.
+
+If the two chapters differ on how Orchestrator behaves, follow Workflow authoring: it is derived from Orchestrator 4.1.6 and its examples were executed on 4.1.6.
+
+Workflow development practices describes the graphical designer.
+Workflow authoring shows the same objects as XML (for example `Synch_factor` for the OR operator).
+
+#### How each chapter was verified
+
+- **Workflow development practices:** the rules come from field experience of workflow design on Orchestrator 3.x and 4.x.
+  A few facts were checked against Orchestrator 4.1.6; they are marked *(4.1.6)*.
+  The screenshots show Orchestrator 4.1.6: the user interface and some option names differ in other versions.
+  The concepts and rules do not.
+- **Workflow authoring:** the content is derived from Orchestrator 4.1.6.
+  The examples in [Recipes](#recipes) were imported, published and executed on Orchestrator 4.1.6.
+- **Plugin development:** the content is derived from Orchestrator 4.1.6.
+  The example plugin of [Plugin quick start](#plugin-quick-start) was installed, enabled, and executed in a workflow on Orchestrator 4.1.6, and the steps of [Installing a plugin](#installing-a-plugin) and [Updating a plugin](#updating-a-plugin) were done on that server.
+- **Portlet development:** the content is derived from Orchestrator 4.1.6.
+  - On an Orchestrator 4.1.6.2036 server: the example portlet of [Portlet quick start](#portlet-quick-start) was imported with **Import Portlet**, chosen and configured in a dashboard frame, displayed, and its action called with GET and POST. In Chrome, the **Ping** link (`ajaxUpdate`) and the automatic refresh worked with no JavaScript error. The behaviors of import (file name, collision), enable, disable, restart, the version API and the CSRF token described in that chapter were reproduced on this server.
+  - From Orchestrator: the security notes, the custom portlets, the legacy upgrade script, and the counts of the [Portlet annex](#portlet-annex).
+
+#### Reference documents
+
+These documents are separate from this guide:
+
+- [Action Template Reference](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/action-template-reference.md): attributes, inputs and outputs of every shipped action plugin (generated from Orchestrator).
+- [Plugin specifications](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/plugins.yml) (`plugins.yml`): the same as data (YAML), with the allowed values of attributes and the template settings each input and output depends on.
+  Its header describes its fields.
+  Read one plugin with [`yq`](https://github.com/mikefarah/yq): `yq '.AmazonS3Operation' plugins.yml`.
+- [Plugin Manual](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/Orchestrator_Plugin_Manual.md): functional description of each shipped action plugin.
+
 ### Terminology
 
 This table is the only definition of the terms used in the chapters.
@@ -22,7 +76,7 @@ The last column gives the label that the web interface shows, when it differs.
 | Work order | One execution of a published workflow. Like an object, an instance of the class. | Work order |
 | Step | A node of the graph that executes an action. | Step |
 | Work step | One execution of a step in a work order. | Work step |
-| Action plugin, plugin | The type of a step, for example `CustomRuby` (step type, action type). In development, a Ruby class that includes module `Action`, and its folder. The designer shows display names, listed in [Practices introduction](#practices-introduction). | Action |
+| Action plugin, plugin | The type of a step, for example `CustomRuby` (step type, action type). In development, a Ruby class that includes module `Action`, and its folder. The designer shows display names, listed in [Plugin display names](#plugin-display-names). | Action |
 | Action template, template | A configured instance of an action plugin: a database record holding the plugin settings (its attributes). Each step references one template by `Step_type` and `Action_id`. | Template |
 | Embedded template | A template that belongs to one workflow, named `W<workflow id>__<step name>`. | Configuration (**New configuration**) |
 | Global template | A template shared by several workflows, identified by its name. It is created in **Workflows > Workflow Actions**. | Template |
@@ -45,50 +99,11 @@ The last column gives the label that the web interface shows, when it differs.
 | Portlet action | A public method of the portlet controller, called from the view with an HTTP request, for example to load a table page. | - |
 | Custom portlet | A portlet defined in the web interface (Ruby and ERB text in the database) instead of files. See [Custom portlets](#custom-portlets). | Custom portlet |
 
-Template wording: the Authoring Guide says *embedded template* and *global template* where the Practices Guide, which follows the designer, says *configuration* and *template*.
+Template wording: Workflow authoring says *embedded template* and *global template* where Workflow development practices, which follows the designer, says *configuration* and *template*.
 Plugin development says *template* for both.
 Where a text only says *template*, it means either kind.
 
-
-### Statuses
-
-A work step ends with one of the following statuses, which are matched by the `status` of prerequisites:
-
-| Status | Meaning |
-|--------|---------|
-| `Complete` | Success. |
-| `Failed` | Functional failure (for example a filter evaluated to false). |
-| `Error` | Technical error (exception, timeout with `On_timeout` set to `Error`). |
-
-While running, a work step can also be `Inactive`, `In Progress`, `Paused`, `Canceling`, and so on.
-A work order is `Complete`, `Failed` or `Error` when it reaches `End`, `Fail` or `Error`, and `Canceled` when canceled.
-
-## Workflow development practices
-
-### Practices introduction
-
-This guide collects the practices, rules and pitfalls of workflow development with IBM Aspera Orchestrator: how to design a workflow, how to use the designer, how to pass data, how to branch, handle errors, detect files, limit concurrency, interact with operators and monitor executions.
-
-It is written for people and for AI assistants.
-Most rules are stated as **do** or **do not**, followed by the reason.
-
-The rules come from field experience of workflow design on Orchestrator 3.x and 4.x.
-A few facts were checked against Orchestrator 4.1.6; they are marked *(4.1.6)*.
-
-Version notes:
-
-- The screenshots show Orchestrator 4.1.6: the user interface and some option names differ in other versions.
-  The concepts and rules do not.
-- When this guide and the [Workflow Authoring Guide](#workflow-authoring) differ, the Authoring Guide prevails: it is derived from Orchestrator 4.1.6 and its examples were executed on 4.1.6.
-- This guide describes the graphical designer.
-  The Authoring Guide shows the same objects as XML (for example `Synch_factor` for the OR operator).
-
-Related documents:
-
-- [Workflow Authoring Guide](#workflow-authoring): workflow file format, import, publish, REST API, secrets, tested recipes.
-- [Action Template Reference](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/action-template-reference.md) and [plugins.yml](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/plugins.yml): attributes, inputs and outputs of every plugin.
-- [Plugin Manual](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/Orchestrator_Plugin_Manual.md): functional description of each plugin.
-- [Plugin Development Guide](#plugin-development) and [Portlet Development Guide](#portlet-development).
+### Plugin display names
 
 The designer shows the plugin display names.
 This guide uses the plugin class names, as in [plugins.yml](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/plugins.yml):
@@ -105,6 +120,21 @@ This guide uses the plugin class names, as in [plugins.yml](https://github.com/l
 | Queue stager, load manager, resource manager | `QueueStager`, `LoadManager`, `ResourceManager` |
 | Journal log entry, alert entry | `FileJournalLogEntry`, `OrchestratorAlertEntry` |
 | Path conversion, file generator, file information | `ConvertPath`, `FileGenerator`, `FileInfo` |
+
+### Statuses
+
+A work step ends with one of the following statuses, which are matched by the `status` of prerequisites:
+
+| Status | Meaning |
+|--------|---------|
+| `Complete` | Success. |
+| `Failed` | Functional failure (for example a filter evaluated to false). |
+| `Error` | Technical error (exception, timeout with `On_timeout` set to `Error`). |
+
+While running, a work step can also be `Inactive`, `In Progress`, `Paused`, `Canceling`, and so on.
+A work order is `Complete`, `Failed` or `Error` when it reaches `End`, `Fail` or `Error`, and `Canceled` when canceled.
+
+## Workflow development practices
 
 ### Rules at a glance
 
@@ -1078,7 +1108,7 @@ Processing code also exists on inputs (pre-processing), outputs (post-processing
 Resource management limits how many times a part of a workflow runs in parallel: "not more than 5 transcodings at a time".
 It is the most complex part of Orchestrator, and the only one that requires real thinking; everything else is mechanical.
 
-#### Concepts
+#### Resource concepts
 
 - A resource is a ticket, not a machine: Orchestrator does not check, ping or monitor anything.
   Naming a resource after a server is only a convention of the workflow.
@@ -1472,25 +1502,6 @@ Tests and changes:
 - [ ] External files and plugin versions are deployed with the workflow.
 
 ## Workflow authoring
-
-### Introduction
-
-This guide explains how to write an Aspera Orchestrator workflow as a file, import it, publish it and run it, without the graphical designer and without exporting an existing workflow first.
-
-It is written for people and for AI assistants.
-Each rule gives the exact element, attribute or value expected by Orchestrator.
-
-The content is derived from Orchestrator 4.1.6.
-The examples in [Recipes](#recipes) were imported, published and executed on Orchestrator 4.1.6.
-
-Related documents:
-
-- [Action Template Reference](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/action-template-reference.md): attributes, inputs and outputs of every action plugin (generated from Orchestrator).
-- [Plugin specifications](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/plugins.yml): the same as data (YAML), with the allowed values of attributes and the template settings each input and output depends on.
-  Its header describes its fields.
-  Read one plugin with [`yq`](https://github.com/mikefarah/yq): `yq '.AmazonS3Operation' plugins.yml`.
-- [Plugin Manual](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/Orchestrator_Plugin_Manual.md): functional description of each action plugin.
-- [Plugin Development Guide](#plugin-development): how to write an action plugin.
 
 ### Quick start
 
@@ -3445,24 +3456,6 @@ Observed in Orchestrator 4.1.6:
 
 ## Plugin development
 
-### Plugin introduction
-
-This guide explains how to write an action plugin for IBM Aspera Orchestrator: a Ruby class, its database table, its template form and its metadata, and how to install, test and update it.
-
-It is written for people and for AI assistants.
-Each rule gives the exact name, method or value expected by Orchestrator.
-
-The content is derived from Orchestrator 4.1.6.
-The example plugin of [Quick start](#plugin-quick-start) was installed, enabled, and executed in a workflow on Orchestrator 4.1.6, and the steps of [Installing a plugin](#installing-a-plugin) and [Updating a plugin](#updating-a-plugin) were done on that server.
-
-Related documents:
-
-- [Workflow Authoring Guide](#workflow-authoring): how to write, import and run a workflow that uses a plugin.
-- [Action Template Reference](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/action-template-reference.md): attributes, inputs and outputs of every shipped plugin.
-- [Plugin specifications](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/plugins.yml): the same as data (YAML).
-- [Plugin Manual](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/Orchestrator_Plugin_Manual.md): functional description of each shipped plugin.
-- [Portlet Development Guide](#portlet-development): the same for dashboard portlets, which share several mechanisms with plugins.
-
 The shipped plugins are the best set of examples: folder `/opt/aspera/orchestrator/actions` of an Orchestrator server, one folder per plugin.
 `HelloWorld` (`hello_worlds`) is a reference implementation with pause, resume, cancel, rollback and recovery.
 
@@ -4537,26 +4530,6 @@ orchestrator restart
 - [Rails guides](https://guides.rubyonrails.org/): Active Record migrations, form helpers, Action View.
 
 ## Portlet development
-
-### Portlet introduction
-
-This guide explains how to write a portlet for IBM Aspera Orchestrator: a Ruby class, a view, a configuration partial and a metadata file, and how to install, test and update it.
-A portlet is a widget of the Orchestrator dashboard.
-
-It is written for people and for AI assistants.
-Each rule gives the exact name, method or value expected by Orchestrator.
-
-The content is derived from Orchestrator 4.1.6.
-
-How it was verified:
-
-- On an Orchestrator 4.1.6.2036 server: the example portlet of [Quick start](#portlet-quick-start) was imported with **Import Portlet**, chosen and configured in a dashboard frame, displayed, and its action called with GET and POST. In Chrome, the **Ping** link (`ajaxUpdate`) and the automatic refresh worked with no JavaScript error. The behaviors of import (file name, collision), enable, disable, restart, the version API and the CSRF token described below were reproduced on this server.
-- From Orchestrator: the security notes, the custom portlets, the legacy upgrade script, and the counts of the [Annex](#portlet-annex).
-
-Related documents:
-
-- [Plugin Development Guide](#plugin-development): the same for action plugins. Portlets and plugins share several mechanisms, listed in [Comparison with plugins](#comparison-with-plugins).
-- [Workflow Authoring Guide](#workflow-authoring): how to write workflows, whose work orders a portlet can display.
 
 The shipped portlets are the best set of examples: folder `/opt/aspera/orchestrator/portlets` of an Orchestrator server, one folder per portlet.
 `orchestrator_information` is the simplest, `user_tasks` has parameters and a permission check, `csv_editor` has uploads, a modal dialog and several actions, `queue_management` has pagination and `helper_method`.
