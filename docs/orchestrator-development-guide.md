@@ -200,6 +200,37 @@ This chapter gives the rules for designing workflows that are reliable and easy 
 Read it before designing a workflow, and use the [Practices checklist](#practices-checklist) to review one.
 For the exact elements and values, see [Workflow authoring](#workflow-authoring).
 
+### First workflow in the designer
+
+This is the `hello` workflow of the [Quick start](#quick-start), built with the mouse: one `CustomRuby` step that returns the output `message`.
+
+1. In **Workflows**, open the folder that will hold it, click **New Workflow**, enter a name and a description, and click **Save**.
+   The designer opens, with the nodes **START**, **COMPLETE**, **FAILED** and **ERROR**.
+
+   ![The New Workflow dialog, with a name and a description](images/practices/4.1.6/first-workflow-new.png)
+
+2. In the plugin palette on the left, type `Custom Ruby` in **Search plugins**, and drag **Custom Ruby** to the canvas.
+3. Drag from the output port of **START** to the input port of the step, then from the output port of the step to the input port of **COMPLETE**.
+   The two small icons under the step are its **Failed** and **Error** exits: they stay unlinked here.
+4. Right-click the step, choose **Rename Step**, enter `Say hello`, and confirm.
+5. Right-click the step again, choose **Edit Action Template**, and in **Outputs** click **Add Outputs**: enter `message` and choose the type `String/Text`.
+   In **Execute code**, enter `outputs['message'] = 'Hello'`, then click **Save**.
+
+   ![The step configuration: output message, and the code that sets it](images/practices/4.1.6/first-workflow-step.png)
+
+6. Click **Save** in the toolbar of the designer, and confirm the message that offers to enter a summary of the changes.
+
+   ![The workflow: START, the step Say hello, COMPLETE](images/practices/4.1.6/first-workflow-graph.png)
+
+7. Click **Publish**: Orchestrator goes back to the list of workflows, where the workflow shows the status **Published**.
+8. Click the launch icon of the workflow, then **Start**.
+9. Open **Work Orders**, select the work order, which is `Complete`, and click its step: the output `message` is `Hello`.
+
+   ![The work step Say hello: status Complete, output message = Hello](images/practices/4.1.6/first-workflow-work-order.png)
+
+The graph is the same as the one of the file in the Quick start, so the same work order can be started with `ascli`.
+The next sections give the rules to apply when the workflow has more than one step: see [Rules at a glance](#rules-at-a-glance), and [Testing](#testing) to check a workflow before it goes to production.
+
 ### Rules at a glance
 
 The most important rules, each detailed later:
