@@ -409,37 +409,29 @@ This is a rule of the designer, not of the engine *(4.1.6)*: a workflow written 
 Inserting a step in an existing workflow breaks the chain of carried outputs.
 In the new step, tick **Select All Variables** so that all carried outputs continue (except the step information outputs, which are rarely needed).
 
-#### Practices parameters
+#### Using parameters
 
-A parameter has a name, a type and a value.
-A runtime parameter is given when the work order starts; it is optional when it has a default value.
+[Parameters](#parameters) gives the definition of a parameter, its links and its runtime settings.
 
 - **Link parameters to Start**: they become global, visible to all steps without carry through.
-  A parameter linked to a step appears only in the mappings of that step (older workflows); its value is the same for all steps *(4.1.6)*.
+  A parameter linked to a step is offered only in the mappings of that step.
 - Global parameters are read-only.
   To change a value, produce a new output (for example in `CustomRuby`).
 - Give a default value when the parameter has the same value 99 % of the time.
 - For an empty default value, leave the field empty; do not write `""`.
 - Do not use parameter default values as constants shared by several workflows: use a global template ([Configuration](#configuration)).
 
-#### Practices placeholders
+#### Using placeholders
 
-In many fields, `<%= expression %>` is replaced at run time by the value of the expression.
+[Placeholders](#placeholders) gives the syntax, the inputs that a placeholder creates, and their types.
 
-- A variable used in a placeholder becomes an input of the step, of type string, to be mapped (for example `<%= p_file_path %>` in a label).
-- A suffix in the name gives another type: `_int`, `_float`, `_date`, `_array`, `_hash`, `_flag`, `_pwd` (for example `<%= start_date %>`); the input keeps the suffix in its name.
-- A typing error creates an extra input: check the **Inputs** tab after editing.
+- **Check the Inputs tab after editing**: a typing error creates an extra input, and a placeholder in a complex expression or in a field that is not scanned creates none.
+- As soon as a placeholder is more than a name or a call on names, read each variable with `var(name)`: write `<%= File.join(var(dir), 'sub') %>`, because `<%= File.join(dir, 'sub') %>` creates no input and fails at run time (error "no implicit conversion of nil").
 - Do not name the variable like an input of the plugin (use `<%= recipients1 %>` for a field `recipients`): it would not appear as an input.
-- Useful methods: `File.basename(path)` (name with extension), `File.nakedname(path)` (name without extension, an Orchestrator extension), `File.dirname(path)`, `File.join(dir, name)`.
-- The variables are found only in simple forms *(4.1.6)*: `<%= name %>`, a call whose arguments are all variable names (`<%= File.join(dir, name) %>`), and `var(name)` in any expression.
-  `<%= File.join(dir, 'sub') %>` (a literal argument) or `<%= File.basename(path).upcase %>` creates no input: the value is `nil` at run time (error "no implicit conversion of nil").
-  Write `<%= File.join(var(dir), 'sub') %>`.
-  Some fields are not scanned at all: see [Placeholders](#placeholders) in the Authoring Guide.
-  Check the **Inputs** tab after editing.
-- `RestRequest` does not support conditions (`<% if %>`) or method calls such as `gsub` in its body; prepare the values in a previous step.
+- Useful methods: `File.basename(path)` (name with extension), `File.nakedname(path)` (name without extension, see [CustomRuby](#customruby)), `File.dirname(path)`, `File.join(dir, name)`.
+- In the body of a `RestRequest`, do not rely on conditions (`<% if %>`) or method calls such as `gsub`, which work only in some forms: prepare the values in a previous step.
 - Computing a value in a field (for example a target folder `<%= File.dirname(package_dir) %>/transferring/`) saves a step, but the value is visible only when the step runs, and is tested only with real files and servers.
   A dedicated step (`ConvertPath`, `MassParameterSetter`, `FileInfo`) shows the computed value as an output and can be tested alone: prefer it when readability matters.
-- The rules of placeholders in template attributes are in the Authoring Guide ([Placeholders](#placeholders)).
 
 #### Types and conversions
 
@@ -625,7 +617,7 @@ In XML, the OR and its setting are the `Synch_factor` of the following node: see
 
 `Filter` is the if-then-else: its Ruby code returns `true` (complete exit) or `false` (failed exit).
 Inputs are read with `inputs['name']` and declared as required inputs with a type.
-Placeholders also work, but are replaced by text before the code runs: see [Filter](#filter) in the Authoring Guide.
+Placeholders also work, but are replaced by text before the code runs: see [Filter](#filter).
 
 ![Filter: a condition on the file size; true moves the file, false sends an e-mail and fails](images/practices/4.1.6/filter-workflow.png)
 
@@ -1036,7 +1028,7 @@ Pitfalls:
   Writing the body directly in `RestRequest` saves a step but hides the payload.
 - In templates, end lines of Ruby tags with `%>\` and select **Suppress marked linefeeds** to avoid blank lines; do not indent the tags.
 - Required inputs of `FileGenerator` accept empty values.
-- The template is ERB (`<%= variable %>`), although the form mentions a `{{variable_name}}` syntax *(4.1.6)*.
+- Write `<%= variable %>`, not the `{{variable_name}}` syntax that the form mentions *(4.1.6)*: see [Placeholders](#placeholders).
 - Do not start input names with a capital letter, and do not name an input like a Ruby or Orchestrator method: for example an input `md5` calls the method `md5` of Orchestrator, and the step fails with "wrong number of arguments".
 
 **`RestRequest`** sends one HTTP request (XML or JSON), optionally repeated at a polling frequency until the **polling stop condition** (Ruby) is true.
@@ -2031,7 +2023,7 @@ At run time, a variable that is not an input is `nil`, and the code fails, for e
 The input created by a placeholder:
 
 - Has the name written in the placeholder: letters, digits and `_`.
-- Is a `string`, unless the name ends with `_<type>`: `<%= count_int %>` gives input `count_int` (the suffix is kept) of type `int`.
+- Is a `string`, unless the name ends with `_<type>`, where `<type>` is a [value type](#value-types): `<%= count_int %>` gives input `count_int` (the suffix is kept) of type `int`, and `<%= start_date %>` gives input `start_date` of type `date`.
 - Is required, unless the plugin defines a constant `DEFAULT_<NAME>`.
 - Is not created if the name is a method of the template that returns a value: `name` (the template name) or another attribute of the template that is set.
   That value is used.
