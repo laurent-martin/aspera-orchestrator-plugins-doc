@@ -22,11 +22,11 @@ It is written for people and for AI assistants.
   Most rules are stated as **do** or **do not**, followed by the reason.
 - [Workflow authoring](#workflow-authoring) explains how to write a workflow as a file, import it, publish it and run it, without the graphical designer and without exporting an existing workflow first.
   Each rule gives the exact element, attribute or value expected by Orchestrator.
+- [Extending Orchestrator](#extending-orchestrator) compares action plugins and portlets, and gives what they share on installation, testing and security.
 - [Plugin development](#plugin-development) explains how to write an action plugin (a Ruby class, its database table, its template form and its metadata), and how to install, test and update it.
   Each rule gives the exact name, method or value expected by Orchestrator.
 - [Portlet development](#portlet-development) explains how to write a portlet, a widget of the Orchestrator dashboard (a Ruby class, a view, a configuration partial and a metadata file), and how to install, test and update it.
   Each rule gives the exact name, method or value expected by Orchestrator.
-  Portlets and plugins share several mechanisms, listed in [Comparison with plugins](#comparison-with-plugins).
 
 #### Valid and wise
 
@@ -47,6 +47,7 @@ Workflow authoring shows the same objects as XML (for example `Synch_factor` for
   The concepts and rules do not.
 - **Workflow authoring:** the content is derived from Orchestrator 4.1.6.
   The examples in [Recipes](#recipes) were imported, published and executed on Orchestrator 4.1.6.
+- **Extending Orchestrator:** the content comes from Plugin development and Portlet development, and was verified in the same way.
 - **Plugin development:** the content is derived from Orchestrator 4.1.6.
   The example plugin of [Plugin quick start](#plugin-quick-start) was installed, enabled, and executed in a workflow on Orchestrator 4.1.6, and the steps of [Installing a plugin](#installing-a-plugin) and [Updating a plugin](#updating-a-plugin) were done on that server.
 - **Portlet development:** the content is derived from Orchestrator 4.1.6.
@@ -3454,6 +3455,88 @@ Observed in Orchestrator 4.1.6:
 - At publish, a designer note is looked up by its `note_id` in all workflows (`Note.find_by(note_id:)`): a note whose id is also used in another workflow updates the note of that workflow, and is not shown in this one.
   The designer generates UUIDs; in a hand-written file, use a UUID too, not `note1`.
 
+## Extending Orchestrator
+
+Two kinds of components add code to Orchestrator: an action plugin adds a step type to workflows, and a portlet adds a widget to the dashboard.
+They are two applications of the same design.
+This chapter gives what they share and how they differ.
+[Plugin development](#plugin-development) and [Portlet development](#portlet-development) give the details of each.
+
+### Plugins and portlets compared
+
+Common points:
+
+- A component is a folder with `<NAME>.rb`, `metadata.yml` with `:revision_history` and `:minimum_server_version`, ERB views, and optional CSS and JavaScript.
+- A component has two folders: the stock folder in `/opt/aspera/orchestrator`, and a second one in the configuration folder of Orchestrator, the load folder of a plugin or the user folder of a portlet (see [Terminology](#terminology)).
+  Orchestrator prefers the copy in the second one.
+- The class is an Active Record model.
+- A page, which requires the permission `engine`, lists the components, and enables or disables each one: **Plugins** and **Engine > Portlets**.
+- Export and import as a gzip tar (`.plugin`, `.portlet`) with `File.tgz` and `untgz`.
+- Version reading with `SafeYaml.load_file('metadata.yml')[:revision_history]`, sorted as `[major, minor, revision, patch]`.
+- The same libraries: `MultiType` (`TYPE_*`), `Payload.expand`, `OrchConfig`, `Rails.logger`, `BasicUpload` (also used by portlet `csv_editor`) and `ModuleSSHTools` (also included by portlets `aspera_service` and `transfer_console`).
+- A component can have its own controller class in its folder.
+
+Differences:
+
+| Topic | Plugin | Portlet |
+| --- | --- | --- |
+| Table | One table per plugin, created by a migration; each template is one row. | One shared table `portlets`, no migration; each enabled portlet is one row. |
+| Settings | Attributes, in the template row. | Parameters, in the frame (`link_parameters`). |
+| Naming | `tableize` and `classify` must round-trip. | `camelize` only. |
+| Loading | Zeitwerk, in engine, workers and web. | `load` on demand, web process only. |
+| Compatibility check | Version, beta and dependencies checked. | None. |
+| Controller | Own `<NAME>_controller.rb`, in the `skip_authenticity_token` list. | `<CLASS>Controller < PortletsController`, called by `portlet_action`; CSRF always applies. |
+| Permission | Entitlement of the template (`Action`). | Entitlement of the portlet row (`Portlet:<ROW_ID>`). |
+| Runtime object | Kept between `execute` and `check_status`. | Rebuilt at every display. |
+
+### Installing and updating
+
+| Topic | Plugin | Portlet |
+| --- | --- | --- |
+| Folder to install in | Stock folder; **Enable** copies it to the load folder. | User folder: upgrades overwrite the stock folder. |
+| Archive to import | `<CLASS>_<VERSION>.plugin`. | Exactly `<ID>.portlet`. |
+| Import of a name already installed | Stored apart, in `actions_imported/<FOLDER>/<N>/`. | Renamed to `<ID>_version_N`, which breaks a portlet installed in the user folder. |
+| Code change | Edit the stock folder, then **Disable** and **Enable**; or edit the load folder, then **Reload**. | Replace the files in the user folder, then restart the web server. |
+| Restart of the web server | Before importing a workflow file that uses a new plugin. | After each code change. |
+
+The steps are in [Plugin installation and updates](#plugin-installation-and-updates) and [Portlet installation and updates](#portlet-installation-and-updates).
+
+### Testing and debugging
+
+Read `/opt/aspera/orchestrator/log/production.log`, the log of both: your `Rails.logger` messages, and the errors, for a plugin those of loading, of migrations and of execution.
+
+| Topic | Plugin | Portlet |
+| --- | --- | --- |
+| Check without a server | `ruby lib/plugin_probe.rb`: fields, inputs, outputs and errors. | `ruby -c <ID>.rb`: syntax only. |
+| Try on the server | **Test template**, then a step in a workflow. | **Preview** in a frame, then the URL of an action. |
+| Read the version | `GET api/plugin_version/<CLASS>`. | `GET api/portlet_version/<NAME>`, wrong in 4.1.6: see [Known issues](#portlet-known-issues). |
+
+Symptoms and their causes are in [Plugin testing and debugging](#plugin-testing-and-debugging) and [Portlet testing and debugging](#portlet-testing-and-debugging).
+
+### Security
+
+The code of a plugin or of a portlet runs with the rights of Orchestrator.
+
+The same rules apply to the inputs of a plugin, which come from workflows and from external systems, and to the parameters and `params` values of a portlet:
+
+- Validate them.
+- Quote them in shell commands (`MultiType.shell_doublequote`, or `Open3` with separate arguments), and use bound parameters in SQL.
+- Check that file paths stay in the expected folders.
+- Never `eval` them.
+
+| Topic | Plugin | Portlet |
+| --- | --- | --- |
+| Settings stored in clear | Template attributes, unless the plugin encrypts them: in the plugin table and in exported workflows. | Parameters: in the frame. |
+| Where a secret comes from | Inputs of type `pwd`, remote nodes, secret references. | A stored credential; `double_password_configurator` only for values that the portlet must hold. |
+| Code entered in the web interface | Templates of `CustomRuby`. | Custom portlets; restrict the permission `engine`. |
+
+The details are in [Plugin security](#plugin-security) and [Portlet security](#portlet-security).
+
+### Learning Ruby and Rails
+
+- [Ruby documentation](https://www.ruby-lang.org/en/documentation/)
+- [Rails guides](https://guides.rubyonrails.org/): Action View for both, Active Record migrations and form helpers for plugins, Action Controller for portlets.
+
 ## Plugin development
 
 The shipped plugins are the best set of examples: folder `/opt/aspera/orchestrator/actions` of an Orchestrator server, one folder per plugin.
@@ -4400,11 +4483,12 @@ Programs used by the plugin (for example `ffmpeg`, `python3`) are declared in `:
 
 ### Plugin testing and debugging
 
+For the log, see [Testing and debugging](#testing-and-debugging).
+
 - Check the inputs and outputs of a plugin without a server, with the probe of this repository: `ruby lib/plugin_probe.rb <folder containing plugin folders> build/<VERSION>/src/lib` prints, as JSON, the fields of the form, the inputs and outputs for several template settings, and the errors.
   It needs the library files extracted by `rake extract_rpm`.
 - On the server, open a template and click **Test template**: the action tester runs it with the input values you give.
 - Run it in a workflow: see the [Workflow Authoring Guide](#workflow-authoring), for example with `ascli orchestrator workflows start <id> @json:'{"who":"Laurent"}'`.
-- Read `/opt/aspera/orchestrator/log/production.log`: errors of loading, of migrations and of execution, and your `Rails.logger` messages.
 
 | Symptom | Cause |
 | --- | --- |
@@ -4421,11 +4505,10 @@ Programs used by the plugin (for example `ffmpeg`, `python3`) are declared in `:
 
 ### Plugin security
 
+The rules for inputs are in [Security](#security).
+
 - Template attributes are stored in clear in the plugin table, except where the plugin encrypts them (`OrchCipher.encrypt`, `OrchCipher.decrypt`).
-- Inputs come from workflows and from external systems: validate them, quote them in shell commands (`MultiType.shell_doublequote`, or `Open3` with separate arguments), and use bound parameters in SQL.
-- Never `eval` an input.
-  Code entered in templates (for example `CustomRuby`) runs with the rights of Orchestrator.
-- Check that file paths stay in the expected folders.
+- Code entered in templates (for example `CustomRuby`) runs with the rights of Orchestrator.
 - Do not put secrets in the plugin files or in `metadata.yml`.
 - Do not expect secrets in template attributes: they are stored in clear in the plugin table, and written in clear in exported workflows.
   Read secrets from inputs of type `pwd`, fed by Password parameters, from remote nodes (`login`, `password`, `certificate_passphrase`), or from secret references (see [Secret references](#secret-references)).
@@ -4523,11 +4606,6 @@ cd /opt/aspera/orchestrator/
 bundle install
 orchestrator restart
 ```
-
-#### Plugin learning Ruby and Rails
-
-- [Ruby documentation](https://www.ruby-lang.org/en/documentation/)
-- [Rails guides](https://guides.rubyonrails.org/): Active Record migrations, form helpers, Action View.
 
 ## Portlet development
 
@@ -4921,9 +4999,10 @@ It skips a folder that has a `metadata.yml`, and does not scope CSS rules to the
 
 ### Portlet testing and debugging
 
+For the log, see [Testing and debugging](#testing-and-debugging).
+
 - Check the syntax: `ruby -c <id>.rb`.
 - Display the portlet in a frame with **Preview**, before saving the configuration.
-- Read `/opt/aspera/orchestrator/log/production.log`; write to it with `Rails.logger` in the portlet.
 - Call an action in the browser: `/aspera/orchestrator/portlet_action?portlet=<id>&portlet_action=<method>&frame_id=1&frame_html_id=f1` (logged in).
 - Call `GET /aspera/orchestrator/api/portlet_version[/<name>]?format=json` (or `xml`), with API credentials, to read the version of a portlet from `metadata.yml`, or of all portlets without `<name>`. `<name>` is the portlet name, URL-encoded (`Hello%20banner`), not the ID. The result is wrong in 4.1.6 (see [Known issues](#portlet-known-issues)).
 
@@ -4962,9 +5041,11 @@ Each was reproduced on a 4.1.6 server, except the regular expression on `link_pa
 
 ### Portlet security
 
+The rules for parameters and `params` values are in [Security](#security).
+
 - A portlet runs with the rights of the Orchestrator web process and can read the whole database. Review the code of every imported `.portlet` and `.yml` file before enabling it.
 - Import requires the permission `engine`; grant it only to trusted administrators. In 4.1.6, enable, disable and export check no permission: any logged-in user can call them (see [Security of actions](#security-of-actions)).
-- Escape all output (`h`). Validate every parameter and every `params` value used in queries, commands and file paths.
+- Escape all output (`h`).
 - Check permissions inside each action and view; see [Security of actions](#security-of-actions).
 - Do not store passwords in parameters: they are saved in the frame as clear text. Use `double_password_configurator` only for values that the portlet must hold, and prefer a stored credential.
 - Custom portlets run `eval`: restrict the permission `engine`.
@@ -5004,33 +5085,6 @@ Therefore:
 
 ### Portlet annex
 
-#### Comparison with plugins
-
-Portlets and plugins are two applications of the same design.
-
-Common points:
-
-- A component is a folder with `<name>.rb`, `metadata.yml` with `:revision_history` and `:minimum_server_version`, ERB views, and optional CSS and JavaScript.
-- A stock folder in `/opt/aspera/orchestrator` and a user folder in `<config_dir>` (`actions` or `portlets`); the user copy has priority.
-- The class is an Active Record model whose table is the registry of enabled components; the Engine area has a page with a slider to enable or disable each component, and the permission `engine`.
-- Export and import as a gzip tar (`.plugin`, `.portlet`) with `File.tgz` and `untgz`, and renaming on collision.
-- Version reading with `SafeYaml.load_file('metadata.yml')[:revision_history]`, sorted as `[major, minor, revision, patch]`.
-- The same libraries: `MultiType` (`TYPE_*`), `Payload.expand`, `OrchConfig`, `Rails.logger`, `BasicUpload` (also used by portlet `csv_editor`) and `ModuleSSHTools` (also included by portlets `aspera_service` and `transfer_console`).
-- A component can have its own controller class in its folder.
-
-Differences:
-
-| Topic | Plugin | Portlet |
-| --- | --- | --- |
-| Table | One table per plugin, created by a migration. | One shared table `portlets`, no migration. |
-| Settings | Attributes, in the template row. | Parameters, in the frame (`link_parameters`). |
-| Naming | `tableize` and `classify` must round-trip. | `camelize` only. |
-| Loading | Zeitwerk, in engine, workers and web. | `load` on demand, web process only. |
-| Compatibility check | Version, beta and dependencies checked. | None. |
-| Controller | Own `<name>_controller.rb`, in the `skip_authenticity_token` list. | `<Class>Controller < PortletsController`, called by `portlet_action`; CSRF always applies. |
-| Permission | Entitlement of the template (`Action`). | Entitlement of the portlet row (`Portlet:<row id>`). |
-| Runtime object | Kept between `execute` and `check_status`. | Rebuilt at every display. |
-
 #### Custom portlets
 
 A custom portlet is defined in the web interface, with no file: **Engine > Portlets > Define Custom Portlet**. Portlet `custom_portlet` (stock) must be enabled first.
@@ -5064,8 +5118,3 @@ Counts in the 23 portlets of Orchestrator 4.1.6 (versions 0.0.2 to 0.1.2, all wi
 | `ModuleSSHTools` | 2 |
 
 Shipped portlets: `aspera_service`, `assigned_tasks`, `csv_editor`, `custom_portlet`, `file_browser`, `filter_work_orders`, `inline_journals`, `load_utilization`, `lookup_editor`, `monitors_dashboard`, `orchestrator_information`, `processes_view`, `queue_management`, `resource_management`, `step_activity`, `step_performance_stats`, `step_stats`, `table_details_viewer`, `transfer_console`, `user_tasks`, `workflow_performance_stats`, `workflow_stats`, `workorder_activities`.
-
-#### Portlet learning Ruby and Rails
-
-- [Ruby documentation](https://www.ruby-lang.org/en/documentation/)
-- [Rails guides](https://guides.rubyonrails.org/): Action View, Action Controller.
