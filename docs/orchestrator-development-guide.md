@@ -727,13 +727,13 @@ Several rules (lines) combine as an AND; for example "20 seconds from now" and "
 
 ![Schedule trigger configuration: a rule 30 Minute(s) from now](images/practices/4.1.6/schedule-trigger-config.png)
 
-The **timeout** of a step limits one execution of the step: the time without a status update.
-For a watcher, one execution is one scan of the folder: the timeout fires only if the scan does not return, never because the file does not arrive.
-To limit a wait, or the total duration of several steps, run a `ScheduleTrigger` in parallel:
+The **timeout** of a step does not limit a wait: for a watcher, it limits one scan of the folder, and it never fires because the file does not arrive ([Timeouts](#timeouts)).
+To limit the wait of a single trigger without **Continue monitoring**, make its timeout absolute.
+To limit the total duration of several steps, or to act during a wait, run a `ScheduleTrigger` in parallel:
 
 ![Cumulative timeout: three operations in parallel with "wait 2 minutes", which fails the work order](images/practices/4.1.6/cumulative-timeout.png)
 
-The first branch to reach an end node ends the work order and stops the other branch.
+The first branch to reach an end node ends the work order and stops the other branch ([Terminal nodes](#terminal-nodes)).
 Orchestrator is not a real-time scheduler: do not expect precision to the second.
 
 Escalation: a media file is expected after its XML side file.
@@ -761,26 +761,17 @@ If there is one rule to remember: protect yourself.
 Ways to report an issue: e-mail, Slack, Jira ticket, journal entry, alert, log file read by a log collector (Splunk, Elastic), metrics database (InfluxDB with Grafana), custom table shown in a dashboard, REST call.
 Ways to recover: retry, move the file to an error folder (operators can drop it back), an operator decision ([Human interaction](#human-interaction)), a fallback resource ([Resource management](#resource-management)).
 
-#### Practices retries
+#### Using retries
 
-The **retry** tabs of a step (one for failure, one for error) set:
+The **retry** tabs of a step, one for failure and one for error, set the number of attempts, the retry duration and the delay between attempts ([Retries](#retries)).
 
-| Setting | Meaning |
-| --------- | --------- |
-| Maximum number of attempts | `0` means unlimited. |
-| Retry duration (retry for) | Total time for retries; empty or `0` means no limit. |
-| Delay between attempts | Minimum delay in seconds. |
-
-The most restrictive setting wins: 10 attempts, retry for 30 seconds, 10 seconds between attempts makes 3 attempts.
-
-![Retry tab of a step: 10 attempts, for 30 seconds, every 10 seconds: 3 attempts](images/practices/4.1.6/retry-tab.png)
+![Retry tab of a step: 10 attempts, for 30 seconds, every 10 seconds: the 30 seconds stop the retries first](images/practices/4.1.6/retry-tab.png)
 
 *(4.1.6)* The designer opened from the list of workflows shows **Retry Duration** empty, and saving the workflow there drops it (attempts and delay are kept).
 Enter it again before saving, and check it in the **Revisions** tab, which shows it.
 
 - **A retry happens only if the exit is linked**, at least to an OR that leads to an end node.
-- A notification linked to the failed exit is sent once, after the last attempt.
-  The work order view shows the attempts (for example "Failed (5)").
+- Link a notification to the failed exit: it is sent once, after the last attempt, not at each attempt.
 - Retrying a functional failure is usually useless: the transcoder will reject the same file again.
   Retry errors (network, server restart).
 - Synchronous steps interrupted by a restart of Orchestrator cannot resume ("Recovery after partial execution is not supported"): a retry on error covers this case.
@@ -793,14 +784,13 @@ Enter it again before saving, and check it in the **Revisions** tab, which shows
 - Some versions retried forever when a required input was missing with retry on error set.
   The workaround is `input_value = "" if input_value.blank?` in the pre-processing of required inputs.
 
-#### Practices timeouts
+#### Using timeouts
 
-- Set the timeout of synchronous steps above their expected duration; `0` means no timeout.
-  The default is the timeout of the plugin, else 60 seconds (engine setting `default_step_timeout`) *(4.1.6)*.
-- On timeout, a step ends as failed by default, or as error.
-  For triggers, choose error: a failed trigger with **Continue monitoring** starts a new work order, and a timeout loop follows.
+[Timeouts](#timeouts) gives the possible values, the default, and the statuses on timeout.
+
+- Set the timeout of synchronous steps above their expected duration: do not rely on the default, which can be only 60 seconds.
+- For triggers, choose error on timeout: a failed trigger with **Continue monitoring** starts a new work order, and a timeout loop follows.
 - An absolute timeout cannot be set on a sub-workflow step with retries: use a parallel `ScheduleTrigger` ([Waiting and timeouts](#waiting-and-timeouts)).
-- A trigger without **Continue monitoring** with an absolute timeout waits at most that time.
 
 #### Cancel
 
@@ -865,55 +855,45 @@ The step information output of a step (`Step_information`) can be customized in 
 - External monitoring through the API may require a manual status change, for example during maintenance.
 - Non-administrators need the permission `Aspera:Orchestrator:WorkOrder:edit` to reset work orders.
 
-### Practices triggers
+### Using triggers
 
 #### Continue monitoring
 
-All triggers have the option **Continue monitoring** (**Keep trigger ongoing** in older versions).
+All triggers have the option **Continue monitoring** (**Keep trigger ongoing** in older versions); [Triggers](#triggers) describes the work orders it creates.
 
-- **Not selected**: the step waits for its condition, fires once, and the workflow continues.
-  Use it inside a workflow to wait for something, for example a folder whose full path is known (even for days).
-- **Selected**: when the condition is met, the work order continues with the detected element, and a clone of the work order waits for the next event at the trigger step.
-  All these work orders form a work order group.
+- **Not selected**: use it inside a workflow to wait once for something, for example a folder whose full path is known (even for days).
+- **Selected**: use it to process every new element, each one in its own work order.
 
 ![Local file watcher: Continue monitoring, watch directory, multi-folder search, glob or regular expression](images/practices/4.1.6/watcher-keep-ongoing.png)
 
-- With **Return all matching files** (or **return elements as a list**), one work order receives all the elements detected in one scan; without it, one work order per element, started one after the other (about two polling periods apart).
-  With a long polling period, prefer the list and a fan-out.
-- A file watcher detects a file when it is stable: same size and modification date during the stability time (by default the polling period).
-  **Trigger on partial** continues as soon as the file exists.
+- With a long polling period, return the elements as a list (**Return all matching files**, or **return elements as a list**) and use a fan-out: otherwise the work orders start one after the other, about two polling periods apart.
 - Polling every 2 seconds is too often, especially for remote watchers (one SSH connection per scan); keep the default (5 seconds) or use 10 seconds.
-- A watcher runs forever: only a manual action (cancel, pause, destroy) stops it.
-  Add a workflow monitor to restart it ([Monitors](#monitors)).
-- After a restart of Orchestrator, watchers start again automatically, and running work orders continue from where they were.
+- A watcher runs until a manual action (cancel, pause, destroy) or an error stops it: add a workflow monitor to restart it ([Monitors](#monitors)).
 
 #### Persistency scope
 
 The persistency scope sets the memory of a trigger: which elements it has already detected, so that it does not detect them again.
-The history is keyed by the element (for example the file path); a file with the same name but a new modification date or content is detected again.
+[History of past triggers](#history-of-past-triggers) gives what each scope shares; this table gives when to use it:
 
-| Scope | History shared by | Use |
-| ------- | ------------------- | ----- |
-| by workorder group (default) | The work orders cloned from one start of the trigger. A new start (new work order, relaunch) has an empty history. | Files moved out of the watched folder after detection. To reprocess the files left in the folder (after a failure), restart the trigger. |
-| by workflow | All the work orders of the workflow. A restart does not detect again. | Files that stay in the folder. Touch a file to detect it again. |
-| by step | One step. | Two watchers on the same folder in one workflow, with separate histories. |
-| by action template *(4.1.6)* | All the steps that use the same template. | Steps that share a watcher template must not process the same element twice. |
-| absolute | All workflows. | Two workflows on the same folder must not process the same file. |
-| none | Nothing: the element is detected at each scan while it is present. | Only a trigger **without** Continue monitoring that waits for a file that may already be there. |
+| Scope | Use |
+| ------- | ----- |
+| by workorder group (default) | Files moved out of the watched folder after detection. To reprocess the files left in the folder (after a failure), restart the trigger. |
+| by workflow | Files that stay in the folder. Touch a file to detect it again. |
+| by step | Two watchers on the same folder in one workflow, with separate histories. |
+| by action template *(4.1.6)* | Steps that share a watcher template must not process the same element twice. |
+| absolute | Two workflows on the same folder must not process the same file. |
+| none | Only a trigger **without** Continue monitoring that waits for a file that may already be there. |
 
 **Never use scope none with Continue monitoring**: the same file is detected at each scan, and each detection creates a work order.
 In one real case, 15 000 work orders were created for one file within an hour; the server stopped responding, and the license had to be removed so that Orchestrator would start without processing.
 
-- `LocalFileWatcher` keeps a history only when **Remove trigger file** is not selected *(4.1.6)*: a removed file needs none.
-  A template written as a file with this option blank (null) has no history at all, whatever the scope: with Continue monitoring, it behaves like scope none.
-  See [LocalFileWatcher](#localfilewatcher) in the Authoring Guide.
-- Changing the scope erases the history: existing files are detected again.
-- The history is stored on disk, or in the database with `persistence_mode: db`, which is needed when several Orchestrator servers share the work.
+- In a template written as a file, write **Remove trigger file** explicitly: left blank, `LocalFileWatcher` keeps no history, whatever the scope, and with Continue monitoring it behaves like scope none ([LocalFileWatcher](#localfilewatcher)).
+- When several Orchestrator servers share the work, set `persistence_mode: db`, so that the history is in the database instead of on disk.
 - Two triggers in the same work order group see the same history: a second trigger on the same element (for example the start and the end of the same transfer) needs scope none, and no Continue monitoring.
 
 ![Transfer start (Continue monitoring, by workorder group), then transfer end of the same transfer (scope none)](images/practices/4.1.6/trigger-start-end-monitors.png)
 
-- A trigger called several times in a sub-workflow (without Continue monitoring) returns a different element each time with scope by step.
+- For a trigger called several times in a sub-workflow (without Continue monitoring) that must return a different element each time, use scope by step.
 
 #### Rules for triggers
 
@@ -1796,6 +1776,8 @@ General rules:
 | `Fail` | `Synch_factor`, `Prerequisites` | Reached: the work order is `Failed`. |
 | `Error` | `Synch_factor`, `Prerequisites` | Reached: the work order is `Error`. |
 
+The first of these nodes reached ends the work order: the steps still running on other branches are cancelled (`WorkOrder#terminate_all_work_steps`).
+
 `Fail` and `Error` are also reached **implicitly**: when a work step ends with status `Failed` (or `Error`) and no step is connected to it for that status, the work order goes to `Fail` (or `Error`).
 So only success paths need to be connected to `End`; failures do not need explicit links.
 The status details of the work order are then `No behavior defined for step status change to <status> - in <step name>`.
@@ -1818,7 +1800,7 @@ Each `Step` element has attributes `id`, `x`, `y`, and these children:
 | `Version` | no | Plugin version, informational. |
 | `Pre_processing` | no | Ruby code run before the action. See [Processing code](#processing-code). |
 | `Post_processing` | no | Ruby code run after the action. |
-| `Timeout` | no | Execution timeout in seconds, `0` for none. Default: timeout of the plugin, else the engine setting `default_step_timeout` (60 by default). |
+| `Timeout` | no | Execution timeout in seconds. See [Timeouts](#timeouts). |
 | `On_timeout` | no | Status on timeout: `Pass` (Complete), `Fail` (Failed, the default), `Error` (Error), `Raise` (Error, and the work order timeout action runs). |
 | `Error_attempts` | no | Maximum attempts when the step ends with `Error` and a branch with status `Error` leaves it. |
 | `Error_retryFor`, `Error_retryForUnit` | no | Retry period: value multiplied by unit (seconds). |
@@ -2098,11 +2080,38 @@ Inputs and outputs (a name in angle brackets is the value of that template attri
 
 When a step ends with `Error` (or `Failed`) and a branch with that status leaves it, the step can be retried before that branch is followed: up to `Error_attempts` (or `Failed_attempts`) attempts, within `Error_retryFor` x `Error_retryForUnit` seconds, waiting `Error_retryDelay` seconds between attempts.
 
+The designer has one retry tab for failure and one for error:
+
+| Designer | Element | Content |
+|----------|---------|---------|
+| Maximum number of attempts | `Error_attempts`, `Failed_attempts` | Attempts, the first one included. |
+| Retry duration (retry for) | `Error_retryFor` x `Error_retryForUnit`, `Failed_retryFor` x `Failed_retryForUnit` | Total time for retries. |
+| Delay between attempts | `Error_retryDelay`, `Failed_retryDelay` | Minimum delay, in seconds. |
+
 Rules (`Prerequisite.retry_needed?`):
 
 - `0` means no limit, for the attempts and for the period.
+  So does a blank value, when the other one is set.
 - Both limits apply: retries stop at the first one reached.
-- With `Error_attempts` `1`, or with neither attempts nor period, the step is not retried.
+  They are checked when an attempt ends, so an attempt that starts before the end of the period still runs.
+- With `Error_attempts` `1`, or with attempts and period both blank, the step is not retried.
+- The branch is followed once, after the last attempt.
+  The work order view shows the attempts, for example "Failed (5)".
+
+#### Timeouts
+
+The element `Timeout` of a step limits one execution of the step: the time without a status update.
+For a watcher, one execution is one scan of the folder: the timeout fires only if the scan does not return, never because the file does not arrive.
+For the calls of a plugin, see [Plugin timeouts](#plugin-timeouts).
+
+| Value of `Timeout` | Effect |
+|--------------------|--------|
+| blank | Timeout of the plugin, else the engine setting `default_step_timeout` (60 seconds by default). |
+| `0` | No timeout. |
+| positive | Timeout in seconds, restarted by each status update. |
+| negative (**Make Timeout Absolute** in the designer) | Timeout in seconds, counted from the start of the step, whatever the status updates. A trigger without continuous monitoring then waits at most that time. |
+
+When the timeout fires, the step ends with the status set by `On_timeout` (**On Timeout Action** in the designer), `Failed` by default (see [Step](#step)).
 
 #### Processing code
 
@@ -2123,17 +2132,45 @@ If processing code raises an exception, a warning is logged and execution contin
 Some plugins wait for an event instead of executing at once, for example `LocalFileWatcher`.
 They do not hold a worker while waiting.
 
-If the template enables continuous monitoring (for example attribute `allow_multiple` of `LocalFileWatcher`, or `keep_ongoing` of `Faspex5InboxWatcher`), the work order is cloned at the trigger step each time the step ends with a status other than `Error` (`WorkStep`, `WorkOrder.clone_at_step`):
+Without continuous monitoring, the step waits for its condition, fires once, and the workflow continues.
+
+If the template enables continuous monitoring (**Continue monitoring** in the designer; for example attribute `allow_multiple` of `LocalFileWatcher`, or `keep_ongoing` of `Faspex5InboxWatcher`), the work order is cloned at the trigger step each time the step ends with a status other than `Error` (`WorkStep`, `WorkOrder.clone_at_step`):
 
 - The work order that detected the event continues with the next steps, with the outputs of the trigger.
 - The clone is a new work order that waits for the next event.
   Its `comments` are `Derived from WorkOrder <id>, forked at '<step name>' (<step id>)`, and its `derived_from` and `master_id` are the id of the first work order.
 
 So the work order that waits is always the last one, and its id changes after each event.
-The work steps of the clones keep the group of the first work order (`WorkStep#group`): with the default history scope `by workorder group`, all the clones share the history of past triggers (see [LocalFileWatcher](#localfilewatcher)).
+The work steps of the clones keep the group of the first work order (`WorkStep#group`), and form a work order group: with the default history scope `by workorder group`, all the clones share the history of past triggers (see [History of past triggers](#history-of-past-triggers)).
 To stop the monitoring, cancel that work order: `ascli orchestrator workflows workorders <workflow id>` lists the work orders, the waiting one is `In Progress` on the trigger step.
 If a workflow monitor auto-starts the workflow (**Monitors**), turn the monitor off first: otherwise it starts a new work order at its next check.
 When the trigger step ends with `Error`, no clone is created, and the monitoring stops.
+
+A trigger that returns a list (`return_all` of `LocalFileWatcher`, **Return all matching files** or **return elements as a list** in the designer) gives one work order all the elements detected in one scan.
+Otherwise, each element gets its own work order, started one after the other, about two polling periods apart.
+
+After a restart of Orchestrator, watchers start again automatically, and running work orders continue from where they were.
+A synchronous step that the restart interrupted ends with `Error`: "Recovery after partial execution is not supported".
+
+#### History of past triggers
+
+A trigger remembers the elements it has already detected, so that it does not detect them again.
+The history is keyed by the element, for example the file path: a file with the same name but a new modification date is detected again.
+
+The attribute `trigger_type` (**persistency scope** in the designer) sets who shares the history:
+
+| Scope | History shared by |
+|-------|-------------------|
+| `by workorder group` (default) | The work orders cloned from one start of the trigger. A new start (new work order, relaunch) has an empty history. |
+| `by workflow` | All the work orders of the workflow. A restart does not detect again. |
+| `by step` | One step. |
+| `by action template` *(4.1.6)* | All the steps that use the same template. |
+| `absolute` | All workflows. |
+| `none` | Nothing: the element is detected at each scan while it is present. |
+
+- Changing the scope erases the history: existing files are detected again.
+- The history is stored on disk, or in the database with the server setting `persistence_mode: db`.
+- A plugin can also decide when it keeps a history: see [LocalFileWatcher](#localfilewatcher).
 
 ### Secrets
 
@@ -2327,11 +2364,11 @@ Output `FileName` is the full path of the file (`string`), or the list of paths 
 | `allow_multiple` | Continuous monitoring: keep watching after a detection (see [Triggers](#triggers)). |
 | `remove_file` | `1`: delete the file once detected (move it, with `archive_directory`). `0`: keep it, and remember it (see below). |
 | `archive_directory`, `archive_with_timestamp`, `keep_timestamps` | Archive directory: the file is moved there with `remove_file` `1`, copied there otherwise. Output `FileName` is then the path in the archive. |
-| `cool_off` | Seconds a file must stay unchanged to be considered stable. |
+| `cool_off` | Seconds a file must keep the same size and modification date to be considered stable (default: `polling_frequency`). |
 | `polling_frequency` | Seconds between scans (default 5). |
-| `partial_file` | Trigger on files still being written. |
+| `partial_file` | Trigger on files still being written: the step continues as soon as the file exists. |
 | `return_all` | Return all matching files at once. |
-| `trigger_type` | Scope of the history of past triggers: `by workorder group` (default, also when blank), `by workflow`, `by action template`, `by step`, `absolute`, `none`. |
+| `trigger_type` | [Scope of the history of past triggers](#history-of-past-triggers): `by workorder group` (default, also when blank), `by workflow`, `by action template`, `by step`, `absolute`, `none`. |
 | `exclusions`, `fullpath_exclusions`, `ignore_zero_bytes`, `ignore_readlocked` | Filters. |
 
 History of past triggers: the watcher remembers the files it has detected, with their modification time, only when `remove_file` is `0` and `trigger_type` is not `none` (`LocalFileWatcher#some_persistence?`).
@@ -4193,7 +4230,7 @@ To not report an event twice, include `ModuleTriggerTools`, and save the events 
 | `clean_up_triggers` | Deletes the saved object. |
 | `trigger_file_name` | `<run_dir>/<folder>/<WATCHER_PREFIX>_<scope>_triggers.prst`. |
 
-The scope of the saved object depends on the attribute `trigger_type`, if the table has one: `by workorder group` (default), `by action template`, `absolute`, `by step`, `by workflow`, `none` (constants `TRIG_*`).
+The scope of the saved object depends on the attribute `trigger_type`, if the table has one: `by workorder group` (default), `by action template`, `absolute`, `by step`, `by workflow`, `none` (constants `TRIG_*`, see [History of past triggers](#history-of-past-triggers)).
 Define the constant `WATCHER_PREFIX` to name the files of your plugin (default `Watcher`).
 See `DatabaseTrigger` (`database_triggers`) for a complete trigger in about 300 lines.
 
