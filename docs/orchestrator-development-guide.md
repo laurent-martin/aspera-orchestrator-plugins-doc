@@ -88,11 +88,11 @@ The last column gives the label that the web interface shows, when it differs.
 | Trigger, watcher | A step that waits for an event (file, transfer, message, schedule) and starts the processing. | Trigger |
 | Work order group | The work orders cloned from one trigger started with **Continue monitoring**. | History scope: by workorder group |
 | Worker | A process of Orchestrator that executes steps: synchronous (busy until the step ends) or asynchronous (polls). | - |
-| Stock folder | The source of a plugin (`/opt/aspera/orchestrator/actions/<folder>`) or of a portlet (`/opt/aspera/orchestrator/portlets/<id>`). | - |
-| Load folder | `<config_dir>/actions/<folder>`, by default `/opt/aspera/var/config/orchestrator/actions/<folder>`: the copy of the stock folder made when the plugin is enabled, from which Orchestrator loads it. | - |
+| Stock folder | The source of a plugin (`/opt/aspera/orchestrator/actions/<FOLDER>`) or of a portlet (`/opt/aspera/orchestrator/portlets/<ID>`). | - |
+| Load folder | `<CONFIG_DIR>/actions/<FOLDER>`, by default `/opt/aspera/var/config/orchestrator/actions/<FOLDER>`: the copy of the stock folder made when the plugin is enabled, from which Orchestrator loads it. | - |
 | Portlet | A Ruby class that inherits from `Portlet`, for example `HelloBanner`, and its folder. Displays one widget. | Portlet |
 | Portlet ID | The folder name in snake_case, for example `hello_banner`. The class name is `portlet_id.camelize`. | - |
-| User folder | `<config_dir>/portlets/<id>`, by default `/opt/aspera/var/config/orchestrator/portlets/<id>`: portlets written or imported by the user. | - |
+| User folder | `<CONFIG_DIR>/portlets/<ID>`, by default `/opt/aspera/var/config/orchestrator/portlets/<ID>`: portlets written or imported by the user. | - |
 | Frame | A zone of a dashboard page. A frame shows one portlet, or is split horizontally or vertically into sub-frames. Stored in table `frames`. | Frame |
 | Dashboard | The frames of a user or of a group. | Menu **Dashboard** |
 | Portlet parameter | A named, typed setting of a portlet, edited in the configuration of the frame and stored in the frame, not in the portlet. Not a workflow parameter. | Frame configuration |
@@ -1259,7 +1259,7 @@ Split into two workflows:
 - Do not leave tasks open for long: each open task is a waiting work order.
   Set a timeout.
 - A task can be completed through the REST API.
-- A custom form is an `.html.erb` file named `_<name>.html.erb` in `/opt/aspera/var/config/orchestrator/actions_config/user_inputs/`.
+- A custom form is an `.html.erb` file named `_<NAME>.html.erb` in `/opt/aspera/var/config/orchestrator/actions_config/user_inputs/`.
   It is part of an HTML form that already has the submit and cancel buttons.
   Read displayed data from `received_parameters['name']`, and write requested data as `outputs[name]` fields, or with the helpers `draw_input('outputs', 'name', 'string', 'default')`, `draw_input_string`, `draw_input_flag` (types flag, int, string, date, attachment).
 
@@ -1269,7 +1269,7 @@ See the recipe [operator decision](#recipe-operator-decision) and its [custom fo
 
 #### Direct start
 
-A workflow with runtime parameters can have a custom start page: `/opt/aspera/var/config/orchestrator/workflow_start_views/_start_<WORKFLOW_ID>.html.erb`, with fields `external_parameters[<name>]` (`draw_input_string("external_parameters", "<name>")`, or a list built on the server, for example the files of a folder with `Dir.glob`), and an optional JavaScript function `validate_workflow_<WORKFLOW_ID>()` that is called before the start (return `false` to stay on the page).
+A workflow with runtime parameters can have a custom start page: `/opt/aspera/var/config/orchestrator/workflow_start_views/_start_<WORKFLOW_ID>.html.erb`, with fields `external_parameters[<NAME>]` (`draw_input_string("external_parameters", "<NAME>")`, or a list built on the server, for example the files of a folder with `Dir.glob`), and an optional JavaScript function `validate_workflow_<WORKFLOW_ID>()` that is called before the start (return `false` to stay on the page).
 The page shows these fields after the standard ones (description, comments, execution priority).
 
 ![A custom start page: the media files of a folder in a list](images/practices/4.1.6/direct-start-form.png)
@@ -1324,7 +1324,7 @@ Do not use the Orchestrator database for heavy external monitoring.
 | Workflow | Whether a work order of the workflow runs. | Auto-start the workflow, with given runtime parameters; call a notification workflow. |
 | Work order | Work orders of a workflow that complete, fail, end in error or are canceled. | Call a workflow for each (for example to send an e-mail). |
 | Folder | Age and number of files (local, mounted, or on a remote node). | Call a workflow (for example to delete old files). Does not detect a missing folder. |
-| Script | A command run on a remote node, which prints `<code> <message>`: 0 OK, 2 warning, another code an alert. | Disk, CPU, memory, processes, also on remote servers. |
+| Script | A command run on a remote node, which prints `<code> <MESSAGE>`: 0 OK, 2 warning, another code an alert. | Disk, CPU, memory, processes, also on remote servers. |
 | Remote node | Reachability. | |
 
 ![Monitors: a tile per type of monitor, then a tab per type; the workflow monitor of Asset ingest is on, with auto-start](images/practices/4.1.6/monitors-view.png)
@@ -1576,7 +1576,7 @@ Rules:
 | Extension | Content |
 |-----------|---------|
 | `.yml` | One workflow, as described in this guide. |
-| `.wkf` | A gzipped tar archive containing a manifest file `<name>.txt` and the files it lists. The manifest is a YAML list of file names: the first one is the main workflow (`.yml`), the others are its dependencies: sub-workflows (`Workflow_*.yml`) and remote nodes (`Remote_node*.node`). `export_workflow` produces this format when dependencies are exported. |
+| `.wkf` | A gzipped tar archive containing a manifest file `<NAME>.txt` and the files it lists. The manifest is a YAML list of file names: the first one is the main workflow (`.yml`), the others are its dependencies: sub-workflows (`Workflow_*.yml`) and remote nodes (`Remote_node*.node`). `export_workflow` produces this format when dependencies are exported. |
 
 The file name given to `import_workflow` must end with `yml` or `wkf`.
 
@@ -1588,7 +1588,7 @@ A workflow file is a YAML sequence of exactly six elements, in this order:
 |---|---------|---------|
 | 1 | Workflow | Workflow attributes: name, description, ... See [Workflow attributes](#workflow-attributes). |
 | 2 | Whiteboard | The graph (`xml_export`) and its state. See [Whiteboard attributes](#whiteboard-attributes). |
-| 3 | Action templates | A map: key `<StepType>__<N>`, value the template object. See [Action templates](#action-templates). |
+| 3 | Action templates | A map: key `<STEP_TYPE>__<N>`, value the template object. See [Action templates](#action-templates). |
 | 4 | Dependency list | A map: same keys as element 3, value the list of external entities used by the template (written by `export_workflow`). |
 | 5 | Packed dependencies | A map of dependencies included in a `.wkf` package. `{}` for a `.yml` file. |
 | 6 | Plugin versions | A map: plugin name to version. Informational: not checked on import. |
@@ -1612,8 +1612,8 @@ That converter is line-based, so the layout rules matter:
 - An optional first line `---`.
 - Each of the six elements starts with a dash and a space (`-` then space) at column 0.
   - Element 1 starts with `- !ruby/object:Workflow`.
-  - Element 3 starts with `- <StepType>__<N>: !ruby/object:<StepType>` for the first template.
-    Each next template starts with a line `<StepType>__<N>: !ruby/object:<StepType>` (any indentation).
+  - Element 3 starts with `- <STEP_TYPE>__<N>: !ruby/object:<STEP_TYPE>` for the first template.
+    Each next template starts with a line `<STEP_TYPE>__<N>: !ruby/object:<STEP_TYPE>` (any indentation).
     The separator must be exactly `: !ruby/object:`.
 - A line `attributes:` is optional and ignored.
 - The other lines of a section are its attributes, one `name: value` per line, with the same indentation within a section.
@@ -1669,8 +1669,8 @@ Columns of a workflow, and how `import_workflow` uses them:
 | `user_lock`, `locked_by` | boolean, integer | Used. |
 | `created_by` | integer | Replaced by the importing user. |
 | `portable_id` | string | Replaced by a new UUID. |
-| `source_revision` | string | Replaced by `<name>\|<revision>`. |
-| `comments` | text | Replaced by `Imported from file <path>`. |
+| `source_revision` | string | Replaced by `<NAME>\|<REVISION>`. |
+| `comments` | text | Replaced by `Imported from file <PATH>`. |
 | `id`, `folder_id`, `revision_id`, `generated_from`, `created_at`, `updated_at` | | Ignored. The folder is given by the import request. |
 
 The minimum is `name`, and `run_as` is recommended.
@@ -1686,9 +1686,9 @@ The minimum is `name`, and `run_as` is recommended.
 
 #### Action templates
 
-Element 3 maps each key `<StepType>__<N>` to an action template.
+Element 3 maps each key `<STEP_TYPE>__<N>` to an action template.
 
-- `<StepType>` is the plugin class name, for example `CustomRuby`, and must be the `Step_type` of the steps using it.
+- `<STEP_TYPE>` is the plugin class name, for example `CustomRuby`, and must be the `Step_type` of the steps using it.
 - `<N>` is a number unique within the file for that type, and must be the `Action_id` of the steps using it.
   On import, the template gets a new database id and the graph is updated: `Action_id` of steps, and `action_id` of `Map_to` and `Carry_thru` of type `output`.
 - The value holds the template attributes: the plugin settings.
@@ -1698,7 +1698,7 @@ Element 3 maps each key `<StepType>__<N>` to an action template.
     Use this form, with `W0__` and the step name.
   - Any other name: **global** template.
     If a template of the same class and name exists and has the same attributes, it is reused.
-    If it differs, a new template named `<name> (import_N)` is created.
+    If it differs, a new template named `<NAME> (import_N)` is created.
     If none exists, it is created.
 - Plugins that are not enabled on the server are enabled automatically by `import_workflow`.
   If that fails, the import returns the list of missing plugins.
@@ -1737,7 +1737,7 @@ With `import_workflow`:
 
 - Remote nodes of the package are not imported: the attribute keeps the node name, and the node must exist on the server.
   `import_with_constraints` imports or maps them (see [import_with_constraints](#import_with_constraints)).
-- Field `link_to_subworkflows` set to `true`: a packed sub-workflow that was already imported (a workflow with the same name and a `source_revision` equal to `<name>|<revision_id>` of the packed file) is used instead of a new copy.
+- Field `link_to_subworkflows` set to `true`: a packed sub-workflow that was already imported (a workflow with the same name and a `source_revision` equal to `<NAME>|<REVISION_ID>` of the packed file) is used instead of a new copy.
   The value is evaluated as Ruby code: only `true` links, and in a package with sub-workflows, a word other than `true` or `false` makes the import fail.
 
 ### Graph XML
@@ -1796,7 +1796,7 @@ The first of these nodes reached ends the work order: the steps still running on
 
 `Fail` and `Error` are also reached **implicitly**: when a work step ends with status `Failed` (or `Error`) and no step is connected to it for that status, the work order goes to `Fail` (or `Error`).
 So only success paths need to be connected to `End`; failures do not need explicit links.
-The status details of the work order are then `No behavior defined for step status change to <status> - in <step name>`.
+The status details of the work order are then `No behavior defined for step status change to <STATUS> - in <step name>`.
 The reason of the failure is in key `step_status_details` of output `<step name>:Step_information`: `ascli orchestrator workorders output <work order id>` shows it.
 
 #### Step
@@ -1806,7 +1806,7 @@ Each `Step` element has attributes `id`, `x`, `y`, and these children:
 | Child | Required | Content |
 |-------|----------|---------|
 | `Action_id` | yes | Number `<N>` of the template key `<Step_type>__<N>`. |
-| `Step_name` | yes | Name of the step, unique in the workflow. Used to name outputs (`<Step_name>:<output>`) and in `Map_to` of type `output`. |
+| `Step_name` | yes | Name of the step, unique in the workflow. Used to name outputs (`<STEP_NAME>:<OUTPUT>`) and in `Map_to` of type `output`. |
 | `Step_type` | yes | Plugin class name, for example `CustomRuby`. |
 | `Synch_factor` | yes | Number of prerequisites to meet. See [Prerequisites and branches](#prerequisites-and-branches). When it is not `0`, attributes `x` and `y` (position of the join symbol) are needed by the designer. |
 | `Prerequisites` | yes (to be valid) | Links from previous nodes. |
@@ -1906,7 +1906,7 @@ The `Outputs` element only adds settings:
 | Element | Content |
 |---------|---------|
 | `Output` | Attribute `name`. Optional children: `Processing` (Ruby code transforming the value), `Global` (name of a global variable that also receives the value). |
-| `Carry_thru` | Makes a variable available as an input of this step without the plugin declaring it: at run time, the value is in `@inputs` under `<name>` and `<step_name>/<name>`. Attributes: `type` (`output` or `parameter`), `name`, and for `output`: `step_name`, `step_type`, `action_id`. |
+| `Carry_thru` | Makes a variable available as an input of this step without the plugin declaring it: at run time, the value is in `@inputs` under `<NAME>` and `<STEP_NAME>/<NAME>`. Attributes: `type` (`output` or `parameter`), `name`, and for `output`: `step_name`, `step_type`, `action_id`. |
 
 An input can be mapped to an output of **any** step of the graph, not only of a step linked to it: the recipes [queue](#recipe-queue-and-resource-pool), [one work order per file](#recipe-one-work-order-per-file) and [operator decision](#recipe-operator-decision) map outputs of the step before the previous one, without `Carry_thru`.
 The designer has a narrower rule: the mapping list of a step offers only the outputs of the steps linked to it, the variables they carry through, and the global parameters (`WhiteboardsController#input_mappings`).
@@ -1983,7 +1983,7 @@ Many plugins derive inputs from some of their template attributes (`ActionTools#
   The [Action Template Reference](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/action-template-reference.md) gives its name in column **Input if blank**.
   - Input name: the value of the plugin constant `VAR_<ATTRIBUTE>` if it exists, else the attribute name with its first letter in upper case (for example `file_path` gives `File_path`).
   - The input is optional if the plugin defines a constant `DEFAULT_<ATTRIBUTE>`, else required.
-  - An attribute name ending with `_<type>` (for example `delay_int`) gives an input of that type, named without the suffix.
+  - An attribute name ending with `_<TYPE>` (for example `delay_int`) gives an input of that type, named without the suffix.
 - A text attribute that is set can contain [placeholders](#placeholders) `<%= variable %>`: each one creates an input.
 - A non-text attribute left null becomes an input of the corresponding type.
 
@@ -2021,7 +2021,7 @@ At run time, a variable that is not an input is `nil`, and the code fails, for e
 The input created by a placeholder:
 
 - Has the name written in the placeholder: letters, digits and `_`.
-- Is a `string`, unless the name ends with `_<type>`, where `<type>` is a [value type](#value-types): `<%= count_int %>` gives input `count_int` (the suffix is kept) of type `int`, and `<%= start_date %>` gives input `start_date` of type `date`.
+- Is a `string`, unless the name ends with `_<TYPE>`, where `<TYPE>` is a [value type](#value-types): `<%= count_int %>` gives input `count_int` (the suffix is kept) of type `int`, and `<%= start_date %>` gives input `start_date` of type `date`.
 - Is required, unless the plugin defines a constant `DEFAULT_<NAME>`.
 - Is not created if the name is a method of the template that returns a value: `name` (the template name) or another attribute of the template that is set.
   That value is used.
@@ -2044,9 +2044,9 @@ The form of 4.1.6 mentions a `{{variable_name}}` syntax: it is not supported.
 
 The file [plugins.yml](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/plugins.yml) gives, for each plugin, its template attributes and the inputs and outputs of its steps, with the template settings they depend on.
 They were found by calling methods `inputs_spec` and `outputs_spec` of the plugin on templates with one or two attributes changed.
-Read one plugin with `ascli orchestrator plugins spec <PluginClass>`, or with `yq '.<PluginClass>' plugins.yml`.
+Read one plugin with `ascli orchestrator plugins spec <PLUGIN_CLASS>`, or with `yq '.<PLUGIN_CLASS>' plugins.yml`.
 
-Each plugin is a key, its class name: the `Step_type` of a step, and the class of its template (key `<PluginClass>__<N>`).
+Each plugin is a key, its class name: the `Step_type` of a step, and the class of its template (key `<PLUGIN_CLASS>__<N>`).
 
 ```yaml
 AmazonS3Operation:
@@ -2085,7 +2085,7 @@ Inputs and outputs (a name in angle brackets is the value of that template attri
 | `required` | Inputs: `true`, `false`, or the condition for which the input is required (`{if_blank: ...}`, `{if_set: ...}`, `{when: ...}`). |
 | `if_blank` | Exists only when this attribute is blank (for an input: it replaces the attribute), or when all attributes of the list are blank. |
 | `if_set` | Exists only when this attribute (or all of the list) is not blank. |
-| `when` | Exists only for some values of attributes: `{<attribute>: {in: [...]}}` (`null`: attribute blank) or `{<attribute>: {not_in: [...]}}` (set to another value). |
+| `when` | Exists only for some values of attributes: `{<ATTRIBUTE>: {in: [...]}}` (`null`: attribute blank) or `{<ATTRIBUTE>: {not_in: [...]}}` (set to another value). |
 | `conditional` | `true`: other template settings also decide whether it exists, the conditions given are not complete. |
 
 `if_blank`, `if_set` and `when` must all match, unless `conditional` is `true`.
@@ -2154,7 +2154,7 @@ If the template enables continuous monitoring (**Continue monitoring** in the de
 
 - The work order that detected the event continues with the next steps, with the outputs of the trigger.
 - The clone is a new work order that waits for the next event.
-  Its `comments` are `Derived from WorkOrder <id>, forked at '<step name>' (<step id>)`, and its `derived_from` and `master_id` are the id of the first work order.
+  Its `comments` are `Derived from WorkOrder <ID>, forked at '<step name>' (<step id>)`, and its `derived_from` and `master_id` are the id of the first work order.
 
 So the work order that waits is always the last one, and its id changes after each event.
 The work steps of the clones keep the group of the first work order (`WorkStep#group`), and form a work order group: with the default history scope `by workorder group`, all the clones share the history of past triggers (see [History of past triggers](#history-of-past-triggers)).
@@ -2316,7 +2316,7 @@ Contract of `execute_code`:
 - Optionally set `@status` to `Complete` (default), `Failed` or `Error`, and `@status_details` to a message.
   Any other status becomes `Error`.
   The message is also kept with `Complete`: it is the `step_status_details` of output `Step_information`.
-- `return <status>, <message>, @outputs` ends the code at once, for example `return STATUS_FAILED, "not a .tar file", @outputs` (constants `STATUS_COMPLETE`, `STATUS_FAILED`, `STATUS_ERROR`).
+- `return <STATUS>, <MESSAGE>, @outputs` ends the code at once, for example `return STATUS_FAILED, "not a .tar file", @outputs` (constants `STATUS_COMPLETE`, `STATUS_FAILED`, `STATUS_ERROR`).
   The code runs with `eval` inside the method of the plugin, so `return` leaves that method: the status is not checked, and without the third value the outputs are not stored.
 - An exception ends the step with `Error`.
 - Write to the Orchestrator log with `Rails.logger.info`.
@@ -2402,7 +2402,7 @@ Inputs and outputs come from the header:
 - The inputs that have a value select the row: the first row whose cells, in those columns, match the input values.
   A cell matches if it is equal to the value, if it is a glob pattern that matches it (`File.fnmatch`), or if it is written `/<regular expression>/` and matches it.
 - The outputs are the cells of that row, for all columns.
-- If no row matches, the step ends with `Failed`: `No configuration match for data set: <column>:<value>`.
+- If no row matches, the step ends with `Failed`: `No configuration match for data set: <COLUMN>:<VALUE>`.
   With no input value (no key), no row matches.
 - With `return_array_of_rows`, the step completes even if no row matches: output `rows` is then empty (and stays empty without a key).
 - Input `ColumnToListValueFrom` (a column name) gives all the values of that column in output `ColumnValues` when the step completes:
@@ -2437,7 +2437,7 @@ Outputs:
 
 - `Id`: the package id, a number (as a `string`). `Package UUID`: its UUID.
 - `File_list`: names of the files of the package, without path.
-- `Transfer_spec`: JSON text from Faspex, with `direction` `receive`, `remote_host`, `remote_user`, `authentication` `token` and `token`, and one path: `paths[0].source` is the folder of the package on the Faspex storage, `<storage>/<title> - <UUID>.aspera-package/PKG - <title>/`.
+- `Transfer_spec`: JSON text from Faspex, with `direction` `receive`, `remote_host`, `remote_user`, `authentication` `token` and `token`, and one path: `paths[0].source` is the folder of the package on the Faspex storage, `<STORAGE>/<TITLE> - <UUID>.aspera-package/PKG - <TITLE>/`.
   The token is stored in clear in the outputs of the work order.
 
 To download the package to a node, give `Transfer_spec` as payload to [`AsperaNodeApiTransferOperation`](#asperanodeapitransferoperation).
@@ -2447,8 +2447,8 @@ To download the package to a node, give `Transfer_spec` as payload to [`AsperaNo
 Starts a transfer on a node with the Node API, then checks its status every `polling_frequency` seconds (default 5) until it ends.
 
 - With operation `Submit Transfer Using Payload`, input `Payload` (attribute `payload` blank) is posted as is to `/ops/transfers` of the node: a transfer spec as JSON text.
-- The node is `https://<service_node_ip>:<service_node_port>` with `use_ssl` `1` (default port 9092), `http://` and port 9091 with `use_ssl` `0`, or the address of `remote_node`.
-  `service_node_ip` can include the port (`<host>:<port>`).
+- The node is `https://<SERVICE_NODE_IP>:<SERVICE_NODE_PORT>` with `use_ssl` `1` (default port 9092), `http://` and port 9091 with `use_ssl` `0`, or the address of `remote_node`.
+  `service_node_ip` can include the port (`<HOST>:<PORT>`).
   The certificate of the node is not verified.
 - Authentication is Basic, with `user_login` and `user_password`: a node user and its password, or an access key and its secret.
   They are required also with `remote_node`.
@@ -2551,8 +2551,8 @@ Step `Greet` receives the runtime parameter `who`; step `Shout` receives the out
 ```
 
 ```shell
-ascli orchestrator workflows start <id> @json:'{"who":"Laurent"}' @json:'{"step":"Shout","variable":"result"}'   # HELLO LAURENT!
-ascli orchestrator workflows start <id> @json:'{}' @json:'{"step":"Shout","variable":"result"}'                  # HELLO WORLD!
+ascli orchestrator workflows start <ID> @json:'{"who":"Laurent"}' @json:'{"step":"Shout","variable":"result"}'   # HELLO LAURENT!
+ascli orchestrator workflows start <ID> @json:'{}' @json:'{"step":"Shout","variable":"result"}'                  # HELLO WORLD!
 ```
 
 #### Recipe: branch on a status
@@ -2652,7 +2652,7 @@ The workflow waits for a file matching `/tmp/ascli_watch_*.txt` on the Orchestra
 ```
 
 ```shell
-ascli orchestrator workflows start <id> @json:'{}' @json:'{"step":"Wait for file","variable":"FileName"}'
+ascli orchestrator workflows start <ID> @json:'{}' @json:'{"step":"Wait for file","variable":"FileName"}'
 ```
 
 The command returns when a matching file has been stable for `cool_off` seconds, for example `/tmp/ascli_watch_20261006_230726.txt`.
@@ -3001,9 +3001,9 @@ Workflow `queue` runs step `Work` for one work order at a time, in the order the
 
 ```shell
 ascli orchestrator workflows import queue.yml @json:'{"publish":true}'
-ascli orchestrator workflows start <id> @json:'{"item":"a"}'
-ascli orchestrator workflows start <id> @json:'{"item":"b","fail":"yes"}'
-ascli orchestrator workflows start <id> @json:'{"item":"c"}'
+ascli orchestrator workflows start <ID> @json:'{"item":"a"}'
+ascli orchestrator workflows start <ID> @json:'{"item":"b","fail":"yes"}'
+ascli orchestrator workflows start <ID> @json:'{"item":"c"}'
 ascli orchestrator queues list
 ascli orchestrator pools status 'doc test pool'   # taken 0, capacity 1: all released
 ```
@@ -3063,8 +3063,8 @@ Rows are separated by `\n` in a double-quoted value.
 ```
 
 ```shell
-ascli orchestrator workflows start <id> @json:'{"profile":"webm"}' @json:'{"step":"Build command","variable":"command"}'       # ffmpeg -i in.mov -c:v libvpx-vp9 out.webm
-ascli orchestrator workflows start <id> @json:'{"profile":"AUDIO_HQ"}' @json:'{"step":"Build command","variable":"command"}'   # ffmpeg -i in.mov -vn -c:a libmp3lame out.mp3
+ascli orchestrator workflows start <ID> @json:'{"profile":"webm"}' @json:'{"step":"Build command","variable":"command"}'       # ffmpeg -i in.mov -c:v libvpx-vp9 out.webm
+ascli orchestrator workflows start <ID> @json:'{"profile":"AUDIO_HQ"}' @json:'{"step":"Build command","variable":"command"}'   # ffmpeg -i in.mov -vn -c:a libmp3lame out.mp3
 ```
 
 - `webm` matches `WEBM`: the comparison ignores case by default (`case_sensitive`).
@@ -3078,7 +3078,7 @@ Workflow `review` delivers to the runtime parameter `target` if it is valid, and
 Two branches join in a `MergePoint` step:
 
 - `Check target` (`Filter`): `Complete` if `target` starts with `/data/`, `Failed` otherwise.
-- `Ask operator` (`UserInput`), after `Failed`: creates a task in the web interface (tab Tasks) for the user `admin` (`assigned_user_logins`), described as `Invalid target for <title>`.
+- `Ask operator` (`UserInput`), after `Failed`: creates a task in the web interface (tab Tasks) for the user `admin` (`assigned_user_logins`), described as `Invalid target for <TITLE>`.
   The task shows `title` and `target` (`mandatory_inputs`), and asks for `new_target` (required, `required_requested_data`) and `rejected` (optional, `user_outputs`): they become outputs of the step.
   For another layout of the task, see [Custom form](#custom-form).
 - `Check rejection` (`Filter`): `Failed` if the operator wrote `yes` in `rejected`: the work order goes to `Fail`.
@@ -3163,8 +3163,8 @@ Two branches join in a `MergePoint` step:
 ```
 
 ```shell
-ascli orchestrator workflows start <id> @json:'{"target":"/data/ok"}' @json:'{"step":"Deliver","variable":"result"}'   # delivered to /data/ok
-ascli orchestrator workflows start <id> @json:'{"title":"clip 2","target":"bad/path"}'
+ascli orchestrator workflows start <ID> @json:'{"target":"/data/ok"}' @json:'{"step":"Deliver","variable":"result"}'   # delivered to /data/ok
+ascli orchestrator workflows start <ID> @json:'{"title":"clip 2","target":"bad/path"}'
 ```
 
 The second work order waits on `Ask operator`.
@@ -3276,7 +3276,7 @@ Observed on 4.1.6:
 To add a revision to an existing workflow, the file must be on the Orchestrator host, and `import_with_constraints` is called with `add as revision`:
 
 1. Have the file on the server.
-   `import_workflow` stores each uploaded file in `<run_dir>/workflows/import/<import_file_name>` (for example `/opt/aspera/orchestrator/var/run/orchestrator/workflows/import/`), but also imports it as a new workflow.
+   `import_workflow` stores each uploaded file in `<RUN_DIR>/workflows/import/<IMPORT_FILE_NAME>` (for example `/opt/aspera/orchestrator/var/run/orchestrator/workflows/import/`), but also imports it as a new workflow.
    Upload it with `publish_workflow` set to `false`, so that this copy is not published, and delete the copy in the user interface.
 2. Call `import_with_constraints` with the path of the file and the id of the workflow to update (see [import_with_constraints](#import_with_constraints)).
    The response is the workflow; its last revision is the imported one.
@@ -3301,7 +3301,7 @@ File:
 - Six elements, in order; elements 4, 5 and 6 present, even empty.
 - Plain format: no line matching `concise_attributes:`; booleans of templates written `1` and `0`.
 - `error_free: true` in the whiteboard.
-- Each template key `<StepType>__<N>` matches the `Step_type` and `Action_id` of its steps.
+- Each template key `<STEP_TYPE>__<N>` matches the `Step_type` and `Action_id` of its steps.
 - Embedded templates named `W0__<step name>`.
 - `LocalFileWatcher` templates have `remove_file` `0` or `1`, not blank (else no trigger history).
 - No secret in the file: secrets are given by runtime `pwd` parameters, or by remote nodes (see [Using secrets](#using-secrets)).
@@ -3325,7 +3325,7 @@ Graph:
 
 ### REST API
 
-Base URL: `https://<host>/aspera/orchestrator/api/`.
+Base URL: `https://<HOST>/aspera/orchestrator/api/`.
 The response format is chosen with query parameter `format` (`xml`, the default, or `json`).
 
 Authentication depends on the option **Use Secure JWT API Auth** (`use_secure_jwt_api_auth`, set by default):
@@ -3338,10 +3338,10 @@ Authentication depends on the option **Use Secure JWT API Auth** (`use_secure_jw
 The pages of the web interface, such as a [direct start](#direct-start) page, do not read these query parameters: with the option **Inline Auth Allowed** (`inline_auth_allowed`, not set by default), they accept HTTP Basic.
 
 Routes: each endpoint below has a route with the given method.
-In addition, any endpoint can be called as `api/<endpoint>/<id>`, with any HTTP method, where `<id>` is the main identifier (workflow or work order).
-Some endpoints have no other route (for example `export_workflow`, `list_monitors`, `journal_files`, `pool_status`): when they do not use `<id>`, any value works, for example `0`.
+In addition, any endpoint can be called as `api/<ENDPOINT>/<ID>`, with any HTTP method, where `<ID>` is the main identifier (workflow or work order).
+Some endpoints have no other route (for example `export_workflow`, `list_monitors`, `journal_files`, `pool_status`): when they do not use `<ID>`, any value works, for example `0`.
 The [OpenAPI description](https://github.com/IBM/aspera-cli/blob/main/lib/aspera/schema/IBM%20Aspera%20Orchestrator%20API-v1-enhanced.yaml) lists all endpoints and their parameters, checked against Orchestrator with `rake doc:api_check` of this repository.
-**Swagger API**, in the help pages of the web interface (`https://<host>/aspera/orchestrator/api-docs`), shows the description delivered with Orchestrator, and can try calls.
+**Swagger API**, in the help pages of the web interface (`https://<HOST>/aspera/orchestrator/api-docs`), shows the description delivered with Orchestrator, and can try calls.
 
 Errors are returned with the exception message and stack trace in the response body.
 
@@ -3352,7 +3352,7 @@ Errors are returned with the exception message and stack trace in the response b
 | Field | Required | Content |
 |-------|----------|---------|
 | `import_file` | yes | The workflow file (file part). |
-| `import_file_name` | yes | File name, ending with `yml` or `wkf`. The upload is stored under this name in `<run_dir>/workflows/import/`. |
+| `import_file_name` | yes | File name, ending with `yml` or `wkf`. The upload is stored under this name in `<RUN_DIR>/workflows/import/`. |
 | `folder_id` | no | Folder of the new workflow. |
 | `link_to_subworkflows` | no | `true`: in a `.wkf` package, use the sub-workflows already imported from the same files instead of importing them again. See [Referring to existing entities](#referring-to-existing-entities). |
 | `publish_workflow` | no | `true` or `1`: publish after import. The server option `publish_api_imported_workflow` sets the default. |
@@ -3385,12 +3385,12 @@ Response: `true` or `false` (JSON), or `<WorkflowPublish><Success>true</Success>
 
 #### find_constraints
 
-`GET api/find_constraints?file=<path>[&wf_id=<workflow id>]`
+`GET api/find_constraints?file=<PATH>[&wf_id=<workflow id>]`
 
 Analyzes a workflow file present on the Orchestrator host and returns the list expected by `import_with_constraints`, with the possible choices for each conflict:
 
 ```json
-[{"filename": "<path>"}, {"add as revision": null}, {"subwf constraints": {}},
+[{"filename": "<PATH>"}, {"add as revision": null}, {"subwf constraints": {}},
  {"action template constraints": {}}, {"remote node constraints": {}},
  {"missing plugins": null, "Auto-enable missing plugins?": null}]
 ```
@@ -3424,7 +3424,7 @@ The workflow is not published.
 
 #### initiate
 
-`POST api/initiate?format=json`, JSON body `{"workflow_id": <id>, "external_parameters": {"<name>": <value>, ...}}`.
+`POST api/initiate?format=json`, JSON body `{"workflow_id": <ID>, "external_parameters": {"<NAME>": <VALUE>, ...}}`.
 Query parameters:
 
 | Parameter | Content |
@@ -3444,12 +3444,12 @@ A JSON array as value fails with status 500 (`undefined method 'gsub' for an ins
 | Endpoint | Content |
 |----------|---------|
 | `GET api/workflows_list` | All workflows: id, name, portable id, published and latest revision. |
-| `GET api/workflow_inputs_spec/<id>` | Runtime parameters: name, type, optional, default value. |
-| `GET api/workflow_outputs_spec/<id>` | Outputs: `<step name>:<output name>`, type. |
+| `GET api/workflow_inputs_spec/<ID>` | Runtime parameters: name, type, optional, default value. |
+| `GET api/workflow_outputs_spec/<ID>` | Outputs: `<step name>:<output name>`, type. |
 | `GET api/work_orders_list/<workflow id>` | Work orders of a workflow, or of all workflows with `all`. Filters: `status`, `priority`, `from_date`, `to_date`, `tag`, `max_results`. |
-| `GET api/work_order_status/<id>` | Status of a work order and of its work steps. For a sub-workflow, only its status, not its steps. |
-| `GET api/work_order_output/<id>` | Output values of a work order (XML: one `variable` element per output). |
-| `GET api/work_order_cancel/<id>` | Cancel a work order. |
+| `GET api/work_order_status/<ID>` | Status of a work order and of its work steps. For a sub-workflow, only its status, not its steps. |
+| `GET api/work_order_output/<ID>` | Output values of a work order (XML: one `variable` element per output). |
+| `GET api/work_order_cancel/<ID>` | Cancel a work order. |
 | `GET api/work_order_reset/<WORK_ORDER_ID>` | Reset a work order. |
 | `GET api/work_step_status/<WORK_STEP_ID>` | Status, inputs and outputs of a work step. Parameters such as `set_status` change its status. |
 | `GET api/resource_online/0?pool_name=<POOL_NAME>&resource_name=<RESOURCE_NAME>` | Take a resource of a pool online. `api/resource_offline` takes the same parameters. |
@@ -3458,16 +3458,16 @@ A JSON array as value fails with status 500 (`undefined method 'gsub' for an ins
 
 | Operation | Command |
 |-----------|---------|
-| Import | `ascli orchestrator workflows import <file>` |
-| Import with constraints, or as a revision | `ascli orchestrator workflows import_with_constraints @json:'{"filename":"<path on server>","add_as_revision":<id>}'` |
-| Export | `ascli orchestrator workflows export <id> --out.file=<file>` |
-| Export with dependencies (`.wkf`) | `ascli orchestrator workflows export <id> @json:'{"dependencies":true}' --to-folder=<folder>` |
-| Publish | `ascli orchestrator workflows publish <id>` |
-| Inputs, outputs | `ascli orchestrator workflows inputs <id>`, `ascli orchestrator workflows outputs <id>` |
-| Start | `ascli orchestrator workflows start <id> [<parameters>] [<execution>]`, where execution is `{"synchronous":true}` or `{"step":"<step name>","variable":"<output name>"}` |
-| Work orders of a workflow | `ascli orchestrator workflows workorders <id>` |
-| Work order | `ascli orchestrator workorders status <id>`, `ascli orchestrator workorders output <id>`, `ascli orchestrator workorders cancel <id>` |
-| Journal, monitors, queues, resource pools | `ascli orchestrator journal files <book>`, `ascli orchestrator monitors list <type>`, `ascli orchestrator queues list`, `ascli orchestrator pools status <name>` |
+| Import | `ascli orchestrator workflows import <FILE>` |
+| Import with constraints, or as a revision | `ascli orchestrator workflows import_with_constraints @json:'{"filename":"<path on server>","add_as_revision":<ID>}'` |
+| Export | `ascli orchestrator workflows export <ID> --out.file=<FILE>` |
+| Export with dependencies (`.wkf`) | `ascli orchestrator workflows export <ID> @json:'{"dependencies":true}' --to-folder=<FOLDER>` |
+| Publish | `ascli orchestrator workflows publish <ID>` |
+| Inputs, outputs | `ascli orchestrator workflows inputs <ID>`, `ascli orchestrator workflows outputs <ID>` |
+| Start | `ascli orchestrator workflows start <ID> [<PARAMETERS>] [<EXECUTION>]`, where execution is `{"synchronous":true}` or `{"step":"<step name>","variable":"<output name>"}` |
+| Work orders of a workflow | `ascli orchestrator workflows workorders <ID>` |
+| Work order | `ascli orchestrator workorders status <ID>`, `ascli orchestrator workorders output <ID>`, `ascli orchestrator workorders cancel <ID>` |
+| Journal, monitors, queues, resource pools | `ascli orchestrator journal files <BOOK>`, `ascli orchestrator monitors list <TYPE>`, `ascli orchestrator queues list`, `ascli orchestrator pools status <NAME>` |
 | Query parameters of an API call | `--query=@json:'{...}'`; `--query=help` lists them, from the OpenAPI description |
 
 ### Known issues
@@ -3475,7 +3475,7 @@ A JSON array as value fails with status 500 (`undefined method 'gsub' for an ins
 Observed in Orchestrator 4.1.6:
 
 - A negative `Synch_factor` is never met (see [Prerequisites and branches](#prerequisites-and-branches)).
-- When a `Synch_factor` other than `0` has no attributes `x` and `y`, the designer opened from the list of workflows generates `workflow.addFigure(<join>, , );` (`WhiteboardsHelper#draw_operator`): the JavaScript does not parse, and the canvas is empty.
+- When a `Synch_factor` other than `0` has no attributes `x` and `y`, the designer opened from the list of workflows generates `workflow.addFigure(<JOIN>, , );` (`WhiteboardsHelper#draw_operator`): the JavaScript does not parse, and the canvas is empty.
   The **Revisions** tab (`draw_xmlconnections`) skips the join symbol and shows the graph.
 - `find_constraints` returns empty constraints for a file that does not exist.
 - `LocalFileWatcher` keeps a history of past triggers only when `remove_file` is `false`, not when it is null (the database default): a template that leaves it blank detects the same files again at each scan, whatever `trigger_type`.
@@ -3821,7 +3821,7 @@ end
 #### Plugin install and run
 
 1. Copy the folder to `/opt/aspera/orchestrator/actions/my_greetings`, owned by `aspweb`, and the icon to `/opt/aspera/orchestrator/public/aspera/orchestrator/assets/actions/MyGreeting.png`.
-2. Open the **Plugins** page (`https://<host>/aspera/orchestrator/plugins`): `My greeting` is listed, disabled. Click **Enable**.
+2. Open the **Plugins** page (`https://<HOST>/aspera/orchestrator/plugins`): `My greeting` is listed, disabled. Click **Enable**.
 3. Restart the web server: `systemctl restart orchestrator_server`, needed to import workflow files that use the new plugin (see [Installing a plugin](#installing-a-plugin)).
 4. Use it in a workflow: in the designer, or with a workflow file (see the [Workflow authoring chapter](#workflow-authoring)).
 
@@ -3837,11 +3837,11 @@ All names derive from the class name, with the Rails inflections of Orchestrator
 | Item | Rule | Example |
 | --- | --- | --- |
 | Class | CamelCase, includes `Action`, inherits `ActiveRecord::Base`. It is the action type and the `Step_type` of steps. | `MyGreeting` |
-| Folder | `"<Class>".tableize`: snake case, plural. Orchestrator finds the class from the folder name (`singularize.camelcase`). | `my_greetings` |
+| Folder | `"<CLASS>".tableize`: snake case, plural. Orchestrator finds the class from the folder name (`singularize.camelcase`). | `my_greetings` |
 | Main file | The folder name singularized, `.rb`. | `my_greeting.rb` |
-| Table | `action_<folder>`. | `action_my_greetings` |
-| Icon | `<Class>.png`. The shipped icons are 128 x 128. | `MyGreeting.png` |
-| Migration file | `<version>_<description>.rb`: see [Migrations](#migrations). | `20261023123000_my_greetings_create_my_greetings.rb` |
+| Table | `action_<FOLDER>`. | `action_my_greetings` |
+| Icon | `<CLASS>.png`. The shipped icons are 128 x 128. | `MyGreeting.png` |
+| Migration file | `<VERSION>_<DESCRIPTION>.rb`: see [Migrations](#migrations). | `20261023123000_my_greetings_create_my_greetings.rb` |
 
 Check that the class name converts back from the folder name: `"MyGreeting".tableize.classify == "MyGreeting"` in a Rails console.
 Names that end with an irregular plural (`Data`, `Media`) or that contain an acronym declared in `config/initializers/inflections.rb` (`AJAX`, `CGI`, `DBI`, `OS`, `OSX`, `SMTP`, `SSH`, so `SshCopy` becomes `SSHCopy`) do not convert back.
@@ -3852,12 +3852,12 @@ Names that end with an irregular plural (`Data`, `Media`) or that contain an acr
 | --- | --- | --- |
 | `<folder singular>.rb` | yes | The plugin class. |
 | `metadata.yml` | yes | Versions, display name, category: see [metadata.yml](#plugin-metadata-file). |
-| `<version>_<description>.rb` | yes | Migrations: they create the table, see [Migrations](#migrations). |
+| `<VERSION>_<DESCRIPTION>.rb` | yes | Migrations: they create the table, see [Migrations](#migrations). |
 | `edit.html.erb` | yes | Template form: see [Template form](#template-form). |
 | `help.html.erb` | no | Help page, see [Help page](#help-page). Shipped in 204 of the 205 plugins. |
-| `<Class>.png` | no | Icon in the designer and the template lists. Without it, a generic icon is shown. |
-| `<name>_controller.rb` | no | Controller that serves data to the template form (21 shipped plugins), see [Server data for the form](#server-data-for-the-form). |
-| Other `.rb` files | no | Helpers, services (`<name>_helper.rb`, `<name>_service.rb`). |
+| `<CLASS>.png` | no | Icon in the designer and the template lists. Without it, a generic icon is shown. |
+| `<NAME>_controller.rb` | no | Controller that serves data to the template form (21 shipped plugins), see [Server data for the form](#server-data-for-the-form). |
+| Other `.rb` files | no | Helpers, services (`<NAME>_helper.rb`, `<NAME>_service.rb`). |
 | `Gemfile` | no | Gems of the plugin, see [Gems and external tools](#gems-and-external-tools). |
 | Other files | no | WSDL, payload templates, CSS, JavaScript: read by your code. |
 
@@ -3882,7 +3882,7 @@ Keys are Ruby symbols (`:key:`).
 | `:plugin_name` | recommended | The class name. Used by the help pages. |
 | `:description` | recommended | One sentence. Shown in the help pages. |
 | `:help` | recommended | Short help text. |
-| `:external_dependencies` | no | Programs required on the server, as `- :bin: "<program>"`. Enabling the plugin fails with `External dependency <program> not found` if `command -v <program>` finds nothing. |
+| `:external_dependencies` | no | Programs required on the server, as `- :bin: "<PROGRAM>"`. Enabling the plugin fails with `External dependency <PROGRAM> not found` if `command -v <PROGRAM>` finds nothing. |
 
 Keys of a revision:
 
@@ -3906,14 +3906,14 @@ Each template is one row of the table.
 
 Rules:
 
-- File name: `<version>_<description>.rb`, where `<version>` is a number, by convention the date and time of creation as `YYYYMMDDHHMMSS`.
-  The shipped plugins name the description `<folder>_create_<folder>` for the first migration, and `<folder>_<x_y_z>_<change>` for the migration of version `x.y.z`, for example `20211213103239_local_file_operations_1_1_0_add_source_no_glob.rb`.
+- File name: `<VERSION>_<DESCRIPTION>.rb`, where `<VERSION>` is a number, by convention the date and time of creation as `YYYYMMDDHHMMSS`.
+  The shipped plugins name the description `<FOLDER>_create_<FOLDER>` for the first migration, and `<FOLDER>_<X_Y_Z>_<CHANGE>` for the migration of version `x.y.z`, for example `20211213103239_local_file_operations_1_1_0_add_source_no_glob.rb`.
 - The class name is the description in CamelCase: `MyGreetingsCreateMyGreetings`.
   It must be unique in Orchestrator: migrations of all plugins are evaluated in the same Ruby namespace.
 - The class inherits `ActiveRecord::Migration[8.0]` (600 of the 731 shipped migrations; others use `[6.1]` or `[8.1]`).
-- `<version>` must be unique among all migrations of Orchestrator and of all plugins: Rails records applied versions in the table `schema_migrations`, shared by the whole application.
+- `<VERSION>` must be unique among all migrations of Orchestrator and of all plugins: Rails records applied versions in the table `schema_migrations`, shared by the whole application.
   A migration whose version is already recorded is not run, and enabling the plugin does not report it: the log shows `Table '...' doesn't exist`, and no default template is created.
-- The table is `action_<folder>`, written literally (`:action_my_greetings`): Orchestrator replays the migrations on a copy of the table, replacing that name, to find which ones are applied.
+- The table is `action_<FOLDER>`, written literally (`:action_my_greetings`): Orchestrator replays the migrations on a copy of the table, replacing that name, to find which ones are applied.
 - The first migration creates the table with columns `name` and `comments` (strings) and timestamps (`t.timestamps`), and the attributes of the plugin.
 - To change the table in a new version of the plugin, add a migration. Never change a migration that may have been applied.
 
@@ -3978,9 +3978,9 @@ Methods of the template are available: its attributes as methods (`greeting`, `n
 | `pause`, `resume`, `cancel`, `rollback` | no | `false` (not supported) | On user request, see [Pause, resume, cancel, rollback](#pause-resume-cancel-rollback). |
 | `cancel_on_request?`, `pause_on_request?`, `resume_on_request?`, `rollback_on_request?` | no | `false` | On user request. |
 | `recover` | no | returns `Error` | When a worker finds a synchronous step still `In Progress` after an interruption. |
-| `initialize_default_template` | no | nothing | When the default template (`<Class> Default`) is created, at first enable. |
+| `initialize_default_template` | no | nothing | When the default template (`<CLASS> Default`) is created, at first enable. |
 | `dependencies` | no | `[]` | Export of workflows, see [Dependencies](#dependencies). |
-| `name` | no | attribute `name`, else `<Class>_<id>` | Lists. |
+| `name` | no | attribute `name`, else `<CLASS>_<ID>` | Lists. |
 | `remote_execution?` | no | `true` | Only displayed by the action tester in 4.1.6. |
 | `help`, `self.dependencies` | no | | Not used by Orchestrator 4.1.6. |
 
@@ -4071,7 +4071,7 @@ Rules:
   Only outputs declared by `outputs_spec` are stored.
 - `validate_inputs` is called before `execute`, with the input values.
   The default, `default_inputs_validation`, checks that the required inputs are present and that the values have the declared types.
-  To add a check, call it first, and add a message to `@validation_errors` before returning `false`: the step ends with `Error` and details `Invalid inputs: <messages>`.
+  To add a check, call it first, and add a message to `@validation_errors` before returning `false`: the step ends with `Error` and details `Invalid inputs: <MESSAGES>`.
 
 ```ruby
 def validate_inputs(inputs_hash = @inputs)
@@ -4094,20 +4094,20 @@ Most plugins (186 of 205) let a template attribute come from an input when it is
   Its name is the value of the constant `VAR_<ATTRIBUTE>` if it exists, else the attribute name with its first letter in upper case (`wait_seconds` gives `Wait_seconds`).
   It is optional if the constant `DEFAULT_<ATTRIBUTE>` exists, else required.
 - A text attribute that is set gives one input per placeholder (`Payload.variables`): `<%= name %>`, arguments of `<%= function(a, b) %>`, `var(name)` in an expression.
-  The input is a `string`, or the type of a suffix `_<type>` of its name, required unless the constant `DEFAULT_<NAME>` exists.
+  The input is a `string`, or the type of a suffix `_<TYPE>` of its name, required unless the constant `DEFAULT_<NAME>` exists.
   No input is created for a name that is a method of the template with a value (`name`, a set attribute).
 - A non-text attribute left null becomes an input of the corresponding type.
-- An attribute name ending with `_<type>` (for example `delay_int`) gives an input of that type, named without the suffix (`Delay`).
+- An attribute name ending with `_<TYPE>` (for example `delay_int`) gives an input of that type, named without the suffix (`Delay`).
 
-`default_get(:attribute)`, or `<attribute>_get` (handled by `method_missing`), returns the run time value of an attribute, the first of:
+`default_get(:attribute)`, or `<ATTRIBUTE>_get` (handled by `method_missing`), returns the run time value of an attribute, the first of:
 
 1. The value of the input that replaces the attribute (name as above), if present.
 2. The attribute value, if not blank.
 3. The value of the constant `DEFAULT_<ATTRIBUTE>`.
 
 A `string` or `text` value is then expanded with `Payload.expand`: placeholders are replaced by input values.
-If the attribute name ends with `_<type>`, the value is converted to that type.
-The result is cached in the instance variable `@<attribute>`: `default_get(:attribute, true)` reads it again.
+If the attribute name ends with `_<TYPE>`, the value is converted to that type.
+The result is cached in the instance variable `@<ATTRIBUTE>`: `default_get(:attribute, true)` reads it again.
 
 ```ruby
 DEFAULT_POLLING_FREQUENCY = 5
@@ -4201,7 +4201,7 @@ By default (`synchronous_execution?` returns `true`), `execute` does the work in
 
 Orchestrator then stores the declared outputs, adds `Step_information` (step id, name, status, details, attempts, processing time), runs the post-processing code of the step, and activates the next steps.
 
-An exception raised by `execute` ends the step with `Error`, details `Execution error: <message>`.
+An exception raised by `execute` ends the step with `Error`, details `Execution error: <MESSAGE>`.
 A `RuntimeError` whose message is a final status (`raise STATUS_FAILED`) ends the step with that status.
 
 #### Asynchronous execution
@@ -4221,7 +4221,7 @@ Between `execute` and `check_status`, the plugin object is serialized with `Mars
 Instance variables must be serializable: no open connection, file, thread or `Proc`.
 Reconnect in each call of `check_status`.
 
-The serialized object includes `@inputs`, where the values of `pwd` inputs are decrypted, and the values cached by `default_get` (`@<attribute>`).
+The serialized object includes `@inputs`, where the values of `pwd` inputs are decrypted, and the values cached by `default_get` (`@<ATTRIBUTE>`).
 `SharedState` stores it according to the server setting `persistence_mode`: file `state_<work step id>.prst` of the state folder (`disk`), a row of the database (`db`), or a Redis key (`redis`).
 Do not keep a secret in another instance variable.
 
@@ -4242,7 +4242,7 @@ To not report an event twice, include `ModuleTriggerTools`, and save the events 
 | `retrieve_triggers(default = {})` | The object saved by the last `persist_triggers`, or `default`. |
 | `persist_triggers(object)` | Saves `object` (for example a hash of event ids), returns `true` on success. |
 | `clean_up_triggers` | Deletes the saved object. |
-| `trigger_file_name` | `<run_dir>/<folder>/<WATCHER_PREFIX>_<scope>_triggers.prst`. |
+| `trigger_file_name` | `<RUN_DIR>/<FOLDER>/<WATCHER_PREFIX>_<SCOPE>_triggers.prst`. |
 
 The scope of the saved object depends on the attribute `trigger_type`, if the table has one: `by workorder group` (default), `by action template`, `absolute`, `by step`, `by workflow`, `none` (constants `TRIG_*`, see [History of past triggers](#history-of-past-triggers)).
 Define the constant `WATCHER_PREFIX` to name the files of your plugin (default `Watcher`).
@@ -4318,7 +4318,7 @@ By default (`cancel_on_request?` and the like return `false`), the request is a 
   The plugin checks `must_pause?`, reports `report_progress(STATUS_PAUSED, ...)`, and waits while `must_pause?` is `true`.
   Resume clears the flag: `must_pause?` returns `false`.
 
-If `cancel_on_request?` returns `true`, Orchestrator calls `cancel` at once and ends the step with `Failed`, details `Canceled at <time>`: use it when the operation can be stopped from outside, for example by an API call to a remote job.
+If `cancel_on_request?` returns `true`, Orchestrator calls `cancel` at once and ends the step with `Failed`, details `Canceled at <TIME>`: use it when the operation can be stopped from outside, for example by an API call to a remote job.
 The same applies to `pause_on_request?` and `resume_on_request?`.
 
 `rollback` is called on a step that has ended, to undo its effect.
@@ -4335,11 +4335,11 @@ The default returns `Error`, `Recovery after partial execution is not supported`
 | --- | --- |
 | `report_progress(status, details, percent)` | See [Progress](#progress). |
 | `must_cancel?`, `must_pause?` | `true` if a cancel or a pause is requested. |
-| `runtime_basedir` | Folder for runtime files of the plugin: `<run_dir>/<folder>`. |
+| `runtime_basedir` | Folder for runtime files of the plugin: `<RUN_DIR>/<FOLDER>`. |
 | `persist_state_file(prefix, suffix, object)`, `retrieve_state_file(prefix, suffix)` | Save and read an object for this work step. |
 | `action_dir` | Load folder of the plugin. |
 | `state_id`, `work_order_id` | Ids of the work step and of the work order. |
-| `default_get`, `<attribute>_get`, `default_inputs_spec` | See [Inputs from attributes](#inputs-from-attributes). |
+| `default_get`, `<ATTRIBUTE>_get`, `default_inputs_spec` | See [Inputs from attributes](#inputs-from-attributes). |
 
 Modules to include for common integrations:
 
@@ -4385,11 +4385,11 @@ Variables:
 
 Rules:
 
-- One form, built with `form_with model: @<snake>, url: action_update_path(action_type: "<snake>", id: @<snake>.id), id: "edit_action"`.
+- One form, built with `form_with model: @<SNAKE>, url: action_update_path(action_type: "<SNAKE>", id: @<SNAKE>.id), id: "edit_action"`.
   The id `edit_action` is required: the buttons of the dialog send the fields of the form with this id.
 - One `<li>` per field, with `f.label` and the field. A `<p class="input_help">` under a field gives help.
-- Field names are `<snake>[<attribute>]`, as made by the form helpers (`f.text_field :greeting`): each one must be a column of the table.
-- In an embedded template, Orchestrator disables the name field (`#<snake>_name`).
+- Field names are `<SNAKE>[<ATTRIBUTE>]`, as made by the form helpers (`f.text_field :greeting`): each one must be a column of the table.
+- In an embedded template, Orchestrator disables the name field (`#<SNAKE>_name`).
 
 Form helpers used by the shipped plugins: `f.text_field`, `f.text_area`, `f.check_box`, `f.select`, `f.number_field`, `f.password_field`, `f.hidden_field`.
 
@@ -4405,7 +4405,7 @@ The buttons send the fields with JavaScript, and Orchestrator saves the template
 - Passwords: `f.password_field` does not display the stored value.
   An empty value keeps the stored password only for these attribute names: `password`, `passphrase`, `token`, `apikey`, `node_password`, `node_secret`, `remote_password`, `remote_passphrase`, `remote_node_passwd`, `user_password`, `database_password`, `basic_auth_password`, `http_basic_auth_password`, `origin_password`, `queue_password`, `mediator_password`, `execution_password`, `serving_ssh_password`, `initiating_ssh_password`, `aoc_client_secret`, `files_client_secret`, `oapi_secret`, `console_db_password`, `mq_trust_store_password`, `mq_user_password`.
   For any other name, saving the form with the field empty erases the password: name secret attributes with one of these names.
-  A request parameter `clear_<attribute>=true` erases it.
+  A request parameter `clear_<ATTRIBUTE>=true` erases it.
 - HTML5 validation attributes (`required`, `min`, `pattern`) are displayed by the browser, but do not prevent saving: the buttons do not submit the form.
   Check values in `validate_inputs`, and show warnings with your script.
 
@@ -4423,20 +4423,20 @@ The form can contain any HTML5, CSS and JavaScript:
 
   These files are not ERB templates: `<%=` in them is kept as is.
 - In a `<script>` or `<style>` written in `edit.html.erb`, ERB is evaluated: write `<%%=` for a literal `<%=`, and pass server values with `<%= raw value.to_json %>`.
-- The shipped plugins include files of Orchestrator (`stylesheet_link_tag 'actions/<folder>_edit'`, `javascript_include_tag 'actions/<folder>_edit'`): they are in the asset pipeline of Orchestrator (`app/assets`), compiled at installation.
+- The shipped plugins include files of Orchestrator (`stylesheet_link_tag 'actions/<FOLDER>_edit'`, `javascript_include_tag 'actions/<FOLDER>_edit'`): they are in the asset pipeline of Orchestrator (`app/assets`), compiled at installation.
   A custom plugin cannot add files there.
 - The form is loaded into a page that is already displayed: `DOMContentLoaded` has already fired (a jQuery `ready` callback runs at once), and the script runs again each time the dialog opens, in the same page.
   Keep variables inside a function (`(function () { ... })();`): a top-level `let`, `const` or `class` can fail when the dialog opens a second time.
 - Find elements from the form: `document.getElementById('edit_action')`.
-  Fields have ids `<snake>_<attribute>` (`my_greeting_greeting`); prefix the ids of your elements with the plugin name.
+  Fields have ids `<SNAKE>_<ATTRIBUTE>` (`my_greeting_greeting`); prefix the ids of your elements with the plugin name.
 - A `<button>` must have `type="button"`: without it, it submits the form and leaves the page.
 - In `show` view, the dialog disables all fields after rendering: the script still runs.
 - Libraries already loaded by the pages that open the form: jQuery 3.7.1 (`jQuery`), jQuery UI 1.14.1, Bootstrap 5.3.3 (`bootstrap`), select2.
 
 #### Server data for the form
 
-To fill the form with data from the server or from an external system (lists of profiles, of folders), add a controller to the plugin: file `<name>_controller.rb`, class `<Name>Controller < ApplicationController`.
-Orchestrator routes `GET <web_root>/<name>/<action>[/<id>]` to the method `<action>` of `<Name>Controller` (routes `:controller/:action/:id`, `GET` only), with the session of the user.
+To fill the form with data from the server or from an external system (lists of profiles, of folders), add a controller to the plugin: file `<NAME>_controller.rb`, class `<Name>Controller < ApplicationController`.
+Orchestrator routes `GET <WEB_ROOT>/<NAME>/<ACTION>[/<ID>]` to the method `<ACTION>` of `<Name>Controller` (routes `:controller/:action/:id`, `GET` only), with the session of the user.
 
 ```ruby
 class MyGreetingController < ApplicationController
@@ -4456,7 +4456,7 @@ In `edit.html.erb`, write the URL with `<%= Rails.configuration.web_root %>/my_g
 #### Help page
 
 `help.html.erb` is the help page of the plugin, opened by the help button of the template dialog.
-It is an ERB view, read from the stock folder (`/opt/aspera/orchestrator/actions/<folder>/help.html.erb`).
+It is an ERB view, read from the stock folder (`/opt/aspera/orchestrator/actions/<FOLDER>/help.html.erb`).
 The help topics also show `:description` of `metadata.yml`.
 
 ### Plugin installation and updates
@@ -4465,17 +4465,17 @@ The help topics also show `:description` of `metadata.yml`.
 
 ![Folders of a plugin, and what Enable does](images/plugin-folders.svg)
 
-1. Copy the plugin folder to the stock folder `/opt/aspera/orchestrator/actions/<folder>`, owned by `aspweb`.
-2. Copy the icon to `/opt/aspera/orchestrator/public/aspera/orchestrator/assets/actions/<Class>.png`, owned by `aspweb`.
+1. Copy the plugin folder to the stock folder `/opt/aspera/orchestrator/actions/<FOLDER>`, owned by `aspweb`.
+2. Copy the icon to `/opt/aspera/orchestrator/public/aspera/orchestrator/assets/actions/<CLASS>.png`, owned by `aspweb`.
    Upgrades of Orchestrator copy the icons of the stock folders there (`rake actions:refresh_icons`); until then, a new plugin has the generic icon.
 3. Open the **Plugins** page: it lists the stock folders, and adds the new plugin, disabled.
 4. Click **Enable**. A background job (`delayed_job`):
-   - Copies the stock folder to the load folder `<config_dir>/actions/<folder>`, and moves the migration files out of the copy.
+   - Copies the stock folder to the load folder `<CONFIG_DIR>/actions/<FOLDER>`, and moves the migration files out of the copy.
    - Runs the migrations of the stock folder (see [Migrations](#migrations)).
-   - Loads the classes, records the plugin as loaded, and creates the default template `<Class> Default`.
+   - Loads the classes, records the plugin as loaded, and creates the default template `<CLASS> Default`.
    - Tells the web server and the workers to load the plugin.
 5. Restart the web server, `systemctl restart orchestrator_server` (or `orchestrator restart` for all services), before importing a workflow file that uses the plugin.
-   Each process caches the list of plugins allowed in imported YAML files on first use (`SafeYaml`): otherwise the import fails with `Tried to load unspecified class: <Class>`.
+   Each process caches the list of plugins allowed in imported YAML files on first use (`SafeYaml`): otherwise the import fails with `Tried to load unspecified class: <CLASS>`.
 
 Without the Plugins page, the same as user `aspweb`, in `/opt/aspera/orchestrator`:
 
@@ -4485,33 +4485,33 @@ sudo -u aspweb env PATH=<ruby bin folder>:/usr/bin:/bin RAILS_ENV=production bin
 ```
 
 where `<ruby bin folder>` is the one of the service, given by `systemctl cat orchestrator_server`.
-The result of the job is in `log/production.log`: `Migrating to <migration class>`, `Initiating install of plugin <Class>`, then `Worker <n> reloading plugin <Class>`.
+The result of the job is in `log/production.log`: `Migrating to <migration class>`, `Initiating install of plugin <CLASS>`, then `Worker <N> reloading plugin <CLASS>`.
 
 #### Plugin importing and exporting
 
-The **Import Plugin** button of the Plugins page installs a plugin from a file `<Class>_<version>.plugin` (at most 50 MB): a `tar.gz` archive of the plugin folder.
+The **Import Plugin** button of the Plugins page installs a plugin from a file `<CLASS>_<VERSION>.plugin` (at most 50 MB): a `tar.gz` archive of the plugin folder.
 
 ```shell
 tar -czf MyGreeting_1.0.0.plugin my_greetings
 ```
 
-Imported plugins are stored in `/opt/aspera/orchestrator/actions_imported/<folder>/<n>/`, and enabled like stock plugins.
-**Export** and the backups made at upgrade (`<archive_dir>/action_backups`) produce the same format.
+Imported plugins are stored in `/opt/aspera/orchestrator/actions_imported/<FOLDER>/<N>/`, and enabled like stock plugins.
+**Export** and the backups made at upgrade (`<ARCHIVE_DIR>/action_backups`) produce the same format.
 
 #### Updating a plugin
 
 | Change | Do |
 | --- | --- |
 | Code, form or help, same version | Edit the stock folder, then **Disable** and **Enable** the plugin: Enable copies the stock folder again. |
-| New version | Edit the stock folder, add a revision to `metadata.yml`, and add migrations for new columns. The Plugins page shows **Upgrade**: it saves the current version to `<archive_dir>/action_backups/<Class>_<version>.plugin`, copies the stock folder and runs the new migrations. |
+| New version | Edit the stock folder, add a revision to `metadata.yml`, and add migrations for new columns. The Plugins page shows **Upgrade**: it saves the current version to `<ARCHIVE_DIR>/action_backups/<CLASS>_<VERSION>.plugin`, copies the stock folder and runs the new migrations. |
 | Quick test of a code change | Edit the load folder, then **Reload**: it loads the code of the load folder again, without copying the stock folder. The change is lost at the next Enable or Upgrade. |
 
 **Disable** removes the load folder and unloads the classes.
 The table and the templates are kept, and workflows that use the plugin cannot run until it is enabled again.
 Orchestrator has no function to drop the table of a plugin.
 
-The REST API reloads enabled plugins: `GET api/reload_plugin?action_type=<Class>` (all plugins without `action_type`), `POST api/reload_plugin_set` with `{"plugin_set": ["<Class>", ...]}` and `format=json`.
-`GET api/plugin_version/<Class>` returns the version of a plugin.
+The REST API reloads enabled plugins: `GET api/reload_plugin?action_type=<CLASS>` (all plugins without `action_type`), `POST api/reload_plugin_set` with `{"plugin_set": ["<CLASS>", ...]}` and `format=json`.
+`GET api/plugin_version/<CLASS>` returns the version of a plugin.
 
 #### Gems and external tools
 
@@ -4531,16 +4531,16 @@ For the log, see [Testing and debugging](#testing-and-debugging).
 - Check the inputs and outputs of a plugin without a server, with the probe of this repository: `ruby lib/plugin_probe.rb <folder containing plugin folders> build/<VERSION>/src/lib` prints, as JSON, the fields of the form, the inputs and outputs for several template settings, and the errors.
   It needs the library files extracted by `rake extract_rpm`.
 - On the server, open a template and click **Test template**: the action tester runs it with the input values you give.
-- Run it in a workflow: see the [Workflow authoring chapter](#workflow-authoring), for example with `ascli orchestrator workflows start <id> @json:'{"who":"Laurent"}'`.
+- Run it in a workflow: see the [Workflow authoring chapter](#workflow-authoring), for example with `ascli orchestrator workflows start <ID> @json:'{"who":"Laurent"}'`.
 
 | Symptom | Cause |
 | --- | --- |
 | The plugin is not in the Plugins page. | The folder name is not the `tableize` of the class, `metadata.yml` is missing or invalid, or no version of the plugin fits this Orchestrator version (`:minimum_server_version`, `:maximum_server_version`, `:is_beta`). |
-| Enable fails: `External dependency <program> not found`. | A program of `:external_dependencies` is not in the `PATH`. |
-| Enable succeeds, but the log shows `Table '...' doesn't exist` and there is no default template. | The version of the migration is already used by another migration, or the migration does not create `action_<folder>`. |
-| Import of a workflow fails: `Tried to load unspecified class: <Class>`. | The web server was started before the plugin was enabled: restart it. |
-| The step ends with `Error`, `Invalid inputs: Input <name> expected, but not found`. | A required input is not mapped in the step, or the template changed after the workflow was published. |
-| The step ends with `Failed`, `Timed Out at <time>`. | A call of `execute` or `check_status` lasted longer than the timeout without `report_progress`. |
+| Enable fails: `External dependency <PROGRAM> not found`. | A program of `:external_dependencies` is not in the `PATH`. |
+| Enable succeeds, but the log shows `Table '...' doesn't exist` and there is no default template. | The version of the migration is already used by another migration, or the migration does not create `action_<FOLDER>`. |
+| Import of a workflow fails: `Tried to load unspecified class: <CLASS>`. | The web server was started before the plugin was enabled: restart it. |
+| The step ends with `Error`, `Invalid inputs: Input <NAME> expected, but not found`. | A required input is not mapped in the step, or the template changed after the workflow was published. |
+| The step ends with `Failed`, `Timed Out at <TIME>`. | A call of `execute` or `check_status` lasted longer than the timeout without `report_progress`. |
 | An asynchronous step loses a value between `execute` and `check_status`. | The value is not in an instance variable, or is not serializable with `Marshal`. |
 | Save in the template dialog does nothing, or leaves the page. | The form has no id `edit_action`, or a `<button>` has no `type="button"`. |
 | A password is erased after editing the template. | Its attribute name is not in the list of [Saved values](#saved-values). |
@@ -4559,11 +4559,11 @@ The rules for inputs are in [Security](#security).
 
 ### Plugin checklist
 
-1. Choose the class name, and check `"<Class>".tableize.classify == "<Class>"`.
-2. Create the folder `<folder>` with `<folder singular>.rb`, `metadata.yml`, one migration and `edit.html.erb`.
+1. Choose the class name, and check `"<CLASS>".tableize.classify == "<CLASS>"`.
+2. Create the folder `<FOLDER>` with `<folder singular>.rb`, `metadata.yml`, one migration and `edit.html.erb`.
 3. Give the migration a version not used by any other migration: the current date and time.
 4. Write `self.version` as in the [Quick start](#plugin-quick-start), `category`, `inputs_spec`, `outputs_spec` and `execute`.
-5. Prefer `default_inputs_spec` and `<attribute>_get`, with constants `VAR_` and `DEFAULT_`.
+5. Prefer `default_inputs_spec` and `<ATTRIBUTE>_get`, with constants `VAR_` and `DEFAULT_`.
 6. Return a final status and the outputs from `execute`; for a long wait, use asynchronous execution, and set `@outputs` before the final status of `check_status`.
 7. Build the form with `form_with ... id: "edit_action"`, one `<li>` per attribute; keep CSS and JavaScript in files of the folder.
 8. Check with `lib/plugin_probe.rb`, install, enable, restart the web server, run in a workflow.
@@ -4605,7 +4605,7 @@ Counts in the 205 plugins of Orchestrator 4.1.6:
 | Pattern | Plugins |
 | --- | --- |
 | `self.version` from `metadata.yml` with `@@plugin_version_loaded` | 205 |
-| `default_get` or `<attribute>_get` | 203 |
+| `default_get` or `<ATTRIBUTE>_get` | 203 |
 | `Rails.logger` | 192 |
 | `DEFAULT_` constants | 188 |
 | `default_inputs_spec` | 186 |
@@ -4640,7 +4640,7 @@ gem 'prawn'
 gem 'prawn-table'
 ```
 
-Plugin gem: add the `gem` lines to `/opt/aspera/orchestrator/actions/<folder>/Gemfile`.
+Plugin gem: add the `gem` lines to `/opt/aspera/orchestrator/actions/<FOLDER>/Gemfile`.
 
 Then:
 
@@ -4775,16 +4775,16 @@ A code change in an existing portlet needs a restart of the web server, `systemc
 | Item | Rule | Example |
 | --- | --- | --- |
 | Folder | Portlet ID, snake_case. | `hello_banner` |
-| Main file | `<id>.rb` in the folder. This exact name is loaded. | `hello_banner.rb` |
+| Main file | `<ID>.rb` in the folder. This exact name is loaded. | `hello_banner.rb` |
 | Class | `id.camelize`, a subclass of `Portlet`. | `HelloBanner` |
-| Controller class | `<Class>Controller`, a subclass of `PortletsController`, optional. | `HelloBannerController` |
-| Main view | `<id>.erb` | `hello_banner.erb` |
-| Configuration partial | `_<id>.erb` | `_hello_banner.erb` |
+| Controller class | `<CLASS>Controller`, a subclass of `PortletsController`, optional. | `HelloBannerController` |
+| Main view | `<ID>.erb` | `hello_banner.erb` |
+| Configuration partial | `_<ID>.erb` | `_hello_banner.erb` |
 
 Rules:
 
 - The class is looked up with `Object.const_get(id.camelize)`. Orchestrator does not use `tableize` or `classify` for portlets, but the inflections of `config/initializers/inflections.rb` (for example `SSH`, `CGI`) still apply to `camelize`. Avoid an acronym in the ID.
-- If the class is not defined after loading `<id>.rb`, enabling fails with "definition of the portlet is missing".
+- If the class is not defined after loading `<ID>.rb`, enabling fails with "definition of the portlet is missing".
 - `portlet_id` of a new object is `self.class.name` without a trailing `Portlet`, in snake_case, and `Portlet.generate` sets it to the folder name anyway. Do not override it: the class name must be `id.camelize` in all cases.
 - A portlet ID must not collide with a class of Orchestrator. Do not name a portlet `User` or `Workflow`.
 - The name (`self.name`) must be unique among portlets: **Choose Portlet** sends the name, and `Frame#select` finds the portlet with `Portlet.find_by(name:)`. The REST call `api/portlet_version` also takes the name.
@@ -4793,11 +4793,11 @@ Rules:
 
 | File | Required | Content |
 | --- | --- | --- |
-| `<id>.rb` | Yes | The model class. The controller class can be in the same file. |
-| `<id>.erb` | Yes | The view displayed in the frame. Rendered as `<id>/<id>` with layout `individual_portlet`. |
-| `_<id>.erb` | Yes | The configuration partial: `<li>` elements shown in the configuration form of the frame. For a portlet with no setting, create an empty file: without it, choosing the portlet in a frame and **Save Configuration** fail with HTTP 500 (Missing partial). |
+| `<ID>.rb` | Yes | The model class. The controller class can be in the same file. |
+| `<ID>.erb` | Yes | The view displayed in the frame. Rendered as `<ID>/<ID>` with layout `individual_portlet`. |
+| `_<ID>.erb` | Yes | The configuration partial: `<li>` elements shown in the configuration form of the frame. For a portlet with no setting, create an empty file: without it, choosing the portlet in a frame and **Save Configuration** fail with HTTP 500 (Missing partial). |
 | `metadata.yml` | Recommended | The version history. Read by `Portlet.version` only. |
-| `_*.erb`, `*.js`, `*.css`, images | No | Other partials, rendered as `<id>/<partial>`. |
+| `_*.erb`, `*.js`, `*.css`, images | No | Other partials, rendered as `<ID>/<PARTIAL>`. |
 
 There is no migration, no icon and no help page: a portlet has no table of its own.
 
@@ -4854,7 +4854,7 @@ end
 | `set_portlet_name_and_desc` | Yes | Assigns `self.name` and `self.description`. Called by the two callbacks. |
 | `parameters_spec` | No | Hash `name => TYPE_*`. Default: `{}`. |
 | `defaulted_parameters` | No | Hash `name => default value`. Default: `{}`. |
-| `view_template` | No | Template rendered by `PortletsController#view`. Default: `<id>/<id>`. |
+| `view_template` | No | Template rendered by `PortletsController#view`. Default: `<ID>/<ID>`. |
 | `url`, `generic_url` | No | Do not override. `Frame#select` reads `url` on the plain `Portlet` record returned by `Portlet.find_by(name:)`, not on your class, so an override has no effect. |
 | `portlet_id` | No | Do not override. Default: class name without `Portlet` suffix, underscored. |
 
@@ -4890,7 +4890,7 @@ Gotchas:
 - Database columns win. A parameter named `name`, `description`, `active` or `parameters` is hidden by the column: read it with `runtime_value('name')`, and prefer another name. Likewise `@portlet.id` is the row ID, not the URL parameter `id` (the portlet ID).
 - A default value of `false` or `nil` gives the runtime value `nil`, because `set_runtime_value` keeps only values that are truthy. Test a flag with `if uppercase`, never with `== false`.
 - `frame_id` is an `attr_accessor`, and `Portlet.generate` does not set it in `view` and `portlet_action`: use `@frame_id` in views and actions.
-- `input_field(name)` returns `"__<name>"`, the name of the form field for a parameter.
+- `input_field(name)` returns `"__<NAME>"`, the name of the form field for a parameter.
 
 #### Parameter `refresh`
 
@@ -4904,8 +4904,8 @@ If `refresh` is not in the link of the frame, the frame uses `defaulted_paramete
 
 How a portlet is shown:
 
-1. A user opens a frame in **Dashboard** and selects a portlet in **Choose Portlet**, which sends the portlet name. `Frame#select` finds the row by name and stores `portlet_name`, `portlet_id`, `link = portlets/view?id=<id>` and `configuration_link = <portlet folder>/<id>`, for example `.../portlets/hello_banner/hello_banner`.
-2. **Save Configuration** stores `link_parameters` (a Ruby hash as text, for example `{"greeting" => "Bonjour", "uppercase" => "true"}`) and appends `&<name>=<%= CGI::escape(<name>) %>` to the link for each saved parameter.
+1. A user opens a frame in **Dashboard** and selects a portlet in **Choose Portlet**, which sends the portlet name. `Frame#select` finds the row by name and stores `portlet_name`, `portlet_id`, `link = portlets/view?id=<ID>` and `configuration_link = <portlet folder>/<ID>`, for example `.../portlets/hello_banner/hello_banner`.
+2. **Save Configuration** stores `link_parameters` (a Ruby hash as text, for example `{"greeting" => "Bonjour", "uppercase" => "true"}`) and appends `&<NAME>=<%= CGI::escape(<NAME>) %>` to the link for each saved parameter.
 3. The page requests `FramesController#display`, which redirects to the expanded URL, with `frame_id` and `frame_html_id`, for example `portlets/view?id=hello_banner&greeting=Bonjour&uppercase=true&max_orders=3&refresh=30&frame_id=2&frame_html_id=dashboard_2`.
 4. `PortletsController#view` merges `params` and `link_parameters`, calls `Portlet.generate`, and renders `view_template` in layout `individual_portlet`.
 5. If `refresh` is **above** `0`, `FramesDisplay.loadSubframe` calls `startAjaxAutoUpdates` to reload the frame.
@@ -4916,7 +4916,7 @@ A dashboard can be exported and imported as YAML (`*_dashboardpage.yml`), assign
 
 #### Main view
 
-`<id>.erb` is rendered inside the layout `individual_portlet`, which is loaded into the frame. Variables available:
+`<ID>.erb` is rendered inside the layout `individual_portlet`, which is loaded into the frame. Variables available:
 
 | Variable | Content |
 | --- | --- |
@@ -4938,13 +4938,13 @@ Rules:
 
 #### Configuration partial
 
-`_<id>.erb` is rendered by the **Dashboard** configuration (`frames/show`) from the `configuration_link` of the frame, as partial `<id>/<id>`. It contains `<li>` elements. The form buttons are **Save Configuration**, **Reset Frame** and **Preview**.
+`_<ID>.erb` is rendered by the **Dashboard** configuration (`frames/show`) from the `configuration_link` of the frame, as partial `<ID>/<ID>`. It contains `<li>` elements. The form buttons are **Save Configuration**, **Reset Frame** and **Preview**.
 
 Use the helpers of `PortletsHelper`:
 
 | Helper | Output |
 | --- | --- |
-| `portlet_input_name(portlet, name)` | `name="__<name>"` |
+| `portlet_input_name(portlet, name)` | `name="__<NAME>"` |
 | `portlet_input_value(portlet, name)` | `value="..."`; when the value equals the default, it outputs `placeholder="default: X" value=""`. |
 | `portlet_input_name_and_value(portlet, name)` | Both. Most used (29 shipped uses). |
 | `style_short`, `style_long` | Width 120px, 320px. |
@@ -4975,7 +4975,7 @@ A POST without a valid token is not only rejected: Orchestrator invalidates all 
 
 #### Actions
 
-A portlet action is a public method of `<Class>Controller < PortletsController`, in the portlet file.
+A portlet action is a public method of `<CLASS>Controller < PortletsController`, in the portlet file.
 
 URL helper:
 
@@ -4984,16 +4984,16 @@ URL helper:
       frame_id: @frame_id, frame_html_id: @frame_html_id) %>
 ```
 
-It generates `GET` or `POST /aspera/orchestrator/portlet_action?portlet=<id>&portlet_action=<method>&frame_id=..&frame_html_id=..`.
+It generates `GET` or `POST /aspera/orchestrator/portlet_action?portlet=<ID>&portlet_action=<METHOD>&frame_id=..&frame_html_id=..`.
 
 `PortletsController#portlet_action`:
 
 1. Loads the portlet, enabling it if it is defined but not loaded.
 2. Merges the `link_parameters` of the frame into `params`.
-3. Creates `<Class>Controller`, and sets `request`, `response`, `frame_id`, `frame_html_id`, `portlet`, `user` and `params`.
+3. Creates `<CLASS>Controller`, and sets `request`, `response`, `frame_id`, `frame_html_id`, `portlet`, `user` and `params`.
 4. Calls `controller.process(params[:portlet_action])`, and copies the body, status, content type and headers to the response.
 
-In the action: `@portlet`, `@frame_id`, `@frame_html_id`, `params`, `session`, `current_user`, `render plain:`, `render partial:`, `render html:`. Views are looked up as `<id>/<partial>`. `helper_method` works (see `queue_management`). Private methods cannot be called as actions.
+In the action: `@portlet`, `@frame_id`, `@frame_html_id`, `params`, `session`, `current_user`, `render plain:`, `render partial:`, `render html:`. Views are looked up as `<ID>/<PARTIAL>`. `helper_method` works (see `queue_management`). Private methods cannot be called as actions.
 
 Orchestrator checks no permission for an action: check it in the action, see [Security of actions](#security-of-actions).
 
@@ -5003,10 +5003,10 @@ Orchestrator checks no permission for an action: check it in the action, see [Se
 
 Stock folder `/opt/aspera/orchestrator/portlets` is overwritten by upgrades; use the user folder.
 
-Loading order: the user folder `<config_dir>/portlets/<id>` has priority over the stock folder. `Portlet.available` lists both; a user folder counts as soon as it contains a `.rb` file.
+Loading order: the user folder `<CONFIG_DIR>/portlets/<ID>` has priority over the stock folder. `Portlet.available` lists both; a user folder counts as soon as it contains a `.rb` file.
 
-1. Put the folder in `/opt/aspera/var/config/orchestrator/portlets/<id>`, or import `<id>.portlet`.
-2. Open **Engine > Portlets** (permission `engine`) and enable the portlet. Enabling runs `Portlet.attempt_load(id)`: it loads `<id>.rb`, checks the class, and creates the row with `active = true`.
+1. Put the folder in `/opt/aspera/var/config/orchestrator/portlets/<ID>`, or import `<ID>.portlet`.
+2. Open **Engine > Portlets** (permission `engine`) and enable the portlet. Enabling runs `Portlet.attempt_load(id)`: it loads `<ID>.rb`, checks the class, and creates the row with `active = true`.
 3. To enable a portlet at every start, add its ID to the OrchConfig setting `default_portlet_list` (comma-separated); `config/application.rb` loads these portlets after initialization. Setting `auto_activate_portlets` enables portlets when they are assigned to users by dashboard.
 
 A portlet is loaded only in the web process (not in the engine or the workers).
@@ -5015,28 +5015,28 @@ A disabled portlet is enabled again, with a new row, as soon as a frame displays
 
 #### Portlet importing and exporting
 
-- Export (**Export** in the portlet list) creates `<id>.portlet`, a gzip tar of the portlet folder.
+- Export (**Export** in the portlet list) creates `<ID>.portlet`, a gzip tar of the portlet folder.
 - Import (`Portlet.uncompact`) accepts `.portlet` (a tar) or `.yml` (a custom portlet). The tar must contain the folder at the top level. The archive name, without the extension, must equal the portlet ID: `hello_banner_1.0.0.portlet` extracts the folder `hello_banner`, overwriting the files of an installed `hello_banner`, then fails to load `hello_banner_1.0.0`.
-- If a portlet with the same ID exists in the stock folder, the import renames the new one to `<id>_version_N`: the folder, the file names, the class name (by text replacement) and the name, which becomes "... (Version: N)" (only for a name in double quotes). Do not use the string of the class name in text that must not change, and do not rely on a hard-coded `portlet: "<id>"` in views: update the renamed copy yourself.
+- If a portlet with the same ID exists in the stock folder, the import renames the new one to `<ID>_version_N`: the folder, the file names, the class name (by text replacement) and the name, which becomes "... (Version: N)" (only for a name in double quotes). Do not use the string of the class name in text that must not change, and do not rely on a hard-coded `portlet: "<ID>"` in views: update the renamed copy yourself.
 - If the portlet exists in the user folder, the import does the same renaming, but extracts the archive over the installed folder before renaming it: the installed portlet loses its files. It keeps working until the next restart, then its frames show "Undefined portlet". Never import an archive of a portlet installed in the user folder; see [Updating a portlet](#updating-a-portlet).
-- Imports go through `<run_dir>/portlet/import`, exports through `<run_dir>/portlet/export`.
+- Imports go through `<RUN_DIR>/portlet/import`, exports through `<RUN_DIR>/portlet/export`.
 
 #### Updating a portlet
 
 1. Replace the files in the user folder. Do not import a new archive with the same ID: it breaks the installed portlet (see [Importing and exporting](#portlet-importing-and-exporting)).
 2. Increase `:version` in `metadata.yml`.
-3. Restart the web server: `systemctl restart orchestrator_server` (or `orchestrator restart` for all services). In production, `enable_reloading` is `false` and `eager_load` is `true`; Orchestrator does not reload a portlet in the running process. A disable followed by an enable runs `load` again on `<id>.rb`, so the model and the methods of the controller change, but the views stay cached until restart; it also changes the row ID and loses permissions.
+3. Restart the web server: `systemctl restart orchestrator_server` (or `orchestrator restart` for all services). In production, `enable_reloading` is `false` and `eager_load` is `true`; Orchestrator does not reload a portlet in the running process. A disable followed by an enable runs `load` again on `<ID>.rb`, so the model and the methods of the controller change, but the views stay cached until restart; it also changes the row ID and loses permissions.
 4. Check the frames that use the portlet: they keep their stored parameters. A parameter removed from `parameters_spec` stays in the frame and is ignored.
 
 #### Upgrading a legacy portlet
 
-`script/update_portlet.rb <directory>` upgrades a portlet written before 4.1.0:
+`script/update_portlet.rb <DIRECTORY>` upgrades a portlet written before 4.1.0:
 
 - creates `metadata.yml` from a "Revision history" comment;
 - rewrites `def name` and `def description` into `set_portlet_name_and_desc`;
 - rewrites `< ApplicationController` into `< PortletsController`;
 - rewrites `AbInitio::X` into `OrchConfig.x`;
-- rewrites `/portlet_action/<p>/<a>` URLs into `portlet_action_path(...)`.
+- rewrites `/portlet_action/<PORTLET>/<ACTION>` URLs into `portlet_action_path(...)`.
 
 It skips a folder that has a `metadata.yml`, and does not scope CSS rules to the frame: do that by hand.
 
@@ -5044,19 +5044,19 @@ It skips a folder that has a `metadata.yml`, and does not scope CSS rules to the
 
 For the log, see [Testing and debugging](#testing-and-debugging).
 
-- Check the syntax: `ruby -c <id>.rb`.
+- Check the syntax: `ruby -c <ID>.rb`.
 - Display the portlet in a frame with **Preview**, before saving the configuration.
-- Call an action in the browser: `/aspera/orchestrator/portlet_action?portlet=<id>&portlet_action=<method>&frame_id=1&frame_html_id=f1` (logged in).
-- Call `GET /aspera/orchestrator/api/portlet_version[/<name>]?format=json` (or `xml`), with API credentials, to read the version of a portlet from `metadata.yml`, or of all portlets without `<name>`. `<name>` is the portlet name, URL-encoded (`Hello%20banner`), not the ID. The result is wrong in 4.1.6 (see [Known issues](#portlet-known-issues)).
+- Call an action in the browser: `/aspera/orchestrator/portlet_action?portlet=<ID>&portlet_action=<METHOD>&frame_id=1&frame_html_id=f1` (logged in).
+- Call `GET /aspera/orchestrator/api/portlet_version[/<NAME>]?format=json` (or `xml`), with API credentials, to read the version of a portlet from `metadata.yml`, or of all portlets without `<NAME>`. `<NAME>` is the portlet name, URL-encoded (`Hello%20banner`), not the ID. The result is wrong in 4.1.6 (see [Known issues](#portlet-known-issues)).
 
 | Symptom | Cause |
 | --- | --- |
-| Enabling fails with "definition of the portlet is missing" | Class name different from `id.camelize`, or file not `<id>.rb`. |
-| Import fails, and the files of the installed portlet changed | Archive name differs from `<id>.portlet`. |
-| Choosing the portlet in a frame fails (HTTP 500, "Missing partial" in the log) | `_<id>.erb` is missing. |
-| After a restart, frames show "Undefined portlet" | An archive of the same ID was imported: the folder was moved to `<id>_version_N`. |
+| Enabling fails with "definition of the portlet is missing" | Class name different from `id.camelize`, or file not `<ID>.rb`. |
+| Import fails, and the files of the installed portlet changed | Archive name differs from `<ID>.portlet`. |
+| Choosing the portlet in a frame fails (HTTP 500, "Missing partial" in the log) | `_<ID>.erb` is missing. |
+| After a restart, frames show "Undefined portlet" | An archive of the same ID was imported: the folder was moved to `<ID>_version_N`. |
 | Name in the list shows Ruby code | `self.name` is computed; use a literal string. |
-| A parameter is always the default | The field is blank, or the name is not `__<name>`. |
+| A parameter is always the default | The field is blank, or the name is not `__<NAME>`. |
 | A flag is always `false` | Value is not the text `true`. Use `draw_portlet_flag_*`. |
 | `NoMethodError` on a parameter | Not in `parameters_spec`, no default, and not in `link_parameters`. |
 | A parameter named `name` is wrong | Shadowed by the column. Use `runtime_value('name')`. |
@@ -5077,8 +5077,8 @@ Each was reproduced on a 4.1.6 server, except the regular expression on `link_pa
 | `Entitlement.matching_permissions` returns an array of parts and the list tests complete principals. | A non-administrator with an explicit `run` permission does not see the portlet in **Choose Portlet**. | Assign the portlet to the user with the administrator, through a dashboard. |
 | Portlet controllers inherit the public methods of `PortletsController`. | `portlet_action=disable` and similar are reachable without a permission check. | Check permissions in each action; do not expose sensitive operations. |
 | The row ID changes when a portlet is disabled and enabled. | Permissions are orphaned. | Avoid disable and enable; grant permissions again. |
-| `.portlet` file name must equal the ID. | Import fails for names such as `<id>_1.0.0.portlet`, after overwriting the files of an installed `<id>`. | Rename the file. |
-| Import of an ID present in the user folder extracts over it, then moves it to `<id>_version_N`. | The installed portlet loses its files, and breaks at the next restart. | Update by replacing the files; do not import. |
+| `.portlet` file name must equal the ID. | Import fails for names such as `<ID>_1.0.0.portlet`, after overwriting the files of an installed `<ID>`. | Rename the file. |
+| Import of an ID present in the user folder extracts over it, then moves it to `<ID>_version_N`. | The installed portlet loses its files, and breaks at the next restart. | Update by replacing the files; do not import. |
 | `link_parameters` is parsed with a regular expression in `portlet_action`. | `"` and `\` in a value are doubled. | Avoid these characters. |
 | A POST without CSRF token calls `redirect_to_login`. | All sessions of the user are invalidated. | Send POST requests with `ajaxUpdate` or `$.ajax`. |
 
@@ -5106,7 +5106,7 @@ Do not rely on portlet permissions for confidentiality; check permissions on the
 
 #### Security of actions
 
-`<Class>Controller` inherits the public methods of `PortletsController`, and `portlet_action` calls any public method by name. In 4.1.6, `portlet_action=disable`, `enable`, `export`, `upload`, `import`, `revoke`, `update_permissions`, `view` and `index` are reachable through a portlet controller. Only some of them check a permission, and `disable`, `enable`, `export` and `view` check none.
+`<CLASS>Controller` inherits the public methods of `PortletsController`, and `portlet_action` calls any public method by name. In 4.1.6, `portlet_action=disable`, `enable`, `export`, `upload`, `import`, `revoke`, `update_permissions`, `view` and `index` are reachable through a portlet controller. Only some of them check a permission, and `disable`, `enable`, `export` and `view` check none.
 The same methods of `PortletsController` are also reachable directly (`POST portlets/disable`, `POST portlets/enable`, `GET portlets/export`) by any logged-in user: only the list page, **Import Portlet** and the upload check the permission `engine`.
 
 Therefore:
@@ -5119,12 +5119,12 @@ Therefore:
 ### Portlet checklist
 
 1. Choose the portlet ID (snake_case, no acronym), the class `id.camelize`, and the folder name.
-2. Create `<id>.rb`, `<id>.erb`, `_<id>.erb` and `metadata.yml`.
+2. Create `<ID>.rb`, `<ID>.erb`, `_<ID>.erb` and `metadata.yml`.
 3. Set name and description in `set_portlet_name_and_desc` with literal strings, called by `after_initialize` and `before_save`.
 4. Declare `refresh`, and every parameter in `parameters_spec`, with a default in `defaulted_parameters`.
 5. Escape output, scope CSS with `#<%= @frame_html_id %>`, and give every `id` a unique name.
-6. For an action, add `<Class>Controller < PortletsController`, check the permission in the action, and call it with `portlet_action_path` and `ajaxUpdate`.
-7. Pack as `<id>.portlet` (name equal to the ID), import, enable, and configure a frame. After each code change, replace the files in the user folder (do not import again) and restart the web server.
+6. For an action, add `<CLASS>Controller < PortletsController`, check the permission in the action, and call it with `portlet_action_path` and `ajaxUpdate`.
+7. Pack as `<ID>.portlet` (name equal to the ID), import, enable, and configure a frame. After each code change, replace the files in the user folder (do not import again) and restart the web server.
 
 ### Portlet annex
 
@@ -5135,8 +5135,8 @@ A custom portlet is defined in the web interface, with no file: **Engine > Portl
 A definition (`custom_portlet_definitions`) has a name, a display name, a version, a description, parameters (typed), a model (Ruby) and a view (ERB, rendered inline). The model is evaluated with `eval` as methods of the portlet.
 
 - It runs Ruby and ERB with the rights of Orchestrator. The forms **Define Custom Portlet** and edit require the permission `engine`, but in 4.1.6 the create, update and delete requests themselves check no permission.
-- Definitions are exported as `CustomPortlet_<id>_<version>.yml` and imported in the same page. Importing an existing name increases the version and deactivates the previous one.
-- IDs are `c_<n>`.
+- Definitions are exported as `CustomPortlet_<ID>_<VERSION>.yml` and imported in the same page. Importing an existing name increases the version and deactivates the previous one.
+- IDs are `c_<N>`.
 
 Use it for a quick prototype. Write a file portlet for anything that is kept, versioned, tested and reviewed.
 
