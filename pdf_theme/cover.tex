@@ -1,17 +1,28 @@
 % Cover and last pages, for PDF with LuaLaTeX, see README.md
-% Positions are in pixels of cover.jpg, 1086 pixels wide, so that they follow the picture.
+% Positions are in pixels of cover.svg, 1086 pixels wide, so that they follow the picture.
 \definecolor{covertext}{HTML}{00000E}
 \definecolor{coverrule}{HTML}{03B8F8}
 \newcommand{\coverpx}[1]{\dimexpr\paperwidth*#1/1086\relax}
 % Arguments: left, first baseline, width, text
-\newcommand{\coverput}[4]{\AtPageUpperLeft{\hspace*{\coverpx{#1}}\raisebox{-\coverpx{#2}}{\parbox[t]{\coverpx{#3}}{\raggedright #4}}}}
-% The picture is 3:4, it goes past the bottom of a Letter page
+% The text starts a paragraph: else a \color at its start would come before the first line, the box would be aligned
+% on the color and not on the first baseline, which would be lower by the height of the line
+\newcommand{\coverput}[4]{\AtPageUpperLeft{\hspace*{\coverpx{#1}}\raisebox{-\coverpx{#2}}{\parbox[t]{\coverpx{#3}}{\raggedright\leavevmode #4}}}}
+% The picture is a PDF made from cover.svg, see README.md. It is 3:4, it goes past the bottom of a Letter page.
+% cover.svg declares the size of a Letter page and stretches its 3:4 view box to it: stretched to 3:4 again, it has its shape
 \renewcommand{\gfmcoverbackground}{\AddToShipoutPictureBG*{
-    \AtPageUpperLeft{\raisebox{-\height}{\includegraphics[width=\paperwidth]{cover.jpg}}}
+    \AtPageUpperLeft{\raisebox{-\height}{\includegraphics[width=\paperwidth,height=\coverpx{1448}]{cover.pdf}}}
   }}
+% IBM logo and product name at the top left, above and under the gradient rule of the picture
+\newfontfamily\coverlightfont{IBM Plex Sans Light}
+\newcommand{\coverbrand}{%
+  \color{covertext}%
+  \coverput{72}{160}{190}{\includegraphics[width=\coverpx{190}]{ibm_logo.pdf}}%
+  \coverput{72}{330}{800}{\fontsize{40.6}{40.6}\selectfont{\coverlightfont IBM} {\bfseries Aspera}\raisebox{0.9ex}{\fontsize{12}{12}\selectfont\textregistered}\par}}
+% Pictures made from parts of cover.svg by make_back.rb, then PDF, see README.md
 \renewcommand{\gfmlastbackground}{\AddToShipoutPictureBG*{
-    \AtPageUpperLeft{\raisebox{-\height}{\includegraphics[width=\paperwidth]{back_top.jpg}}}
-    \AtPageLowerLeft{\includegraphics[width=\paperwidth]{back_bottom.jpg}}
+    \AtPageUpperLeft{\raisebox{-\height}{\includegraphics[width=\paperwidth]{back_top.pdf}}}
+    \AtPageLowerLeft{\includegraphics[width=\paperwidth]{back_bottom.pdf}}
+    \coverbrand
   }}
 % Title of the document without the first words, shown apart in bold
 \ExplSyntaxOn
@@ -25,6 +36,7 @@
 \renewcommand{\maketitle}{%
   \begin{titlepage}%
     \AddToShipoutPictureFG*{%
+      \coverbrand
       \color{covertext}%
       \coverput{75}{465}{745}{%
         \fontsize{38}{44}\selectfont
@@ -34,7 +46,8 @@
         \fontsize{17}{30}\selectfont
         \@author\par
         \@date\par}%
-      \coverput{72}{1296}{93}{\color{coverrule}\rule{\coverpx{93}}{3pt}}%
+      % Rule under the baseline: its top at the position, as with Typst
+      \coverput{72}{1296}{93}{\color{coverrule}\rule[-3pt]{\coverpx{93}}{3pt}}%
       \coverput{72}{1344}{800}{\color{white}\fontsize{11.5}{14}\selectfont\addfontfeatures{LetterSpace=18}BUILD\hspace{1em}•\hspace{1em}AUTOMATE\hspace{1em}•\hspace{1em}ORCHESTRATE\par}%
     }%
     \null

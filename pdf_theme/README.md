@@ -1,23 +1,29 @@
 # PDF theme
 
-Theme of [gfm2pdf-toolchain](https://github.com/laurent-martin/gfm2pdf-toolchain) for the PDF documents of this repository: pictures of the cover and last pages, text of the cover, and fonts IBM Plex Sans and IBM Plex Mono.
+Theme of [gfm2pdf-toolchain](https://github.com/laurent-martin/gfm2pdf-toolchain) for the PDF documents of this repository: pictures of the cover and last pages, logo and text of the cover, and fonts IBM Plex Sans and IBM Plex Mono.
 
 The `Rakefile` always uses this theme.
 
-The cover shows the bold words `Aspera Orchestrator`, then the title of the document without these words, its author and its date.
+The cover is the vector picture `cover.svg`, with no text or logo.
+On top of it, the theme places the IBM logo (`ibm_logo.svg`, the 8-bar positive logo of the [IBM Design Language](https://www.ibm.com/brand/experience-guides/developer/b1db1ae501d522a1a4b49613fe07c9f1/01_8-bar-positive.svg), with its white background removed and cropped to the logo), and `IBM Aspera®` as text, above and under the gradient rule of the picture.
+Then come the bold words `Aspera Orchestrator`, the title of the document without these words, its author and its date.
+Typst uses the SVG files as they are. LaTeX cannot, it uses PDF files generated from the SVG files, see below.
 
-The picture of the last page is landscape: it is split in two, `back_top.jpg` and `back_bottom.jpg`, placed at the top and at the bottom of the page.
-It is cut at row 500, the closest to white, and both pieces fade to white over 80 rows, as this row is not fully white.
+The view box of `cover.svg` is 3:4, 1086 × 1448, but the file declares the size of a Letter page and stretches its view box to it (`preserveAspectRatio="none"`).
+The theme stretches it to 3:4 again, as wide as the page: it goes past the bottom of the page, and the positions of the text, in pixels of the view box, follow the picture.
 
-The pictures are JPEG, without metadata: a PDF document contains a JPEG file unchanged, it cannot contain WebP, and PNG would take about 7 times more space.
-On these saturated blues, no color subsampling (`4:4:4`) gives better quality than a higher JPEG quality with subsampling, for the same size.
+The pictures of the last page, `back_top.svg` and `back_bottom.svg`, are parts of `cover.svg`, placed at the top and at the bottom of the page, with the same logo and text as the cover at the top left.
+`make_back.rb` makes them:
 
-To generate the pictures again from the originals, which are not in this repository, from the root of the repository:
+- `back_top.svg`: the rows 0 to 420 of the cover, fading to white over their last 90 rows, without the gradient rule, which is only for the cover.
+- `back_bottom.svg`: the rows 1110 to the end, fading from white over their first 90 rows, without the globe and the workflow, which would be cut.
+- In both, only what the part shows: no element outside of its rows, no unused definition, no comment and no settings of the Inkscape window. Their size is the one of their view box, they need no stretch.
+
+To make them again after any change of `cover.svg`, then the PDF files for LaTeX, from the root of the repository:
 
 ```shell
-COVER="private/cover_art/IBM Aspera Global Workflow Cover.png"
-BACK="private/cover_art/IBM Aspera Waves and Global Network.png"
-magick "$COVER" -strip -sampling-factor 4:4:4 -quality 85 pdf_theme/cover.jpg
-magick "$BACK" -crop 1536x500+0+0 +repage \( -size 1536x420 xc:white -size 1536x80 gradient:white-black -append \) -alpha off -compose CopyOpacity -composite -compose Over -background white -flatten -strip -sampling-factor 4:4:4 -quality 85 pdf_theme/back_top.jpg
-magick "$BACK" -crop 1536x524+0+500 +repage \( -size 1536x80 gradient:black-white -size 1536x444 xc:white -append \) -alpha off -compose CopyOpacity -composite -compose Over -background white -flatten -strip -sampling-factor 4:4:4 -quality 85 pdf_theme/back_bottom.jpg
+ruby pdf_theme/make_back.rb
+for f in cover ibm_logo back_top back_bottom; do rsvg-convert -f pdf pdf_theme/$f.svg -o pdf_theme/$f.pdf; done
 ```
+
+All pictures are vector: `cover.svg` has no filter, as a PDF document cannot contain one, and the PDF writers would turn it into a bitmap.
