@@ -250,7 +250,7 @@ Rules:
 - When the caller must handle the failure of the called workflow (for example to release a resource), use `SubWorkflow`, or a launcher with **Wait for completion** and **Fail if launched work order fails**: without them, a launcher reports success once the work order is started.
 - A republished sub-workflow is used by the next execution of its callers; no need to republish them.
 - Refer to the called workflow by its UUID (`portable_id`) rather than its numeric id when workflows move between servers by import in the user interface or with `import_with_constraints`: the import keeps the `portable_id` of the file, unless a workflow of the target already has it *(4.1.6)*.
-  The `import_workflow` API (`ascli orchestrator workflows import`) always generates a new `portable_id`: there, refer by id (see [Referring to existing entities](#referring-to-existing-entities) in the Authoring Guide).
+  The `import_workflow` API (`ascli orchestrator workflows import`) always generates a new `portable_id`: there, refer by id (see [Referring to existing entities](#referring-to-existing-entities) in the Workflow authoring chapter).
 - Parameters of `WorkflowLauncher` are a hash: `{"param1"=>"value1", "param2"=>true}`; `CollectionManager` can build it.
 - Never put a trigger with **Continue monitoring** in a sub-workflow: the sub-workflow is cloned at each event.
   Put it in the top-level workflow, or in a workflow started by a launcher.
@@ -402,7 +402,7 @@ This keeps mapping lists short.
 To pass an output further, open the next step, **Outputs** tab (right-click > **Map outputs**), and tick **Carry Thru?** for that output.
 Repeat on each step along the way.
 
-This is a rule of the designer, not of the engine *(4.1.6)*: a workflow written as a file can map an output of any previous step without carry through (see [Outputs](#outputs) in the Authoring Guide).
+This is a rule of the designer, not of the engine *(4.1.6)*: a workflow written as a file can map an output of any previous step without carry through (see [Outputs](#outputs) in the Workflow authoring chapter).
 
 ![Outputs tab: Carry Thru? passes an output of the previous step ("from 'Configuration'") to the next step](images/practices/4.1.6/map-outputs-carry-thru.png)
 
@@ -1265,7 +1265,7 @@ Split into two workflows:
 
 ![A custom form: logo, file name from the inputs, video preview; target, description, profile, source, paths and offer times requested (video: Big Buck Bunny, © Blender Foundation, CC BY 3.0)](images/practices/4.1.6/user-input-form.png)
 
-See the recipe [operator decision](#recipe-operator-decision) and its [custom form](#custom-form), with a sample, in the Authoring Guide.
+See the recipe [operator decision](#recipe-operator-decision) and its [custom form](#custom-form), with a sample, in the Workflow authoring chapter.
 
 #### Direct start
 
@@ -1276,7 +1276,7 @@ The page shows these fields after the standard ones (description, comments, exec
 
 - The page is opened at `https://<ORCHESTRATOR_HOST>/aspera/orchestrator/work_orders/direct_start/<WORKFLOW_ID>`, from the work order creation, from a dashboard, or from a link in a custom portlet.
 - It starts the work order and does not report its result.
-  For a page that starts and follows work orders (a "fast track" page for editors, for example), write a portlet that calls the API ([Portlet Development Guide](#portlet-development)).
+  For a page that starts and follows work orders (a "fast track" page for editors, for example), write a portlet that calls the API ([Portlet development chapter](#portlet-development)).
 - Do not put credentials in a link to this page (`login=`, `password=`): URLs are logged (see [Where a secret is displayed](#where-a-secret-is-displayed)), and the page does not read them (see [REST API](#rest-api)).
 
 ### Monitoring and operations
@@ -3208,7 +3208,7 @@ The designer lists the files of this folder in **View template**.
 | `draw_input('outputs', '<NAME>', '<TYPE>', <DEFAULT_VALUE>, '<HTML_ATTRIBUTES>')` | Draws a field for the type: `flag`, `int`, `float`, `string`, `pwd`, `array`, `hash`, `object`, `date` or `attachment`. The last two arguments are optional. |
 
 This form shows a file name and a video, and asks for a target, a path, a date with time, and a description.
-It is a shorter version of the form in the figure of the [Development Practices](#user-input).
+It is a shorter version of the form in the figure of the [Workflow development practices chapter](#user-input).
 
 `_external_delivery.html.erb`:
 
@@ -3823,7 +3823,7 @@ end
 1. Copy the folder to `/opt/aspera/orchestrator/actions/my_greetings`, owned by `aspweb`, and the icon to `/opt/aspera/orchestrator/public/aspera/orchestrator/assets/actions/MyGreeting.png`.
 2. Open the **Plugins** page (`https://<host>/aspera/orchestrator/plugins`): `My greeting` is listed, disabled. Click **Enable**.
 3. Restart the web server: `systemctl restart orchestrator_server`, needed to import workflow files that use the new plugin (see [Installing a plugin](#installing-a-plugin)).
-4. Use it in a workflow: in the designer, or with a workflow file (see the [Workflow Authoring Guide](#workflow-authoring)).
+4. Use it in a workflow: in the designer, or with a workflow file (see the [Workflow authoring chapter](#workflow-authoring)).
 
 A template with `greeting` set to `Hello <%= who %>!` and `uppercase` checked has a required input `who`: with `who` = `Laurent`, the step ends `Complete` with output `Message` = `HELLO LAURENT!`.
 A template with `greeting` blank and `wait_seconds` = 70 has an optional input `Greeting`: the step ends `Complete` after 70 seconds, with `Message` = the value of `Greeting`.
@@ -4129,7 +4129,7 @@ end
 
 An attribute handled by your own code (for example `required_inputs[VAR_SERVER] = TYPE_STRING if server.blank?`) gets no input for its placeholders: call `default_inputs_spec` for it, or scan it with `Payload.variables`.
 The documentation generator of this repository marks an attribute `placeholders: true` in `plugins.yml` only when `<%= variable %>` in its value gives an input `variable`.
-See [Placeholders](#placeholders) in the Workflow Authoring Guide for the syntax as seen by workflow authors.
+See [Placeholders](#placeholders) in the Workflow authoring chapter for the syntax as seen by workflow authors.
 
 Other constants read by Orchestrator:
 
@@ -4531,7 +4531,7 @@ For the log, see [Testing and debugging](#testing-and-debugging).
 - Check the inputs and outputs of a plugin without a server, with the probe of this repository: `ruby lib/plugin_probe.rb <folder containing plugin folders> build/<VERSION>/src/lib` prints, as JSON, the fields of the form, the inputs and outputs for several template settings, and the errors.
   It needs the library files extracted by `rake extract_rpm`.
 - On the server, open a template and click **Test template**: the action tester runs it with the input values you give.
-- Run it in a workflow: see the [Workflow Authoring Guide](#workflow-authoring), for example with `ascli orchestrator workflows start <id> @json:'{"who":"Laurent"}'`.
+- Run it in a workflow: see the [Workflow authoring chapter](#workflow-authoring), for example with `ascli orchestrator workflows start <id> @json:'{"who":"Laurent"}'`.
 
 | Symptom | Cause |
 | --- | --- |

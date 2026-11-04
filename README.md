@@ -44,7 +44,7 @@ Intermediate HTML files (`rake html`) are in `build/<VERSION>/out`.
 | `exiftool`      | Make PDF files reproducible (dates)                |
 | `pandoc`        | Convert HTML to Markdown, and Markdown to PDF      |
 | `lualatex`      | PDF engine of `pandoc`                             |
-| draw.io desktop | Export the diagrams of the guides (`doc:diagrams`) |
+| draw.io desktop | Export the diagrams of the guide (`doc:diagrams`) |
 
 The PDF theme uses fonts IBM Plex Sans and IBM Plex Mono.
 
