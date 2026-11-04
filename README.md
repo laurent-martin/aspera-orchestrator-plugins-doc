@@ -1,21 +1,32 @@
 # IBM Aspera Orchestrator plugin documentation
 
-This repository generates the plugin (action) documentation for IBM Aspera Orchestrator, and holds the development guide for plugin developers and workflow authors.
+This repository holds the documentation of IBM Aspera Orchestrator for people who build on it, and the tools that generate part of it.
+It has two kinds of content:
 
-The plugin documentation is generated from the Orchestrator RPM: the `actions` folder and some library files are extracted from it, then the metadata and help page of each plugin are rendered to HTML, Markdown and PDF.
+- **A hand-written development guide**, the *Aspera Orchestrator Development Guide*: how Orchestrator works, how to design and write workflows (in the designer or as files), and how to extend Orchestrator with action plugins and portlets.
+  It is written for people and for AI assistants.
+  Read it online: <https://ibm.biz/aspera-orchestrator-book>, or get the [PDF](https://raw.githubusercontent.com/laurent-martin/aspera-orchestrator-plugins-doc/refs/heads/main/docs/orchestrator-development-guide.pdf).
+- **Generated reference documents** for the action plugins shipped with Orchestrator: manual, list, banner, template reference and machine-readable specifications (`plugins.yml`).
+  They are generated from the Orchestrator RPM: the `actions` folder and some library files are extracted from it, then the metadata and help page of each plugin are rendered to HTML, Markdown and PDF, and the plugin code is evaluated to find the inputs and outputs of each plugin.
+
+The documents are generated for one Orchestrator version at a time (the version is in their title).
+The RPM is not in this repository.
+
+To read the documents, go to folder [`docs`](docs) (see [Documents](#documents)).
+To regenerate them, see [Prerequisites](#prerequisites) and [Usage](#usage).
 
 ## Documents
 
 Generated documents and guides are in folder `docs`:
 
-| Document                                                                                 | Content                                                        | Rake task                      |
-|------------------------------------------------------------------------------------------|----------------------------------------------------------------|--------------------------------|
-| [`Orchestrator_Plugin_Manual.md`](docs/Orchestrator_Plugin_Manual.md) and `.pdf`         | Help page of each plugin, by category                          | `md_manual`, `pdf_manual`      |
-| [`Orchestrator_Plugin_List.pdf`](docs/Orchestrator_Plugin_List.pdf)                      | Table of plugins: icon, name, version, description             | `pdf_list`                     |
-| [`Orchestrator_Plugin_Banner.pdf`](docs/Orchestrator_Plugin_Banner.pdf)                  | Icons and names of plugins, by category (landscape)            | `pdf_banner`                   |
-| [`action-template-reference.md`](docs/action-template-reference.md)                      | Template attributes, inputs and outputs of each action plugin  | `doc:template_reference`       |
-| [`plugins.yml`](docs/plugins.yml)                                                        | Same, as data, with allowed values and conditions              | `doc:plugin_specs`             |
-| [`orchestrator-development-guide.md`](docs/orchestrator-development-guide.md) and `.pdf`  | Development guide: workflow practices, workflow authoring, plugins and portlets | `doc:guide` (PDF and diagrams) |
+| Document                                                                                                                                                                                                                             | Content                                                                         | Rake task                      |
+|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|--------------------------------|
+| [`Orchestrator_Plugin_Manual.md`](docs/Orchestrator_Plugin_Manual.md) and [`.pdf`](https://raw.githubusercontent.com/laurent-martin/aspera-orchestrator-plugins-doc/refs/heads/main/docs/Orchestrator_Plugin_Manual.pdf)             | Help page of each plugin, by category                                           | `md_manual`, `pdf_manual`      |
+| [`Orchestrator_Plugin_List.pdf`](https://raw.githubusercontent.com/laurent-martin/aspera-orchestrator-plugins-doc/refs/heads/main/docs/Orchestrator_Plugin_List.pdf)                                                                 | Table of plugins: icon, name, version, description                              | `pdf_list`                     |
+| [`Orchestrator_Plugin_Banner.pdf`](https://raw.githubusercontent.com/laurent-martin/aspera-orchestrator-plugins-doc/refs/heads/main/docs/Orchestrator_Plugin_Banner.pdf)                                                             | Icons and names of plugins, by category (landscape)                             | `pdf_banner`                   |
+| [`action-template-reference.md`](docs/action-template-reference.md)                                                                                                                                                                  | Template attributes, inputs and outputs of each action plugin                   | `doc:template_reference`       |
+| [`plugins.yml`](docs/plugins.yml)                                                                                                                                                                                                    | Same, as data, with allowed values and conditions                               | `doc:plugin_specs`             |
+| [`orchestrator-development-guide.md`](docs/orchestrator-development-guide.md) and [`.pdf`](https://raw.githubusercontent.com/laurent-martin/aspera-orchestrator-plugins-doc/refs/heads/main/docs/orchestrator-development-guide.pdf) | Development guide: workflow practices, workflow authoring, plugins and portlets | `doc:guide` (PDF and diagrams) |
 
 The Aspera Orchestrator Development Guide is written by hand (the task generates its PDF), the other documents are generated: do not edit them.
 [`workflow-authoring-guide.md`](docs/workflow-authoring-guide.md) is only a pointer to the guide, for old versions of `ascli`.
@@ -24,6 +35,34 @@ The screenshots of the practices chapter are in `docs/images/practices`.
 Diagrams of the guide are drawn in [`docs/images/diagrams.drawio`](docs/images/diagrams.drawio), one tab per image: `rake doc:diagrams` exports each tab to `docs/images/<tab>.svg` (for GitHub) and `.pdf` (used in the PDF), with draw.io desktop, when the `.drawio` file is newer.
 
 Intermediate HTML files (`rake html`) are in `build/<VERSION>/out`.
+
+### Content of the development guide
+
+The guide has these chapters:
+
+| Chapter                        | Content                                                                                                          |
+|--------------------------------|------------------------------------------------------------------------------------------------------------------|
+| Concepts                       | Where to start, how Orchestrator works, terminology, server folders, plugin display names, statuses              |
+| Workflow development practices | Wise choices in the designer: design, data between steps, configuration, control flow, error handling, triggers  |
+| Workflow authoring             | What Orchestrator accepts and how it runs a workflow: workflow files (XML), recipes, APIs, `ascli`, known issues |
+| Extending Orchestrator         | Action plugins and portlets compared                                                                             |
+| Plugin development             | Write an action plugin that adds a step type to workflows                                                        |
+| Portlet development            | Write a portlet that adds a widget to the dashboard                                                              |
+| About this guide               | How each chapter was verified                                                                                    |
+
+### Content of the repository
+
+| Path                   | Content                                                                                                                                                           |
+|------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `docs`                 | Guide and generated documents (see above); `docs/images` has the diagrams and the screenshots                                                                     |
+| `lib`                  | Generators: plugin manual, template reference, plugin probe (`plugins.yml`), API check; `plugins_overlay.yml` has the hand-written data merged into `plugins.yml` |
+| `templates`            | ERB templates of the HTML pages (manual, list, banner)                                                                                                            |
+| `pdf_theme`            | Look of the PDF documents: cover, last page, logo and fonts                                                                                                       |
+| `Rakefile`             | Tasks to extract the RPM and generate the documents                                                                                                               |
+| `build` (not in Git)   | Extract of the RPM and intermediate files, one folder per Orchestrator version                                                                                    |
+| `private` (not in Git) | The Orchestrator RPM and working files                                                                                                                            |
+
+`plugins.yml` is generated from the plugin code, then completed with the hand-written data of `lib/plugins_overlay.yml`: to change it, edit the overlay, not `plugins.yml`.
 
 ## Prerequisites
 
