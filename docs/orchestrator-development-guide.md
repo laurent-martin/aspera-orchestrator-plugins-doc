@@ -7,6 +7,13 @@ common:
 
 # Aspera Orchestrator Development Guide
 
+> [!IMPORTANT]
+> This document is not officially supported by the Aspera Orchestrator product team.
+> For any request, question or correction, use the [GitHub issues](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/issues) of the repository, and do not contact the product team.
+>
+> The chapters on plugin development and on portlet (dashboard) development are informative only and are not supported by the product team: the internal interfaces they describe can change over time.
+> Support is given only for the plugins and portlets that are provided with Orchestrator, not for the ones that you develop yourself.
+
 ## Concepts
 
 This chapter gives what the other chapters rely on: where to start for each goal, how Orchestrator works, the terms, the server folders, the plugin display names and the statuses.
@@ -14,7 +21,7 @@ Read it first: the other chapters use these terms, and explain further only thos
 
 ### Introduction
 
-This guide applies to Orchestrator 4.1.6: [About this guide](#about-this-guide) says how each chapter was verified.
+This guide applies to Orchestrator 4.1.6: see [How each chapter was verified](#how-each-chapter-was-verified).
 Its source is at [github.com/laurent-martin/aspera-orchestrator-plugins-doc](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc).
 
 This guide explains how to develop for IBM Aspera Orchestrator: how to design and write workflows, and how to extend Orchestrator with action plugins and portlets.
@@ -46,6 +53,8 @@ Each format has one meaning in this guide.
 | Italic | A term where it is defined, a name of step, workflow or configuration chosen by the author of an example, a word quoted as a word, and the version mark. | *embedded template*, *Check target*, *(4.1.6)* |
 | Bold italic | An emphasis on a word or on a sentence. | ***trigger***, ***Exposing the right information...*** |
 | Double quotes | A message or a text that Orchestrator shows. | "No behavior defined for step status change to failed" |
+| Internal link | A link to a section of this guide, written `[text](#anchor)`. The text names the section. Dark red in the PDF. | [Quick start](#quick-start) |
+| External link | A link to a website or to a document outside of this guide, written `[text](https://...)`. Blue in the PDF. | [IBM Aspera CLI](https://github.com/IBM/aspera-cli) |
 | `<PLACEHOLDER>` in code | A value that the reader replaces. | `W<WORKFLOW_ID>__<STEP_NAME>` |
 | Code block with a language | A complete listing: `yaml`, `ruby`, `xml`, `shell`, `erb`. | |
 | Alert | A box that stands out from the text, see below. | |
@@ -56,6 +65,7 @@ Some cases need a choice:
 - A step type is code (`Filter`), and the name that the author gives to a step is italic (*Check target*).
 - A step name that is written as is in a file, or used as an identifier, is a literal: it stays code (`W0__Check target`).
 - Bold is never used to stress a word or a sentence: use bold italic for a word or a sentence, or an alert for a rule.
+- A literal in the text of a link stays code: [`yq`](https://github.com/mikefarah/yq), [`SimpleParameterLookup`](#simpleparameterlookup).
 
 Alerts are used sparingly, a few per chapter at most:
 
@@ -297,7 +307,7 @@ The most important rules, each detailed later:
 9. Make every outcome readable: work order label, exit status messages, journals ([Meaningful status](#meaningful-status)).
 10. Use `CustomRuby` only when no plugin does the job, or when it saves many steps ([Custom code](#custom-code)).
 11. Between the allocation and the release of a resource, put one step or one sub-workflow, and release on every exit ([Resource management](#resource-management)).
-12. When a load manager and its queue are in the same work order, map the **expected queued item** ([Queue](#queue)).
+12. When a load manager and its queue are in the same work order, map the **Expected queued item** ([Queue](#queue)).
 13. Test each block alone, and test after each change ([Testing](#testing)).
 14. After changing the structure of a workflow, run new work orders (relaunch); reset reruns the old revision ([Changes and revisions](#changes-and-revisions)).
 
@@ -451,7 +461,7 @@ A workflow revision shows the current values of its steps, not the values at the
 | What you changed | What to do |
 | --- | --- |
 | A value in a step configuration or a template | Save the step. Effective at the next execution of the step, without publishing. A running trigger uses the new value at its next clone; reset its work order to apply it at once. |
-| Steps, links, mappings, retries, timeouts, inputs or outputs | Save and publish. Run **new** work orders (new work order or relaunch). |
+| Steps, links, mappings, retries, timeouts, inputs or outputs | Save and publish. Run ***new*** work orders (new work order or relaunch). |
 | Custom inputs or outputs of a step (for example of `CustomRuby`) | Saved with the step, but the workflow does not know them until you publish. |
 | A sub-workflow | Publish it. Its callers use it at their next execution. |
 | The designer says there is nothing to publish | Move a step slightly, then publish. |
@@ -686,7 +696,7 @@ Steps and lookup tables refer to the node, not to its address: when the address 
   As a runtime input of a step, give the node id.
 - Do not create two nodes for the same server.
 - **Secondary addresses** turn a node into a simple load balancer: random, round robin, or primary/secondary (fallback).
-  A **keep-alive port** is checked before use (for example SSH 33001, or the Node API port); without it, each use opens an SSH connection to check the node, which costs time and connections.
+  A *keep-alive port* is checked before use (for example SSH 33001, or the Node API port); without it, each use opens an SSH connection to check the node, which costs time and connections.
   A node has one login for all its addresses.
 - With round robin or random, an asynchronous plugin that polls a remote job may poll the wrong node.
 - **Generate Certificate** creates an SSH key pair, stored under `/opt/aspera/var/config/orchestrator/certificates/`.
@@ -903,7 +913,7 @@ Several rules (lines) combine as an AND; for example "20 seconds from now" and "
 
 ![Schedule trigger configuration: a rule 30 Minute(s) from now](images/practices/4.1.6/schedule-trigger-config.png)
 
-The **timeout** of a step does not limit a wait: for a watcher, it limits one scan of the folder, and it never fires because the file does not arrive ([Timeouts](#timeouts)).
+The *timeout* of a step does not limit a wait: for a watcher, it limits one scan of the folder, and it never fires because the file does not arrive ([Timeouts](#timeouts)).
 To limit the wait of a single trigger without **Continue monitoring**, make its timeout absolute.
 To limit the total duration of several steps, or to act during a wait, run a `ScheduleTrigger` in parallel:
 
@@ -1018,7 +1028,7 @@ The step information output of a step (`Step_information`) can be customized in 
 #### After a failure
 
 - Restart a work order from the work order view: **Reset** (same revision), **Relaunch** (latest revision), or restart from a step (error-prone in a single when-and-what workflow) ([Changes and revisions](#changes-and-revisions)).
-- Fix the cause of a work order manually, then **change its status** (work order view: **Edit**, then **Change Status**): this documents the case in Orchestrator instead of e-mails.
+- Fix the cause of a work order manually, then change its status (work order view: **Edit**, then **Change Status**): this documents the case in Orchestrator instead of e-mails.
 
 ![Modify Work Order: status Cleared, with the resolution in the comment](images/practices/4.1.6/change-work-order-status.png)
 
@@ -1058,7 +1068,7 @@ The persistency scope sets the memory of a trigger: which elements it has alread
 | by step | Two watchers on the same folder in one workflow, with separate histories. |
 | by action template *(4.1.6)* | Steps that share a watcher template must not process the same element twice. |
 | absolute | Two workflows on the same folder must not process the same file. |
-| none | Only a trigger **without** Continue monitoring that waits for a file that may already be there. |
+| none | Only a trigger ***without*** **Continue monitoring** that waits for a file that may already be there. |
 
 > [!WARNING]
 > Never use scope none with Continue monitoring: the same file is detected at each scan, and each detection creates a work order.
@@ -1349,7 +1359,7 @@ Without a queue, nobody sees what waits for a slot, the order is not controlled,
 A queue (FIFO with priorities) between the work and the pool fixes this.
 
 - Create the queue in the **Queues** view (Scheduler group), not ad hoc from the step.
-- `QueueStager` with action **add** (90 % of uses) puts a **string** in the queue (a path, not the file).
+- `QueueStager` with action **add** (90 % of uses) puts a ***string*** in the queue (a path, not the file).
   Set a **Queued item description** that helps operators: by default it is the item; for example `<%= File.basename(queued_item) %> <%= workflow_description %>` (variables become inputs).
 
 ![QueueStager configuration: queue, action Add, queued item description with the file name](images/practices/4.1.6/queue-stager-config.png)
@@ -1394,7 +1404,7 @@ A thousand is manageable; 10 000 or a million overload Orchestrator (for example
 Split into two workflows:
 
 - Workflow 1 detects the elements, adds them to the queue, and ***ends***.
-- Workflow 2 starts with a `LoadManager` with **Continue monitoring**, bound to the queue **without** expected queued item: each time a slot is free, it takes the element at the top and starts a work order.
+- Workflow 2 starts with a `LoadManager` with **Continue monitoring**, bound to the queue ***without*** **Expected queued item**: each time a slot is free, it takes the element at the top and starts a work order.
 
 ![Workflow 1: watcher, add to queue, end](images/practices/4.1.6/two-workflows-add.png)
 
@@ -1543,7 +1553,7 @@ An *asynchronous* worker starts a job and polls its status, serving many steps: 
 
 - The groups give access to the tabs: Developer (**Workflows**), Operator (**Work Orders**, **Monitors**), Contributor (**Tasks**), Scheduler (**Queues**), System (**Engine**).
   Only administrators destroy and reset work orders by default.
-- To start and follow a workflow, a user needs the run and view permissions on the workflow **and on its sub-workflows**.
+- To start and follow a workflow, a user needs the run and view permissions on the workflow ***and on its sub-workflows***.
 - A non-administrator does not get the run permission on the workflows they create: add it.
 - A developer who also runs workflows needs the Developer and Operator groups.
 - Queues, user input tasks and dashboard pages have their own user and group permissions.
@@ -1565,7 +1575,7 @@ An Aspera transfer server can call a workflow for each file it receives, and rej
 
 ![Pattern - inline validation: the event of the call selects the check (file type at start, video codec of the first bytes at the threshold, antivirus at the end); each rejection sets the message for the user](images/practices/4.1.6/inline-validation-workflow.png)
 
-- **4.1.5 and 4.1.6 refuse the call** ([Known issues](#known-issues)), and `ascp` cannot authenticate while **Use Secure JWT API Auth** is set, an option that applies to the whole REST API.
+- ***4.1.5 and 4.1.6 refuse the call*** ([Known issues](#known-issues)), and `ascp` cannot authenticate while **Use Secure JWT API Auth** is set, an option that applies to the whole REST API.
   In these cases, validate after the transfer instead (`AsperaOtfv`, or a trigger workflow).
 - Each file of each transfer creates up to three work orders: tune Orchestrator for the HTTP load, or validate after the transfer instead (`AsperaOtfv`), which does not block `ascp`.
 - Reject at the earliest event that can decide: rejecting at start (for example on the file name) saves the bandwidth and storage of a file that would be refused.
@@ -1709,19 +1719,19 @@ The same operations with the REST API are described in [REST API](#rest-api).
 
 ### Lifecycle
 
-1. **Write** a workflow file (`.yml`), or a package (`.wkf`) that also contains sub-workflows and remote nodes.
-2. **Check** it, with no server: `ascli orchestrator workflows check_import <FILE>` reports part of the rules of the [authoring checklist](#authoring-checklist), which Orchestrator does not check on import.
-3. **Import** it: Orchestrator creates a new workflow with a new `id`.
+1. *Write* a workflow file (`.yml`), or a package (`.wkf`) that also contains sub-workflows and remote nodes.
+2. *Check* it, with no server: `ascli orchestrator workflows check_import <FILE>` reports part of the rules of the [authoring checklist](#authoring-checklist), which Orchestrator does not check on import.
+3. *Import* it: Orchestrator creates a new workflow with a new `id`.
    Each step's action template is created (or mapped to an existing global template).
    The workflow is published when field `publish_workflow` of the request is `true` or `1`, or, without this field, when the server option `publish_api_imported_workflow` is set, which it is not by default.
-4. **Publish** it: Orchestrator builds the runnable workflow from the last whiteboard revision.
-5. **Start** it: Orchestrator creates a work order.
+4. *Publish* it: Orchestrator builds the runnable workflow from the last whiteboard revision.
+5. *Start* it: Orchestrator creates a work order.
    Runtime parameters are given at this point.
-6. **Read** the work order status and outputs.
+6. *Read* the work order status and outputs.
 
 Rules:
 
-- Import and publish do **not** validate the graph.
+- Import and publish do ***not*** validate the graph.
   Publish only requires the whiteboard attribute `error_free` to be set.
   An invalid graph is published and fails at run time, or never ends.
   Use `check_import` and the [authoring checklist](#authoring-checklist).
@@ -1732,10 +1742,10 @@ Rules:
 - To add a revision to an existing workflow instead, use `import_with_constraints` with `add as revision`.
   See [Update an existing workflow](#update-an-existing-workflow).
 - The API has no operation to delete a workflow: delete it in the user interface.
-- **Web UI**: opened from the list of workflows, the designer draws the published revision from the published steps and from the positions in its XML.
+- *Web UI*: opened from the list of workflows, the designer draws the published revision from the published steps and from the positions in its XML.
   The **Revisions** tab draws the XML of the chosen revision.
   If the designer shows an empty canvas, the graph is not lost, and importing again does not help: a `Synch_factor` other than `0` has no position (see [Prerequisites and branches](#prerequisites-and-branches)); the **Revisions** tab still shows the graph.
-  **Never click "Publish" on an empty canvas**: this publishes an empty graph.
+  ***Never click "Publish" on an empty canvas***: this publishes an empty graph.
   A revision imported through the API is shown as created by *Unknown user*.
 
 ### Workflow file
@@ -1774,7 +1784,7 @@ Both are accepted by the import.
 The plain format is the old (Orchestrator 4.0) format.
 It is the simplest to write, and the one used in this guide.
 
-A file is in plain format when **no line** matches `concise_attributes:`.
+A file is in plain format when ***no line*** matches `concise_attributes:`.
 On import, Orchestrator converts it to the current format, line by line, and then loads it.
 That converter is line-based, so the layout rules matter:
 
@@ -1848,8 +1858,8 @@ The minimum is `name`, and `run_as` is recommended.
 
 | Attribute | Type | Rule |
 | --- | --- | --- |
-| `xml_export` | text | **Required.** The graph. See [Graph XML](#graph-xml). |
-| `error_free` | boolean | **Required to publish.** Publish returns `false` if it is null. Set it to `true`: it is not computed on import. |
+| `xml_export` | text | Required. The graph. See [Graph XML](#graph-xml). |
+| `error_free` | boolean | Required to publish. Publish returns `false` if it is null. Set it to `true`: it is not computed on import. |
 | `revision_id` | integer | Optional. Defaults to 1. |
 | `created_by`, `workflow_id`, `revisions_log`, `id`, `created_at`, `updated_at` | | Ignored or replaced. |
 
@@ -1863,9 +1873,9 @@ Element 3 maps each key `<STEP_TYPE>__<N>` to an action template.
 - The value holds the template attributes: the plugin settings.
   The attribute names of each plugin are listed in the [Action Template Reference](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/action-template-reference.md).
 - Attribute `name` decides how the template is imported:
-  - `W<ANY_NUMBER>__<STEP_NAME>`: **embedded** template. It is created for the new workflow and renamed `W<NEW_WORKFLOW_ID>__<STEP_NAME>`.
+  - `W<ANY_NUMBER>__<STEP_NAME>`: *embedded* template. It is created for the new workflow and renamed `W<NEW_WORKFLOW_ID>__<STEP_NAME>`.
     Use this form, with `W0__` and the step name.
-  - Any other name: **global** template.
+  - Any other name: *global* template.
     If a template of the same class and name exists and has the same attributes, it is reused.
     If it differs, a new template named `<NAME> (import_N)` is created.
     If none exists, it is created.
@@ -1963,7 +1973,7 @@ General rules:
 
 The first of these nodes reached ends the work order: the steps still running on other branches are cancelled.
 
-`Fail` and `Error` are also reached **implicitly**: when a work step ends with status `Failed` (or `Error`) and no step is connected to it for that status, the work order goes to `Fail` (or `Error`).
+`Fail` and `Error` are also reached ***implicitly***: when a work step ends with status `Failed` (or `Error`) and no step is connected to it for that status, the work order goes to `Fail` (or `Error`).
 So only success paths need to be connected to `End`; failures do not need explicit links.
 The status details of the work order are then `No behavior defined for step status change to <STATUS> - in <STEP_NAME>`.
 The reason of the failure is in key `step_status_details` of output `<STEP_NAME>:Step_information`: `ascli orchestrator workorders output <WORK_ORDER_ID>` shows it.
@@ -2018,7 +2028,7 @@ A `Prerequisite` element links a previous node to the current one:
 | --- | --- |
 | `0` | All prerequisites (AND). |
 | `N` > 0 | At least `N` prerequisites. `1` is OR: for example `End` after alternative branches. |
-| negative | Never met: do not use. For a value of `-N`, the engine requires the number of prerequisites **plus** `N`, which is more than exist, although "all but `N`" was intended. For "all but `N`", set the positive value: number of prerequisites minus `N`. The designer refuses negative values. |
+| negative | Never met: do not use. For a value of `-N`, the engine requires the number of prerequisites ***plus*** `N`, which is more than exist, although "all but `N`" was intended. For "all but `N`", set the positive value: number of prerequisites minus `N`. The designer refuses negative values. |
 
 When `Synch_factor` is not `0`, the designer draws a join symbol, at the position given by attributes `x` and `y` of `Synch_factor`.
 Write them, on steps and on `End`, `Fail` and `Error`: `<Synch_factor x="920" y="70">1</Synch_factor>`.
@@ -2042,7 +2052,7 @@ See [Recipe: branch on a status](#recipe-branch-on-a-status).
 ```
 
 Attribute `name` of `Input` is the name of an input of the step, as declared by the action template (see [Inputs of a step](#inputs-of-a-step)).
-An `Input` whose name is not declared by the template is **silently ignored**.
+An `Input` whose name is not declared by the template is ***silently ignored***.
 
 `Map_to` gives the source of the value:
 
@@ -2077,7 +2087,7 @@ The `Outputs` element only adds settings:
 | `Output` | Attribute `name`. Optional children: `Processing` (Ruby code transforming the value), `Global` (name of a global variable that also receives the value). |
 | `Carry_thru` | Makes a variable available as an input of this step without the plugin declaring it: at run time, the value is in `@inputs` under `<NAME>` and `<STEP_NAME>/<NAME>`. Attributes: `type` (`output` or `parameter`), `name`, and for `output`: `step_name`, `step_type`, `action_id`. |
 
-An input can be mapped to an output of **any** step of the graph, not only of a step linked to it: the recipes [queue](#recipe-queue-and-resource-pool), [one work order per file](#recipe-one-work-order-per-file) and [operator decision](#recipe-operator-decision) map outputs of the step before the previous one, without `Carry_thru`.
+An input can be mapped to an output of ***any*** step of the graph, not only of a step linked to it: the recipes [queue](#recipe-queue-and-resource-pool), [one work order per file](#recipe-one-work-order-per-file) and [operator decision](#recipe-operator-decision) map outputs of the step before the previous one, without `Carry_thru`.
 The designer has a narrower rule: the mapping list of a step offers only the outputs of the steps linked to it, the variables they carry through, and the global parameters.
 There, `Carry_thru` is the way to offer an output to the step after the next one.
 A mapping to an output that the list does not offer, such as one set by a file, is kept when the step is edited in the designer, but the list then shows **[Select]**; choosing **[Select]** removes the mapping.
@@ -2117,7 +2127,7 @@ Rules:
 
 - A parameter that is not linked to `Start` or to a step does not exist after publish: inputs mapped to it are silently not created.
 - Runtime parameters are the inputs of the workflow: `workflow_inputs_spec` lists them, and `initiate` receives them as `external_parameters`.
-- A **step parameter** is a parameter linked to a step instead of (or in addition to) `Start`.
+- A *step parameter* is a parameter linked to a step instead of (or in addition to) `Start`.
   Linking a parameter to a step does not change its value or scope: the engine sets all parameters when the work order starts, and an input of any step maps to the parameter by name.
   The designer uses step parameter links to draw the parameter node near the step, and offers a step parameter only in the mappings of the steps it is linked to.
   In practice, link a parameter to `Start` and map the input directly.
@@ -2149,8 +2159,8 @@ The [Action Template Reference](https://github.com/laurent-martin/aspera-orchest
 
 Many plugins derive inputs from some of their template attributes:
 
-- A text attribute **left blank** in the template becomes an input, so its value can come from the graph at run time.
-  The [Action Template Reference](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/action-template-reference.md) gives its name in column **Input if blank**.
+- A text attribute ***left blank*** in the template becomes an input, so its value can come from the graph at run time.
+  The [Action Template Reference](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/action-template-reference.md) gives its name in column *Input if blank*.
   - Input name: the value of the plugin constant `VAR_<ATTRIBUTE>` if it exists, else the attribute name with its first letter in upper case (for example `file_path` gives `File_path`).
   - The input is optional if the plugin defines a constant `DEFAULT_<ATTRIBUTE>`, else required.
   - An attribute name ending with `_<TYPE>` (for example `delay_int`) gives an input of that type, named without the suffix (`Delay`).
@@ -2185,7 +2195,7 @@ Any other Ruby code in `<%= ... %>` runs, but creates no input: in `<%= file_nam
 Write `<%= var(file_name).upcase %>`.
 A function call creates inputs only when the placeholder is the call alone and all its arguments are names: `<%= File.join(dir, 'sub') %>` (a literal), `<%= File.join(File.dirname(path), name) %>` (a nested call) and `<%= File.basename(path).upcase %>` create no input.
 Write `<%= File.join(var(dir), 'sub') %>`.
-At run time, a variable that is not an input is `nil`, and the code fails, for example with `no implicit conversion of nil into String`.
+At run time, a variable that is not an input is `nil`, and the code fails, for example with "no implicit conversion of nil into String".
 `var` is only for expressions: `<%= var(file_name) %>` alone fails, write `<%= file_name %>`.
 
 The input created by a placeholder:
@@ -2451,7 +2461,7 @@ History of past triggers: the watcher remembers the files it has detected, with 
 - `remove_file` `0`: a file is detected once per scope of `trigger_type`, and again when its modification time changes.
   With the default scope, the clones of a continuous monitoring share the history, and a new start (a new work order) detects again the files left in the directory.
 - `remove_file` `1`: the file leaves the directory, no history is needed.
-- `remove_file` blank (the database default; in plain format, also when written `false`): **no history**.
+- `remove_file` blank (the database default; in plain format, also when written `false`): ***no history***.
   A file left in the directory is detected again at each scan, by each new clone: with `allow_multiple`, a file that the processing does not remove starts a new processing every polling period.
 
 Write `remove_file` explicitly: `1` to remove the file, `0` to keep it.
@@ -2525,7 +2535,7 @@ Starts a transfer on a node with the Node API, then checks its status every `pol
   The certificate of the node is not verified.
 - Authentication is Basic, with `user_login` and `user_password`: a node user and its password, or an access key and its secret.
   They are required also with `remote_node`.
-  With wrong credentials, the step ends with `Failed`: `Transfer failed: 401 Unauthorized`.
+  With wrong credentials, the step ends with `Failed`: "Transfer failed: 401 Unauthorized".
 - `destination_root` of the transfer spec is a path in the docroot of the node user, or in the storage root of the access key.
 
 #### WorkflowLauncher
@@ -2735,7 +2745,7 @@ It does not check that the file exists: a wrong path returns the same empty list
 
 #### import_with_constraints
 
-`POST api/import_with_constraints`, JSON body: an **array** of six objects, in this order:
+`POST api/import_with_constraints`, JSON body: an ***array*** of six objects, in this order:
 
 ```json
 [{"filename": "/opt/aspera/orchestrator/var/run/orchestrator/workflows/import/my_workflow.yml"},
@@ -2773,7 +2783,7 @@ Query parameters:
 | `tags` | Comma-separated tags of the work order. |
 
 Give the value of an `array` or `hash` parameter as a string, in JSON: `{"files": "[\"/a.mxf\", \"/b.mxf\"]"}`.
-A JSON array as value fails with status 500 (`undefined method 'gsub' for an instance of Array`), observed on 4.1.6.
+A JSON array as value fails with status 500 ("undefined method 'gsub' for an instance of Array"), observed on 4.1.6.
 
 #### Other workflow endpoints
 
@@ -2832,7 +2842,7 @@ In the `aspera.conf` of the server:
 | `validation_secure` | `true` checks the certificate of Orchestrator. Not checked by default. |
 | `session_timeout_sec` | Time limit of a call, 60 seconds by default. |
 
-The session fails at start with `Validator initialization error` when an event is set to `uri` without `validation_uri`, when `validation_uri` is set with no event set to `uri`, or when `validation_threshold` is set without `validation_threshold_kb`.
+The session fails at start with "Validator initialization error" when an event is set to `uri` without `validation_uri`, when `validation_uri` is set with no event set to `uri`, or when `validation_threshold` is set without `validation_threshold_kb`.
 
 #### Validation call
 
@@ -2891,7 +2901,7 @@ See [Quick start](#quick-start).
 
 #### Recipe: runtime parameter and step chaining
 
-Step `Greet` receives the runtime parameter `who`; step `Shout` receives the output of `Greet`, with input processing.
+Step *Greet* receives the runtime parameter `who`; step *Shout* receives the output of *Greet*, with input processing.
 
 ```yaml
 ---
@@ -2949,7 +2959,7 @@ ascli orchestrator workflows start <ID> @json:'{}' @json:'{"step":"Shout","varia
 
 #### Recipe: branch on a status
 
-Step `Check` ends with `Failed` when the runtime parameter `value` is empty; one step is connected to each status; `End` waits for any of them (`Synch_factor` 1).
+Step *Check* ends with `Failed` when the runtime parameter `value` is empty; one step is connected to each status; `End` waits for any of them (`Synch_factor` 1).
 
 ```yaml
 ---
@@ -3001,7 +3011,7 @@ Step `Check` ends with `Failed` when the runtime parameter `value` is empty; one
 - CustomRuby: 0.7.0
 ```
 
-With `{"value":"x"}`, only `On OK` runs; with `{}`, only `On Failed` runs.
+With `{"value":"x"}`, only *On OK* runs; with `{}`, only *On Failed* runs.
 Both work orders end `Complete`.
 
 #### Recipe: wait for a file
@@ -3051,14 +3061,14 @@ The command returns when a matching file has been stable for `cool_off` seconds,
 
 #### Recipe: sub-workflow with outputs
 
-Workflow `child` upper-cases its runtime parameter `text`: step `Upper`, output `result`.
-Workflow `parent` runs it in step `Call child` (`SubWorkflow`), and gets `result` of `Upper` as output `upper` of the step.
+Workflow *child* upper-cases its runtime parameter `text`: step *Upper*, output `result`.
+Workflow *parent* runs it in step *Call child* (`SubWorkflow`), and gets `result` of *Upper* as output `upper` of the step.
 
-Import and publish `child` first, and write its id in `workflow_id` of the `SubWorkflow` template (see [Referring to existing entities](#referring-to-existing-entities)).
-The inputs and outputs of the step come from the published `child`:
+Import and publish *child* first, and write its id in `workflow_id` of the `SubWorkflow` template (see [Referring to existing entities](#referring-to-existing-entities)).
+The inputs and outputs of the step come from the published *child*:
 
-- One input per runtime parameter of `child`, with the same name: here `text`, required because `Runtime_optional` is `false` in `child`.
-- One output per entry of `workflow_outputs`, `{'<OUTPUT_NAME>'=>'<STEP_NAME>:<CHILD_OUTPUT_NAME>'}`, with the type of that output in `child`.
+- One input per runtime parameter of *child*, with the same name: here `text`, required because `Runtime_optional` is `false` in *child*.
+- One output per entry of `workflow_outputs`, `{'<OUTPUT_NAME>'=>'<STEP_NAME>:<CHILD_OUTPUT_NAME>'}`, with the type of that output in *child*.
 
 ```yaml
 ---
@@ -3146,20 +3156,20 @@ ascli orchestrator workflows import parent.yml @json:'{"publish":true}'
 ascli orchestrator workflows start <PARENT_ID> @json:'{"text":"abc"}' @json:'{"step":"Use result","variable":"result"}'   # child returned ABC
 ```
 
-`child` runs in a work order of its own.
-The import of `parent` sets `workflow_portable_id` of the template to the portable id of `child`.
+*child* runs in a work order of its own.
+The import of *parent* sets `workflow_portable_id` of the template to the portable id of *child*.
 
 #### Recipe: one work order per file
 
-Workflow `watch_folder` watches the folder `/tmp/doc_test_watch/` of the Orchestrator host, and starts workflow `per_file` once per file found:
+Workflow *watch_folder* watches the folder `/tmp/doc_test_watch/` of the Orchestrator host, and starts workflow *per_file* once per file found:
 
-- `Detect files` (`LocalFileWatcher`): continuous monitoring (`allow_multiple`, see [Triggers](#triggers)), all files found at once (`return_all`): output `FileName` is an array.
-  The files are left in the folder and remembered (`remove_file` `0`): `per_file` deletes them.
-- `Each file` (`ArrayFanout`): runs the next step once per element of input `all_files`, with the element as output `file`.
-- `Process file` (`WorkflowLauncher`): starts `per_file` with `file_path` set to `file`, waits for its end (`wait_for_completion`), and ends with `Failed` if it fails (`fail_if_failure`).
-- `Wait all` (`Funnelin`): runs once all executions of `Process file` have ended, and gathers their values.
+- *Detect files* (`LocalFileWatcher`): continuous monitoring (`allow_multiple`, see [Triggers](#triggers)), all files found at once (`return_all`): output `FileName` is an array.
+  The files are left in the folder and remembered (`remove_file` `0`): *per_file* deletes them.
+- *Each file* (`ArrayFanout`): runs the next step once per element of input `all_files`, with the element as output `file`.
+- *Process file* (`WorkflowLauncher`): starts *per_file* with `file_path` set to `file`, waits for its end (`wait_for_completion`), and ends with `Failed` if it fails (`fail_if_failure`).
+- *Wait all* (`Funnelin`): runs once all executions of *Process file* have ended, and gathers their values.
 
-`per_file` reads the size of the file and deletes it.
+*per_file* reads the size of the file and deletes it.
 
 ```yaml
 ---
@@ -3275,13 +3285,13 @@ ascli orchestrator workflows start <WATCH_FOLDER_ID> @json:'{}'
 ```
 
 Observed with the files `a_ok.txt`, `b_ok.txt` and `c_locked.txt`, the last one made impossible to delete (`chattr +i`).
-The folder belongs to the user that runs Orchestrator (`aspweb`), so that `per_file` can delete the files:
+The folder belongs to the user that runs Orchestrator (`aspweb`), so that *per_file* can delete the files:
 
-- One work order of `per_file` per file.
-  The executions of the fanned step are named `Process file (0)`, `Process file (1)`, ... in `Step_information`.
-- Outputs of `Wait all`, by work step id: `Hash_by_state_id` (value of `file`), `Status_by_state_id`; by value of `file`: `Status_hash`, and `WorkOrder_ID_hash` for the input `WorkOrder_ID` declared in `funneled_inputs`.
+- One work order of *per_file* per file.
+  The executions of the fanned step are named *Process file (0)*, *Process file (1)*, ... in `Step_information`.
+- Outputs of *Wait all*, by work step id: `Hash_by_state_id` (value of `file`), `Status_by_state_id`; by value of `file`: `Status_hash`, and `WorkOrder_ID_hash` for the input `WorkOrder_ID` declared in `funneled_inputs`.
   For example `Status_hash` is `{"/tmp/doc_test_watch/a_ok.txt" => "Complete", "/tmp/doc_test_watch/b_ok.txt" => "Complete", "/tmp/doc_test_watch/c_locked.txt" => "Failed"}`.
-- `Wait all` ends with `Failed` (`fail_if_failures`: `Funneled in 3 work steps with 1 failures`), and the work order goes to `Fail`.
+- *Wait all* ends with `Failed` (`fail_if_failures`: "Funneled in 3 work steps with 1 failures"), and the work order goes to `Fail`.
   When all files are processed, it goes to `End`.
 - The work order that detected the files continues; a clone waits for the next files: cancel it to stop the monitoring.
 - `c_locked.txt` stays in the folder, and the clone does not detect it again: it shares the history of the first work order.
@@ -3290,27 +3300,27 @@ Rules of this pattern (from `ArrayFanout` and `Funnelin`, and tests):
 
 - Exactly one step between `ArrayFanout` and `Funnelin`.
   `ArrayFanout` ends with `Error` when its `Complete` exit leads to more than one step ("Only one step is supported between fan-out and funnel-in"), or when the `Complete` exit of that step leads to more than one step ("Funneled-step should only exit complete in the funnel-in step").
-  A chain of two steps is not refused, but is wrong: observed with `ArrayFanout`, two `FileInfo` steps and `Funnelin`, on three files, the first step ran three times, the second one once (first file), and `Funnelin` reported `Funneled in 1 work steps`; the work order completed.
+  A chain of two steps is not refused, but is wrong: observed with `ArrayFanout`, two `FileInfo` steps and `Funnelin`, on three files, the first step ran three times, the second one once (first file), and `Funnelin` reported "Funneled in 1 work steps"; the work order completed.
   For more processing, use a `SubWorkflow` or `WorkflowLauncher` step, as here.
 - Connect `Funnelin` to each end status of that step (`Complete`, `Failed`, `Error`), with `Synch_factor` 1: `ArrayFanout` replaces 1 by the number of elements, so `Funnelin` waits for all executions, whatever their status.
-  With a link on `Complete` only, a failed execution has no next step, and the work order fails at once (`No behavior defined for step status change to Failed - in Process file (1)`).
+  With a link on `Complete` only, a failed execution has no next step, and the work order fails at once ("No behavior defined for step status change to Failed - in Process file (1)").
 - Write `remove_file` `0` (or `1`).
   Left blank, the watcher keeps no history (see [LocalFileWatcher](#localfilewatcher)): a file still in the folder is detected again by each clone.
-  This was observed with this recipe without `remove_file`: with `c_locked.txt` left in the folder, each new clone started `per_file` on it again.
-- A new start of `watch_folder` has an empty history: it processes again the files left in the folder.
+  This was observed with this recipe without `remove_file`: with `c_locked.txt` left in the folder, each new clone started *per_file* on it again.
+- A new start of *watch_folder* has an empty history: it processes again the files left in the folder.
   Move a file whose processing fails to an error folder.
 
 #### Recipe: queue and resource pool
 
-Workflow `queue` runs step `Work` for one work order at a time, in the order the work orders started:
+Workflow *queue* runs step *Work* for one work order at a time, in the order the work orders started:
 
-- `Enqueue` (`QueueStager`, operation `Add`): adds the runtime parameter `item` to the queue `doc test queue`, created on first use (`adhoc_queue`).
+- *Enqueue* (`QueueStager`, operation `Add`): adds the runtime parameter `item` to the queue *doc test queue*, created on first use (`adhoc_queue`).
   With `lifetime` `WorkOrder`, the items of a work order that stopped are removed from the queue.
-- `Reserve` (`LoadManager`, action `Reserve`): reserves a resource of the pool `doc test pool`, created on first use (default `is_adhoc`) with one resource of capacity 1 (`max_resources`, `resource_capacity`).
-  With `queue_id` set to the queue, and input `Expected_queued_item` mapped to output `Queued_item` of `Enqueue`, it waits until this item is the first of the queue and a resource is free, and then removes the item from the queue.
+- *Reserve* (`LoadManager`, action `Reserve`): reserves a resource of the pool *doc test pool*, created on first use (default `is_adhoc`) with one resource of capacity 1 (`max_resources`, `resource_capacity`).
+  With `queue_id` set to the queue, and input `Expected_queued_item` mapped to output `Queued_item` of *Enqueue*, it waits until this item is the first of the queue and a resource is free, and then removes the item from the queue.
   The value of an item identifies it: use a value that is unique to the work order, for example a file path.
-- `Work` (`CustomRuby`): 10 seconds of work; with `fail` set to `yes`, it raises an exception (`Error`).
-- `Release` and `Release on error` (`LoadManager`, action `Release`): release the reservation (input `Allocation_token_to_release` mapped to output `Allocation_token` of `Reserve`), after `Complete` of `Work`, and after `Failed` or `Error` (`Synch_factor` 1).
+- *Work* (`CustomRuby`): 10 seconds of work; with `fail` set to `yes`, it raises an exception (`Error`).
+- *Release* and *Release on error* (`LoadManager`, action `Release`): release the reservation (input `Allocation_token_to_release` mapped to output `Allocation_token` of *Reserve*), after `Complete` of *Work*, and after `Failed` or `Error` (`Synch_factor` 1).
   A reservation that is not released holds the resource until `resource_hold_timeout` (none by default): the next work orders wait.
 
 ```yaml
@@ -3400,13 +3410,13 @@ ascli orchestrator queues list
 ascli orchestrator pools status 'doc test pool'   # taken 0, capacity 1: all released
 ```
 
-Observed: `Reserve` waited 0 s for `a`, 15 s for `b` and 25 s for `c` (`processingTime` in `Step_information`).
-`a` and `c` end `Complete`; `b` ends `Failed`, through `Release on error`.
+Observed: *Reserve* waited 0 s for `a`, 15 s for `b` and 25 s for `c` (`processingTime` in `Step_information`).
+`a` and `c` end `Complete`; `b` ends `Failed`, through *Release on error*.
 Generic resources are named `resource_1`, `resource_2`, ... (output `Resource_reserved`).
 
 #### Recipe: lookup table
 
-Workflow `lookup` takes the settings of the runtime parameter `profile` from a table (see [SimpleParameterLookup](#simpleparameterlookup)), and fails for an unknown profile.
+Workflow *lookup* takes the settings of the runtime parameter `profile` from a table (see [SimpleParameterLookup](#simpleparameterlookup)), and fails for an unknown profile.
 Rows are separated by `\n` in a double-quoted value.
 
 ```yaml
@@ -3462,21 +3472,21 @@ ascli orchestrator workflows start <ID> @json:'{"profile":"AUDIO_HQ"}' @json:'{"
 - `webm` matches `WEBM`: the comparison ignores case by default (`case_sensitive`).
 - `AUDIO_HQ` matches the row `/^AUDIO/`, a regular expression.
 - With `{}`, `profile` has its default value `MP4`.
-- `PRORES` matches no row: `Profile settings` ends with `Failed` (`No configuration match for data set: Profile:PRORES`), and the work order goes to `Fail`.
+- `PRORES` matches no row: *Profile settings* ends with `Failed` ("No configuration match for data set: Profile:PRORES"), and the work order goes to `Fail`.
 
 #### Recipe: operator decision
 
-Workflow `review` delivers to the runtime parameter `target` if it is valid, and otherwise asks an operator for another target.
+Workflow *review* delivers to the runtime parameter `target` if it is valid, and otherwise asks an operator for another target.
 Two branches join in a `MergePoint` step:
 
-- `Check target` (`Filter`): `Complete` if `target` starts with `/data/`, `Failed` otherwise.
-- `Ask operator` (`UserInput`), after `Failed`: creates a task in the web interface (tab Tasks) for the user `admin` (`assigned_user_logins`), described as `Invalid target for <TITLE>`.
+- *Check target* (`Filter`): `Complete` if `target` starts with `/data/`, `Failed` otherwise.
+- *Ask operator* (`UserInput`), after `Failed`: creates a task in the web interface (tab **Tasks**) for the user `admin` (`assigned_user_logins`), described as `Invalid target for <TITLE>`.
   The task shows `title` and `target` (`mandatory_inputs`), and asks for `new_target` (required, `required_requested_data`) and `rejected` (optional, `user_outputs`): they become outputs of the step.
   For another layout of the task, see [Custom form](#custom-form).
-- `Check rejection` (`Filter`): `Failed` if the operator wrote `yes` in `rejected`: the work order goes to `Fail`.
-- `Merge target` (`MergePoint`), after `Complete` of `Check target` or of `Check rejection` (`Synch_factor` 1): output `target` is input `target` (mapped to `new_target` of `Ask operator`) when it has a value, and input `target_alternate` (mapped to the parameter `target`) otherwise.
-  When `Ask operator` did not run, its outputs have no value.
-- `Deliver` (`CustomRuby`): uses `target` of `Merge target`.
+- *Check rejection* (`Filter`): `Failed` if the operator wrote `yes` in `rejected`: the work order goes to `Fail`.
+- *Merge target* (`MergePoint`), after `Complete` of *Check target* or of *Check rejection* (`Synch_factor` 1): output `target` is input `target` (mapped to `new_target` of *Ask operator*) when it has a value, and input `target_alternate` (mapped to the parameter `target`) otherwise.
+  When *Ask operator* did not run, its outputs have no value.
+- *Deliver* (`CustomRuby`): uses `target` of *Merge target*.
 
 ```yaml
 ---
@@ -3559,13 +3569,13 @@ ascli orchestrator workflows start <ID> @json:'{"target":"/data/ok"}' @json:'{"s
 ascli orchestrator workflows start <ID> @json:'{"title":"clip 2","target":"bad/path"}'
 ```
 
-The second work order waits on `Ask operator`.
-In the web interface, the operator fills the form and clicks `Complete Task`.
+The second work order waits on *Ask operator*.
+In the web interface, the operator fills the form and clicks **Complete Task**.
 Observed:
 
 - `new_target` `/data/fixed`, `rejected` empty: `delivered to /data/fixed`, work order `Complete`.
-- `rejected` `yes`: `Check rejection` ends with `Failed`, work order `Failed`.
-- Output `InputProvider` of `Ask operator` is the id of the user who completed the task (`1` for `admin`).
+- `rejected` `yes`: *Check rejection* ends with `Failed`, work order `Failed`.
+- Output `InputProvider` of *Ask operator* is the id of the user who completed the task (`1` for `admin`).
 
 The [REST API](#rest-api) can also complete a task:
 
@@ -3582,10 +3592,10 @@ Observed on 4.1.6:
 
 ##### Custom form
 
-`Ask operator` above uses the default form: the inputs, then one field per requested data.
+*Ask operator* above uses the default form: the inputs, then one field per requested data.
 For another layout, write the content of the form in a file, and give its name in attribute `view_template`.
 The file replaces the default content.
-The buttons `Cancel` and `Complete Task` stay below it, in the same HTML form: do not add them.
+The buttons **Cancel** and **Complete Task** stay below it, in the same HTML form: do not add them.
 
 Install the file on the Orchestrator server, with owner `aspweb`: `/opt/aspera/var/config/orchestrator/actions_config/user_inputs/_<NAME>.html.erb`.
 The name must start with `_`.
@@ -3658,7 +3668,7 @@ Observed on 4.1.6:
 - When the form is submitted, the server does not check the required data: without `target`, the step ends with `Complete`.
   Only the browser can refuse: set the HTML attribute `required`, as in this sample.
   `api/submit_task` does check them.
-- `Cancel` only closes the dialog, and the task stays open.
+- **Cancel** only closes the dialog, and the task stays open.
   To let the operator refuse, ask for it in a field, such as `rejected` in the recipe above.
 - `draw_input` with type `string` draws a field that is read-only until it has the focus.
 - `draw_input` with type `date` has no time.
@@ -3766,6 +3776,9 @@ They are two applications of the same design.
 This chapter gives what they share and how they differ.
 [Plugin development](#plugin-development) and [Portlet development](#portlet-development) give the details of each.
 
+> [!WARNING]
+> The chapters [Plugin development](#plugin-development) and [Portlet development](#portlet-development) are informative and are not supported by the product team: the internal interfaces can change in any release.
+
 ### Plugins and portlets compared
 
 Common points:
@@ -3846,13 +3859,18 @@ The details are in [Plugin security](#plugin-security) and [Portlet security](#p
 This chapter explains how to add a step type to workflows by writing an action plugin.
 Read it when no shipped plugin does the job and a [`CustomRuby` step](#custom-code) is not enough, or to change an existing plugin.
 
+> [!WARNING]
+> This chapter is informative and is not supported by the product team: the internal interfaces of action plugins can change in any release.
+> Support is given only for the plugins provided with Orchestrator, not for the ones that you develop yourself.
+> Check the code of your Orchestrator version before you rely on it.
+
 The shipped plugins are the best set of examples: folder `/opt/aspera/orchestrator/actions` of an Orchestrator server, one folder per plugin.
 `HelloWorld` (`hello_worlds`) is a reference implementation with pause, resume, cancel, rollback and recovery.
 
 ### Plugin quick start
 
 The following plugin `MyGreeting` builds a message from a template attribute with placeholders.
-When attribute `wait_seconds` is **not** `0`, it waits that long before completing, without holding a worker (asynchronous execution).
+When attribute `wait_seconds` is ***not*** `0`, it waits that long before completing, without holding a worker (asynchronous execution).
 Its template form has its own CSS and JavaScript: a live preview of the message.
 
 #### Plugin source
@@ -4085,7 +4103,7 @@ end
 #### Plugin install and run
 
 1. Copy the folder to `/opt/aspera/orchestrator/actions/my_greetings`, owned by `aspweb`, and the icon to `/opt/aspera/orchestrator/public/aspera/orchestrator/assets/actions/MyGreeting.png`.
-2. Open the **Plugins** page (`https://<HOST>/aspera/orchestrator/plugins`): `My greeting` is listed, disabled. Click **Enable**.
+2. Open the **Plugins** page (`https://<HOST>/aspera/orchestrator/plugins`): *My greeting* is listed, disabled. Click **Enable**.
 3. Restart the web server: `systemctl restart orchestrator_server`, needed to import workflow files that use the new plugin (see [Installing a plugin](#installing-a-plugin)).
 4. Use it in a workflow: in the designer, or with a workflow file (see the [Workflow authoring chapter](#workflow-authoring)).
 
@@ -4176,7 +4194,7 @@ Rules:
   It must be unique in Orchestrator: migrations of all plugins are evaluated in the same Ruby namespace.
 - The class inherits `ActiveRecord::Migration[8.0]` (600 of the 731 shipped migrations; others use `[6.1]` or `[8.1]`).
 - `<VERSION>` must be unique among all migrations of Orchestrator and of all plugins: Rails records applied versions in the table `schema_migrations`, shared by the whole application.
-  A migration whose version is already recorded is not run, and enabling the plugin does not report it: the log shows `Table '...' doesn't exist`, and no default template is created.
+  A migration whose version is already recorded is not run, and enabling the plugin does not report it: the log shows "Table '...' doesn't exist", and no default template is created.
 - The table is `action_<FOLDER>`, written literally (`:action_my_greetings`): Orchestrator replays the migrations on a copy of the table, replacing that name, to find which ones are applied.
 - The first migration creates the table with columns `name` and `comments` (strings) and timestamps (`t.timestamps`), and the attributes of the plugin.
 - To change the table in a new version of the plugin, add a migration. Never change a migration that may have been applied.
@@ -4580,7 +4598,7 @@ The same applies to `pause_on_request?` and `resume_on_request?`.
 
 `recover` is called when a worker finds a synchronous step still `In Progress`, for example after a restart of the worker during `execute`.
 It returns `status, details, outputs` like `execute`.
-The default returns `Error`, `Recovery after partial execution is not supported`.
+The default returns `Error`, "Recovery after partial execution is not supported".
 
 `HelloWorld` (`hello_worlds`) implements all of them.
 
@@ -4792,7 +4810,7 @@ For the log, see [Testing and debugging](#testing-and-debugging).
 | --- | --- |
 | The plugin is not in the Plugins page. | The folder name is not the `tableize` of the class, `metadata.yml` is missing or invalid, or no version of the plugin fits this Orchestrator version (`:minimum_server_version`, `:maximum_server_version`, `:is_beta`). |
 | Enable fails: `External dependency <PROGRAM> not found`. | A program of `:external_dependencies` is not in the `PATH`. |
-| Enable succeeds, but the log shows `Table '...' doesn't exist` and there is no default template. | The version of the migration is already used by another migration, or the migration does not create `action_<FOLDER>`. |
+| Enable succeeds, but the log shows "Table '...' doesn't exist" and there is no default template. | The version of the migration is already used by another migration, or the migration does not create `action_<FOLDER>`. |
 | Import of a workflow fails: `Tried to load unspecified class: <CLASS>`. | The web server was started before the plugin was enabled: restart it. |
 | The step ends with `Error`, `Invalid inputs: Input <NAME> expected, but not found`. | A required input is not mapped in the step, or the template changed after the workflow was published. |
 | The step ends with `Failed`, `Timed Out at <TIME>`. | A call of `execute` or `check_status` lasted longer than the timeout without `report_progress`. |
@@ -4835,23 +4853,23 @@ The plugin `SecretReference` of repository `aspera-orchestrator-secret-reference
 
 Rules:
 
-- **Support file loaded first**: files are loaded shortest path first, so a support file with a shorter name than the main file (`secret_core.rb` before `secret_reference.rb`) installs the changes before the class is defined.
-- **Zeitwerk names**: at boot, Rails eager loads each load folder with Zeitwerk, so the support file must define the constant of its name (`SecretCore` in `secret_core.rb`).
-  A folder whose name is not a constant name (`vendor/aspera-cli`) stops the boot: `wrong constant name Aspera-cli`.
-- **Library in a hidden folder**: Zeitwerk ignores hidden folders, and `Plugin.load_plugin` loads only `[A-Za-z]*.rb` of the folder itself.
+- *Support file loaded first*: files are loaded shortest path first, so a support file with a shorter name than the main file (`secret_core.rb` before `secret_reference.rb`) installs the changes before the class is defined.
+- *Zeitwerk names*: at boot, Rails eager loads each load folder with Zeitwerk, so the support file must define the constant of its name (`SecretCore` in `secret_core.rb`).
+  A folder whose name is not a constant name (`vendor/aspera-cli`) stops the boot: "wrong constant name Aspera-cli".
+- *Library in a hidden folder*: Zeitwerk ignores hidden folders, and `Plugin.load_plugin` loads only `[A-Za-z]*.rb` of the folder itself.
   Copy the library and its gems into `.vendor` of the plugin folder, and add their `lib` folders to `$LOAD_PATH` from the support file: no `bundle install`.
   The runtime dependencies of these gems must be satisfied by the gems of Orchestrator, at their versions (see `Gemfile.lock`).
   Enable copies the folder with its subfolders, and the plugin file (`tar.gz`) keeps them.
-- **Change with `prepend`**: prepend a module whose methods call `super` to the class or module of Orchestrator (`ActionTools.prepend(Hook)`, `ActionTools.singleton_class.prepend(Hook)` for a class method).
+- *Change with `prepend`*: prepend a module whose methods call `super` to the class or module of Orchestrator (`ActionTools.prepend(Hook)`, `ActionTools.singleton_class.prepend(Hook)` for a class method).
   A module prepended to a module, such as `ActionTools`, also applies to classes that included it before.
-- **Once per process**: a file is loaded by Zeitwerk at boot, then again with `load` by Enable, Reload and the reload of plugins by workers (`Engine.reload_plugin`).
+- *Once per process*: a file is loaded by Zeitwerk at boot, then again with `load` by Enable, Reload and the reload of plugins by workers (`Engine.reload_plugin`).
   Install the changes once per process (a flag in the support module).
   Each service (web server, engine, workers) loads the plugin, so each one installs the changes.
-- **Disabled plugin**: Disable unloads only the constants under the name of the plugin class (`Plugin.unload_plugin_classes`): the support module and the prepended modules stay in memory.
+- *Disabled plugin*: Disable unloads only the constants under the name of the plugin class (`Plugin.unload_plugin_classes`): the support module and the prepended modules stay in memory.
   Each changed method checks that the plugin is enabled (`Object.const_defined?(:SecretReference)`), and else only calls `super`.
-- **Versions**: set `:minimum_server_version` and `:maximum_server_version` of `metadata.yml` to the version you tested.
+- *Versions*: set `:minimum_server_version` and `:maximum_server_version` of `metadata.yml` to the version you tested.
   Before installing the changes, check the parameters of each changed method (`ActionTools.instance_method(:assign_inputs).parameters`): if one differs, install nothing, and log it.
-- **Upgrade**: code already loaded (the library) is not loaded again: restart Orchestrator after **Upgrade** (`orchestrator restart`).
+- *Upgrade*: code already loaded (the library) is not loaded again: restart Orchestrator after **Upgrade** (`orchestrator restart`).
 
 #### Patterns in the shipped plugins
 
@@ -4899,7 +4917,7 @@ Plugin gem: add the `gem` lines to `/opt/aspera/orchestrator/actions/<FOLDER>/Ge
 
 Then:
 
-```bash
+```shell
 cd /opt/aspera/orchestrator/
 bundle install
 orchestrator restart
@@ -4909,6 +4927,11 @@ orchestrator restart
 
 This chapter explains how to add a widget to the Orchestrator dashboard by writing a portlet.
 Read it when users need a view or an action that no shipped portlet offers, or to change an existing portlet.
+
+> [!WARNING]
+> This chapter is informative and is not supported by the product team: the internal interfaces of portlets can change in any release.
+> Support is given only for the portlets provided with Orchestrator, not for the ones that you develop yourself.
+> Check the code of your Orchestrator version before you rely on it.
 
 The shipped portlets are the best set of examples: folder `/opt/aspera/orchestrator/portlets` of an Orchestrator server, one folder per portlet.
 `orchestrator_information` is the simplest, `user_tasks` has parameters and a permission check, `csv_editor` has uploads, a modal dialog and several actions, `queue_management` has pagination and `helper_method`.
@@ -5152,8 +5175,8 @@ Gotchas:
 
 #### Parameter `refresh`
 
-All 23 shipped portlets have a parameter `refresh` (seconds) in `defaulted_parameters`; 19 also declare it in `parameters_spec` as `TYPE_INT`. Declare it in both. With a value **above** `0` and no sub-frame, the dashboard reloads the frame periodically while the page is visible. `-1` or `0` disables it.
-The layout `individual_portlet` shows "Last refreshed at" when `refresh` is set and is `0` **or more**.
+All 23 shipped portlets have a parameter `refresh` (seconds) in `defaulted_parameters`; 19 also declare it in `parameters_spec` as `TYPE_INT`. Declare it in both. With a value ***above*** `0` and no sub-frame, the dashboard reloads the frame periodically while the page is visible. `-1` or `0` disables it.
+The layout `individual_portlet` shows "Last refreshed at" when `refresh` is set and is `0` ***or more***.
 If `refresh` is not in the link of the frame, the frame uses `defaulted_parameters['refresh']`.
 
 ### Views and actions
@@ -5166,10 +5189,10 @@ How a portlet is shown:
 2. **Save Configuration** stores `link_parameters` (a Ruby hash as text, for example `{"greeting" => "Bonjour", "uppercase" => "true"}`) and appends `&<NAME>=<%= CGI::escape(<NAME>) %>` to the link for each saved parameter.
 3. The page requests `FramesController#display`, which redirects to the expanded URL, with `frame_id` and `frame_html_id`, for example `portlets/view?id=hello_banner&greeting=Bonjour&uppercase=true&max_orders=3&refresh=30&frame_id=2&frame_html_id=dashboard_2`.
 4. `PortletsController#view` merges `params` and `link_parameters`, calls `Portlet.generate`, and renders `view_template` in layout `individual_portlet`.
-5. If `refresh` is **above** `0`, `FramesDisplay.loadSubframe` calls `startAjaxAutoUpdates` to reload the frame.
+5. If `refresh` is ***above*** `0`, `FramesDisplay.loadSubframe` calls `startAjaxAutoUpdates` to reload the frame.
 
 Errors render a small HTML message: "Undefined portlet" if the ID is unknown, "Error displaying portlet" if the view raises.
-The "Choose Portlet" list contains the enabled portlets; for a non-administrator, only those with permission `run` (see [Permissions](#permissions)).
+The **Choose Portlet** list contains the enabled portlets; for a non-administrator, only those with permission `run` (see [Permissions](#permissions)).
 A dashboard can be exported and imported as YAML (`*_dashboardpage.yml`), assigned to users or groups, and ranked.
 
 #### Main view
@@ -5331,7 +5354,7 @@ Each was reproduced on a 4.1.6 server, except the regular expression on `link_pa
 
 | Issue | Effect | Work-around |
 | --- | --- | --- |
-| `Portlet.version` is a class method that reads `first_or_initialize.portlet_id`. | `api/portlet_version` returns the version of the first portlet row for every portlet. On the test server, all portlets, `Hello banner` 1.0.0 and `Queue Manager` 0.0.9 included, were reported as 0.0.3, the version of `aspera_service`. | Read `metadata.yml` directly. |
+| `Portlet.version` is a class method that reads `first_or_initialize.portlet_id`. | `api/portlet_version` returns the version of the first portlet row for every portlet. On the test server, all portlets, *Hello banner* 1.0.0 and `Queue Manager` 0.0.9 included, were reported as 0.0.3, the version of `aspera_service`. | Read `metadata.yml` directly. |
 | `Entitlement.matching_permissions` returns an array of parts and the list tests complete principals. | A non-administrator with an explicit `run` permission does not see the portlet in **Choose Portlet**. | Assign the portlet to the user with the administrator, through a dashboard. |
 | Portlet controllers inherit the public methods of `PortletsController`. | `portlet_action=disable` and similar are reachable without a permission check. | Check permissions in each action; do not expose sensitive operations. |
 | The row ID changes when a portlet is disabled and enabled. | Permissions are orphaned. | Avoid disable and enable; grant permissions again. |
@@ -5426,15 +5449,15 @@ This chapter says how the content of each chapter was checked, for a reader who 
 
 ### How each chapter was verified
 
-- **Workflow development practices:** the rules come from field experience of workflow design on Orchestrator 3.x and 4.x.
+- [Workflow development practices](#workflow-development-practices): the rules come from field experience of workflow design on Orchestrator 3.x and 4.x.
   A few facts were checked against Orchestrator 4.1.6; they are marked *(4.1.6)*.
   The screenshots show Orchestrator 4.1.6: the user interface and some option names differ in other versions.
   The concepts and rules do not.
-- **Workflow authoring:** the content is derived from Orchestrator 4.1.6.
+- [Workflow authoring](#workflow-authoring): the content is derived from Orchestrator 4.1.6.
   The examples in [Recipes](#recipes) were imported, published and executed on Orchestrator 4.1.6.
-- **Extending Orchestrator:** the content comes from Plugin development and Portlet development, and was verified in the same way.
-- **Plugin development:** the content is derived from Orchestrator 4.1.6.
+- [Extending Orchestrator](#extending-orchestrator): the content comes from Plugin development and Portlet development, and was verified in the same way.
+- [Plugin development](#plugin-development): the content is derived from Orchestrator 4.1.6.
   The example plugin of [Plugin quick start](#plugin-quick-start) was installed, enabled, and executed in a workflow on Orchestrator 4.1.6, and the steps of [Installing a plugin](#installing-a-plugin) and [Updating a plugin](#updating-a-plugin) were done on that server.
-- **Portlet development:** the content is derived from Orchestrator 4.1.6.
+- [Portlet development](#portlet-development): the content is derived from Orchestrator 4.1.6.
   - On an Orchestrator 4.1.6.2036 server: the example portlet of [Portlet quick start](#portlet-quick-start) was imported with **Import Portlet**, chosen and configured in a dashboard frame, displayed, and its action called with GET and POST. In Chrome, the **Ping** link (`ajaxUpdate`) and the automatic refresh worked with no JavaScript error. The behaviors of import (file name, collision), enable, disable, restart, the version API and the CSRF token described in that chapter were reproduced on this server.
   - From Orchestrator: the security notes, the custom portlets, the legacy upgrade script, and the counts of the [Portlet annex](#portlet-annex).

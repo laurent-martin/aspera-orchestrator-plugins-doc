@@ -54,3 +54,9 @@
   \end{titlepage}%
 }
 \makeatother
+
+% Background of inline code, lighter than the lightgray of the toolchain (latex/pdf_in_header.tex), see README.md.
+% Not gray 0.96, the color of the shaded table rows: inline code would not show on them.
+% This file is included after pdf_in_header.tex, so this replaces its \LuaULSetHighLightColor{lightgray}.
+\definecolor{inlinecodebackground}{gray}{0.90}
+\LuaULSetHighLightColor{inlinecodebackground}

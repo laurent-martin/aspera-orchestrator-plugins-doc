@@ -27,3 +27,7 @@ for f in cover ibm_logo back_top back_bottom; do rsvg-convert -f pdf pdf_theme/$
 ```
 
 All pictures are vector: `cover.svg` has no filter, as a PDF document cannot contain one, and the PDF writers would turn it into a bitmap.
+
+Inline code has a lighter background than the one of the toolchain: gray 0.90 (`luma(230)` in Typst) instead of `lightgray` (0.75) with LaTeX and `luma(222)` with Typst. It is still darker than the shaded rows of tables (0.96 with LaTeX, `luma(245)` with Typst), so that inline code shows on them. Code blocks are not changed.
+With LaTeX, `cover.tex` sets it with `\LuaULSetHighLightColor`: the toolchain includes this file after its own header.
+With Typst, `inline_code.typ` (set in `typst.yaml`) does it: a `show raw` rule of the theme would not apply, because the template sets its own inside its `conf` function, which is called after the header. The theme's rule matches the template's highlight by its fill instead (`show highlight.where(fill: luma(222))`), so it needs to follow that value if the template changes it.

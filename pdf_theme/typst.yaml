@@ -2,3 +2,5 @@
 variables:
   mainfont: "IBM Plex Sans"
   codefont: "IBM Plex Mono"
+include-in-header:
+  - ${.}/inline_code.typ
