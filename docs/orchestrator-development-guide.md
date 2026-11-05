@@ -35,6 +35,47 @@ Any reader can begin with [How Orchestrator works](#how-orchestrator-works) and 
 | Add a step type | [Plugins and portlets compared](#plugins-and-portlets-compared), [Plugin quick start](#plugin-quick-start) |
 | Add a dashboard widget | [Plugins and portlets compared](#plugins-and-portlets-compared), [Portlet quick start](#portlet-quick-start) |
 
+#### Typographic conventions
+
+Each format has one meaning in this guide.
+
+| Format | Use | Example |
+| --- | --- | --- |
+| Bold | A label of the web interface: button, menu, tab, field, option, node of the canvas. `>` separates the levels of a menu. | **Publish**, **Workflows > Remote Nodes**, **Complete** (node) |
+| Code | A literal of a file or of code: attribute, status, step type, input, output or parameter name, value, path, command, XML or Ruby fragment. | `Synch_factor`, `Failed`, `CustomRuby` |
+| Italic | A term where it is defined, a name of step, workflow or configuration chosen by the author of an example, a word quoted as a word, and the version mark. | *embedded template*, *Check target*, *(4.1.6)* |
+| Bold italic | An emphasis on a word or on a sentence. | ***trigger***, ***Exposing the right information...*** |
+| Double quotes | A message or a text that Orchestrator shows. | "No behavior defined for step status change to failed" |
+| `<PLACEHOLDER>` in code | A value that the reader replaces. | `W<WORKFLOW_ID>__<STEP_NAME>` |
+| Code block with a language | A complete listing: `yaml`, `ruby`, `xml`, `shell`, `erb`. | |
+| Alert | A box that stands out from the text, see below. | |
+
+Some cases need a choice:
+
+- A status is code (`Complete`), and the node with the same name on the canvas is bold (**Complete**).
+- A step type is code (`Filter`), and the name that the author gives to a step is italic (*Check target*).
+- A step name that is written as is in a file, or used as an identifier, is a literal: it stays code (`W0__Check target`).
+- Bold is never used to stress a word or a sentence: use bold italic for a word or a sentence, or an alert for a rule.
+
+Alerts are used sparingly, a few per chapter at most:
+
+| Alert | Use |
+| --- | --- |
+| `[!NOTE]` | A precision that is not needed to follow the text. |
+| `[!TIP]` | A piece of advice. |
+| `[!IMPORTANT]` | A rule that must not be missed. |
+| `[!WARNING]`, `[!CAUTION]` | A risk of failure, of a blocked work order or of data loss. |
+
+An alert is written as a quote that starts with its type:
+
+```markdown
+> [!NOTE]
+> Text of the alert.
+```
+
+> [!NOTE]
+> This alert is the example of the rule above.
+
 #### Valid and wise
 
 [Workflow authoring](#workflow-authoring) says what is valid: what Orchestrator accepts and how it behaves.
@@ -211,7 +252,7 @@ For the exact elements and values, see [Workflow authoring](#workflow-authoring)
 
 ### First workflow in the designer
 
-This is the `hello` workflow of the [Quick start](#quick-start), built with the mouse: one `CustomRuby` step that returns the output `message`.
+This is the *hello* workflow of the [Quick start](#quick-start), built with the mouse: one `CustomRuby` step that returns the output `message`.
 
 1. In **Workflows**, open the folder that will hold it, click **New Workflow**, enter a name and a description, and click **Save**.
    The designer opens, with the nodes **START**, **COMPLETE**, **FAILED** and **ERROR**.
@@ -221,7 +262,7 @@ This is the `hello` workflow of the [Quick start](#quick-start), built with the 
 2. In the plugin palette on the left, type `Custom Ruby` in **Search plugins**, and drag **Custom Ruby** to the canvas.
 3. Drag from the output port of **START** to the input port of the step, then from the output port of the step to the input port of **COMPLETE**.
    The two small icons under the step are its **Failed** and **Error** exits: they stay unlinked here.
-4. Right-click the step, choose **Rename Step**, enter `Say hello`, and confirm.
+4. Right-click the step, choose **Rename Step**, enter *Say hello*, and confirm.
 5. Right-click the step again, choose **Edit Action Template**, and in **Outputs** click **Add Outputs**: enter `message` and choose the type `String/Text`.
    In **Execute code**, enter `outputs['message'] = 'Hello'`, then click **Save**.
 
@@ -245,7 +286,7 @@ The next sections give the rules to apply when the workflow has more than one st
 The most important rules, each detailed later:
 
 1. Spend most of the design time away from the designer: split the problem into blocks, and ask for each block "what if something goes wrong?" ([Method](#method)).
-2. Separate the **trigger** (when to act) from the **processing** (what to do): the processing workflow takes the detected element as a parameter, and the trigger workflow starts it ([Separate the trigger from the processing](#separate-the-trigger-from-the-processing)).
+2. Separate the ***trigger*** (when to act) from the ***processing*** (what to do): the processing workflow takes the detected element as a parameter, and the trigger workflow starts it ([Separate the trigger from the processing](#separate-the-trigger-from-the-processing)).
 3. Only one step with **Continue monitoring** from start to end, sub-workflows included ([Rules for triggers](#rules-for-triggers)).
 4. Never combine **Continue monitoring** with persistency scope **none** ([Persistency scope](#persistency-scope)).
 5. Several links into a step mean AND.
@@ -272,7 +313,7 @@ That sentence is not enough to build the workflow.
   In Orchestrator, a macro-action becomes a sub-workflow, like a function in a program.
   Iterate: the breakdown changes when you learn more.
 - For each block, write down its inputs, its outputs and its specifications (file patterns, files to ignore, polling interval).
-- For each step, ask **"what if something goes wrong?"**: folder missing, server down, bad content.
+- For each step, ask: ***what if something goes wrong?*** : folder missing, server down, bad content.
   Decide which failures to handle and how (notify, retry, move the file to an error folder), and which ones you accept.
   You cannot handle everything, but an unhandled foreseeable failure is the call you get at 3 a.m.
 - Identify the steps that are heavy or long (transcoding, checksum, transfer) and ask what happens if hundreds run in parallel: put resource control around them ([Resource management](#resource-management)).
@@ -314,10 +355,10 @@ One-shot workflows are often forgotten but useful: a "fix" workflow that reruns 
 
 #### Separate the trigger from the processing
 
-The first split of any workflow: the **trigger** (when to act: a file arrives) and the **processing** (what to do: process the file).
+The first split of any workflow: the ***trigger*** (when to act: a file arrives) and the ***processing*** (what to do: process the file).
 
-- Build the **processing workflow** first: it processes one element, received as a runtime parameter (for example `p_file_path`).
-- Build the **trigger workflow** last: it detects elements and starts the processing workflow with `WorkflowLauncher`, one work order per element.
+- Build the ***processing*** workflow first: it processes one element, received as a runtime parameter (for example `p_file_path`).
+- Build the ***trigger*** workflow last: it detects elements and starts the processing workflow with `WorkflowLauncher`, one work order per element.
   The trigger is the hardest part to test; when you add it, everything else is ready.
 
 Benefits:
@@ -327,7 +368,7 @@ Benefits:
   In a single workflow, a reset restarts at the first step, the trigger.
 - Each work order has its own label and status: operators find an element directly.
 
-A `SubWorkflow` step inside the trigger workflow does not separate the **trigger** from the **processing**: it runs in the same work order, and a relaunch restarts the trigger.
+A `SubWorkflow` step inside the trigger workflow does not separate the ***trigger*** from the ***processing***: it runs in the same work order, and a relaunch restarts the trigger.
 
 ![A trigger workflow: configuration, lookup table, file watcher, then one launched work order per file inside a fan-out](images/practices/4.1.6/launcher-in-fanout.png)
 
@@ -376,19 +417,22 @@ A new end-to-end workflow is then an assembly of tested blocks plus a trigger an
 
 Conventions save time, especially when several people work on the same workflows.
 
-- **Workflows**: meaningful names, with a level marker for the call chain, and folders (like a file system) rather than everything at the root.
+- *Workflows*: meaningful names, with a level marker for the call chain, and folders (like a file system) rather than everything at the root.
 
   ![Workflow names with levels: the top workflow, then the L1 and L2 workflows it calls](images/practices/4.1.6/naming-levels.png)
 
-- **Steps**: meaningful titles, unique in the workflow.
+- *Steps*: meaningful titles, unique in the workflow.
   Letters, digits, spaces, dashes and underscores only, no accents.
-  **Rename the step before creating its configuration**: the configuration takes the name of the step and cannot be renamed later.
-- **Variables and parameters**: ASCII letters, digits and underscore (`A-Za-z0-9_`), no spaces, accents or dashes.
+
+> [!IMPORTANT]
+> Rename the step before creating its configuration: the configuration takes the name of the step and cannot be renamed later.
+
+- *Variables and parameters*: ASCII letters, digits and underscore (`A-Za-z0-9_`), no spaces, accents or dashes.
   Do not start a variable name with a capital letter: Ruby treats it as a constant.
   Prefix parameters with `p_`, so that a mapping list shows at once what comes from a parameter and what comes from a step, and write the names of configuration values in UPPERCASE.
-- **Inputs**: names that mean something in the context of the workflow (`remote_base_folder` rather than `input_mount_point`).
-- **Work order labels**: include the processed element (file or package name) ([Meaningful status](#meaningful-status)).
-- **Revision comments**: what changed and who changed it.
+- *Inputs*: names that mean something in the context of the workflow (`remote_base_folder` rather than `input_mount_point`).
+- *Work order labels*: include the processed element (file or package name) ([Meaningful status](#meaningful-status)).
+- *Revision comments*: what changed and who changed it.
 
 ### Working in the designer
 
@@ -499,7 +543,9 @@ The **Inputs** tab of a step (or right-click > **Map inputs**) maps each input t
 
 #### Output visibility and carry through
 
-**In the designer, an output is offered only to the step immediately after the step that produces it.**
+> [!IMPORTANT]
+> In the designer, an output is offered only to the step immediately after the step that produces it.
+
 This keeps mapping lists short.
 
 To pass an output further, open the next step, **Outputs** tab (right-click > **Map outputs**), and tick **Carry Thru?** for that output.
@@ -542,7 +588,7 @@ Orchestrator is strongly typed: string, integer, date, flag (boolean), hash, arr
 Conversions are not automatic.
 They are needed mostly between a single value and a list: a watcher returns a path (string) and the next plugin wants an array; a lookup table returns strings and the next step wants a flag.
 
-**Pre-processing** code on an input converts the value: the variable `input_value` holds the value and can be reassigned.
+*Pre-processing* code on an input converts the value: the variable `input_value` holds the value and can be reassigned.
 
 | Conversion | Pre-processing |
 | --- | --- |
@@ -576,7 +622,8 @@ All inputs and outputs of all work steps are stored in the database.
 ### Configuration
 
 A workflow must be configurable: IP addresses, credentials, folders, e-mail lists, patterns, profiles.
-**Never bury constants in step settings, in pre-processing or in Ruby code**: when a folder or a server changes, you must find every occurrence.
+> [!IMPORTANT]
+> Never bury constants in step settings, in pre-processing or in Ruby code: when a folder or a server changes, you must find every occurrence.
 
 | Need | Use |
 | --- | --- |
@@ -610,7 +657,11 @@ The step searches the rows whose key column matches the input value, and returns
 
 ![Lookup table: key column PROFILE with glob patterns and a default row *, value columns TYPE, DIR, DO_QC](images/practices/4.1.6/lookup-table-config.png)
 
-- Map the input of the key column (for example `workflow_prefix`): **without a key, no row matches and the step fails** (`No configuration match`).
+- Map the input of the key column (for example `workflow_prefix`).
+
+> [!IMPORTANT]
+> Without a key, no row matches and the step fails (`No configuration match`).
+
 - The key is compared as a string: spaces count.
   Glob and regular expressions are supported; `*` as the last row gives a default.
 - It replaces nested if-then-else, like a case statement.
@@ -691,13 +742,15 @@ Each step has one entry and three exits (the statuses are in [Statuses](#statuse
 
 #### AND and OR
 
-**Several links into a step (or an end node) mean AND: the step starts when all of them are activated.**
+> [!IMPORTANT]
+> Several links into a step (or an end node) mean AND: the step starts when all of them are activated.
+
 The OR operator (palette **Connectors**) starts the next step when one of its entries is activated.
 Double-click the OR to set how many entries must be activated ("n of m"); `0` means all (the symbol then becomes an AND) *(4.1.6)*.
 
 ![Double-click on an OR: number of steps that must complete for the work order to progress (0 for all steps)](images/practices/4.1.6/or-set-operator.png)
 
-**Starvation**: a step waits on an AND of links that can never all be activated, for example the complete and the failed exits of the same step.
+*Starvation*: a step waits on an AND of links that can never all be activated, for example the complete and the failed exits of the same step.
 The workflow is published without error, the work order starts, and it never ends.
 Almost every workflow developer makes this mistake at least once.
 It is the first thing to check when a work order does not complete.
@@ -729,8 +782,8 @@ Rules:
 
 Choose the join by the pattern of the incoming branches:
 
-- **Parallel branches, all of which run** (a fan-out where several tasks run at the same time): leave the join step as an AND (`Synch_factor` `0`). It waits until all the branches have completed.
-- **Mutually exclusive branches** (an if and else condition, a route decision between alternative lanes, a nominal branch and an error branch): only one branch runs per execution. An AND would wait forever for the branches that did not run and the work order would never end. Use an OR with `Synch_factor` `1` on the join step (or on `End` or `Fail`), so that it proceeds as soon as any one of the incoming branches completes.
+- ***Parallel branches, all of which run*** (a fan-out where several tasks run at the same time): leave the join step as an AND (`Synch_factor` `0`). It waits until all the branches have completed.
+- ***Mutually exclusive branches*** (an if and else condition, a route decision between alternative lanes, a nominal branch and an error branch): only one branch runs per execution. An AND would wait forever for the branches that did not run and the work order would never end. Use an OR with `Synch_factor` `1` on the join step (or on `End` or `Fail`), so that it proceeds as soon as any one of the incoming branches completes.
 
 In XML, the OR and its setting are the `Synch_factor` of the following node: see [Prerequisites and branches](#prerequisites-and-branches).
 
@@ -776,7 +829,8 @@ Steps linked to the same exit start in parallel.
 
 #### Loops
 
-**A step that has run cannot run again in the same work order: do not link back to a previous step.**
+> [!IMPORTANT]
+> A step that has run cannot run again in the same work order: do not link back to a previous step.
 
 ![NO: a link back from the condition to the operation](images/practices/4.1.6/loop-back-no.png)
 
@@ -798,7 +852,8 @@ Re-queuing an element with a delay to retry later creates many work orders: avoi
 
 ![Fan-out (for each file), one step, funnel-in (merge)](images/practices/4.1.6/fanout-basic.png)
 
-**Exactly one step between the fan-out and the funnel-in.**
+> [!IMPORTANT]
+> Exactly one step between the fan-out and the funnel-in.
 With a second step after it, only the first step runs for each element: the second one runs once, after all executions of the first, with the first element, and the funnel-in sees one execution; the work order completes without error, and the other elements are skipped *(4.1.6)*.
 To run several steps per element, put them in a sub-workflow and call it between the two.
 The sub-workflow is then testable with one element, and the main workflow stays readable.
@@ -891,7 +946,7 @@ The **retry** tabs of a step, one for failure and one for error, set the number 
 *(4.1.6)* The designer opened from the list of workflows shows **Retry Duration** empty, and saving the workflow there drops it (attempts and delay are kept).
 Enter it again before saving, and check it in the **Revisions** tab, which shows it.
 
-- **A retry happens only if the exit is linked**, at least to an OR that leads to an end node.
+- ***A retry happens only if the exit is linked***, at least to an OR that leads to an end node.
 - Link a notification to the failed exit: it is sent once, after the last attempt, not at each attempt.
 - Retrying a functional failure is usually useless: the transcoder will reject the same file again.
   Retry errors (network, server restart).
@@ -922,9 +977,9 @@ Enter it again before saving, and check it in the **Revisions** tab, which shows
 #### Meaningful status
 
 By default, the work order list shows only "Work order ended with status complete", or "No behavior defined for step status change to failed", and the reason of a failure is deep in the sub-workflows.
-**Exposing the right information at the right time is as important as getting the job done**: for support, for changes, and for the person who takes over.
+***Exposing the right information at the right time is as important as getting the job done***: for support, for changes, and for the person who takes over.
 
-**Work order label.**
+*Work order label.*
 `WorkOrderMetaData` changes the label (title) and tags of the work order, for example `Processing <%= File.basename(file_path) %>`.
 The work order list shows the workflow name and the status message; the label follows the workflow name in the work order view, and the filter **Title** searches it.
 
@@ -941,7 +996,7 @@ The work order list shows the workflow name and the status message; the label fo
 - Outputs: `master_id` is the id of the top-level work order, `work_order_id` the id of the current one.
 - Goal: from the work order list and its filters alone, know which element, which variant and which workflow: name the element in the label and in the status messages ([exit status](#meaningful-status)).
 
-**Exit status.**
+*Exit status.*
 `ExitStatus` sets the status message of the work order for complete, failed and error ends (255 characters, with placeholders).
 
 ![ExitStatus before Complete: only the complete message is set, with placeholders](images/practices/4.1.6/exit-status-config.png)
@@ -1005,8 +1060,9 @@ The persistency scope sets the memory of a trigger: which elements it has alread
 | absolute | Two workflows on the same folder must not process the same file. |
 | none | Only a trigger **without** Continue monitoring that waits for a file that may already be there. |
 
-**Never use scope none with Continue monitoring**: the same file is detected at each scan, and each detection creates a work order.
-In one real case, 15 000 work orders were created for one file within an hour; the server stopped responding, and the license had to be removed so that Orchestrator would start without processing.
+> [!WARNING]
+> Never use scope none with Continue monitoring: the same file is detected at each scan, and each detection creates a work order.
+> In one real case, 15 000 work orders were created for one file within an hour; the server stopped responding, and the license had to be removed so that Orchestrator would start without processing.
 
 - In a template written as a file, write **Remove trigger file** explicitly: left blank, `LocalFileWatcher` keeps no history, whatever the scope, and with Continue monitoring it behaves like scope none ([LocalFileWatcher](#localfilewatcher)).
 - When several Orchestrator servers share the work, set `persistence_mode: db`, so that the history is in the database instead of on disk.
@@ -1018,10 +1074,11 @@ In one real case, 15 000 work orders were created for one file within an hour; t
 
 #### Rules for triggers
 
-- **Only one trigger with Continue monitoring from start to end**, in the workflow and all its sub-workflows.
+- ***Only one trigger with Continue monitoring from start to end***, in the workflow and all its sub-workflows.
   Two of them clone each other: 1, 2, 4, 8 work orders, and the server collapses.
-  Several independent watcher workflows started by a launcher are fine.
-- **Only one watcher in progress per detection point**: two watchers on the same folder detect the same files (unless scope absolute).
+
+- Several independent watcher workflows started by a launcher are fine.
+- ***Only one watcher in progress per detection point***: two watchers on the same folder detect the same files (unless scope absolute).
 - Move the detected files out of the watched folder: detection folder, in-progress folder, and one folder per outcome (done, failed, error).
   This is an extremely good design habit.
   If files must stay (existing process), use scope by workflow.
@@ -1093,7 +1150,7 @@ Pitfalls:
 
 #### Transfers
 
-- In `FaspTransfer`, the node is the one that **performs** the transfer (upload or download), not necessarily the destination.
+- In `FaspTransfer`, the node is the one that ***performs*** the transfer (upload or download), not necessarily the destination.
 - `FaspTransfer` offers a generic form with all transfer options, or a predefined XML payload file for special cases; after choosing a payload, refresh the step so that its inputs and outputs follow the variables of the payload.
   Keep destinations and credentials as variables, not in the payload.
 - Use Node API credentials, and source paths relative to the docroot of the transfer user tied to the node user.
@@ -1121,7 +1178,7 @@ Pitfalls:
 
 #### Generating text and calling services
 
-**`FileGenerator`** writes a text file (XML, JSON, text, not binary) from a template with placeholders, or returns the text as an output (**return file content**, no target path).
+`FileGenerator` writes a text file (XML, JSON, text, not binary) from a template with placeholders, or returns the text as an output (**return file content**, no target path).
 
 ![FileGenerator: a JSON template with a condition, linefeeds suppressed after the Ruby tags, content returned as output](images/practices/4.1.6/file-generator-config.png)
 
@@ -1132,7 +1189,7 @@ Pitfalls:
 - Write `<%= variable %>`, not the `{{variable_name}}` syntax that the form mentions *(4.1.6)*: see [Placeholders](#placeholders).
 - Do not start input names with a capital letter, and do not name an input like a Ruby or Orchestrator method: for example an input `md5` calls the method `md5` of Orchestrator, and the step fails with "wrong number of arguments".
 
-**`RestRequest`** sends one HTTP request (XML or JSON), optionally repeated at a polling frequency until the **polling stop condition** (Ruby) is true.
+`RestRequest` sends one HTTP request (XML or JSON), optionally repeated at a polling frequency until the **polling stop condition** (Ruby) is true.
 
 - To start a job and wait for it: two steps, a start request and a check request with polling.
 
@@ -1206,19 +1263,21 @@ It is the most complex part of Orchestrator, and the only one that requires real
 
 - A resource is a ticket, not a machine: Orchestrator does not check, ping or monitor anything.
   Naming a resource after a server is only a convention of the workflow.
-  Orchestrator guarantees that **it** sends no more than N jobs; jobs submitted to the server by other means are not counted.
+  Orchestrator guarantees that ***it*** sends no more than N jobs; jobs submitted to the server by other means are not counted.
 - Resource control is also useful without any server: to protect Orchestrator from too many checksums in parallel, for example.
 - Load balancing (`LoadBalancer`, or secondary addresses of a remote node) distributes requests (a, b, c, a, ...) without limit or lock.
   Enough for many quick operations.
 - Mutual exclusion locks a capacity until it is released: `LoadManager` (current) or `ResourceManager` (legacy).
-  **For new workflows, use `LoadManager`**; migrate old workflows when possible.
+  For new workflows, use `LoadManager`; migrate old workflows when possible.
   `ResourceManager` is supported but gets no new features (queue tags, for example).
   Both use the same resource pools.
 - A pool has resources, each with a capacity (number of slots); a request reserves a number of slots (1 by default).
 
 #### Resource pools
 
-**Create the pool first, in Workflows > Resources**, before designing the workflow.
+> [!IMPORTANT]
+> Create the pool first, in **Workflows > Resources**, before designing the workflow.
+
 Do not create it ad hoc from the workflow step: a pool is not a workflow-level object.
 Create it as **Custom** to be able to change resource names and capacities later.
 
@@ -1236,13 +1295,13 @@ Always the same layout:
 
 1. `QueueStager` (add): puts the element in the queue (optional, see [Queue](#queue)).
 2. `LoadManager` (reserve): waits for a slot.
-3. **One step, or one sub-workflow** with all the work that needs the resource.
+3. ***One step, or one sub-workflow*** with all the work that needs the resource.
 4. `LoadManager` (release) on success, then **Complete**.
 5. On failure or error of step 3: OR, `LoadManager` (release), then **Failed**.
 
 ![Add to queue, reserve, transcode, release if OK; failure and error of the transcoding go through an OR to "Release if not OK"](images/practices/4.1.6/load-manager-pattern.png)
 
-- Every path after the reservation must release, or the slot is never freed: **starvation**.
+- Every path after the reservation must release, or the slot is never freed: *starvation*.
   New work orders wait forever ("No resource to allocate"), and a manual release only delays the next starvation.
   With several steps between reserve and release, every failed and error exit must reach a release: unreadable and fragile.
   With one sub-workflow, the pattern stays the same whatever the sub-workflow does.
@@ -1295,24 +1354,25 @@ A queue (FIFO with priorities) between the work and the pool fixes this.
 
 ![QueueStager configuration: queue, action Add, queued item description with the file name](images/practices/4.1.6/queue-stager-config.png)
 
-- **Bind the load manager to the queue**: **Advanced parameters > Queue** (by id, or **runtime**), and map **Expected queued item** to the **queued item** output of the add step (and the queue to the queue id when runtime).
+- Bind the load manager to the queue: **Advanced parameters > Queue** (by id, or **runtime**), and map **Expected queued item** to the **queued item** output of the add step (and the queue to the queue id when runtime).
   Mechanical rule: select runtime and map both.
   The load manager then waits until its element is at the top of the queue and a slot is free, then removes the element and reserves.
 
 ![Load manager inputs: Queue and Expected_queued_item mapped to the outputs of "Add to queue"](images/practices/4.1.6/expected-queued-item.png)
 
-- **Expected queued item is not a required input, but forgetting it in the same work order is a serious bug**: a work order processes the element of another work order ("inversion of context"), which is very hard to detect.
+- ***Expected queued item is not a required input, but forgetting it in the same work order is a serious bug***: a work order processes the element of another work order ("inversion of context"), which is very hard to detect.
+
 - **Set Auto-purge: On work order stop** on the queue.
   Otherwise, when someone cancels or destroys a work order, its element stays at the top of the queue, and all other work orders wait forever, even with free slots: a very common case.
   A workflow can also remove the element explicitly (`QueueStager` with action remove), for example after a wait timeout.
 
 ![Configure Managed Queue: Auto-purge On work order stop](images/practices/4.1.6/queue-auto-purge.png)
 
-- **Priority**: 0 is the highest (like process priorities); for example a priority per source folder.
+- *Priority*: 0 is the highest (like process priorities); for example a priority per source folder.
   There is no preemption: priority orders the queue, it does not stop running work.
-- **Weight**: an estimate of the work of an element (size, duration); it does not change the order.
+- *Weight*: an estimate of the work of an element (size, duration); it does not change the order.
   The total weight ahead of a priority (action `list_all`) tells whether a deadline can be met, for example to send an urgent file another way.
-- **Tags** (4.0 and later, `LoadManager` only): a tag set on a queued item and on a resource makes the load manager take the first item that matches the tag of a free resource, even if it is not at the top of the queue.
+- *Tags* (4.0 and later, `LoadManager` only): a tag set on a queued item and on a resource makes the load manager take the first item that matches the tag of a free resource, even if it is not at the top of the queue.
 - Operators with the Scheduler group and membership of the queue can reorder, remove and pause elements from the **Queues** view or a dashboard.
 - In the **Queues** view, **Delete** deletes the queue definition; **Clear** removes its elements.
 
@@ -1320,7 +1380,7 @@ A queue (FIFO with priorities) between the work and the pool fixes this.
 
 #### Operating with queues and pools
 
-- **Pause the queue** to stop the work after the queue (maintenance of the transfer or transcoding servers): everything before the queue goes on (watchers, preparation), elements accumulate, and resuming processes them in order.
+- ***Pause the queue*** to stop the work after the queue (maintenance of the transfer or transcoding servers): everything before the queue goes on (watchers, preparation), elements accumulate, and resuming processes them in order.
   This alone is worth adding a queue.
 - Take one resource offline (or lower its capacity) to work on one server.
 - Add a resource to a pool at any time: it is used at once.
@@ -1333,7 +1393,7 @@ A thousand is manageable; 10 000 or a million overload Orchestrator (for example
 
 Split into two workflows:
 
-- Workflow 1 detects the elements, adds them to the queue, and **ends**.
+- Workflow 1 detects the elements, adds them to the queue, and ***ends***.
 - Workflow 2 starts with a `LoadManager` with **Continue monitoring**, bound to the queue **without** expected queued item: each time a slot is free, it takes the element at the top and starts a work order.
 
 ![Workflow 1: watcher, add to queue, end](images/practices/4.1.6/two-workflows-add.png)
@@ -1432,7 +1492,7 @@ Do not use the Orchestrator database for heavy external monitoring.
 
 ![Workflow monitor of the trigger workflow Asset ingest: must run, auto-start with a work order name, notification workflow, corrective code](images/practices/4.1.6/workflow-monitor-config.png)
 
-- **Add a workflow monitor to each trigger workflow**: watchers are supposed to run forever.
+- ***Add a workflow monitor to each trigger workflow***: watchers are supposed to run forever.
 - Set the **Work Order Name** of the auto-start: the monitor then checks and starts only the work orders of that name,
   so that several monitors can watch the instances of one workflow started with different runtime parameters.
 - The runtime parameters of the workflow are listed under the work order name: without a value for a required one, the auto-start is skipped.
@@ -1467,8 +1527,8 @@ Dashboards are pages of portlets (frames), per user or group: work order statist
 #### Workers and capacity
 
 Steps run in workers.
-A **synchronous** worker runs one step until it ends: file operations, script execution, `Md5Checksum` (computed on Orchestrator), `MediaInfo`, FTP transfers, `CustomRuby`.
-An **asynchronous** worker starts a job and polls its status, serving many steps: triggers, `FaspTransfer`, transcoder jobs.
+A *synchronous* worker runs one step until it ends: file operations, script execution, `Md5Checksum` (computed on Orchestrator), `MediaInfo`, FTP transfers, `CustomRuby`.
+An *asynchronous* worker starts a job and polls its status, serving many steps: triggers, `FaspTransfer`, transcoder jobs.
 
 - Prefer asynchronous plugins (for example `AsyncRemoteExecution`).
 - Limit the number of synchronous steps that run in parallel with resource pools or the workflow throttle: when all synchronous workers are busy, the other steps wait.
@@ -1540,7 +1600,7 @@ An Aspera transfer server can call a workflow for each file it receives, and rej
 
 Design:
 
-- [ ] The **trigger workflow** and the **processing workflow** (with parameters) are separate.
+- [ ] The ***trigger*** workflow and the ***processing*** workflow (with parameters) are separate.
 - [ ] Each foreseeable error has a way out, and unhandled cases end with a clear message.
 - [ ] Heavy or long steps are protected by a resource pool, when volume requires it.
 - [ ] Workflows have 20 steps at most; repeated blocks are sub-workflows or templates.
