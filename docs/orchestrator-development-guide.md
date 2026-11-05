@@ -2,7 +2,7 @@
 common:
   metadata:
     title: "Aspera Orchestrator Development Guide"
-    author: "IBM Aspera"
+    author: "Laurent Martin, IBM"
 -->
 
 # Aspera Orchestrator Development Guide
