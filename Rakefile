@@ -271,16 +271,16 @@ namespace :doc do
   end
 
   desc 'Generate plugin specifications (YAML): template attributes, inputs and outputs, found by evaluating plugin code'
-  task plugin_specs: PATH_PROBE_JSON do
+  task plugin_specs: [PATH_PROBE_JSON, PATH_MANUAL_MD] do
     require 'yaml'
     require_relative 'lib/action_template_reference'
     probe = JSON.parse(File.read(PATH_PROBE_JSON))
     overlay = YAML.safe_load_file(PATH_OVERLAY)
-    File.write(PATH_PLUGINS_YML, ActionTemplateReference.new(PATH_BUILD_ACTIONS.to_s, probe).yaml(BUILD_VERSION, overlay))
+    File.write(PATH_PLUGINS_YML, ActionTemplateReference.new(PATH_BUILD_ACTIONS.to_s, probe).yaml(BUILD_VERSION, overlay, PATH_MANUAL_MD.to_s))
   end
 
   desc 'Apply hand-authored enrichments (lib/plugins_overlay.yml) onto the existing docs/plugins.yml without regenerating from the probe'
-  task :apply_overlay do
+  task apply_overlay: PATH_MANUAL_MD do
     require 'yaml'
     require 'json'
     require_relative 'lib/action_template_reference'
@@ -288,6 +288,7 @@ namespace :doc do
     data = YAML.safe_load_file(PATH_PLUGINS_YML)
     ref = ActionTemplateReference.new(PATH_BUILD_ACTIONS.to_s)
     ref.apply_overlay(data, overlay)
+    ref.add_manual_anchors(data, PATH_MANUAL_MD.to_s)
     # Preserve the header comment block then re-serialise in flow style
     header = File.read(PATH_PLUGINS_YML).lines.take_while { |l| l.start_with?('#', "\n") }.join
     File.write(PATH_PLUGINS_YML, header + ref.serialize_plugins(data))

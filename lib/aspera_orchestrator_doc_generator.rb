@@ -26,6 +26,8 @@ require_relative 'doc_sanitizer'
 
 # Generate documentation for Aspera Orchestrator plugins
 class AsperaOrchestratorDocGenerator
+  # First line of the Plugin Manual (Markdown)
+  MD_GENERATED_COMMENT = '<!-- Generated from the Orchestrator `actions` directory by `rake md_manual`: do not edit. -->'
   DIRNAME_ACTIONS = 'actions'
   DIRNAME_ICONS = 'icons'
   DIRNAME_TEMPLATES = 'templates'
@@ -91,7 +93,7 @@ class AsperaOrchestratorDocGenerator
       # init plugin data
       one_plugin = {
         folder: entry_path,
-        long_name: entry.gsub(/s$/, '')
+        long_name: plugin_long_name(entry_path)
       }
 
       # check plugin file
@@ -213,7 +215,8 @@ class AsperaOrchestratorDocGenerator
     content = File.read(temp_md_path)
     cleaned_content = clean_markdown_content(content)
     File.write(temp_md_path, cleaned_content)
-    FileUtils.cp(temp_md_path, md_path)
+    # The comment is only in the published file: the temporary file is the input of the PDF
+    File.write(md_path, "#{MD_GENERATED_COMMENT}\n#{cleaned_content}")
   end
 
   private
@@ -288,14 +291,23 @@ class AsperaOrchestratorDocGenerator
     context.instance_eval { binding }
   end
 
+  # Name of the plugin (name of its source file, without extension), from the name of its folder, which is a plural.
+  # Rails plurals: faspex5_deliveries -> faspex5_delivery, custom_rubies -> custom_ruby, aspera_node_searches -> aspera_node_search, otherwise remove the final `s`.
+  # @param folder [Pathname] Folder of the plugin
+  # @return [String] First candidate that has a source file, or the folder name without final `s`
+  def plugin_long_name(folder)
+    entry = folder.basename.to_s
+    candidates = [entry.sub(/s$/, ''), entry.sub(/ies$/, 'y'), entry.sub(/es$/, '')]
+    candidates.find { |name| (folder / "#{name}.rb").exist? } || candidates.first
+  end
+
   # Converts ERB file to HTML using the plugin's context
   # @param file [Pathname] Path to ERB file
   def erb_to_html(file)
     return '<p>No Documentation.</p>' unless file.exist?
 
     plugin_folder = file.parent
-    # TODO: custom_rubies -> custom_ruby ?
-    plugin_name = plugin_folder.basename.to_s.gsub(/s$/, '')
+    plugin_name = plugin_long_name(plugin_folder)
     source = file.read
     # Fix errors in doc
     source = source.gsub('<strong>"Continue Monitoring"</strong>', '<strong>Continue Monitoring</strong>')
@@ -388,6 +400,8 @@ class AsperaOrchestratorDocGenerator
     content.gsub!(%r{</?div[^>]*>\n?}, '')
     # Convert HTML img tags to Markdown syntax: <img src="path" class="..." alt="text" /> -> ![text](path)
     content.gsub!(%r{<img\s+src="([^"]+)"[^>]*alt="([^"]*)"[^>]*/?>}, '![\\2](\\1)')
+    # Code blocks without language (some versions of pandoc add class `line-numbers`)
+    content.gsub!(/^```line-numbers$/, '```')
     content.gsub!("\n|----|----|\n",
                   "\n|-------|---------------------------------------------------|\n")
     content = DocSanitizer.code_placeholders(DocSanitizer.sanitize(content))

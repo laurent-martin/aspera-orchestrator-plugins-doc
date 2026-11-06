@@ -1,5 +1,5 @@
 # Aspera Orchestrator 4.1.6 action plugins: template attributes, inputs and outputs.
-# Generated from Orchestrator: do not edit.
+# Generated from Orchestrator by `rake doc:plugin_specs` (plugin code, Plugin Manual) and lib/plugins_overlay.yml (hand-written data): do not edit, change the generator or the overlay.
 # How to use it in a workflow file: see the Workflow authoring chapter of orchestrator-development-guide.md.
 #
 # <PluginClass>:          Step_type of a step, and class of its action template (key <PluginClass>__<N>)
@@ -50,6 +50,7 @@ Adi3Parser:
   version: 0.2.2
   min_orchestrator: 4.1.6
   description: This plugin provides ability to parse and/or validate contents of ADI 3.0 XML
+  manual_anchor: adi-3-parser-and-validator
   attributes:
     adi_file_path: {type: string, label: ADI File Path, hint: Full path to the ADI 3.0 XML file, placeholders: true}
     validate_fields: {type: text}
@@ -97,6 +98,7 @@ AdiParser:
   version: 0.5.2
   min_orchestrator: 4.1.6
   description: This plugin provides ability to parse and/or validate contents of ADI XML
+  manual_anchor: adi-parser-and-validator
   attributes:
     adi_file_path: {type: string, label: ADI File Path, hint: Full path to the ADI XML file, placeholders: true}
     adi_version: {type: string, label: ADI Version, widget: select, values: ['1.1']}
@@ -152,6 +154,7 @@ AdiTransformation:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: This plugin provides ability to convert ADI 1.1 version compliant XML files to ADI 3.0 version and vice versa
+  manual_anchor: adi-transformation
   attributes:
     adi_file_path: {type: string, label: ADI File Path, placeholders: true}
     adi_version: {type: string, label: Conversion, widget: select, values: ['1.1', '3.0']}
@@ -176,6 +179,7 @@ AkamaiTranscoding:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: This plugin starts and monitors a Transcoding job using the Akamai Transcoding platform.
+  manual_anchor: akamai-transcoding
   attributes:
     user_name: {type: string, placeholders: true}
     active_password:
@@ -222,6 +226,7 @@ AlchemistSnellOdOperation:
   version: 0.2.2
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to control Alchemist Snell OD systems.
+  manual_anchor: alchemist-snell-od-operations
   attributes:
     url: {type: text, label: Service URL, hint: Enter the service URL along with the port, placeholders: true}
     payload: {type: mediumtext, widget: multiline_text, format: xml, placeholders: true}
@@ -245,6 +250,7 @@ AmazonDynamodbOperation:
   version: 0.4.1
   min_orchestrator: 4.1.6
   description: This action plug-ins can be used to interact with Amazon DynamoDB.
+  manual_anchor: amazon-dynamodb-operation
   attributes:
     operation: {type: string, widget: select, values: [Get Item, Put Item, Delete Item, Batch Get Item, Batch Write Item], placeholders: true}
     aws_key: {type: string, hint: Enter AWS access key ID, placeholders: true}
@@ -288,6 +294,7 @@ AmazonElasticTranscoding:
   version: 0.4.0
   min_orchestrator: 4.1.0
   description: This action plug-in provides the ability to use Amazon Elastic Transcoder
+  manual_anchor: amazon-elastic-transcoder
   attributes:
     operation: {type: string, widget: select, values: [Create Job Request]}
     aws_key: {type: string, placeholders: true}
@@ -334,6 +341,7 @@ AmazonGlacierOperation:
   version: 0.7.1
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to integrate with Amazon Glacier Service.
+  manual_anchor: amazon-glacier-operation
   attributes:
     operation: {type: string, widget: select, values: [Upload_Archive, Delete Archive]}
     aws_key: {type: string, hint: Enter AWS access key ID, placeholders: true}
@@ -387,6 +395,7 @@ AmazonMediaConvertOperation:
   version: 0.2.2
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to integrate with Amazon Media Convert Service.
+  manual_anchor: amazon-media-convert-operation
   attributes:
     operation: {type: string, widget: select, values: [Start Job, Cancel Job]}
     aws_key: {type: string, label: AWS Key, placeholders: true}
@@ -420,6 +429,7 @@ AmazonS3Operation:
   version: 1.3.1
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to execute file and bucket operations (such as upload, download, copy, list, and delete) on Amazon S3 storage.
+  manual_anchor: amazon-s3-operation
   attributes:
     operation: {type: string, label: File Operation, widget: select, values: [upload, delete, list, createbucket, delete bucket, download, Head Object, Restore Object, copy object, generate pre-signed url, list objects]}
     aws_key: {type: string, hint: Enter AWS access key ID, placeholders: true}
@@ -508,6 +518,7 @@ AmazonSimpledbOperation:
   version: 0.4.0
   min_orchestrator: 4.1.0
   description: This action plug-in provides the ability to execute SimpleDB operations
+  manual_anchor: amazon-simpledb-operation
   attributes:
     operation: {type: string, widget: select, values: [create_domain, batch_delete_attributes, batch_put_attributes, delete_attributes, delete_domain, domain_metadata, get_attributes, put_attributes, select, list_domains]}
     aws_key: {type: string, placeholders: true}
@@ -567,6 +578,7 @@ AmazonSnsOperation:
   version: 0.4.1
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to use Amazon SNS service.
+  manual_anchor: amazon-sns-operation
   attributes:
     operation: {type: string, widget: select, values: [Publish, Subscribe, Unsubscribe], placeholders: true}
     aws_key: {type: string, hint: Enter AWS access key ID, placeholders: true}
@@ -619,6 +631,7 @@ AmazonSqsOperation:
   version: 0.5.1
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to perform an action onto an Amazon SQS queue.
+  manual_anchor: amazon-sqs-operation
   attributes:
     operation: {type: string, widget: select, values: [Queues_list, Message_delete, Message_get, Message_send]}
     aws_key: {type: string, hint: Enter AWS access key ID, placeholders: true}
@@ -670,6 +683,7 @@ AmazonSqsTrigger:
   version: 0.4.4
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to watch for messages out of an Amazon SQS queue.
+  manual_anchor: amazon-sqs-trigger
   attributes:
     aws_key: {type: string, hint: Enter AWS access key ID, placeholders: true}
     aws_secret: {type: string, widget: password, hint: Enter AWS secret access key, placeholders: true}
@@ -713,6 +727,7 @@ AmazonSwfOperation:
   version: 0.4.0
   min_orchestrator: 4.1.0
   description: This action plug-in provides the ability to execute Amazon Simple Workflow API calls
+  manual_anchor: amazon-swf-operation
   attributes:
     operation: {type: string, widget: select, values: [Launch Workflow]}
     aws_key: {type: string, placeholders: true}
@@ -770,6 +785,7 @@ AmazonTranscribeOperation:
   version: 0.3.0
   min_orchestrator: 4.1.0
   description: This action plug-in provides the ability to execute Amazon Transcribe API calls
+  manual_anchor: amazon-transcribe-operation
   attributes:
     operation: {type: string, widget: select, values: [Start Transcription Job]}
     aws_key: {type: string, placeholders: true}
@@ -818,6 +834,7 @@ AmberfinTranscoding:
   version: 0.3.0
   min_orchestrator: 4.1.0
   description: This Action plug-in provides the ability to submit file transcoding job to a Amberfin server.
+  manual_anchor: amberfin-transcoding
   attributes:
     server_node: {type: string, label: Amberfin server node, widget: remote_node, placeholders: true}
     server_address: {type: string, label: Amberfin ip address (or hostname), placeholders: true}
@@ -847,6 +864,7 @@ AmqpMessage:
   version: 0.9.1
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to insert messages into an AMQP queue.
+  manual_anchor: amqp-message
   attributes:
     queue_name: {type: string, label: AMQP Queue Name, hint: Enter queue name, placeholders: true}
     queue_host: {type: string, label: Queue Host, hint: localhost}
@@ -940,6 +958,7 @@ AmqpTrigger:
   version: 0.9.2
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to wait for messages in an AMQP queue.
+  manual_anchor: amqp-trigger
   attributes:
     keep_ongoing: {type: boolean, label: Continue Monitoring}
     polling_frequency: {type: integer, label: Polling Frequency, code_default: 5}
@@ -1003,6 +1022,7 @@ ArchiveManager:
   version: 0.4.1
   min_orchestrator: 4.1.6
   description: This action plug-in can be used to manage a file archive, by deleting or compressing aging entries.
+  manual_anchor: archive-manager
   attributes:
     archive_root: {type: string, hint: Root directory to archive/purge, placeholders: true}
     purge_file_pattern: {type: string, label: Purge file regexp pattern, code_default: "[^/]+"}
@@ -1036,6 +1056,7 @@ ArrayFanout:
   version: 1.2.2
   min_orchestrator: 4.1.6
   description: This plugin executes the following workflow step once for each element in an input array, enabling parallel or serial processing of array data with customizable variable exposure and step labeling for efficient batch operations.
+  manual_anchor: array-fan-out
   attributes:
     variable_type: {type: string}
     serialize: {type: boolean, label: 'Execute serial?', code_default: false}
@@ -1056,6 +1077,7 @@ AscpClient:
   version: 1.6.2
   min_orchestrator: 4.1.6
   description: This action plugin performs a file transfer upload or download operation to/from a server using Aspera's FASP protocol. In order for it to work, an Aspera client or server product needs to be installed on the Orchestrator server.
+  manual_anchor: ascp-client
   attributes:
     operation: {type: string, widget: select, values: [Download, Upload], placeholders: true}
     files_array: {type: text, label: Source files, hint: 'e.g., [''/tmp/f1'', ''/tmp/f2''] or /tmp/f1;/tmp/f2', placeholders: true}
@@ -1105,6 +1127,7 @@ AsperaCentralWatcher:
   version: 2.8.2
   min_orchestrator: 4.1.6
   description: This action plugin provides the ability to sense the initiation or completion of transfers on an Aspera server.
+  manual_anchor: aspera-central-watcher
   attributes:
     service_uri: {type: string, placeholders: true}
     allow_multiple: {type: boolean, label: Continue monitoring}
@@ -1185,6 +1208,7 @@ AsperaFilesPackageDelivery:
   version: 0.5.1
   min_orchestrator: 4.1.6
   description: A plugin to create and deliver file packages to recipients in Aspera on Cloud.
+  manual_anchor: aoc-package-delivery
   attributes:
     files_client_id: {type: string, label: Aoc client id, hint: Enter AoC client ID, placeholders: true}
     files_client_secret: {type: string, label: Aoc client secret, widget: password, placeholders: true}
@@ -1251,6 +1275,7 @@ AsperaFilesPackageWatcher:
   version: 0.6.3
   min_orchestrator: 4.1.6
   description: This plugin can be used to trigger workflows on new packages uploaded to Aspera On Cloud.
+  manual_anchor: aoc-package-watcher
   attributes:
     files_client_id: {type: string, label: Aoc client id, hint: Enter AoC Client ID, placeholders: true}
     files_client_secret: {type: string, label: AoC Client Secret, widget: password, placeholders: true}
@@ -1320,6 +1345,7 @@ AsperaNodeApi:
   version: 0.2.1
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to perform file system operations such as search, rename, and delete. It also supports retrieving node information (e.g., token, SSH user, and port) and checking node availability through status queries (ping).
+  manual_anchor: aspera-node-api
   attributes:
     server_node: {type: string, label: Aspera node, widget: remote_node}
     server_address: {type: string, label: Aspera node ip address (or hostname), hint: 'e.g., 10.0.103.85 or aspera.example.com'}
@@ -1369,6 +1395,7 @@ AsperaNodeApiTransferMonitor:
   version: 0.3.3
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to monitor and detect file transfer events on remote Aspera servers via the Aspera Node API.
+  manual_anchor: aspera-node-api-transfer-monitor
   attributes:
     auth_type: {type: string, widget: select, values: [Basic, Bearer], code_default: Basic, placeholders: true}
     remote_node: {type: string, widget: remote_node, placeholders: true}
@@ -1426,6 +1453,7 @@ AsperaNodeApiTransferOperation:
   version: 1.3.2
   min_orchestrator: 4.1.6
   description: This action plugin provides the ability to initiate and monitor server-to-server transfers using Aspera's Node API cluster protocol.
+  manual_anchor: aspera-node-api-transfer
   attributes:
     payload: {type: text, placeholders: true}
     remote_node: {type: string, label: Service node, widget: remote_node, placeholders: true}
@@ -1547,6 +1575,7 @@ AsperaNodeFileWatcher:
   version: 0.9.5
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to detect and monitor files and folders matching specified patterns on remote Aspera servers via the Aspera Node API.
+  manual_anchor: aspera-node-file-watcher
   attributes:
     watch_directory: {type: string, hint: Enter directory path to watch, placeholders: true}
     file_pattern: {type: string, hint: 'Enter file pattern (e.g., *.mp4)', placeholders: true}
@@ -1600,6 +1629,7 @@ AsperaNodeSearch:
   version: 0.3.1
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to perform file system operations (search, rename, delete) through the Aspera Node API.
+  manual_anchor: aspera-node-search
   attributes:
     server_node: {type: string, label: Aspera node, widget: remote_node}
     server_address: {type: string, label: Aspera node ip address (or hostname), hint: 'e.g., 10.0.103.85 or aspera.example.com'}
@@ -1649,6 +1679,7 @@ AsperaOnCloudManagement:
   version: 0.3.1
   min_orchestrator: 4.1.6
   description: A plugin to perform Aspera On Cloud management operations including shared inbox and user account management.
+  manual_anchor: aspera-on-cloud-management
   attributes:
     aoc_client_id: {type: string, hint: Enter AoC client ID, placeholders: true}
     aoc_client_secret: {type: string, label: AoC client secret, widget: password, placeholders: true}
@@ -1693,6 +1724,7 @@ AsperaOtfv:
   version: 0.1.2
   min_orchestrator: 4.1.6
   description: This plugin provides the ability to retrieve the list of files to validate and update the file status during validation.
+  manual_anchor: aspera-out-of-transfer-file-validation
   attributes:
     node_ip_address: {type: string, label: Node ip address (or hostname), hint: 'e.g., 10.0.103.85 or aspera.example.com', placeholders: true}
     remote_node: {type: string, widget: remote_node, placeholders: true}
@@ -1744,6 +1776,7 @@ AsperaSharesManagement:
   version: 0.1.1
   min_orchestrator: 4.1.6
   description: This plugin is used to utilize Aspera Shares command line utilities to perform shares management tasks such as creating, modifying, and administering shared directories on Aspera Shares servers.
+  manual_anchor: aspera-shares-management
   attributes:
     os_type: {type: string, widget: select, values: [Windows, Linux], placeholders: true}
     shares_version: {type: string, label: Aspera shares version, widget: select, values: [1.10.1 Or Greater, Lesser than 1.10.1], placeholders: true}
@@ -1792,6 +1825,7 @@ AsyncRemoteExecution:
   version: 0.6.4
   min_orchestrator: 4.1.6
   description: This plugin executes commands remotely on target servers via SSH with support for synchronous and asynchronous execution modes. It offers flexible authentication options, custom output processing, and configurable polling for background process monitoring.
+  manual_anchor: async-remote-execution
   attributes:
     command: {type: text, widget: multiline_text, hint: your shell script, placeholders: true}
     remote_node: {type: string, widget: remote_node}
@@ -1855,6 +1889,7 @@ AtemeTranscoding:
   version: 0.1.1
   min_orchestrator: 4.1.6
   description: This action plugin provides the ability to transcode video files via Ateme Titan File. It implements the Ateme Titan 3.7 REST API 1.7.
+  manual_anchor: ateme-transcoding
   attributes:
     remote_node: {type: string, label: Ateme node, widget: remote_node}
     server_address: {type: string, label: Ateme server ip address (or hostname), hint: 'e.g., 10.0.103.85 or ateme.example.com'}
@@ -1880,6 +1915,7 @@ AuroraFileVerification:
   version: 1.4.0
   min_orchestrator: 4.1.0
   description: This Action plug-ins enables the submission of a file verification request to a Tektronix Aurora Server
+  manual_anchor: aurora-file-verification
   attributes:
     server_node: {type: string, label: Aurora server node, widget: remote_node}
     server_port: {type: string, label: Aurora service port, code_default: 1002}
@@ -1933,6 +1969,7 @@ AzureServiceBusOperation:
   version: 0.1.1
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to perform an action onto an Azure Service Bus queue.
+  manual_anchor: azure-service-bus-operation
   attributes:
     operation: {type: string, widget: select, values: [Message_get_from_queue, Message_get_from_topic, Message_send]}
     azure_namespace: {type: string, label: Azure Namespace, hint: e.g. my-namespace, placeholders: true}
@@ -1960,6 +1997,7 @@ AzureServiceBusTrigger:
   version: 0.1.3
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to watch for messages out of an Azure Service Bus queue
+  manual_anchor: azure-service-bus-trigger
   attributes:
     operation: {type: string, widget: select, values: [Message_get_from_queue, Message_get_from_topic]}
     azure_namespace: {type: string, label: Azure Namespace, hint: e.g. my-namespace, placeholders: true}
@@ -1988,6 +2026,7 @@ BatonFileCorrection:
   version: 0.5.1
   min_orchestrator: 4.1.6
   description: This Action plug-ins enables the submission of a file correction request to an Interra Baton Server
+  manual_anchor: baton-file-correction
   attributes:
     server_node: {type: string, label: Baton server node, widget: remote_node}
     baton_port: {type: integer, label: Baton rpc port, code_default: 8080}
@@ -2036,6 +2075,7 @@ BatonFileVerification:
   version: 1.8.2
   min_orchestrator: 4.1.6
   description: This Action plug-ins enables the submission of a file verification request to an Interra Baton Server
+  manual_anchor: baton-file-verification
   attributes:
     server: {type: string, label: Server address, hint: 'e.g., baton-server.example.com or 10.0.0.1'}
     user: {type: string, label: Baton user, hint: Enter Baton username, placeholders: true}
@@ -2105,6 +2145,7 @@ BatonXmlReport:
   version: 0.3.1
   min_orchestrator: 4.1.6
   description: This Action plug-ins enables the retrieval of XML Report from Baton
+  manual_anchor: baton-xml-report
   attributes:
     server: {type: string, label: Server address, hint: 'e.g., baton-server.example.com or 10.0.0.1'}
     user: {type: string, label: Baton user, hint: Enter Baton username, placeholders: true}
@@ -2137,6 +2178,7 @@ BitmovinEncoding:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: This plug-in provides the ability to start and monitor a Bitmovin encoding.
+  manual_anchor: bitmovin-encoding
   attributes:
     server_address: {type: string, label: Bitmovin domain name, code_default: api.bitmovin.com}
     server_port: {type: integer, label: Bitmovin port, code_default: 443}
@@ -2170,6 +2212,7 @@ CambriaFtcTranscoder:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: Add description here
+  manual_anchor: cambria-ftc-transcoder
   attributes:
     remote_node: {type: string, label: Cambria ftc node, widget: remote_node}
     server_address: {type: string, label: Cambia ftc server ip address (or hostname)}
@@ -2190,6 +2233,7 @@ CarbonCoderTranscoding:
   version: 1.4.1
   min_orchestrator: 4.1.0
   description: This is Action plug-ins provides the ability to submit file transcoding job to a Harmonic Carbon Coder/WFS server.
+  manual_anchor: carbonwfs-transcoding
   attributes:
     server_address: {type: string, label: Carbon/wfs ip address (or hostname)}
     carbon_api_port: {type: integer, label: Carbon api port (optional), code_default: 1120}
@@ -2230,6 +2274,7 @@ CatdvRestRequest:
   version: 0.1.1
   min_orchestrator: 4.1.6
   description: This plugin provides capability to perform REST operations on CatDV server.
+  manual_anchor: catdvrestrequest
   attributes:
     service_url: {type: string, label: Service URL, hint: 'Enter URL, with port id followed by ''/api/<version>/''', placeholders: true}
     rest_method: {type: string, label: Operation, widget: select, values: [get, put, post, delete], placeholders: true}
@@ -2271,6 +2316,7 @@ CerifyFileVerification:
   version: 0.2.0
   min_orchestrator: 4.1.0
   description: This Action plug-in provides the ability to submit a quality control task to a Cerify Server.
+  manual_anchor: cerify-file-verification
   attributes:
     server_node: {type: string, label: Cerify server node, widget: remote_node}
     server_address: {type: string, label: Cerify ip address (or hostname)}
@@ -2306,6 +2352,7 @@ ClamavCheck:
   version: 0.3.1
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to check a file, folder or set of files for viruses using the clamAV utility.
+  manual_anchor: clamav-check
   attributes:
     execution_node: {type: string, widget: remote_node}
     execution_login: {type: string}
@@ -2342,6 +2389,7 @@ CollectionManager:
   version: 0.3.2
   min_orchestrator: 4.1.6
   description: This action plug-in enables creating a name-value pair collection (Hash) or adding fields to an existing one.
+  manual_anchor: collection-manager
   attributes:
     optional_elements: {type: text, widget: type_map, declares: optional_inputs}
     mandatory_elements: {type: text, label: Required elements, widget: type_map, declares: required_inputs}
@@ -2364,6 +2412,7 @@ ConsoleNotification:
   version: 0.5.1
   min_orchestrator: 4.1.6
   description: This plugin provides the ability to insert entries in the Aspera Console database representing Orchestrator workflow events, enabling integration between Orchestrator and Console for comprehensive monitoring and tracking of automated transfer activities.
+  manual_anchor: console-notification
   attributes:
     console_host: {type: string, label: Console node name or host address, hint: Enter console node name or host address}
     console_db_port: {type: integer, hint: Enter console database port}
@@ -2417,6 +2466,7 @@ ConsoleSmartTransferOperation:
   version: 0.2.1
   min_orchestrator: 4.1.6
   description: This action plugin provides the ability to initiate Smart Transfer templates in Aspera Console or to list available templates.
+  manual_anchor: console-smart-transfer
   attributes:
     console_ip: {type: text, hint: Enter the IP address of the console node, placeholders: true}
     console_port: {type: integer, hint: Enter the port to access the console (default 443), code_default: 443}
@@ -2460,6 +2510,7 @@ ConvertPath:
   version: 0.2.1
   min_orchestrator: 4.1.6
   description: Converts an absolute file path from one mount point to another based on configured input and output mappings. Supports one-to-one and multi-mount point conversions.
+  manual_anchor: path-conversion
   attributes:
     file_path: {type: text, hint: Source file path, placeholders: true}
     input_mount_point: {type: text, hint: e.g. /mnt/source, placeholders: true}
@@ -2490,6 +2541,7 @@ CorbaOperation:
   version: 0.1.2
   min_orchestrator: 4.1.6
   description: This plugin is used to make a CORBA call to the Arris CMM (Content Management and Metadata server) using the JacORB utility.
+  manual_anchor: corba-operation
   attributes:
     corba_ip: {type: string, label: CORBA IP Address, hint: 'e.g., 192.0.2.1', placeholders: true}
     port: {type: integer, hint: 'e.g., 5000'}
@@ -2518,6 +2570,7 @@ CurlOperation:
   version: 0.1.1
   min_orchestrator: 4.1.6
   description: This action plug-in executes curl command operations on remote nodes via SSH, supporting GET and POST requests with authentication, flexible parameter handling, image downloads, and configurable result storage for comprehensive HTTP operations.
+  manual_anchor: curl-operations
   attributes:
     remote_node: {type: string, widget: remote_node, placeholders: true}
     service_url: {type: string, label: Request url, hint: 'e.g., https://api.example.com/endpoint', placeholders: true}
@@ -2555,6 +2608,7 @@ CustomProgressNotifier:
   version: 0.2.2
   min_orchestrator: 4.1.6
   description: This plugin provides the ability to intercept progress notifications from a step and add custom behavior to it. For example, logging to an external log file or RSS feed.
+  manual_anchor: custom-progress-notifier
   attributes:
     action_type: {type: string, label: Action plugin, widget: select, dynamic_values: true}
     action_id: {type: integer, label: Action template, widget: action_template}
@@ -2574,6 +2628,7 @@ CustomPython:
   version: 0.1.3
   min_orchestrator: 4.1.6
   description: This action plug-in can be used to script in python for some customized behaviour.
+  manual_anchor: custom-python
   attributes:
     execute_code: {type: text, widget: multiline_text, format: python}
     use_code_from_github: {type: boolean, label: 'Use code from source control?'}
@@ -2608,6 +2663,7 @@ CustomRuby:
   version: 0.7.3
   min_orchestrator: 4.1.6
   description: This action plug-in can be used to script in ruby some customized behaviour.
+  manual_anchor: custom-ruby
   attributes:
     execute_code: {type: mediumtext, widget: multiline_text, format: ruby}
     use_code_from_github: {type: boolean, label: 'Use code from source control?'}
@@ -2644,6 +2700,7 @@ CustomTrigger:
   version: 0.4.2
   min_orchestrator: 4.1.6
   description: The Custom Trigger Plugin allows workflows to be initiated based on custom Ruby logic that runs periodically until a defined condition is met.
+  manual_anchor: custom-trigger
   attributes:
     execute_code: {type: text, label: Execute Code, widget: multiline_text, format: ruby}
     check_status_code: {type: text, label: Check Status Code, widget: multiline_text, format: ruby}
@@ -2669,6 +2726,7 @@ DaletAssetManagement:
   version: 0.2.0
   min_orchestrator: 4.1.0
   description: This plug-in provides the ability to interact with Dalet Asset Management System.
+  manual_anchor: dalet-asset-management-plugin
   attributes:
     user_name: {type: text}
     password:
@@ -2691,6 +2749,7 @@ DatabaseQuery:
   version: 0.3.4
   min_orchestrator: 4.1.6
   description: This plug-in provides the ability to execute SQL queries on external databases (MySQL, Oracle, ODBC compatible) and format their results with flexible output options.
+  manual_anchor: database-query
   attributes:
     database_type: {type: string, code_default: 'Database::DATABASE_MYSQL'}
     database_name: {type: string, label: Database or data source name, hint: 'e.g., mydb or DSN name'}
@@ -2726,6 +2785,7 @@ DatabaseTrigger:
   version: 1.1.6
   min_orchestrator: 4.1.6
   description: This plugin provides the ability to periodically execute SQL queries on external databases (MySQL, Oracle, ODBC compatible) and trigger workflows when new rows are found.
+  manual_anchor: database-trigger
   attributes:
     database_type: {type: string, label: Database Type, code_default: 'Database::DATABASE_MYSQL'}
     database_name: {type: string, label: Database Name, hint: Enter database or data source name}
@@ -2764,6 +2824,7 @@ DependencyChecker:
   version: 0.1.1
   min_orchestrator: 4.1.6
   description: The DependencyChecker plug-in monitors the presence of specific files in a defined location and allows workflows to pause until those files are detected. This ensures that dependent data is available before proceeding to the next step.
+  manual_anchor: dependency-checker
   attributes:
     dependency_paths: {type: string, label: Dependency Paths, widget: list, placeholders: true}
     polling_frequency: {type: integer, code_default: 10}
@@ -2788,6 +2849,7 @@ DigitalrapidsStreamTranscoding:
   version: 0.4.0
   min_orchestrator: 4.1.0
   description: This is Action plug-ins provides the ability to submit file transcoding job to a DigitalRapids Stream server. This has been obsoleted by the DigitalRapids TM plugin.
+  manual_anchor: imagine-streamz-transcoding
   attributes:
     stream_node: {type: string, label: Stream server node, widget: remote_node}
     stream_server_address: {type: string, label: Server ip address (or hostname)}
@@ -2820,6 +2882,7 @@ DigitalrapidsTmTranscoding:
   version: 0.4.1
   min_orchestrator: 4.1.0
   description: This is Action plug-in provides the ability to submit a file transcoding job to a DigitalRapids Transcode Manager server.
+  manual_anchor: imagine-tm-transcoding
   attributes:
     tm_node: {type: string, label: Transcode manager server node, widget: remote_node}
     tm_server_address: {type: string, label: Server ip address (or hostname)}
@@ -2857,6 +2920,7 @@ DivaArchive:
   version: 0.4.2
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to archive or restore files to/from the DIVArchive system. It implements the DIVA REST WEB services API 1.0, 2.1 and 2.2
+  manual_anchor: diva-archive
   attributes:
     remote_node: {type: string, label: Diva node, widget: remote_node}
     server_address: {type: string, label: Diva server ip address (or hostname), hint: e.g. 10.0.103.85 or diva.example.com, placeholders: true}
@@ -2917,6 +2981,7 @@ DolbyOperation:
   version: 0.1.1
   min_orchestrator: 4.1.6
   description: This action plugin provides the ability to invoke Dolby VM600/DP600 API operations for audio processing and workflow management.
+  manual_anchor: dolby-vm600dp600
   attributes:
     url: {type: string, hint: Enter Dolby API URL, placeholders: true}
     api_operation: {type: string, widget: select, values: [List Workflow Profiles, Submit Workorder]}
@@ -2951,6 +3016,7 @@ ElementalMediaConvert:
   version: 0.4.2
   min_orchestrator: 4.1.6
   description: This Action plugin provides the ability to submit a file transcoding job to the AWS Elemental MediaConvert service.
+  manual_anchor: elemental-media-convert
   attributes:
     access_key: {type: string, widget: password, hint: Enter AWS access key ID, placeholders: true}
     secret_key: {type: string, widget: password, hint: Enter AWS secret access key, placeholders: true}
@@ -2991,6 +3057,7 @@ ElementalTranscoding:
   version: 0.7.1
   min_orchestrator: 4.1.6
   description: This action plugin provides the ability to submit file transcoding jobs to an Elemental server.
+  manual_anchor: elemental-transcoding
   attributes:
     server_node: {type: string, label: Elemental server node, widget: remote_node}
     server_address: {type: string, label: Elemental ip address (or hostname), hint: 'e.g., 10.0.103.85 or elemental.example.com'}
@@ -3037,6 +3104,7 @@ EmailInboxWatcher:
   version: 0.4.2
   min_orchestrator: 4.1.6
   description: This action plug-in provides a way to trigger workflows based on the arrival of incoming packages in a IMAP inbox.
+  manual_anchor: email-inbox-watcher
   attributes:
     server: {type: string, label: IMAP Server Address, hint: "-optional-"}
     port: {type: integer, label: Email Server Port, code_default: 143}
@@ -3083,6 +3151,7 @@ EmailNotification:
   version: 0.7.4
   min_orchestrator: 4.1.6
   description: This action plugin provides the ability to send email as part of the execution of a workflow. It can be configured with recipients, subject, message body, and optional sender details to enable workflow-driven email notifications.
+  manual_anchor: email-notification
   attributes:
     template: {type: text, label: Html message template, widget: multiline_text, format: html, code_default: <font color="gray">eMail generated by Aspera Orchestrator</font>, placeholders: true}
     payload: {type: text, label: Message Core Parameters (XML payload), widget: multiline_text, code_default: "<MessageDefinition><Destinations><To><%= To %></To></Destinations><Subject><%= Subject %></Subject></MessageDefinition>"}
@@ -3118,6 +3187,7 @@ EmotionOperation:
   version: 1.2.0
   min_orchestrator: 4.1.0
   description: This action plug-in provides the ability to invoke Emotion API operation.
+  manual_anchor: emotion-operation
   attributes:
     api_operation: {type: string, widget: select, values: [Initiate a Job, Get Job Status, " List the workflows", Submit Payload], placeholders: true}
     service_url: {type: string, placeholders: true}
@@ -3160,6 +3230,7 @@ EncodingdotcomTranscoding:
   version: 0.3.0
   min_orchestrator: 4.1.0
   description: This Action plug-in provides the ability to submit file encoding job to a Encoding.com server.
+  manual_anchor: encodingcom-transcoding
   attributes:
     user_id: {type: string, placeholders: true}
     api_key: {type: string, placeholders: true}
@@ -3191,6 +3262,7 @@ EnvivioVodEncoding:
   version: 1.1.0
   min_orchestrator: 4.1.0
   description: This is Action plug-ins provides the ability to submit file encoding jobs to an Envivio VOD Encoder thru a 4Balancer manager.
+  manual_anchor: envivio-transcoding
   attributes:
     balancer_node: {type: string, label: 4balancer server node, widget: remote_node}
     balancer_server_address: {type: string, label: 4balancer server ip address (or hostname)}
@@ -3226,6 +3298,7 @@ EolementheWorkflowManager:
   version: 0.2.0
   min_orchestrator: 4.1.0
   description: This plug-in provides the ability to run an Eolementhe workflow.
+  manual_anchor: eolementheworkflowmanager
   attributes:
     remote_node: {type: string, widget: remote_node}
     server_address: {type: string, label: Remote server ip address (or hostname)}
@@ -3253,6 +3326,7 @@ EpisodeTranscoding:
   version: 1.2.0
   min_orchestrator: 4.1.0
   description: This is Action plug-ins provides the ability to submit file transformation job to a Telestream Episode engine.
+  manual_anchor: episode-transcoding
   attributes:
     server_node: {type: string, label: Episode engine node, widget: remote_node, placeholders: true}
     server_address: {type: string, placeholders: true}
@@ -3288,6 +3362,7 @@ EvertzMediatorOperation:
   version: 0.1.2
   min_orchestrator: 4.1.6
   description: This plugin provides ability to interact with a Evertz Mediator system.
+  manual_anchor: evertz-mediator-operation
   attributes:
     mediator_node: {type: string, widget: select, dynamic_values: true}
     mediator_address: {type: string, label: Service address or url, hint: 'optional: derived from node if node is provided'}
@@ -3318,6 +3393,7 @@ ExiftoolXmpTagger:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: This action plug-in can be used to retrieve metadate information about an image, video or audio file using the exiftool application. Also supported is the ability to insert metadata tag in image file (but not videos).
+  manual_anchor: exiftool-xmp-tagger
   attributes:
     media_file_path: {type: string, placeholders: true}
     tagged_media_file_path: {type: string, placeholders: true}
@@ -3349,6 +3425,7 @@ ExitStatus:
   version: 0.1.2
   min_orchestrator: 4.1.6
   description: This action plug-in can be used to set up special exit status messages within the workflow.
+  manual_anchor: exit-status
   attributes:
     complete_status: {type: text, label: Complete status message, widget: multiline_text, hint: Message to set when workflow completes successfully, placeholders: true}
     failed_status: {type: text, label: Failed status message, widget: multiline_text, hint: Message to set when workflow fails, placeholders: true}
@@ -3368,6 +3445,7 @@ FacebookUploadOperation:
   version: 0.3.0
   min_orchestrator: 4.1.6
   description: This action plugin is used to perform a resumable video upload via Facebook Graph API.
+  manual_anchor: facebook-video-upload-operation
   attributes:
     object_id: {type: string, hint: 'e.g., Facebook page or group ID', placeholders: true}
     access_token: {type: text, hint: Enter Facebook API access token, placeholders: true}
@@ -3390,6 +3468,7 @@ FaspControl:
   version: 0.7.1
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to control and modify the parameters of running transfers using Aspera's FASP protocol.
+  manual_anchor: fasp-controller
   attributes:
     central_node: {type: string, label: Controlled aspera node, widget: remote_node, placeholders: true}
     central_address: {type: string, hint: 'Optional — default is ''localhost:40001'''}
@@ -3423,6 +3502,7 @@ FaspTransfer:
   version: 4.3.5
   min_orchestrator: 4.1.6
   description: This plugin provides the ability to initiate server-to-server transfers using Aspera's FASP protocol.
+  manual_anchor: fasp-transfer
   attributes:
     payload: {type: text, widget: multiline_text, hint: Enter custom XML/ERB payload here, placeholders: true}
     payload_file: {type: string, widget: file}
@@ -3484,6 +3564,7 @@ Faspex5Delivery:
   version: 0.2.2
   min_orchestrator: 4.1.6
   description: This plugin provides a way to create and send secure file packages through Aspera Faspex5 servers with advanced delivery controls and recipient management.
+  manual_anchor: faspex5-delivery
   attributes:
     title: {type: string, hint: Enter package title, placeholders: true}
     faspex_sender_user: {type: string, hint: Enter Faspex sender username, placeholders: true}
@@ -3549,6 +3630,7 @@ Faspex5FileProcessing:
   version: 0.0.6
   min_orchestrator: 4.1.6
   description: This plugin integrates with Faspex5 servers to manage file processing workflows by retrieving lists of files awaiting validation and updating their processing status throughout the validation lifecycle.
+  manual_anchor: faspex5-file-processing
   attributes:
     faspex_server_address: {type: string, hint: 'e.g., https://10.0.98.3/aspera/faspex'}
     faspex_node: {type: string, widget: remote_node}
@@ -3583,6 +3665,7 @@ Faspex5InboxWatcher:
   version: 0.8.6
   min_orchestrator: 4.1.6
   description: This plugin monitors Faspex5 server mailboxes for incoming packages matching specified criteria and triggers workflows, providing comprehensive package information including metadata, file lists, and transfer specifications.
+  manual_anchor: faspex5-inbox-watcher
   attributes:
     server: {type: string, label: Faspex service address, hint: 'e.g., https://10.0.98.3/aspera/faspex', placeholders: true}
     user: {type: string, label: Faspex user, hint: Enter Faspex username, placeholders: true}
@@ -3658,6 +3741,7 @@ Faspex5PackageMonitor:
   version: 0.2.2
   min_orchestrator: 4.1.6
   description: Provides the capability to monitor Faspex 5 package uploads, downloads, and completion status.
+  manual_anchor: faspex5-package-monitor
   attributes:
     faspex_user: {type: string, hint: Enter Faspex username, placeholders: true}
     server: {type: string, label: Faspex server address, hint: 'e.g., https://10.0.98.3/aspera/faspex', placeholders: true}
@@ -3707,6 +3791,7 @@ Faspstream:
   version: 0.1.1
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to start, monitor and cancel a stream to stream between 2 Aspera transfer servers using faspstream.
+  manual_anchor: faspstream
   attributes:
     initiating_node: {type: string, widget: remote_node, placeholders: true}
     initiating_host: {type: string, label: Initiating node ip address (or hostname), hint: 'e.g., 10.0.103.85 or xxx.example.com', placeholders: true}
@@ -3786,6 +3871,7 @@ FederatedWorkflow:
   version: 0.6.3
   min_orchestrator: 4.1.6
   description: This plug-in is used to launch workflows on a remote orchestrator instance and get the ID and output(s) or just get the ID and not wait for the output(s) of the remote workflow
+  manual_anchor: federated-workflow
   attributes:
     operation: {type: string, widget: select, values: [Sub-Workflow, Workflow-Launcher]}
     remote_node: {type: string, widget: select, dynamic_values: true}
@@ -3843,6 +3929,7 @@ FfmpgTranscoding:
   version: 0.6.1
   min_orchestrator: 4.1.6
   description: This plugin provides the ability to execute file transcoding operations using the FFMPEG toolset on remote nodes.
+  manual_anchor: ffmpeg-transcoding
   attributes:
     execution_node: {type: string, widget: remote_node}
     execution_login: {type: string, placeholders: true}
@@ -3885,6 +3972,7 @@ FfprobeInfo:
   version: 0.1.1
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to submit a file to FFProbe to grab media properties and technical Metadata
+  manual_anchor: ffprobe-information
   attributes:
     execution_node: {type: string, widget: remote_node}
     execution_login: {type: string, placeholders: true}
@@ -3916,6 +4004,7 @@ FileArchivingOperation:
   version: 0.4.1
   min_orchestrator: 4.1.6
   description: This plugin provides the ability to execute file archiving operations on both Orchestrator locally-mounted file systems and remote Linux systems via SSH.
+  manual_anchor: file-archiving-operation
   attributes:
     operation: {type: string, label: File operation, widget: select, values: [OS tar, OS untar, OS tgz, OS untgz]}
     sources: {type: string, hint: Enter source file path(s), placeholders: true}
@@ -3969,6 +4058,7 @@ FileGenerator:
   version: 0.5.1
   min_orchestrator: 4.1.6
   description: This action plug-in is used to create a file using dynamic content provided from parameters and/or the output from previous steps in the workflow. Although it can generate any text file, it is primarily used to generate XML files to be used by other steps or other applications. The user defines the template to be used, the variable content required and variable names, and maps the variable inputs.
+  manual_anchor: file-generator
   attributes:
     file_body_template: {type: text, widget: multiline_text, format: html, hint: Enter file body template with optional variable substitutions}
     file_body_path: {type: string, hint: Optional — path to an external template file, placeholders: true}
@@ -3993,6 +4083,7 @@ FileInfo:
   version: 0.2.1
   min_orchestrator: 4.1.6
   description: Extracts multiple information about a local file, given its full path.
+  manual_anchor: file-information
   attributes:
     file_path: {type: string, hint: Enter file path — supports single or multiple files, placeholders: true}
     fail_if_not_exists: {type: boolean, label: Fail if file does not exist, code_default: false}
@@ -4025,6 +4116,7 @@ FileJournalLogEntry:
   version: 0.4.2
   min_orchestrator: 4.1.6
   description: This plugin provides the ability to log file states in the Orchestrator file journal.
+  manual_anchor: file-journal-log-entry
   attributes:
     file: {type: string, label: File (optional), placeholders: true}
     file_path: {type: string, label: File path (optional), placeholders: true}
@@ -4072,6 +4164,7 @@ Filter:
   version: 0.3.1
   min_orchestrator: 4.1.6
   description: This action plug-in allows conditional execution of a step by evaluating a custom Ruby expression at run-time. The result determines whether the step completes successfully or fails.
+  manual_anchor: filter
   attributes:
     command: {type: text, widget: multiline_text, format: ruby, placeholders: true}
     mandatory_inputs: {type: text, label: Required inputs, widget: type_map, declares: required_inputs}
@@ -4090,6 +4183,7 @@ FlicsTranscoding:
   version: 0.1.1
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to submit and monitor a file transcoding job to a Flics server.
+  manual_anchor: flics-transcoding
   attributes:
     address: {type: string, hint: e.g. flics.example.com, placeholders: true}
     use_ssl: {type: boolean, label: 'Use ssl?'}
@@ -4133,6 +4227,7 @@ FlipFactoryTransformation:
   version: 1.2.0
   min_orchestrator: 4.1.0
   description: This is Action plug-ins provides the ability to submit file transformation job to a Telestream FlipFactory server.
+  manual_anchor: flipfactory-transcoding
   attributes:
     message: {type: text, widget: multiline_text, format: xml, code_default: "<?xml version='1.0' encoding='UTF-8'?><message uuid=''><envelope subject='FlipFactory default message'><to> <account username='<%= user_name %>' password='<%= user_password %>' address='' personal=''><factory name='<%= factory_name %>'/> </account></to></envelope><parcel> <content type='<%= media_type %>'><file version='original'  path='<%= file_path %>'/> </content></parcel></message>", placeholders: true}
     saved_inputs: {type: text, widget: hash}
@@ -4167,6 +4262,7 @@ FrameioOperation:
   version: 0.3.2
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to perform operations on Frame.io.
+  manual_anchor: frameio-operation
   attributes:
     operation: {type: string, widget: select, values: [Get Account Id, Get Team List, Get Project List, Get Assets List, Create Asset, Upload Asset, Create And Upload Asset]}
     token: {type: text, widget: password, hint: Token Saved - Leave blank to keep current, placeholders: true}
@@ -4213,6 +4309,7 @@ FtpFolderTrigger:
   version: 0.1.2
   min_orchestrator: 4.1.6
   description: This action provides the ability to detect folders on a remote node via the FTP protocol.
+  manual_anchor: ftp-folder-trigger
   attributes:
     remote_node: {type: string, widget: remote_node}
     remote_server: {type: string, hint: Enter FTP server hostname or IP address, placeholders: true}
@@ -4257,6 +4354,7 @@ FtpTransfer:
   version: 1.3.1
   min_orchestrator: 4.1.6
   description: This plugin provides a configurable interface to a remote FTP server. It supports sending, retrieving and deleting files within server directories. Username and password authentication are supported when required by the server.
+  manual_anchor: ftp-transfer
   attributes:
     remote_server: {type: string, hint: 'e.g., ftp.example.com or 10.0.1.5'}
     remote_user: {type: string, hint: Enter FTP username}
@@ -4329,6 +4427,7 @@ FtpTrigger:
   version: 2.2.2
   min_orchestrator: 4.1.6
   description: This action enables the detection of files on a remote node via the FTP protocol.
+  manual_anchor: ftp-trigger
   attributes:
     remote_node: {type: string, widget: remote_node}
     remote_server: {type: string, hint: Enter FTP server hostname or IP address}
@@ -4392,6 +4491,7 @@ FtpsTransfer:
   version: 0.1.1
   min_orchestrator: 4.1.6
   description: This action plugin can be used to perform secure file transfer operations on FTPS servers with SSL/TLS encryption and file renaming support.
+  manual_anchor: ftps-transfer
   attributes:
     remote_node: {type: string, widget: remote_node}
     remote_server_port: {type: string, code_default: 21}
@@ -4425,6 +4525,7 @@ Funnelin:
   version: 1.1.3
   min_orchestrator: 4.1.6
   description: This plugin collects and aggregates outputs from parallel executions initiated by Array Fanout, converging multiple parallel processing threads back into a unified workflow.
+  manual_anchor: funnel-in
   attributes:
     synch_filter: {type: integer}
     return_status: {type: boolean, label: Return statuses}
@@ -4450,6 +4551,7 @@ FxpTransfer:
   version: 0.3.1
   min_orchestrator: 4.1.6
   description: This action provides the ability to move files using the FXP protocol.
+  manual_anchor: fxp-transfer
   attributes:
     remote_server: {type: string, label: Remote node, widget: remote_node, hint: 'e.g., ftp.example.com or 10.0.1.5', placeholders: true}
     remote_server_port: {type: integer, code_default: 21}
@@ -4501,6 +4603,7 @@ GoogleCloudstorageOperation:
   version: 0.1.1
   min_orchestrator: 4.1.0
   description: This action plug-in provides the ability to perform an action on the Google Cloud Storage service.
+  manual_anchor: google-cloud-storage-operation
   attributes:
     operation: {type: string, widget: select, values: ["-- select operation --", create_bucket, delete_bucket, upload_file, download_file]}
     credentials_filepath: {type: string, placeholders: true}
@@ -4525,6 +4628,7 @@ GooglePubsubOperation:
   version: 0.1.1
   min_orchestrator: 4.1.0
   description: This action plug-in provides the ability to perform an action on the Google Pub/Sub service.
+  manual_anchor: google-pubsub-operation
   attributes:
     operation: {type: string, widget: select, values: ["-- select operation --", create_topic, delete_topic, create_subscription, delete_subscription, publish_message, read_messages]}
     credentials_filepath: {type: string, placeholders: true}
@@ -4553,6 +4657,7 @@ HandbrakeTranscoding:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: This action plug-in provides the ability to submit and control a file transcoding operation using the HandBrake toolset.
+  manual_anchor: handbrake-transcoding
   attributes:
     execution_node: {type: string, widget: remote_node}
     execution_login: {type: string, placeholders: true}
@@ -4583,6 +4688,7 @@ HelloWorld:
   version: 1.3.1
   min_orchestrator: 4.1.6
   description: This is a reference implementation for a simple Action plugin illustrating the API.
+  manual_anchor: hello-world
   attributes:
     prompt: {type: text, widget: multiline_text, hint: Enter the prompt here, code_default: Hello World, placeholders: true}
     tempo: {type: integer, code_default: 2}
@@ -4598,6 +4704,7 @@ HttpTransfer:
   version: 0.2.2
   min_orchestrator: 4.1.6
   description: This action provides the ability to upload, download and delete files from a remote host using HTTP or HTTPS (Hypertext Transfer Protocol or Hypertext Transfer Protocol over SSL).
+  manual_anchor: http-transfer
   attributes:
     operation: {type: string, widget: select, values: [Upload, Download, Delete], placeholders: true}
     remote_node: {type: string, widget: remote_node}
@@ -4639,6 +4746,7 @@ HybrikTranscoder:
   version: 0.1.2
   min_orchestrator: 4.1.6
   description: This Action plug-in provides the ability to submit a transcoding job to the Hybrik transcoder
+  manual_anchor: hybrik-transcoder
   attributes:
     oapi_key: {type: string, hint: Enter OAPI key, placeholders: true}
     oapi_secret: {type: string, widget: password, hint: Enter OAPI secret, placeholders: true}
@@ -4673,6 +4781,7 @@ IbmMqIntegration:
   version: 0.5.4
   min_orchestrator: 4.1.6
   description: This plugin is used to send/receive MQ messages to/from an IBM MQ system.
+  manual_anchor: ibm-mq-integration
   attributes:
     mq_ip_address: {type: string, label: MQ IP Address, hint: 'e.g., 192.168.1.100 or mq.example.com', placeholders: true}
     mq_port: {type: string, label: MQ Port, hint: Default port is 1414, code_default: 1414, placeholders: true}
@@ -4733,6 +4842,7 @@ IbmMqMftTransfer:
   version: 0.5.3
   min_orchestrator: 4.1.6
   description: This plugin is used to send a file via IBM MQ MFT.
+  manual_anchor: ibm-mq-mft-transfer
   attributes:
     mq_ip_address: {type: string, label: MQ IP Address, hint: 'e.g., 192.168.1.100 or mq.example.com', placeholders: true}
     mq_port: {type: string, label: MQ Port, hint: Default port is 1414, code_default: 1414, placeholders: true}
@@ -4796,6 +4906,7 @@ IcapVirusScan:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: This action plug-in communicates with an ICAP enabled virus scanner engine to quarantine infected files.
+  manual_anchor: icap-virus-scan
   attributes:
     scan_directory: {type: string}
     file_pattern: {type: string, label: To-be-scanned filename pattern}
@@ -4829,6 +4940,7 @@ Imagemagick:
   version: 0.1.3
   min_orchestrator: 4.1.6
   description: This action plug-in can be used to retrieve media information about an image or apply transformation to that image using the popular imagemagick application.
+  manual_anchor: imagemagick
   attributes:
     media_file_path: {type: string, hint: Path to the media file, placeholders: true}
     options: {type: text, label: Command options (before source filename), hint: e.g. -resize 800x600, placeholders: true}
@@ -4864,6 +4976,7 @@ InfluxdbOperation:
   version: 0.1.1
   min_orchestrator: 4.1.6
   description: This action plugin provides the ability to interact with InfluxDB
+  manual_anchor: influxdb
   attributes:
     operation: {type: string, widget: select, values: [Query, Write]}
     url: {type: string, hint: 'e.g., http://localhost:8086', placeholders: true}
@@ -4905,6 +5018,7 @@ InputManipulation:
   version: 0.1.1
   min_orchestrator: 4.1.6
   description: This action plug-in can be used to manipulate inputs using data operations based on the input type.
+  manual_anchor: input-manipulations
   attributes:
     input_type: {type: string, label: Input Type, widget: select, values: [String, Array, Hash]}
     operation: {type: string}
@@ -4927,6 +5041,7 @@ IrtMxfAnalyser:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: This Action plug-ins enables the submission of a file verification request to a IRT MXF Analyser server.
+  manual_anchor: irt-mxf-analyser
   attributes:
     job_name: {type: text, placeholders: true}
     file_path: {type: text, placeholders: true}
@@ -4956,6 +5071,7 @@ IsmM3u8Parser:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: This plugin provides ability to parse an ISM file and a M3U8 file
+  manual_anchor: ism-and-m3u8-file-parser
   attributes:
     file_path: {type: string, label: File Path, placeholders: true}
     return_output_as_array: {type: boolean, label: 'Return output as array?', code_default: false}
@@ -4974,6 +5090,7 @@ ItunesTransporter:
   version: 0.2.2
   min_orchestrator: 4.1.6
   description: This action plugin provides the ability to deliver audio and video content, in a pre-generated iTunes Store package, to the iTunes Store.
+  manual_anchor: itunes-transporter
   attributes:
     operation: {type: string}
     command_line_payload: {type: text, label: Command line options, widget: multiline_text, code_default: "<%= proxy_tag(proxy_host, proxy_port, http_proxy_host, http_proxy_Port) %> <%= target_rate_tag(target_rate, transport_mode) %>  <%= jvm_heap_size_tag(JVM_heap_size) %> -m upload -v eXtreme -indicator true -throughput  -t <%= transport_mode %>  -WONoPause True  -DchecksumValidation=<%= checksum_validation %>  <%= move_or_delete_tag(delete_after_upload, move_after_success_path, move_after_failure_path) %> <%= output_log_tag(output_log_path) %>  <%= add_management_port(management_port) %> ", placeholders: true}
@@ -5015,6 +5132,7 @@ JiraOperation:
   version: 0.2.0
   min_orchestrator: 4.1.0
   description: This action plug-in provides the ability to create JIRA tickets.
+  manual_anchor: jira-ticket-creation
   attributes:
     title: {type: string, placeholders: true}
     ticket_desc: {type: text, label: Description, widget: multiline_text, placeholders: true}
@@ -5056,6 +5174,7 @@ KafkaStream:
   version: 0.1.3
   min_orchestrator: 4.1.6
   description: This plugin is used to send/receive messages to/from an Apache Kafka system.
+  manual_anchor: kafka-stream
   attributes:
     remote_address: {type: string, label: Remote Address, hint: 'e.g., kafka.example.com or 10.0.0.1', placeholders: true}
     remote_port: {type: string, label: Remote Port, hint: Default port is 9092, code_default: 9092, placeholders: true}
@@ -5098,6 +5217,7 @@ LoadBalancer:
   version: 0.1.1
   min_orchestrator: 4.1.6
   description: This action plug-in is a tool to manage resource distribution from a pool of resources using round-robin or random distribution algorithms.
+  manual_anchor: load-balancer
   attributes:
     resource_list: {type: text, widget: multiline_text, hint: Enter comma or semi-colon separated list. Dynamic attributes are permitted.}
     unique_id: {type: string, label: Resource unique name, hint: "-optional-"}
@@ -5114,6 +5234,7 @@ LoadManager:
   version: 0.5.3
   min_orchestrator: 4.1.6
   description: This action plugin is a tool to balance requests for a pool of resources with specific capacities. It provides a way to pause workflows until enough resources become available, and routes requests to the least taxed resources.
+  manual_anchor: load-manager
   attributes:
     max_resources: {type: integer, label: Generic resources maximum number, hint: The number of resources in the pool to be provided unless resources are listed below., code_default: 1}
     resource_capacity: {type: integer, label: Generic resources capacity, hint: The capacity of the generic resource unless resources are listed below., code_default: 1}
@@ -5157,6 +5278,7 @@ LocalExecution:
   version: 0.4.1
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to invoke a third-party application or a script running locally on the workflow server. The integration mechanism conforms to the CGI-BIN protocol used by web and application servers (i.e. input parameters are provided as environment variable, output is provided on the stdio).
+  manual_anchor: local-execution
   attributes:
     command: {type: string, placeholders: true}
     parallel_execution: {type: boolean}
@@ -5179,6 +5301,7 @@ LocalFileOperation:
   version: 1.2.1
   min_orchestrator: 4.1.6
   description: This action plug‑in executes local file operations on Orchestrator‑mounted file systems. It supports actions such as copy, move, delete, makedir, sym‑link, touch, listing, and archive handling, with options for validation, overwriting, timestamp preservation, and permissions control.
+  manual_anchor: local-file-operation
   attributes:
     operation: {type: string}
     sources: {type: string, hint: 'Enter source path(s), comma-separated', placeholders: true}
@@ -5219,6 +5342,7 @@ LocalFilePermission:
   version: 0.1.2
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to do the chmod and chown file operations after a file has been downloaded.
+  manual_anchor: local-file-permission
   attributes:
     source_files: {type: string, label: File(s), hint: 'Enter file or directory path(s), comma-separated', placeholders: true}
     chmod: {type: string, label: Permissions code, hint: 'e.g., 0755', placeholders: true}
@@ -5243,6 +5367,7 @@ LocalFileWatcher:
   version: 1.9.3
   min_orchestrator: 4.1.6
   description: This action plug-in watches a local directory for files matching defined patterns and enables the creation of triggers upon detection.
+  manual_anchor: local-file-watcher
   attributes:
     directory: {type: string, label: Watch directory, hint: Enter directory path to monitor, placeholders: true}
     use_regex_matching: {type: boolean, label: 'Use regex pattern matching?'}
@@ -5295,6 +5420,7 @@ LocalFolderWatcher:
   version: 1.6.3
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to wait for the arrival of folder matching a certain pattern and optionally wait for the stability of all files in that folder.
+  manual_anchor: local-folder-watcher
   attributes:
     watch_directory: {type: string, label: Watch Directory, hint: Search root for new folder, placeholders: true}
     folder_pattern: {type: string, label: Folder name pattern, hint: Matches all if blank, placeholders: true}
@@ -5329,6 +5455,7 @@ MacCaptionOperation:
   version: 0.2.0
   min_orchestrator: 4.1.0
   description: This action plug-in provides the ability to perform captioning operation using the Telestream MacCaption application.
+  manual_anchor: maccaption-operation
   attributes:
     execution_node: {type: string, widget: remote_node}
     execution_login: {type: string}
@@ -5360,6 +5487,7 @@ MarquisMewsOperation:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: This plug-in provides the ability to use the API's listed under the Medway Web Service solution of Marquis.
+  manual_anchor: marquis-mews-operation
   attributes:
     url: {type: text, hint: Enter the service url along with the port, placeholders: true}
     payload: {type: text, widget: multiline_text, format: xml, placeholders: true}
@@ -5381,6 +5509,7 @@ MassParameterSetter:
   version: 0.6.5
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to set the values of multiple parameters within a workflow step. It can be used to store default values or apply a predefined set of values for reuse across workflows. This helps reduce duplication and ensures consistency when configuring actions.
+  manual_anchor: stored-parameter-set
   attributes:
     parameters: {type: text, placeholders: true}
     use_external_storage: {type: boolean, label: 'Use external storage?'}
@@ -5400,6 +5529,7 @@ McAfeeVirusCheck:
   version: 0.2.0
   min_orchestrator: 4.1.0
   description: This action plug-in provides the ability to check a file, folder or set of files for viruses using the McAfee anti-virus application.
+  manual_anchor: mcafee-virus-check
   attributes:
     av_scanner: {type: string}
     execution_node: {type: string, widget: remote_node}
@@ -5440,6 +5570,7 @@ Md5Checksum:
   version: 0.3.1
   min_orchestrator: 4.1.6
   description: This action plug-in calculates MD5 checksums for specified files and optionally verifies them against previously calculated values. It supports memory-efficient processing with configurable block sizes and dynamic file path inputs for flexible file integrity verification workflows.
+  manual_anchor: md5-checksum
   attributes:
     file_path: {type: string, label: File path (optional), hint: 'e.g., /data/files/sample.mov', placeholders: true}
     block_size: {type: integer, code_default: 131072}
@@ -5456,6 +5587,7 @@ MediaInfo:
   version: 0.7.1
   min_orchestrator: 4.1.6
   description: This plugin extracts comprehensive technical and tag metadata from video and audio files using the MediaInfo application.
+  manual_anchor: media-info
   attributes:
     media_file_path: {type: string, hint: Enter media file path, placeholders: true}
     options: {type: string, label: Optional parameters, hint: Any extra flags to pass to the MediaInfo process, placeholders: true}
@@ -5503,6 +5635,7 @@ MediaMateOperation:
   version: 0.3.2
   min_orchestrator: 4.1.6
   description: This action plugin can be used to interact with the MediaMate subtitling service.
+  manual_anchor: media-mate-operation
   attributes:
     url: {type: string, label: Url path, placeholders: true}
     server: {type: string, placeholders: true}
@@ -5534,6 +5667,7 @@ MediabinAssetManagement:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: This plugin provide the ability to perform some asset management on a Mediabin server. Supported operations include asset listing and retrieval (with download).
+  manual_anchor: mediabin-asset-management
   attributes:
     mediabin_node: {type: string, widget: remote_node, placeholders: true}
     mediabin_address: {type: string, placeholders: true}
@@ -5566,6 +5700,7 @@ MergePoint:
   version: 0.5.2
   min_orchestrator: 4.1.6
   description: This plugin can be used to reconcile inputs coming from different branches of logical statements. It provides the ability to define pairs of inputs that get merged. Such steps can be used without inputs to clarify branching in complex workflows.
+  manual_anchor: merge-point
   attributes:
     merged_inputs: {type: text, hint: 'Hash: {''name'' => [''primary_expr'', ''alternate_expr'', ''type'', ''required|optional'']}. Primary and alternate are placeholders or fixed values; blank means use the input named <name> or <name>_alternate respectively.'}
     multi_inputs: {type: text, hint: 'Hash: {''name'' => [''type'', count, ''required|optional'']}. Generates inputs <name>_1 … <name>_N and outputs <name> with the first non-nil value.'}
@@ -5592,6 +5727,7 @@ MinnetonkaAudiotoolserver:
   version: 0.3.0
   min_orchestrator: 4.1.0
   description: This plug-in provides the ability to process, convert, encode, and decode audio files with the Minnetonka AudioTools Server. It implements the AudioTools SOAP based WEB service API.
+  manual_anchor: minnetonka-audiotools-server
   attributes:
     remote_node: {type: string, widget: remote_node}
     server_address: {type: string, label: Remote server ip address (or hostname)}
@@ -5617,6 +5753,7 @@ MogMxfspeedrail:
   version: 0.2.0
   min_orchestrator: 4.1.0
   description: his plug-in provides the ability to run a MOG workflow. It implements MOG mxfSPEEDRAIL v2.22 SOAP API.
+  manual_anchor: mog-mxf-speedrail
   attributes:
     remote_node: {type: string, widget: remote_node}
     server_address: {type: string, label: Remote server ip address (or hostname)}
@@ -5652,6 +5789,7 @@ MongodbOperation:
   version: 1.3.2
   min_orchestrator: 4.1.6
   description: This action plugin enables interaction with MongoDB databases, supporting document operations (insert, find, update, remove), advanced queries, aggregation pipelines, map-reduce processing, and database administration commands for comprehensive data management and analysis.
+  manual_anchor: mongodb-operation
   attributes:
     additional_arguments: {type: text}
     additional_options: {type: text}
@@ -5705,6 +5843,7 @@ MxFixer:
   version: 0.2.0
   min_orchestrator: 4.1.0
   description: Analyse an MXF file for AS11 compatibility using Metaglue MX Fixer.
+  manual_anchor: mx-fixer
   attributes:
     file_path: {type: string, label: File to analyse (full path), placeholders: true}
     report_path: {type: string, label: Report file (full path), placeholders: true}
@@ -5735,6 +5874,7 @@ MxfLegalizer:
   version: 0.2.0
   min_orchestrator: 4.1.0
   description: This plug-in provides the ability to make compliant a MXF file. It implements the MXF Legalizer v2.5.2 SOAP API.
+  manual_anchor: mxf-legalizer
   attributes:
     remote_node: {type: string, widget: remote_node}
     server_address: {type: string, label: Remote server ip address (or hostname)}
@@ -5758,6 +5898,7 @@ OpswatMetadefender:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: Integration with Opswat Metadefender
+  manual_anchor: opswat-metadefender
   attributes:
     opswat_address: {type: string, label: Opswat server address, placeholders: true}
     port: {type: integer, hint: '8008', code_default: 8008}
@@ -5809,6 +5950,7 @@ OrchestratorAlertEntry:
   version: 0.1.1
   min_orchestrator: 4.1.6
   description: This plugin is used to enter custom alerts into orchestrator
+  manual_anchor: orchestrator-alert-configuration
   attributes:
     category_type: {type: integer, label: Alert category, widget: select, dynamic_values: true}
     header: {type: string, hint: Enter a brief summary or title for the alert, placeholders: true}
@@ -5830,6 +5972,7 @@ OrionOttMonitor:
   version: 0.3.0
   min_orchestrator: 4.1.0
   description: This is Action plug-ins provides the ability to submit file to Orion OTT Monitor
+  manual_anchor: orion-ott-monitor
   attributes:
     execution_node: {type: string, label: Orion ott node, widget: remote_node}
     server_address: {type: string, label: Orion ott address, placeholders: true}
@@ -5889,6 +6032,7 @@ PasswordGenerator:
   version: 0.1.1
   min_orchestrator: 4.1.6
   description: This plugin provides the ability to generate random strings that can be used as passwords. The length and constraint of the generated random strings can be configured. Generated passwords can optionally be encrypted for secure storage.
+  manual_anchor: password-generator
   attributes:
     character_set: {type: string, label: Valid characters (optional), widget: multiline_text, code_default: abcdefghijklmnopqrstuvwxywABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_*!+=(), placeholders: true}
     constraints: {type: text, widget: list, code_default: '["ABCDEFGHIJKLMNOPQRSTUVWXYZ", "0123456789", "-_*!+=()"]', placeholders: true}
@@ -5913,6 +6057,7 @@ PulsarContentVerification:
   version: 0.2.0
   min_orchestrator: 4.1.0
   description: This Action plug-in provides the ability to submit a content verification task to a Pulsar Server.
+  manual_anchor: pulsar-content-verification
   attributes:
     server_node: {type: string, label: Pulsar server node, widget: remote_node}
     server_address: {type: string, label: Pulsar ip address (or hostname)}
@@ -5936,6 +6081,7 @@ QscanFileVerification:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: This action plug-in provides the ability to submit and monitor a file verification job to a QScan server.
+  manual_anchor: qscan-file-verification
   attributes:
     address: {type: string, placeholders: true}
     port: {type: string, code_default: '8080', placeholders: true}
@@ -5979,6 +6125,7 @@ QuasarVeneraQcOperation:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: This Action plug-ins enables the submission of a file verification request to an Quasar Venera QC server
+  manual_anchor: quasar-venera-qc
   attributes:
     account_id: {type: string, placeholders: true}
     api_key: {type: string, placeholders: true}
@@ -6017,6 +6164,7 @@ QueueStager:
   version: 0.9.5
   min_orchestrator: 4.1.6
   description: This action plugin is a tool to stage items into a managed queue. It provides a way to pause a workflow until all items queued ahead have been released from the queue. While staged in the queue, the items can be re-ordered by a user with appropriate privileges.
+  manual_anchor: queue-stager
   attributes:
     queue_name: {type: string, label: Queue id, hint: Enter queue identifier, placeholders: true}
     queued_item: {type: string, placeholders: true}
@@ -6063,6 +6211,7 @@ RegexMatcher:
   version: 0.1.1
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to parse a regex expression and extract parts of it
+  manual_anchor: regex-matcher
   attributes:
     expression: {type: string, label: Input expression, hint: "-optional-", placeholders: true}
     regex_pattern: {type: string, placeholders: true}
@@ -6079,6 +6228,7 @@ RemoteExecution:
   version: 1.2.2
   min_orchestrator: 4.1.6
   description: This action plugin provides the ability to execute scripts or executables on remote nodes via SSH, with support for dynamic input variables and custom output extraction.
+  manual_anchor: remote-execution
   attributes:
     command: {type: text, hint: Enter command or script path, placeholders: true}
     execution_node: {type: string, widget: remote_node, placeholders: true}
@@ -6120,6 +6270,7 @@ RemoteFileOperation:
   version: 0.3.2
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to execute file operations (copy, move, delete, makedir, dir list) on remote nodes using Aspera transfer servers.
+  manual_anchor: remote-file-operation
   attributes:
     operation: {type: string, label: File operation, widget: select, values: [copy, move, delete, makedir, list], placeholders: true}
     source: {type: string, widget: list, placeholders: true}
@@ -6150,6 +6301,7 @@ RemoteFileWatcher:
   version: 2.4.3
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to wait for the arrival of files matching a certain pattern on a remote aspera server.
+  manual_anchor: remote-file-watcher
   attributes:
     watch_directory: {type: text, hint: Enter directory path to watch, placeholders: true}
     file_pattern: {type: string, label: File pattern (as regexp), hint: Enter file pattern as regular expression, placeholders: true}
@@ -6200,6 +6352,7 @@ RemoteFolderWatcher:
   version: 0.2.4
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to wait for the arrival of a folder matching a certain pattern on a remote aspera server.
+  manual_anchor: remote-folder-watcher
   attributes:
     watch_directory: {type: string, hint: Enter directory path to watch, placeholders: true}
     folder_pattern: {type: string, label: Folder pattern (as regexp), hint: Enter folder pattern as regular expression, placeholders: true}
@@ -6245,6 +6398,7 @@ ResourceManager:
   version: 2.3.3
   min_orchestrator: 4.1.6
   description: This action plug-in is a tool to manage a limited pool of resources. It provides a way to pause a workflow until the resource becomes available.
+  manual_anchor: resource-manager
   attributes:
     command: {type: text}
     max_resources: {type: integer, label: Generic resources maximum number, hint: The number of resources in the pool to be provided unless resources are listed below.}
@@ -6286,6 +6440,7 @@ RestRequest:
   version: 1.2.4
   min_orchestrator: 4.1.6
   description: This plugin allows you to make REST requests to web services, either as a one-time operation or with repeated polling at specified intervals.
+  manual_anchor: rest-request
   attributes:
     service_url: {type: string, hint: 'e.g., https://api.example.com/endpoint', placeholders: true}
     rest_method: {type: string, values: [get, post, delete, put, patch, __RUNTIME__], hint: 'Lower case. __RUNTIME__: the method is given by the required input Rest_Method.'}
@@ -6371,6 +6526,7 @@ RobocopyOperation:
   version: 0.1.1
   min_orchestrator: 4.1.6
   description: This action plugin provides file copy operation on a Windows OS
+  manual_anchor: robocopy
   attributes:
     execution_node: {type: string, widget: remote_node}
     execution_login: {type: string, placeholders: true}
@@ -6410,6 +6566,7 @@ RssFeedReader:
   version: 0.5.2
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to read an RSS feed and can be used as a trigger.
+  manual_anchor: rss-feed-reader
   attributes:
     rss_url: {type: string, hint: Enter RSS feed URL, placeholders: true}
     post_id_field: {type: string, hint: Typically 'ID' or 'GUID', placeholders: true}
@@ -6443,6 +6600,7 @@ ScheduleTrigger:
   version: 1.2.2
   min_orchestrator: 4.1.6
   description: This action plug-ins provide the ability schedule the triggering of the following steps in a Workflow.
+  manual_anchor: schedule-trigger
   attributes:
     allow_multiple: {type: boolean, label: Continue monitoring}
     schedule_rules: {type: text, placeholders: true}
@@ -6465,6 +6623,7 @@ ScomNotification:
   version: 1.2.0
   min_orchestrator: 4.1.0
   description: This action plugin provide the ability to submit log entry to the Windows Event Log. The execution can only occur on a windows host.
+  manual_anchor: scom-notification
   attributes:
     code: {type: integer, label: Message type code, widget: select, dynamic_values: true}
     message: {type: text, widget: multiline_text, code_default: 'Aspera::Orchestrator: <% = EventMessage %>', placeholders: true}
@@ -6478,6 +6637,7 @@ ScpTransfer:
   version: 0.2.1
   min_orchestrator: 4.1.6
   description: This action enables uploading or downloading files and directories to or from a remote host using SCP (secure copy protocol over SSH).
+  manual_anchor: scp-transfer
   attributes:
     operation: {type: string, widget: select, values: [upload, download], placeholders: true}
     remote_node: {type: string, widget: remote_node}
@@ -6518,6 +6678,7 @@ SftpTransfer:
   version: 0.7.1
   min_orchestrator: 4.1.6
   description: This plugin provides secure file transfer functionality to SFTP servers, supporting uploads, downloads, and deletions with flexible authentication options, proxy support, and specialized operations for handling large files and directory structures.
+  manual_anchor: sftp-transfer
   attributes:
     operation: {type: string, widget: select, values: [Upload, Download, Delete, Transfer (up or down), OS Download, OS Upload], placeholders: true}
     remote_node: {type: string, widget: remote_node, placeholders: true}
@@ -6584,6 +6745,7 @@ SftpTrigger:
   version: 0.4.3
   min_orchestrator: 4.1.6
   description: Enables hot folder functionality on a remote server using SFTP for automated file transfers.
+  manual_anchor: sftp-trigger
   attributes:
     remote_node: {type: string, widget: remote_node}
     remote_address: {type: string, hint: 'e.g., 192.168.1.100 or sftp.example.com'}
@@ -6636,6 +6798,7 @@ SglFlashnetArchive:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: This plug-in proivdes capability to perform rest operation on CatDV server.
+  manual_anchor: sglflashnetarchive
   attributes:
     sgl_node_address: {type: string, label: Sgl ip address (or hostname), placeholders: true}
     sgl_node_port: {type: integer, label: Sgl xml api port}
@@ -6678,6 +6841,7 @@ SharedStateOperation:
   version: 0.5.1
   min_orchestrator: 4.1.6
   description: This action plug-in can be used to create and retrive shared state objects.
+  manual_anchor: shared-state-operation
   attributes:
     entry: {type: text, widget: multiline_text, placeholders: true}
     entry_name: {type: string, placeholders: true}
@@ -6718,6 +6882,7 @@ SharesTransferSetup:
   version: 0.1.1
   min_orchestrator: 4.1.6
   description: This plugin returns the transfer specification to be used for Node API-based transfers to/from a Share defined with Aspera Shares.
+  manual_anchor: shares-transfer-setup
   attributes:
     remote_node: {type: string, widget: remote_node, placeholders: true}
     server_address: {type: string, label: Remote server ip address (or hostname), hint: 'e.g., 10.0.103.85 or shares.example.com', placeholders: true}
@@ -6751,6 +6916,7 @@ ShowMgrOperation:
   version: 0.2.0
   min_orchestrator: 4.1.0
   description: This action plug-ins is used to interact with ShowMgr (using API calls)
+  manual_anchor: showmgr
   attributes:
     subscription_key: {type: text, placeholders: true}
     api_operation: {type: string, widget: select, values: [Get Orders List, Get Order Info, Update Order Status, ShowMgr Trigger Operation]}
@@ -6780,6 +6946,7 @@ SimpleParameterLookup:
   version: 0.8.8
   min_orchestrator: 4.1.6
   description: This plugin provides a framework to associate miscellaneous values to parameters at design time and retrieve these associated values at runtime based on input parameter values.
+  manual_anchor: look-up-table
   attributes:
     case_sensitive: {type: boolean, label: 'Case Sensitive Lookup?', code_default: false}
     strip_spaces: {type: boolean, label: 'Strip leading and trailing spaces?', code_default: false}
@@ -6815,6 +6982,7 @@ SlackNotification:
   version: 0.2.2
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to interact with Slack
+  manual_anchor: slack-notification
   attributes:
     operation: {type: string, label: Slack operation, widget: select, values: [Send a Message]}
     slack_url: {type: string, hint: Enter Slack webhook URL, placeholders: true}
@@ -6853,6 +7021,7 @@ SnapshotPlugin:
   version: 0.2.1
   min_orchestrator: 4.1.6
   description: Takes a snapshot of the Orchestrator configuration.
+  manual_anchor: snapshot
   attributes:
     snapshot_name: {type: string, hint: 'e.g., orchestrator_backup_20250101', code_default: 'Snapshot_#{Time.now.strftime(''%Y%m%d%H%M%S'')}', placeholders: true}
     snapshot_directory: {type: string, hint: 'e.g., /backups/orchestrator', code_default: "<archive_dir>", placeholders: true}
@@ -6873,6 +7042,7 @@ SoapRequest:
   version: 2.1.6
   min_orchestrator: 4.1.6
   description: This plug-in provides the ability to periodically execute a SOAP query on a web service. It can be used for a one-off request or as a polling mechanism.
+  manual_anchor: soap-request
   attributes:
     wsdl_uri: {type: string, label: Wsdl uri (if remote), hint: 'e.g., http://example.com/service?wsdl', placeholders: true}
     local_wsdl_path: {type: string, label: Wsdl file (if stored locally), widget: file}
@@ -6941,6 +7111,7 @@ SoapRequestListener:
   version: 0.2.4
   min_orchestrator: 4.1.6
   description: This action plug-ins provides the ability wait for a SOAP message and extract its content.
+  manual_anchor: soap-request-listener
   attributes:
     callback_id_mode: {type: string}
     id_preset_value: {type: string, label: Preset id value, hint: Enter preset callback ID value}
@@ -6965,6 +7136,7 @@ SoftlayerApi:
   version: 0.2.3
   min_orchestrator: 4.1.6
   description: Integration with Softlayer API
+  manual_anchor: softlayer-api
   attributes:
     softlayer_url: {type: string}
     softlayer_service: {type: string}
@@ -7011,6 +7183,7 @@ SonyCi:
   version: 0.2.2
   min_orchestrator: 4.1.6
   description: This plugin enables management of media assets within Sony Ci cloud platform through upload, download, and metadata operations.
+  manual_anchor: sony-ci
   attributes:
     username: {type: string, hint: Sony Ci username, placeholders: true}
     password:
@@ -7054,6 +7227,7 @@ SonyCiFileWatcher:
   version: 0.1.3
   min_orchestrator: 4.1.6
   description: This plugin monitors Sony Ci folders for new files matching specified patterns and returns file information when matches are detected.
+  manual_anchor: sonyci-file-watcher
   attributes:
     username: {type: string, hint: Enter Sony Ci username, placeholders: true}
     password:
@@ -7090,6 +7264,7 @@ SpreadsheetParser:
   version: 0.2.1
   min_orchestrator: 4.1.6
   description: This plug-in allows workflows to read and process data from spreadsheet files such as Excel. It extracts the spreadsheet content into structured data that can be used in later steps.
+  manual_anchor: spreadsheet-parser
   attributes:
     file_path: {type: string, label: File path (optional), hint: 'e.g., /data/reports/file.xlsx', placeholders: true}
     first_sheet_only: {type: boolean, label: Returns first sheet only}
@@ -7112,6 +7287,7 @@ SubWorkflow:
   version: 1.5.3
   min_orchestrator: 4.1.6
   description: This action plug-in allows you to embed an entire, separately defined workflow as a single step within another workflow. This enables you to break down complex processes into manageable sub-workflows, making them easier to build, maintain, and reuse.
+  manual_anchor: sub-workflow
   attributes:
     workflow_id: {type: integer}
     exit_status_for_errors: {type: string, label: Map Error state to, widget: select, values: [Failed, Error], code_default: Failed}
@@ -7143,6 +7319,7 @@ SublerOperation:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: This action plug-in provides the ability to perform file transformation operations on a MAC System using the Subler toolset.
+  manual_anchor: subler-operation
   attributes:
     execution_node: {type: string, widget: remote_node}
     execution_login: {type: string, placeholders: true}
@@ -7182,6 +7359,7 @@ SymantecIcapDlpOperation:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: This plugin is used to make a ICAP call to Symantec DLP Engine.
+  manual_anchor: symantec-icap-dlp-operations
   attributes:
     service_ip: {type: string, placeholders: true}
     port: {type: integer}
@@ -7210,6 +7388,7 @@ SymantecIcapVirusScanOperation:
   version: 0.4.0
   min_orchestrator: 4.1.0
   description: This plugin is used to make a ICAP call to Symantec Antivirus Engine.
+  manual_anchor: symantec-icap-virus-scan-operations
   attributes:
     service_ip: {type: string, placeholders: true}
     port: {type: integer}
@@ -7254,6 +7433,7 @@ SymantecPgp:
   version: 0.4.0
   min_orchestrator: 4.1.0
   description: This action plug-in can be used to encyrpt/decrypt programatically a file using the symantec pgp command line tool.
+  manual_anchor: pgp-encryption
   attributes:
     source_file_path: {type: string, hint: Enter source file path, placeholders: true}
     passphrase:
@@ -7292,6 +7472,7 @@ ThePlatform:
   version: 0.4.0
   min_orchestrator: 4.1.0
   description: This action plug-in provides the ability to create, read, and update thePlatform objects.
+  manual_anchor: the-platform
   attributes:
     username: {type: string, label: Theplatform username, placeholders: true}
     password:
@@ -7358,6 +7539,7 @@ ThreePlayOperation:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: Add description here
+  manual_anchor: 3playmedia-operation
   attributes:
     service_url: {type: text}
     operation: {type: string, label: Trigger operation, widget: select, values: [Submit to 3Play, Check Status, Download Caption]}
@@ -7416,6 +7598,7 @@ TimecodeManager:
   version: 0.3.1
   min_orchestrator: 4.1.6
   description: Allows timecodes manipulations like conversions, sums or differences.
+  manual_anchor: timecode-manager
   attributes:
     operation: {type: string, widget: select, values: [Convert, Sum, Substract], code_default: Convert}
     input_format: {type: string, label: Input value format, widget: select, values: [Frame count, Timecode, Millisecond count], code_default: Timecode, placeholders: true}
@@ -7441,6 +7624,7 @@ UnifiedPackager:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: This action plug-in provides the ability to create a server manifest file with mp4split tool.
+  manual_anchor: unified-packager
   attributes:
     execution_node: {type: string, widget: remote_node, placeholders: true}
     output_file_path: {type: string, placeholders: true}
@@ -7467,6 +7651,7 @@ UserInput:
   version: 0.8.2
   min_orchestrator: 4.1.6
   description: This plugin provides an interactive way to present information and collect data from users through web forms within the Orchestrator control application.
+  manual_anchor: user-input
   attributes:
     event_description: {type: string, hint: Describe the event shown to the user, placeholders: true}
     assigned_roles: {type: string, hint: 'Before version 0.6.0: group ids separated by commas. Used only when assigned_roles_logins is null.'}
@@ -7522,6 +7707,7 @@ UserLookup:
   version: 0.1.1
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to lookup the information about orchestrator users identified by ID, name, login or email address.
+  manual_anchor: user-lookup
   attributes:
     lookup_by: {type: string, widget: select, values: [id, login, last_name, email]}
     enable_glob: {type: boolean, label: 'Enable GLOB pattern search?'}
@@ -7553,6 +7739,7 @@ UuidGenerator:
   version: 0.3.1
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to generate unique ID formatted "39fa4e20-0f32-0132-d394-282066598c75".
+  manual_anchor: uuid-generator
   attributes:
     compact: {type: boolean, label: 'Compact Version?', default: false}
     randomize: {type: boolean, label: 'Randomize?', default: false}
@@ -7566,6 +7753,7 @@ VantageTranscoding:
   version: 1.0.1
   min_orchestrator: 4.1.6
   description: This action plugin provides the ability to submit file transcoding jobs to a Vantage server.
+  manual_anchor: vantage-transcoding
   attributes:
     server_node: {type: string, label: Vantage server node, widget: remote_node, placeholders: true}
     server_address: {type: string, label: Vantage ip address or hostname, hint: e.g. 10.0.103.85 or vantage.example.com}
@@ -7610,6 +7798,7 @@ VidcheckerVerification:
   version: 0.4.2
   min_orchestrator: 4.1.6
   description: Executes and monitors quality control verifications on a VidChecker server.
+  manual_anchor: vidchecker-verification
   attributes:
     server_node: {type: string, label: Vidchecker server node, widget: remote_node}
     server_port: {type: string, label: Vidchecker api port (optional), code_default: 51060, placeholders: true}
@@ -7644,6 +7833,7 @@ VqbifAnalyzer:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: This plug-in proivdes capability to execute Vqbif commands on a remote node.
+  manual_anchor: vqbifanalyzer
   attributes:
     execution_node: {type: string, widget: remote_node, placeholders: true}
     vqbif_binary_path: {type: string, placeholders: true}
@@ -7674,6 +7864,7 @@ VqmaAnalyzer:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: This action plug-in provides the ability to submit and control a file transcoding operation using the HandBrake toolset.
+  manual_anchor: vqmaanalyzer
   attributes:
     execution_node: {type: string, label: Remote node, widget: remote_node, placeholders: true}
     vqma_binary_path: {type: string, label: Vcmq binary path, placeholders: true}
@@ -7699,6 +7890,7 @@ WatchFileMovement:
   version: 0.1.1
   min_orchestrator: 4.1.6
   description: This action plug-in asynchronously monitors a specified file location and detects when the file is moved by periodically checking its existence.
+  manual_anchor: watch-file-movement
   attributes:
     file_name: {type: string, label: File Name, hint: Full path to the file to watch, placeholders: true}
     polling_frequency: {type: integer, label: Polling Frequency, code_default: 10}
@@ -7713,6 +7905,7 @@ WatsonLanguageTranslator:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: This action plug-in provides the ability to translate from one language to another using IBM Watson Language Translator service.
+  manual_anchor: watson-language-translator
   attributes:
     operation: {type: string, widget: select, values: [Translate, List Identifiable Languages, Identify Language, List Models, Translate Document, Get Document Status, Get Translated Document]}
     url: {type: string, code_default: 'https://gateway.watsonplatform.net/language-translator/api', placeholders: true}
@@ -7756,6 +7949,7 @@ WatsonSpeechToText:
   version: 0.2.1
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to get speech transcriptions with IBM Watson Speech to Text service.
+  manual_anchor: watson-speech-to-text
   attributes:
     file_path: {type: string, hint: Enter the local path of the audio file, placeholders: true}
     url: {type: string, hint: 'e.g., https://storage.example.com/audio.wav', placeholders: true}
@@ -7794,6 +7988,7 @@ WatsonTextToSpeech:
   version: 0.2.1
   min_orchestrator: 4.1.6
   description: This action plug-in provides the ability to get speech-synthesis with IBM Watson Text to Speech service.
+  manual_anchor: watson-text-to-speech
   attributes:
     file_path: {type: string, hint: Enter the output audio file path, placeholders: true}
     url: {type: string, hint: 'e.g., https://api.us-south.text-to-speech.watson.cloud.ibm.com', placeholders: true}
@@ -7828,6 +8023,7 @@ WatsonVideoEnrichment:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: This action plug-in provides the ability to get structured information from video files with IBM Watson Video Enrichment service.
+  manual_anchor: watson-video-enrichment
   attributes:
     video_url: {type: text, widget: multiline_text, placeholders: true}
     api_key: {type: string, widget: password, placeholders: true}
@@ -7866,6 +8062,7 @@ WebdavTransfer:
   version: 0.3.1
   min_orchestrator: 4.1.6
   description: This action provides the ability to upload, download, post commands, make directory, gather properties, copy, move, delete or check files on a remote host which supports WedDAV protocol (extended version of he HTTP protocol)
+  manual_anchor: webdav-operation
   attributes:
     operation: {type: string, widget: select, values: [Upload, Download, Copy, Delete, Head, Move, Post, Propfind, MakeDir]}
     remote_node: {type: string, widget: remote_node}
@@ -7908,6 +8105,7 @@ WorkOrderMetaData:
   version: 0.7.1
   min_orchestrator: 4.1.6
   description: This action plug-in provides work order information and enables customization of work order labels and tags. It supports dynamic labeling, tag management, master ID override, and recursive label updates for better work order identification and management.
+  manual_anchor: work-order-metadata
   attributes:
     label: {type: string, hint: Enter a label to apply to the work order, placeholders: true}
     tags: {type: string, hint: 'e.g., urgent, batch-2025, project-alpha', code_default: "[]", placeholders: true}
@@ -7942,6 +8140,7 @@ WorkflowLauncher:
   version: 1.6.1
   min_orchestrator: 4.1.6
   description: This action plug-in is used to launch one workflow from within another. It is similar to, but not the same as, the SubWorkflow plug-in. The main difference is that WorkflowLauncher launches another workflow and then immediately allows the current workflow to proceed. This behavior is asynchronous, whereas in SubWorkflow, the current workflow waits for the launched workflow to complete before continuing. A WorkflowLauncher step is considered Complete once it has successfully launched the configured workflow, while a SubWorkflow step is considered Complete only after the sub-workflow it launched has finished execution.
+  manual_anchor: workflow-launcher
   attributes:
     workflow_id: {type: integer}
     priority: {type: integer, label: Execution priority, code_default: 'WorkOrder::DEFAULT_PRIORITY rescue 2'}
@@ -7985,6 +8184,7 @@ XfConverter:
   version: 0.3.0
   min_orchestrator: 4.1.0
   description: This plug-in provides the ability to convert (rewrap) audio and video wrapper files (AVI, GXF, MOV, MP4 and MXF) with OpenCube XFConverter. It implements the XFConverter SOAP based WEB service API 2.0
+  manual_anchor: xf-converter
   attributes:
     remote_node: {type: string, widget: remote_node}
     server_address: {type: string, label: Remote server ip address (or hostname)}
@@ -8010,6 +8210,7 @@ XmlParsing:
   version: 0.1.3
   min_orchestrator: 4.1.6
   description: This action plug-in extracts data from XML documents using XPath expressions. It supports XML input from text strings or file paths, allowing multiple configurable parameters to be exposed as workflow outputs.
+  manual_anchor: xml-parsing
   attributes:
     parameters: {type: text, placeholders: true}
     accept_xml_as_string: {type: boolean, label: 'Accept XML as String?'}
@@ -8031,6 +8232,7 @@ XsdValidation:
   version: 0.2.1
   min_orchestrator: 4.1.6
   description: This action plug-in is used to validate an XML file against an XSD template.
+  manual_anchor: xsd-validation
   attributes:
     xml_body: {type: text, widget: multiline_text, format: html, hint: Paste XML content here, placeholders: true}
     xml_file_path: {type: string, hint: 'e.g., /data/files/document.xml', placeholders: true}
@@ -8052,6 +8254,7 @@ XsltTransformation:
   version: 0.1.1
   min_orchestrator: 4.1.6
   description: This action plug-in is used to transform XML file using XSLT.
+  manual_anchor: xslt-transformation
   attributes:
     xml_body: {type: text, widget: multiline_text, format: html, hint: Paste XML content to transform. Supports dynamic attributes., placeholders: true}
     xml_file_path: {type: string, hint: 'e.g., /data/input/document.xml', placeholders: true}
@@ -8073,6 +8276,7 @@ XytechMediaPulse:
   version: 0.1.0
   min_orchestrator: 4.1.0
   description: This plug-in provides the ability to query the MediaPulse API and return MediaOrders and corresponding source file(s).
+  manual_anchor: xytechmediapulse
   attributes:
     endpoint: {type: string, label: End point, placeholders: true}
     payload_file: {type: string, widget: file, placeholders: true}
@@ -8101,6 +8305,7 @@ ZencoderTranscoding:
   version: 0.3.2
   min_orchestrator: 4.1.6
   description: This action plugin provides the ability to submit file transformation jobs to the Zencoder cloud service.
+  manual_anchor: zencoder-transcoding
   attributes:
     input_uri: {type: string, hint: 'e.g. s3://my-bucket/input/source.mp4', placeholders: true}
     outputs_payload: {type: text, widget: multiline_text, format: ruby, code_default: '[{label: "Default transformation", url: "<%= Output_URI %>"}]', placeholders: true}

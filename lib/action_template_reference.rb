@@ -51,10 +51,11 @@ class ActionTemplateReference
 
   YAML_HEADER = <<~HEADER
     # Aspera Orchestrator %<version>s action plugins: template attributes, inputs and outputs.
-    # Generated from Orchestrator: do not edit.
+    # Generated from Orchestrator by `rake doc:plugin_specs` (plugin code, Plugin Manual) and lib/plugins_overlay.yml (hand-written data): do not edit, change the generator or the overlay.
     # How to use it in a workflow file: see the Workflow authoring chapter of orchestrator-development-guide.md.
     #
     # <PluginClass>:          Step_type of a step, and class of its action template (key <PluginClass>__<N>)
+    #   manual_anchor:        anchor of the section of the plugin in the Plugin Manual (Orchestrator_Plugin_Manual.md), when it has one
     #   attributes:           fields of the action template (element 3 of a workflow file), besides name and comments
     #     <attribute>:
     #       type:             database column type; in plain format, write a boolean as 1 or 0
@@ -98,9 +99,11 @@ class ActionTemplateReference
   HEADER
 
   # @param overlay [Hash, nil] hand-authored enrichments (lib/plugins_overlay.yml) to merge on top of generated data
-  def yaml(version, overlay = nil)
+  # @param manual  [String, nil] path of the Plugin Manual (Markdown), to give the anchor of the section of each plugin
+  def yaml(version, overlay = nil, manual = nil)
     data = plugins.to_h { |plugin| [plugin.plugin_name, plugin_spec(plugin)] }
     apply_overlay(data, overlay) if overlay
+    add_manual_anchors(data, manual) if manual
     format(YAML_HEADER, version: version) + serialize_plugins(data)
   end
 
@@ -111,6 +114,31 @@ class ActionTemplateReference
     stream = Psych.parse_stream(Psych.dump(JSON.parse(JSON.generate(data)), line_width: -1))
     flow_style(stream.children.first.root, [])
     stream.to_yaml(nil, line_width: -1)
+  end
+
+  # Add key `manual_anchor` after `description`: anchor of the section of the plugin in the Plugin Manual, which has one section per plugin, titled with its display name.
+  # A plugin without section in the manual has no key.
+  # @param data   [Hash] plugin name => specification
+  # @param manual [String] path of the Plugin Manual (Markdown)
+  def add_manual_anchors(data, manual)
+    anchors = manual_anchors(manual)
+    data.each do |name, spec|
+      found = anchor(spec['display_name'].to_s)
+      next unless anchors.include?(found)
+      spec.delete('manual_anchor')
+      position = spec.keys.index('description')
+      data[name] = spec.to_a.insert(position.nil? ? 0 : position + 1, ['manual_anchor', found]).to_h
+    end
+  end
+
+  # @param manual [String] path of the Plugin Manual (Markdown)
+  # @return [Array<String>] anchors of the headings of level 3 (one per plugin), outside of code blocks
+  def manual_anchors(manual)
+    in_code = false
+    File.foreach(manual).filter_map do |line|
+      in_code = !in_code if line.start_with?('```')
+      anchor(Regexp.last_match(1).strip) if !in_code && line =~ /\A### (.+)/
+    end
   end
 
   # Deep-merge overlay into data.

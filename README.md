@@ -128,6 +128,7 @@ rake doc:guide
 ```
 
 `doc:plugin_specs` generates `plugins.yml`, for tools and AI assistants: for each plugin, the template attributes (label, allowed values, defaults) and the inputs and outputs, with the template settings they depend on.
+It also gives the anchor of the section of each plugin in the Plugin Manual (`manual_anchor`): the manual is generated first if needed.
 It reads the edit form of each plugin, and calls methods `inputs_spec` and `outputs_spec` of the plugin on templates with different settings (`lib/plugin_probe.rb`, run in its own process: about 2 minutes).
 It needs the library files extracted by `extract_rpm`: re-run `extract_rpm` if `build/<VERSION>/src/lib` contains only `action_tools.rb` and `actions_helper.rb`.
 Its intermediate result is `build/<VERSION>/out/plugin_probe.json`, generated again when the `actions` folder or the generator changes.

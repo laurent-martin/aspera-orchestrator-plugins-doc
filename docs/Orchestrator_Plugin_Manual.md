@@ -1,3 +1,4 @@
+<!-- Generated from the Orchestrator `actions` directory by `rake md_manual`: do not edit. -->
 # Aspera Orchestrator v4.1.6 Plugins Manuals
 
 ## Asset Management
@@ -1002,6 +1003,247 @@ Restart the `asperanoded` service as root after changes:
   service asperanoded restart\
 
 For more detailed API documentation, see the <a href="https://developer.ibm.com/api/view/aspera-prod:ibm-aspera:title-IBM_Aspera#Overview" target="_blank">Aspera Developer Network</a>.
+
+
+### Aspera Node Search
+
+
+
+![Aspera Node Search icon](icons/AsperaNodeSearch.png)
+
+This action plug-in provides the ability to perform file system operations (search, rename, delete) through the Aspera Node API.
+
+
+| Version | Comment |
+|-------|---------------------------------------------------|
+| 0.3.1 | Enhanced action template UI |
+| 0.3.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
+| 0.2.1 | Support the form hostname:port in node address |
+| 0.2.0 | Added max depth for searching operation |
+| 0.1.4 | Added to_a to explicitly convert the filter type to an array. Ruby 2+ returns Enumerator object. Defaulted search_root as "/" |
+| 0.1.3 | Added styling to parameter help text. |
+| 0.1.2 | RemoteNode Dependency |
+| 0.1.1 | Adds help file |
+| 0.1.0 | Fixes filtering on full path |
+| 0.0.4 | Fixes run-time node server address |
+| 0.0.3 | exception handling of RemoteNode.find_by_name() |
+| 0.0.2 | Fixes install issue |
+| 0.0.1 | Initial release. |
+
+#### How It Works
+
+- Connects to Aspera Transfer Servers via Node API to perform file system operations and searches.
+- Supports five main operations: Ping (connectivity test), Info (node details), Search (file discovery), Rename (file renaming), and Delete (file removal).
+- Provides advanced search capabilities with filters for file type, name patterns, size, modification time, and directory depth.
+- Uses glob pattern matching for flexible file and directory searching with support for wildcards and complex patterns.
+- Operates through HTTP/HTTPS Node API connections with configurable SSL support and authentication.
+
+#### Configuration Instructions
+
+1.  Add an **AsperaNodeSearch** step to your workflow.
+2.  Configure the essential Node API connection parameters:
+    - **Name**: Enter a descriptive name for the step.
+    - **Aspera Node**: Select from defined Remote Nodes or leave empty to use manual configuration.
+    - **Aspera node IP address**: Node server IP address, domain name, or address:port format.
+    - **Node user name**: Node API username (not OS account).
+    - **Node user password**: Password for Node API authentication.
+3.  Set up the operation and parameters:
+    - **Operation**: Choose from Ping, Info, Search, Rename, or Delete.
+    - **Use ssl?**: Check for HTTPS on port 9092, uncheck for HTTP on port 9091.
+    - **Source**: For Search: directory path (e.g., /TestFolder/); For Rename: comma-separated file paths.
+    - **Target**: For Rename: destination path or regex pattern for bulk renaming.
+
+#### Example Configuration
+
+| Parameter                               | Example Value    |
+|-----------------------------------------|------------------|
+| **Name**                                | Node File Search |
+| **Aspera node IP address**              | 192.168.1.100    |
+| **Node user name**                      | node_api_user    |
+| **Node user password**                  | \*\*\*\*\*\*\*\* |
+| **Use ssl?**                            | checked          |
+| **Operation**                           | Search           |
+| **Source**                              | /TestFolder/     |
+| **Search Parameter - Filter file type** | file,directory   |
+| **Search Parameter - Filter name**      | \*.txt,\*.log    |
+| **Search Parameter - Max count**        | 1000             |
+| **Search Parameter - Max depth**        | 5                |
+
+#### Saved Parameters Description
+
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| **Name** | Display name for this Node search step. |
+| **Comments** | Notes or description for this step. |
+| **Aspera Node** | Remote node name from defined Remote Nodes list. Leave empty to use manual IP configuration. |
+| **Aspera node IP address** | Node server IP address, domain name, or address:port format for manual connection. |
+| **Node API port** | Custom Node API port number. Leave empty to use defaults (9091 for HTTP, 9092 for HTTPS). |
+| **Node user name** | Node API user account name (not operating system account). |
+| **Node user password** | Password for Node API user authentication. |
+| **Use ssl?** | Enable HTTPS on port 9092. When unchecked, uses HTTP on port 9091. |
+| **Operation** | Operation to perform: Ping (connectivity test), Info (node information), Search (file discovery), Rename (file renaming), Delete (file removal). |
+| **Source** | For Search: single directory path (e.g., /TestFolder/). For Rename: comma-separated file paths (/Path/To/File1, /Path/To/File2). |
+| **Target** | For Rename: destination file path (/Path/To/NewFile) or regex pattern starting with '%s/' and ending with '/g' for bulk modifications. |
+| **Overwrite during rename** | Allow overwriting existing files during rename operations. |
+| **Search Parameter - Filter file type** | Comma-separated file types: 'file', 'directory', 'symbolic link' (without quotes). Limits results to specified types. |
+| **Search Parameter - Filter name** | Comma-separated file path patterns. Results include only files matching these filepath patterns. |
+| **Search Parameter - Filter basename** | Comma-separated basename patterns. Results include only files matching these base name patterns. |
+| **Search Parameter - Max count** | Maximum number of files to return (default: 1000000). |
+| **Search Parameter - Max depth** | Maximum directory depth for search. Leave empty for unlimited depth. |
+| **Search Parameter - Minimum size** | Minimum file size in bytes. Returns files larger than specified value. |
+| **Search Parameter - Filter mtime min** | Minimum modification time filter in format '2011-01-31T12:59:59Z' (T or space separator, Z optional). |
+| **Search Parameter - Filter mtime max** | Maximum modification time filter in format '2011-01-31T12:59:59Z' (T or space separator, Z optional). |
+
+#### Inputs Description
+
+Changes in this list of inputs will override any values set in the action template.
+
+- **Aspera_Node_Server_Address**: Remote node name, IP address, domain name, or address:port format.
+- **node_user_name**: Node API username for authentication.
+- **node_password**: Node API password for authentication.
+- **filter_name**: File path patterns for search result filtering.
+- **filter_basename**: Base name patterns for search result filtering.
+- **filter_file_type**: File type filters for search results (file, directory, symbolic link).
+- **filter_mtime_min**: Minimum modification time filter for search results.
+- **filter_mtime_max**: Maximum modification time filter for search results.
+- **max_count**: Maximum number of files to retrieve in search results.
+- **use_ssl**: Enable HTTPS (port 9092) when checked, HTTP (port 9091) when unchecked.
+
+#### Outputs Description
+
+- **Item count**: Number of items found in search results.
+- **Total count**: Total count of matching files and directories.
+- **Search results**: Array containing detailed information about matching files and directories.
+
+#### Supported Actions
+
+- Ping
+- Info
+- Search
+- Rename
+- Delete
+
+#### Dependencies
+
+- Remote nodes must run Aspera Transfer Server or Transfer Endpoint with valid license.
+- Asperanoded service must be running for Node API functionality.
+- Node API user account must be created and configured separately from operating system user accounts.
+- Network connectivity to Node API ports (9091 for HTTP, 9092 for HTTPS).
+
+#### Operating Instructions
+
+#### Operation Types
+
+- **Ping:** Checks if the remote node responds to Node API requests.
+- **Info:** Retrieves primary information about the remote node configuration.
+- **Search:** Discovers files and folders matching specified patterns in designated directories.
+- **Rename:** Renames files from source paths to target destinations with overwrite options.
+- **Delete:** Removes files specified in the source field.
+
+#### Search Pattern Matching
+
+Glob pattern matching is supported for file name and base name patterns with case-sensitive matching:
+
+- **Wildcard patterns:** `*.txt` matches all files with .txt extension.
+- **Multiple patterns:** `*.txt, *.mxf` matches files with either extension.
+- **Directory patterns:** `foo*/*.txt` finds .txt files in directories starting with 'foo'.
+- **Nested directories:** `foo/*/bar/*.txt` finds .txt files in bar subdirectories within foo.
+- **Character matching:** `fo?` matches 'foo' or 'fo1' but not 'foo1'.
+- **Range matching:** `fo[1-9]` matches 'fo1' or 'fo2' but not 'foo1'.
+- **Double wildcards:** `**` has the same meaning as `*`.
+
+#### Node API Configuration
+
+Node API accounts are separate from operating system accounts. Find the associated transfer user with:
+
+\
+\# /opt/aspera/bin/asnodeadmin -l
+
+\
+List of node user(s):
+
+\
+            user       system/transfer user                    acls
+
+\
+====================    =======================    ====================
+
+\
+        node_user                       xfer       \[\]\
+
+#### Path Configuration
+
+Paths are relative to the transfer user's docroot defined in `/opt/aspera/etc/aspera.conf`:
+
+\
+\<user\>
+
+\
+    \<name\>xfer\</name\>
+
+\
+    \<file_system\>
+
+\
+        \<access\>
+
+\
+            \<paths\>
+
+\
+                \<path\>
+
+\
+                    \<absolute\>/home/xfer/data\</absolute\>
+
+\
+                \</path\>
+
+\
+            \</paths\>
+
+\
+        \</access\>
+
+\
+    \</file_system\>
+
+\
+\</user\>\
+
+**Example:** A watch directory "/root" refers to "/home/xfer/data/root" on the remote server.
+
+#### Port Configuration
+
+Enable both HTTP and HTTPS ports by configuring `/opt/aspera/etc/aspera.conf`:
+
+\
+\<server\>
+
+\
+    \<server_name\>node.example.com\</server_name\>
+
+\
+    \<http_port\>9091\</http_port\>
+
+\
+    \<https_port\>9092\</https_port\>
+
+\
+    \<enable_http\>true\</enable_http\>
+
+\
+    \<enable_https\>true\</enable_https\>
+
+\
+\</server\>\
+
+Restart asperanoded service as root to apply changes:
+
+\
+service asperanoded restart\
+
+**Reference:** More information about Aspera Node API is available on the <a href="https://developer.ibm.com/apis/catalog/?search=aspera" target="_blank">Aspera Developer Network</a>.
 
 
 ### Path conversion
@@ -3768,6 +4010,187 @@ The list of inputs depends on the configuration of the AscpClient action templat
 - Ensure that doc root configurations allow access to both source and destination file paths on respective systems.
 
 
+### AoC Package Delivery
+
+
+
+![AoC Package Delivery icon](icons/AsperaFilesPackageDelivery.png)
+
+A plugin to create and deliver file packages to recipients in Aspera on Cloud.
+
+
+| Version | Comment |
+|-------|---------------------------------------------------|
+| 0.5.1 | Enhanced action template UI |
+| 0.5.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
+| 0.4.0 | Adds download notification list |
+| 0.3.0 | Add http proxy support |
+| 0.2.4 | Fix encoding issue for Metadata |
+| 0.2.3 | Use updated AoC API URL |
+| 0.2.2 | Updating the help page |
+| 0.2.1 | Added tags as output when return transfer node informations option is selected |
+| 0.2.0 | Allow encryption at rest |
+| 0.1.1 | Updating branding from Aspera Files to AoC |
+| 0.1.0 | Added option to return transfer node informations |
+| 0.0.3 | Verify ssl false |
+| 0.0.2 | Added support for external users |
+| 0.0.1 | Initial implementation |
+
+#### How It Works
+
+- Connects to Aspera On Cloud (AoC) to create and manage file packages with recipient delivery capabilities.
+- Supports two main operations: Create Package for new package creation and Confirm Package Creation for finalizing packages.
+- Uses OAuth authentication with client credentials and SSH key-based user authentication for secure API access.
+- Enables package customization with metadata, encryption at rest, download notifications, and recipient management.
+- Returns comprehensive package information including transfer node details, recipient data, and HTTP status codes.
+
+#### Configuration Instructions
+
+1.  Add an **AsperaFilesPackageDelivery** step to your workflow.
+2.  Configure AoC authentication parameters:
+    - **Name**: Enter a descriptive name for the step.
+    - **AoC client ID**: API client ID from Organization → Integrations or Nodes and Storage → Nodes.
+    - **AoC client secret**: API client secret for OAuth authentication.
+    - **AoC organization name**: Name of the Aspera On Cloud organization.
+    - **AoC user name**: User email address with appropriate permissions.
+    - **Private key filepath**: Path to SSH private key file on Orchestrator.
+3.  Set up package operation and workspace:
+    - **Package operation**: Choose 'Create Package' or 'Confirm Package Creation'.
+    - **Workspace name**: Target workspace name for package creation.
+    - **Package name**: Title for the new package.
+    - **Recipient Type**: Choose 'user' or 'dropbox' for package delivery.
+4.  Configure optional settings as needed:
+    - **Encryption at rest**: Enable for secure package storage.
+    - **Return transfer node information**: Include transfer details in output.
+    - **Download notification list**: Email addresses for download notifications.
+
+#### Example Configuration
+
+| Parameter                            | Example Value                        |
+|--------------------------------------|--------------------------------------|
+| **Name**                             | AoC Package Delivery                 |
+| **AoC client ID**                    | 12345678-abcd-1234-5678-123456789abc |
+| **AoC client secret**                | \*\*\*\*\*\*\*\*                     |
+| **AoC organization name**            | mycompany                            |
+| **AoC scope**                        | user:all                             |
+| **AoC user name**                    | admin@example.com                    |
+| **Private key filepath**             | /opt/aspera/keys/aoc_private_key     |
+| **Package operation**                | Create Package                       |
+| **Workspace name**                   | Project Workspace                    |
+| **Package name**                     | Data Delivery Package                |
+| **Recipient Type**                   | user                                 |
+| **Recipient / Dropbox Name**         | recipient@example.com                |
+| **Encryption at rest**               | checked                              |
+| **Return transfer node information** | checked                              |
+
+#### Saved Parameters Description
+
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| **Name** | Display name for this package delivery step. |
+| **Comments** | Notes or description for this step. |
+| **AoC client ID** | API client ID found in AoC under Organization → Integrations or Nodes and Storage → Nodes. |
+| **AoC client secret** | API client secret for OAuth authentication. |
+| **AoC organization name** | Name of the Aspera On Cloud organization. |
+| **AoC scope** | Authorization scope for API access (typically 'user:all' for package creation). |
+| **AoC user name** | User email address for AoC authentication (must be standard user, not limited). |
+| **Private key filepath** | Path to SSH private key file on Orchestrator, corresponding to public key in AoC user profile. |
+| **Http proxy** | HTTP proxy URL for AoC API access (requires Orchestrator 4.0.1+ or capsule). |
+| **Package operation** | Operation type: 'Create Package' for new packages or 'Confirm Package Creation' for finalizing. |
+| **Custom package payload** | Custom payload data for package creation. |
+| **Workspace name** | Target workspace name for package operations. |
+| **Workspace ID** | Workspace identifier for package operations. |
+| **Package name** | Title/name for the package being created. |
+| **Package note** | Optional descriptive note for the package. |
+| **Recipient Type** | Type of package recipient: 'user' for individual users or 'dropbox' for shared inboxes. |
+| **Recipient / Dropbox Name** | Name of recipient user or dropbox for package delivery. |
+| **Recipient / Dropbox ID** | Unique identifier for dropbox recipients (required when Recipient Type is 'dropbox'). |
+| **Package metadata** | JSON structure containing package metadata information. |
+| **Encryption at rest** | Enable encryption for secure package storage (required if workspace enforces encryption). |
+| **Return transfer node information** | Include transfer node details (host, access keys, etc.) in plugin outputs. |
+| **Download notification list (comma separated)** | Email addresses to notify after first package download. |
+| **Package id** | Package identifier for 'Confirm Package Creation' operations. |
+
+#### Inputs Description
+
+#### Mandatory Inputs:
+
+- **Files_client_id**: API client ID for AoC authentication.
+- **Files_client_secret**: API client secret for OAuth token generation.
+- **Files_organization_name**: AoC organization name.
+- **Files_user_name**: AoC user name (email address).
+- **Private_key_filepath**: SSH private key file path on Orchestrator.
+
+#### Operation-Specific Mandatory Inputs:
+
+- **Workspace_id**: Workspace ID (required for 'Create Package' operation).
+- **Package_name**: Package title (required for 'Create Package' operation).
+- **Recipient_data**: Recipient information as string array format \[\['user', 'user_name'\], \['dropbox', 'dropbox_name', 'dropbox_id'\]\] (required for 'Create Package').
+- **Files_package_id**: Package ID (required for 'Confirm Package Creation' operation).
+
+#### Optional Inputs:
+
+- **Package_note**: Package description note (for 'Create Package' operation).
+- **Package_metadata**: Package metadata in JSON format (for 'Create Package' operation).
+- **Transferred_file_sessions_count**: Number of desired transfer sessions for confirmation (default value used if not specified).
+
+#### Outputs Description
+
+- **Contents_File_ID**: ID of the 'contents' folder within the package.
+- **File_ID**: ID of the 'asp-package' folder on the transfer node.
+- **Files_OAuth_Token**: OAuth token used for package API calls.
+- **Files_Package_ID**: Unique identifier of the created or confirmed package.
+- **HTTP_Return_Code_Package_Call**: HTTP status code returned by package creation/confirmation API call.
+- **HTTP_Return_Code_Token_Call**: HTTP status code returned by OAuth token generation call.
+- **Package_Metadata**: Metadata information associated with the package.
+- **Recipient_Email**: Email address of the package recipient.
+- **Recipient_Name**: Name of the package recipient.
+- **Recipient_Type**: Type of recipient (user or dropbox).
+- **Sender_Email**: Email address of the package sender.
+- **Sender_Name**: Name of the package sender.
+- **Access_Key**: Transfer node access key (when 'return transfer node information' is enabled).
+- **Access_Token**: Transfer node access token (when 'return transfer node information' is enabled).
+- **Host**: Transfer node hostname (when 'return transfer node information' is enabled).
+- **Node_ID**: Transfer node identifier (when 'return transfer node information' is enabled).
+- **Tags**: FASP transfer tags (when 'return transfer node information' is enabled).
+
+#### Supported Actions
+
+- Create Package
+- Confirm Package Creation
+
+#### Dependencies
+
+- Orchestrator must have internet connectivity to reach api.ibmaspera.com.
+- Valid Aspera On Cloud organization with appropriate API client configuration.
+- AoC user must be defined as standard user (not limited user) with proper permissions.
+- SSH key pair configured (public key in AoC user profile, private key on Orchestrator).
+- The aspweb user must have proper permissions to read the private key file.
+- For dropbox recipients, AoC user must be member of the target shared inbox.
+
+#### Operating Instructions
+
+#### Authentication Requirements
+
+- **AoC scope**: Must be set to 'user:all' for package creation operations.
+- **User permissions**: AoC username must be standard user, not limited user.
+- **Shared inbox access**: For dropbox recipients, AoC user must be member of the target shared inbox.
+- **SSH keys**: Private key on Orchestrator must correspond to public key configured in AoC user profile.
+
+#### Package Operations
+
+- **Create Package**: Establishes new package with specified recipients, metadata, and configuration options.
+- **Confirm Package Creation**: Finalizes package creation with specified transfer session count.
+- **Encryption support**: Enable 'Encryption at rest' checkbox when workspace requires package encryption.
+- **Recipient formats**: Support both individual users and shared inbox (dropbox) recipients with appropriate ID specification.
+
+#### Network and Connectivity
+
+- Orchestrator requires outbound internet access to AoC APIs at api.ibmaspera.com.
+- HTTP proxy support available for environments requiring proxy configuration (Orchestrator 4.0.1+ or capsule).
+- Download notification emails are sent automatically after the first package download, when the notification list is configured.
+
+
 ### Aspera Node API Transfer
 
 
@@ -5502,6 +5925,182 @@ This example describes a Job Order (in this case a pull operation) in XML format
 - Verify Aspera Central configuration accepts external connections if transfer initiation fails - check central_server settings in aspera.conf.
 - Ensure proper authentication credentials and verify network connectivity if connection errors occur during transfer setup.
 - Check ASCP version compatibility (3.6.1+) if failed file reporting is not working as expected.
+
+
+### Faspex5 delivery
+
+
+
+![Faspex5 delivery icon](icons/Faspex5Delivery.png)
+
+This plugin provides a way to create and send secure file packages through Aspera Faspex5 servers with advanced delivery controls and recipient management.
+
+
+| Version | Comment |
+|-------|---------------------------------------------------|
+| 0.2.2 | Enhanced action template UI |
+| 0.2.1 | Improved error handling during reauthentication after access token expiry |
+| 0.2.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
+| 0.1.0 | Added public_download option |
+| 0.0.7 | Added transfer spec json output |
+| 0.0.6 | Fixed result interpretation when creating remote packages |
+| 0.0.5 | Added status link output to the work step, which can return the package status based on the context ID |
+| 0.0.4 | Fixed the duplicated File_paths inputs in the inputs tab. |
+| 0.0.3 | Exposed Note, added support for ssh_private_key file path, added support for dynamic title |
+| 0.0.2 | Improve authentication service logic, exposed parameters at runtime, added support for ssh_private_key file path |
+| 0.0.1 | This is based on Faspex delivery version 0.8.1 |
+
+#### How It Works
+
+- Creates and delivers secure file packages through Aspera Faspex5 servers with comprehensive recipient management and delivery control options.
+- Supports multiple recipient types including users, external users, distribution lists, workgroups, and shared inboxes with both public and private recipient configurations.
+- Provides flexible file sourcing options with local file paths and remote shared folder integration for distributed file package creation.
+- Includes advanced package controls such as download limits, expiration policies, release scheduling, content protection, and filename obfuscation.
+- Offers comprehensive notification system with customizable alerts for upload, download, and receipt events to keep stakeholders informed throughout the package lifecycle.
+
+#### Configuration Instructions
+
+1.  Add a **Faspex5 Delivery** step to your workflow.
+2.  Configure server connection and authentication:
+    - **Faspex Node**: Select configured remote node or specify server details manually.
+    - **Faspex Server Address**: Full URL or hostname of the Faspex5 server.
+    - **Faspex Sender User**: Username that will be the package sender.
+    - **SSH Private key**: Private key in PEM format or path to PEM file.
+    - **Faspex API Client ID**: Client ID from Faspex server configuration.
+3.  Set up package details:
+    - **Title**: Package title for recipients.
+    - **Note**: Optional message to include with the package.
+    - **Recipients**: List of package recipients with appropriate permissions.
+    - **File paths**: Comma-separated list of files to include in the package.
+
+#### Example Configuration
+
+| Parameter | Example Value |
+|-------|---------------------------------------------------|
+| **Faspex Server Address** | https://faspex.example.com |
+| **Faspex Sender User** | orchestrator@example.com |
+| **Faspex API Client ID** | aspera-orchestrator-client |
+| **Title** | Media Files Package |
+| **Note** | Processed media files ready for review |
+| **Recipients** | reviewer@example.com, editor@example.com |
+| **File paths** | /media/processed/video1.mp4, /media/processed/video2.mp4 |
+| **Download limit** | 3 |
+| **Release policy** | now |
+| **Expiration Policy** | delete_after_all_download |
+
+#### Saved Parameters Description
+
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| **Faspex Node** | The node where Aspera Faspex server is installed. If no remote node is configured, use the Advanced parameters section. |
+| **Faspex Server Address** | Advanced - The full URL or the host name of the Faspex server, if not configured as Remote Node. |
+| **Faspex Sender User** | The Faspex user to use for creating the Package. This user will be the sender of the package. |
+| **SSH Private key** | Private key in PEM format or the path to the PEM file. |
+| **Faspex API Client ID** | The client ID provided in the Faspex server Configurations, follow the operating instructions. |
+| **Title** | The Faspex package title. |
+| **Note** | The note to add to the Faspex package. |
+| **Recipients** | List of recipients for the package. Depending on the user permissions, the user will be able to choose the following recipient types: users, external users, distribution lists, workgroups or shared inboxes. |
+| **Private recipients** | List of private recipients for the package. Depending on the user permissions, the user will be able to choose the following private recipient types: users, external users, distribution lists, workgroups or shared inboxes. This input is required if 'Recipients' field input was not addressed. |
+| **Package metadata** | The metadata specifications for the package. Metadata must be well formatted to be accepted. See examples. |
+| **File paths** | A comma separated list of files to include in the Faspex Package. If remote sources is selected, you must specify the file paths from the doc_root directory and not the full_path. |
+| **Shared folder id** | The ID of the shared folder to use as source for this package. If set the Faspex package will be built with files from a remote source. The nodes (sender and receiver) must be configured in the Faspex server. |
+| **Download limit** | The number of times a package can be downloaded. Value can be blank, indicating 'no limit'. |
+| **Content Protection Passphrase** | The phrase to protect the content of the package, this input is required when encryption at rest option is used. If set the package will be stored encrypted in the Faspex storage. |
+| **Expiration Policy** | The expiration policy for the package. Default is 'none' for no expiration policy. 'delete_after_all_download' deletes package after ALL users do a full download. 'delete_after_any_download' deletes package after ANY user fully downloads. |
+| **Release policy** | Sets when the package will be released. Default is 'now'. Options: Now (send immediately), On date (send on specific date), Later (send later without set date). |
+| **Release date** | The time when the package is delivered. If the Release Policy is 'on_date', the release date must be in the future. |
+| **Obfuscation enabled** | Filename obfuscation is set for the package respective to Faspex server settings. |
+| **Prevent http download** | Specifies whether a user can download this package via HTTP Gateway. |
+| **Skip metadata validation** | Allows skipping metadata validation. Skipping validation allows a user to send a package with invalid metadata. |
+| **Get package status link** | Allows returning the package status context to view package status. |
+| **Public Download** | Forces the recipients definition to be public_download: true. |
+| **Notified on upload** | A comma separated list of users or external users to notify upon package upload. Allows sending a notification ('Package Received' email) upon successful file upload. Optional. |
+| **Notified on download** | A comma separated list of users or external users to notify upon package download. Allows sending a notification when a user downloads the package. Optional. |
+| **Notified on receipt** | A comma separated list of users or external users to notify when a receipt occurs. The Faspex server settings for 'allow_receipt_cc_edit' must be 'true'. Optional. |
+
+#### Inputs Description
+
+The list of inputs depends on the configuration of the Faspex5Delivery action template.
+
+- **Faspex_server_address**: Faspex5 server address, hostname or remote node name.
+- **Ssh_private_key**: Required to authenticate Orchestrator with Faspex5 server. It can be either the value or the path to the file.
+- **Faspex_api_client_id**: Faspex5 API client ID must be provided here.
+- **Faspex_sender_user**: Faspex5 user's login username should be provided here, this will also be used as the package sender.
+- **Title**: Required to provide the Faspex5 package title.
+- **Note**: The text of the package note. Optional.
+- **Recipients**: At least one Faspex5 package recipient is required if private recipients were not provided. When used as parameter/value, must be comma-separated with default recipient_type 'user'. Example: your_email1@example.com,your_email2@example.com
+- **File_paths**: Paths to be used in case of remote transfers. Required input.
+- **Release_date**: Required when Release policy is 'on_date'. Accepted formats: DD/MM/YYYY, YYYY/MM/DD, YYYY-MM-DD 00:00:00 UTC, DD-MM-YYYY 00:00:00 UTC. Example: 2023/02/24. Must be future date.
+
+#### Outputs Description
+
+- **step_information**: Provides a hash with the step details like step_id, step_name, step_status, step_status_details, etc.
+- **Transfer_spec**: Transfer Spec for the package delivery.
+- **Id**: The ID of the created Faspex package.
+- **Status_link**: Status link that returns the package status based on the context ID.
+
+#### Operating Instructions
+
+#### How to Configure a Faspex5 Delivery
+
+#### Orchestrator Instance Setup
+
+- You need a new SSH key exclusively to interact with Faspex. The output of the new private key must be in PEM format.
+- To create the SSH key: `ssh-keygen -t rsa -b 4096 -m PEM -C "your_email@example.com"` (assume it's saved as: key_for_faspex.pub)
+- To generate the PEM format: `ssh-keygen -f key_for_faspex.pub -m 'PEM' -e > key_for_faspex.pub.pem`
+- In an HA environment, the new private key needs to be shared among the Orchestrator instances.
+- For Faspex 5.0.4 and later versions, you need to enable the parameter "allow_global_key": "true" or "Allow signing with global key".
+- **Important:** This plugin generates Faspex packages and returns transfer specifications but does not perform the actual file transfer. Use a separate transfer plugin (such as FASP Transfer) to execute the actual file movement using the generated transfer specifications.
+
+
+**Note:** Newer versions of OpenSSH default to generating ED25519 keys rather than RSA. If you run `ssh-keygen -m pem ...` without specifying the key type and then encounter the error *do_convert_to_pem: unsupported key type ED25519* when exporting the public key to PEM format, it means an ED25519 key was generated, which is not supported for PEM conversion. Use the explicit RSA form instead:
+
+`ssh-keygen -t rsa -b 4096 -m PEM -C "your_email@example.com"`
+
+
+#### Faspex Server Instance Configuration
+
+You will need to properly configure an API client from the Faspex5 server:
+
+- Go to `/admin/configurations/api-clients` page and create a new API Client
+- Enable JWT grant type
+- Enable "Allow refresh token" toggle (Faspex 5.0.6 and above versions)
+- Configure "Access token expiration (hours) (optional)" (Faspex 5.0.6 and above versions)
+- Configure "Refresh token expiration (hours)" (Faspex 5.0.6 and above versions)
+- In the "Authentication" section enable "Global key" toggle and paste the orchestrator public key in PEM format
+- In the "Access" section enable "All users" if you want all F5 users to use this client to access the API
+
+#### How to Specify Recipients or Private Recipients
+
+- Click on the "Add Recipients" or "Add Private Recipients" button.
+- A new input will be displayed and next to the input, at the right side, the user will be able to choose the recipient type by selecting from the dropdown.
+- When choosing recipient types "Shared inbox", "Workgroup" or "Distribution list" you should put the name of the existing entity that you want to use as a recipient.
+
+#### How to Specify Metadata
+
+To specify metadata for a new package, use this syntax: `"Target":"VOD Distrib","Profile":"MPEG2"`
+
+There should not be blank spaces before and after the comma.
+
+#### How to Perform a Remote Transfer
+
+When providing a shared folder ID in the "+ Use Remote Sources" section, the plugin will request the Faspex5 remote transfer endpoint and execute it, getting the files specified in the "File paths" input from the specified shared folder ID (node).
+
+#### Dependencies
+
+- Faspex5 server must be accessible and properly configured with API client settings.
+- SSH key pair must be generated and the public key configured in Faspex5 server.
+- Network connectivity between Orchestrator and Faspex5 server is required.
+- Valid Faspex5 user credentials with appropriate permissions for package creation and recipient management.
+- The aspweb user must have proper file permissions for source files and SSH keys.
+
+#### Troubleshooting
+
+- Authentication errors: Verify that valid credentials are provided (Faspex server address, SSH private key, Faspex sender user, Faspex API client ID).
+- Package creation failures: Check that recipients have appropriate permissions and exist in the Faspex5 system.
+- Remote transfer issues: Ensure shared folder ID exists and nodes are properly configured in the Faspex server.
+- Metadata validation errors: Verify metadata format follows the required syntax without extra spaces.
+- Release date errors: Confirm that release dates are in the future when using 'on_date' release policy.
 
 
 ### Faspex5 file processing
@@ -11332,6 +11931,208 @@ The following shows an example custom log output from a File Watcher being monit
 - Check log file permissions and disk space if custom logging is configured but not producing output.
 
 
+### Database query
+
+
+
+![Database query icon](icons/DatabaseQuery.png)
+
+This plug-in provides the ability to execute SQL queries on external databases (MySQL, Oracle, ODBC compatible) and format their results with flexible output options.
+
+
+| Version | Comment |
+|-------|---------------------------------------------------|
+| 0.3.4 | Enhanced action template UI |
+| 0.3.3 | Handle non-SELECT query results |
+| 0.3.2 | Ensure results with key-value pairs are not reversed |
+| 0.3.1 | Update help docs with revised steps to use OracleDB and ODBC |
+| 0.3.0 | Remove hardcoded aspera directory reference, Updating to be compatible with Ruby 3.4 and Rails 8 |
+| 0.2.9 | Fixed problem associated with row formatting and result formatting code. |
+| 0.2.8 | Uses default support of dynamic variables. |
+| 0.2.7 | Fixed outputs spec to expose insert ID on other RDBMS |
+| 0.2.6 | Put DB specific code for insert ID retrieval |
+| 0.2.4 | Added styling to parameter help text. |
+| 0.2.3 | New icon |
+| 0.2.2 | Protect the code from not existing result set |
+| 0.2.1 | Protect the code from empty result set |
+| 0.2.0 | Adds support for node (for MySQL) |
+| 0.1.6 | Adds support for "create" command |
+| 0.1.5 | Adds help file (no functional changes) |
+| 0.1.4 | Fix typo on oracle delete and fix inserted ID |
+| 0.1.3 | Fix - adding a commit statement for Oracle specific queries for data to persist - RandomHouse 3/26/14 |
+| 0.1.2 | Prevents auto-complete of user field |
+| 0.1.1 | Freed result set after select query to optimize performance |
+| 0.1.0 | Moved to integration category |
+| 0.0.9 | Fix problem with deletion |
+| 0.0.8 | Returns inserted id if insert into used in MySql |
+| 0.0.7 | Adds functionality to mask password |
+| 0.0.6 | Uses Database model for common db behavior |
+| 0.0.5 | Adds support for Oracle |
+| 0.0.4 | Fix problems with insert and update queries |
+| 0.0.3 | Adds support for ODBC |
+| 0.0.2 | Adds rich text editing |
+| 0.0.1 | Initial release, only supports mysql |
+
+#### How It Works
+
+- Connects to external databases (MySQL, Oracle, ODBC) to execute SQL queries with support for stored procedures.
+- Supports dynamic attribute substitution in queries using template syntax (\<%=variable_name%\>) for runtime parameterization.
+- Provides flexible result formatting through Ruby code to transform query results into desired output formats.
+- Returns structured data as arrays of hashes by default, with configurable output types based on formatting requirements.
+- Handles both SELECT operations for data retrieval, and INSERT operations with automatic ID capture when supported.
+
+#### Configuration Instructions
+
+1.  Add a **DatabaseQuery** step to your workflow.
+2.  Configure the essential database connection parameters:
+    - **Database Type**: Select MySQL, Oracle, or ODBC.
+    - **Database host**: Hostname or inline connection string (see connection modes below).
+    - **Database port**: Connection port for MySQL and ODBC.
+    - **Database name (or DSN)**: Database name for MySQL; DSN for ODBC; TNS alias for Oracle.
+    - **Database user**: Username for database authentication.
+    - **Database password**: Password for the database user.
+    - **Database query**: SQL query to execute (e.g., 'Select \* from users;').
+
+#### Connection Modes
+
+Database connections support two modes:
+
+#### Mode A — Configuration File / DSN Mode
+
+- **Oracle:** Use TNS alias via `tnsnames.ora`.
+- **ODBC:** Use DSN via `/home/aspweb.odbc.ini`.
+- **MySQL:** Use Database host + Database port + Database name.
+
+#### Mode B — Inline Connection String Mode
+
+Instead of using configuration files, full connection strings may be provided directly via the **Database host** field.
+
+**Oracle EZCONNECT Example:**
+
+hostname:1521/ORCLPDB1
+
+**ODBC-Style Example (Canonical):**
+
+Driver={ODBC Driver 17 for SQL Server};Server=10.10.1.10,1433;Database=mydb;Uid=user;Pwd=`<YOUR_PASSWORD>`;
+
+**TinyTDS Alternative Syntax:**
+
+server=10.10.1.10;port=1433;database=mydb;username=user;password=`<YOUR_PASSWORD>`;
+
+#### Connection Precedence
+
+1.  **Inline connection string** (Database host)
+2.  **TNS / DSN** (`tnsnames.ora` or `/home/aspweb/.odbc.ini`)
+3.  **Defaults** (host + port + database name)
+
+#### Example Configuration
+
+| Parameter                  | Example Value          |
+|----------------------------|------------------------|
+| **Name**                   | New DatabaseQuery Step |
+| **Database Type**          | MySQL                  |
+| **Database host**          | localhost              |
+| **Database port**          | 3306                   |
+| **Database name (or DSN)** | orchestrator           |
+| **Database user**          | root                   |
+| **Database password**      | \*\*\*\*\*\*\*\*       |
+| **Database query**         | Select \* from users;  |
+| **Result Type**            | Array                  |
+
+#### Query and Formatting Examples
+
+- **Dynamic Query:** `select name, login from users where login = "<%=user_login%>"` uses the input variable 'user_login'.
+- **Row Formatting:** `row = "#{row[:login]} (#{row[:name]})"` converts each row to a formatted string.
+- **Results Formatting:** `results = results.join(", ")` produces a single formatted string.
+- **Default Output:** Array of hashes like `[{:name=>'Maurice', :login=>'momo'}]` when no formatting is applied.
+
+#### Expected Results Example
+
+Using the configuration above, the plugin successfully returned four rows from the users table, with Query_results containing an array of user data including fields like login, password, email, and timestamps.
+
+#### Saved Parameters Description
+
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| **Name** | Display name for this database query step. |
+| **Comments** | Notes or description for this step. |
+| **Database Type** | Type of external database: MySQL, Oracle, or ODBC. |
+| **Database host** | Hostname or full inline connection string (Mode B). |
+| **Database port** | Database connection port for MySQL and ODBC. |
+| **Database name (or DSN)** | Database name for MySQL; DSN for ODBC; TNS alias for Oracle (Mode A). |
+| **Database user** | Username for external database authentication. |
+| **Database password** | Password for the database user account. |
+| **Database query** | SQL query to execute; supports stored procedures and dynamic attributes using template syntax. |
+| **Row formatting code** | Ruby code executed for each result row. Each row is a hash indexed by column names as symbols (e.g., **{:name=\>'Maurice', :login=\>'momo'}**). |
+| **Results formatting code** | Ruby code executed after all rows are formatted. Variable 'results' contains the array of formatted rows for manipulation. |
+| **Result Type** | Output data type. Default is array of hashes. Must match formatting code; no automatic translation occurs. |
+
+#### Inputs Description
+
+The list of inputs depends on the Database Query action template configuration, as query and formatting fields support dynamic inputs.
+
+- **Dynamic query variables**: Any variables referenced in the database query using \<%=variable_name%\> syntax become required inputs.
+- **Formatting variables**: Variables used in row or result formatting code are exposed as inputs.
+
+#### Outputs Description
+
+- **Query_results**: Formatted results of the SQL query. Default format is an array of hashes; output type depends on specified result type and formatting code.
+- **Inserted Id**: For INSERT operations only, returns the ID of the newly created record.
+
+#### Supported Actions
+
+None
+
+#### Dependencies
+
+- **Oracle:** Oracle Instant Client; optional `tnsnames.ora` for TNS alias mode.
+- **ODBC:** Requires FreeTDS + unixODBC (or TinyTDS); optional `/home/aspweb/.odbc.ini` for DSN mode.
+- **MySQL:** No additional gems required.
+
+#### Operating Instructions
+
+#### Driver Installation (Choose One)
+
+Run installation commands from the Orchestrator directory:
+
+\
+cd /opt/aspera/orchestrator\
+
+**Oracle Database:**
+
+\
+bundle add ruby-oci8\
+orchestrator restart\
+
+**ODBC / SQL Server:**
+
+\
+bundle add tiny_tds\
+orchestrator restart\
+
+**Note:** `bundle add` updates the Gemfile and runs `bundle install`.
+
+#### Oracle Configuration
+
+- Install Oracle Instant Client.
+- Optional: configure TNS alias in tnsnames.ora.
+- **Important:** The aspweb user requires read permissions to access the tnsnames.ora file if using TNS alias mode.
+- Inline EZCONNECT strings override TNS.
+- Test connectivity from command line before use.
+
+#### ODBC Configuration
+
+- Install FreeTDS and unixODBC libraries (Or TinyTDS).
+- Optional: configure DSN in /home/aspweb/.odbc.ini.
+- **Important:** The aspweb user requires read permissions to access the DSN file if using DSN mode.
+- Inline ODBC-style or TinyTDS-style connection strings override DSN.
+- Test connectivity using isql or tsql tools.
+
+#### MySQL Configuration
+
+No special driver installation required.
+
+
 ### Facebook Video Upload Operation
 
 
@@ -14946,6 +15747,306 @@ pip3 install flask\
 pip3 install flask_cors
 
 
+### Custom Ruby
+
+
+
+![Custom Ruby icon](icons/CustomRuby.png)
+
+This action plug-in can be used to script in ruby some customized behaviour.
+
+
+| Version | Comment |
+|-------|---------------------------------------------------|
+| 0.7.3 | Enhanced action template UI |
+| 0.7.2 | Fix timeout to use server default instead of infinite |
+| 0.7.1 | Add Bitbucket integration |
+| 0.7.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
+| 0.6.2 | Fixing problem with some browser that forces GIT usage |
+| 0.6.1 | Code refactoring and cleanup. |
+| 0.6.0 | Allow code from GitHub to be cached for offline use |
+| 0.5.0 | Support to get code from GitHub Enterprise |
+| 0.4.0 | Support to get code from GitHub |
+| 0.3.0 | Extends field for execution code |
+| 0.2.4 | New icon |
+| 0.2.3 | Fix bug in method_missing() |
+| 0.2.2 | Adds possibility to reference inputs with input_name |
+| 0.2.1 | Adds help file |
+| 0.2.0 | Adds UI helper widget for i/o specifications |
+| 0.1.5 | Enforces valid returned status |
+| 0.1.4 | Adds display name |
+| 0.1.3 | Adds tolerance to inputs_spec function |
+| 0.1.2 | Adds default exit for execute |
+| 0.1.1 | Adds rich textarea editor |
+| 0.1.0 | Supports synchronous action with customizable inputs, outputs, execute and validate inputs |
+
+#### How It Works
+
+- This plugin allows execution of Ruby code within the workflows.
+- It enables dynamic logic, data transformation, and integration with external systems.
+- The plugin uses declared inputs and outputs to interact with the workflow and must explicitly set the workflow status.
+
+#### Configuration Instructions
+
+1.  Add a **Custom Ruby** step to your workflow.
+2.  Configure the execution environment:
+    - **Name**: The label to identify this ConvertRuby step.
+    - **Required inputs**: Define the inputs your Ruby code needs.
+    - **Outputs**: Define the expected outputs from the script.
+    - **Execute code**: Write or paste the Ruby logic to be executed.
+
+#### Example Configuration
+
+#### Example: Sample code to parse XML data.
+
+| Field               | Parameter       | Type   |
+|---------------------|-----------------|--------|
+| **Required inputs** | file_path       | String |
+| **Outputs**         | media_file_name | String |
+
+The XML file is:
+
+\<Asset\>
+
+\
+  \<File\>The-Hobbit-VO.mxf\</File\>
+
+\
+  \<Profile\>XDCAM HD422\</Profile\>
+
+\
+  \<Target\>VOD Distrib\</Target\>
+
+\
+  \<Source\>Internal Demo\</Source\>
+
+\
+\</Asset\>
+
+The Ruby code is:
+
+xml_file_path = inputs\['file_path'\]
+
+\
+xml_structure = XmlSimple.xml_in(xml_file_path)
+
+\
+outputs\['media_file_name'\] = xml_structure\['File'\]\[0\] rescue nil
+
+Note: inputs\['var_name'\] can also be abbreviated var_name. Example:
+
+xml_file_path = file_path
+
+To specify a custom status message, use this syntax:
+
+return STATUS_FAILED, 'Transcoding of foo failed'
+
+#### Saved Parameters Description
+
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| **Name** | The name used to identify a saved CustomRuby configured instance. |
+| **Required inputs** | Define the inputs your Ruby code needs. |
+| **Optional inputs** | Add any additional inputs that may or may not be used. |
+| **Outputs** | Define the expected outputs from the script. |
+| **Execute code** | Write or paste the Ruby logic to be executed. |
+| **Use code from source control?** | If you do not want to enter the code inline, enable this option to fetch it from a source control system. Use the dropdown to select either **GitHub** or **Bitbucket**. The available fields below will update based on your selection. See the *Source Control Configuration* section for details. |
+| **Use cached code?** | If checked, the plugin uses the last saved (cached) version of the Ruby code instead of downloading the latest version from source control every time the step runs. This helps keep workflow runs consistent, especially when the remote code is being updated. If the cached code is missing, the plugin will automatically fetch the latest code and update the cache. |
+| **Verify SSL** | Check this box to use SSL when connecting to the source control host. |
+
+#### Source Control Configuration
+
+When **Use code from source control?** is enabled, select a provider from the dropdown. The fields displayed will vary depending on the selected provider.
+
+#### GitHub
+
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| **GitHub host name** | If you are using GitHub Enterprise, enter the host name used to access your GitHub Enterprise instance. |
+| **GitHub token** | For private repositories, enter the personal access token of the GitHub user for authentication. |
+| **GitHub repo** | The repository name where the Ruby code file resides. |
+| **GitHub file path** | The path to the file from the root of the repository (exclude the repository name itself). |
+| **GitHub branch name** | The branch to fetch the code from. |
+| **GitHub user** | The GitHub username under which the repository is present. |
+
+The GitHub API URL format used is: *https://api.github.com/repos/Username/RepositoryName/contents/FilePath?ref=BranchName*
+
+#### Bitbucket
+
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| **Bitbucket host name** | Enter the Bitbucket host name in API URL format (e.g. *api.bitbucket.org* for standard Bitbucket Cloud, or your self-hosted equivalent) |
+| **Bitbucket token** | For private repositories, enter the access token or app password for authentication. |
+| **Bitbucket repo** | The repository name where the Ruby code file resides. |
+| **Bitbucket file path** | The path to the file from the root of the repository (exclude the repository name itself). |
+| **Bitbucket branch name** | The branch to fetch the code from. |
+| **Workspace** | The Bitbucket workspace under which the repository is present. |
+
+If the source control host is unreachable, the plugin falls back to a cached version of the code stored at: */opt/aspera/orchestrator/config/orchestrator/custom_rubies*
+
+#### Inputs Description
+
+- The list of inputs depends on the configuration of the CustomRuby action template.
+- The inputs for the action will be the ones declared in the 'Required inputs' and 'Optional inputs' section.
+
+#### Outputs Description
+
+- The outputs optionally declared in the 'Outputs' section will be returned with their specified names and types.
+
+#### Supported Actions
+
+None
+
+#### Operating Instructions
+
+- The plugin allows running Ruby code.
+- Inputs are accessed using the **inputs** dictionary.
+- Inputs must be declared under Required or Optional inputs.
+- Outputs are accessed using the **outputs** dictionary.
+- Two reserved output keys are status and status_details.
+- To update workflow status, use two reserved output keys: status and status_details.
+- Both status and status_details must be part of the outputs dictionary.
+- The code must set outputs\['status'\] to one of the following values: '*Complete*' – when the workflow finishes successfully, '*Failed*' – when the workflow fails and '*Error*' – when there is an execution error
+- The plugin includes source control integration to fetch code directly from GitHub or Bitbucket repositories.
+- When GitHub/Bitbucket parameters are provided as mapped inputs, the UI will display them as GitHub parameters (for example, Github_token), even if Bitbucket is configured. Bitbucket authentication will still function correctly.
+- If the source control host is unreachable, the plugin uses a cached version of the code.
+- Cached code is stored at: */opt/aspera/orchestrator/config/orchestrator/custom_rubies*
+
+#### Dependencies
+
+- Ruby must be installed in the same environment as the Orchestrator server.
+
+
+### File journal log entry
+
+
+
+![File journal log entry icon](icons/FileJournalLogEntry.png)
+
+This plugin provides the ability to log file states in the Orchestrator file journal.
+
+
+| Version | Comment |
+|-------|---------------------------------------------------|
+| 0.4.2 | Enhanced action template UI |
+| 0.4.1 | Updating to be compatible with Ruby 3.4 and Rails 8 |
+| 0.4.0 | Adds possibility to avoid logging to DB Journal. |
+| 0.3.1 | Adds possibility to log to a local file. |
+| 0.3.0 | Updating to standard coding conventions |
+| 0.2.3 | Exposing the journal book as an input at runtime. |
+| 0.2.2 | Fixing Status field to support new journal conventions. |
+| 0.2.1 | Added styling to parameter help text. |
+| 0.2.0 | Introducing Journal book and milstone to journals plugin to support inline journaling. |
+| 0.1.2 | Adding check for Journal Book in outputs spec |
+| 0.1.1 | Adding Help File |
+| 0.1.0 | Adding Journal Book to the plugin |
+| 0.0.6 | \- 04/01/2015 ADM - Short the event to 255 |
+| 0.0.5 | \- 02/17/2015 ADM - Make sure the event description does not exceed the DB size |
+| 0.0.4 | Expand dynamic attributes in package name |
+| 0.0.3 | Populates state_id and/or work_step_id, fixes UI glitch for inprogress status |
+| 0.0.2 | template includes processing timeout (unused for now) |
+| 0.0.1 | Initial release |
+
+#### How It Works
+
+- Tracks file lifecycle events through workflow stages by creating journal entries that monitor file processing states and milestones.
+- Associates files with journal books and packages to organize and categorize file processing activities across workflows.
+- Supports dual logging functionality with both internal database journaling and external file logging with configurable formats.
+- Provides milestone tracking and processing timeout monitoring to measure file processing progress and performance.
+- Enables comprehensive file monitoring across complex workflows including transcoding, transfer, and multi-stage processing operations.
+
+#### Configuration Instructions
+
+1.  Add a **File Journal Log Entry** step to your workflow.
+2.  Configure the basic journal settings:
+    - **JournalBook**: Specify the book that the journal entry will be associated with.
+    - **File**: Enter the name of the file being monitored.
+    - **File Path**: Provide the path to the file being tracked.
+    - **Package**: Define the package name for file mapping.
+3.  Set up event tracking parameters:
+    - **Event**: Describe the current stage or event (e.g., 'File initialized', 'Transcoding complete').
+    - **JournalStatus**: Set the status of the file at this entry point.
+    - **StepName**: Name of the step recording the journal entry.
+    - **Milestone**: Define the weight or importance of this journal step.
+
+#### Example Configuration
+
+| Parameter                       | Example Value                           |
+|---------------------------------|-----------------------------------------|
+| **JournalBook**                 | media_processing                        |
+| **File**                        | video_sample.mp4                        |
+| **File Path**                   | /input/media/video_sample.mp4           |
+| **Event**                       | File initialized. Ready for transcoding |
+| **Package**                     | video_workflow_001                      |
+| **StepName**                    | Initial_File_Detection                  |
+| **JournalStatus**               | pending                                 |
+| **Processing Timeout for File** | 3600                                    |
+| **Milestone**                   | 10                                      |
+| **Log to external file**        | checked                                 |
+| **Journaling file path**        | /var/log/orchestrator/journal.log       |
+| **Write to journal**            | checked                                 |
+
+#### Saved Parameters Description
+
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| **Name** | The name to identify the step. |
+| **Comments** | Any comments that need to be stored with the step. |
+| **JournalBook** | The book that the journal has to be associated with. |
+| **File** | The name of the file that has to be observed for journaling. |
+| **File Path** | The path to the file. |
+| **Event** | Event keeps track of the stages the file goes through. While reading the journal entries, Event helps identify the entire process the file went through. |
+| **Package** | The package name that the file has to be mapped to. |
+| **StepName** | The name of the step recording the journal entry. |
+| **JournalStatus** | The status of the file at that point of entry. |
+| **Processing Timeout for File** | The time value provided for the length of time the file has to be monitored. |
+| **Milestone** | The weight of this journal step. |
+| **Log to external file** | Enables logging of journal events to a local file. |
+| **Journaling file path** | The local file path to use for events logging. |
+| **Journal entry format** | The logging format of an event. Default is event\[package\],event\[file\],event\[status\],event\[event\]. |
+| **Maximum File Size in MB** | The maximum size of the journaling file before rotating. |
+| **Number of files to keep** | The number of log files to keep. |
+| **Write to journal** | Specify if the event should be written to the journal. Useful when logging to external file. |
+
+#### Inputs Description
+
+- **File Path**: Optional input to specify the file path for journal tracking.
+- **File**: Optional input to specify the file name being monitored.
+- **Package**: Optional input to specify the package name for file mapping.
+- **Journal book**: Required input to specify the journal book association.
+
+**Note:** None of the inputs are mandatory. It's good to supply values for these fields to help identify the journal entry easily.
+
+#### Outputs Description
+
+- **actual_path**: The path to the journal file.
+- **actual_file**: The name of the journal file.
+- **package_id**: The ID of the package that the file is mapped to.
+- **file_id**: The ID of the file in the journals.
+
+#### Operating Instructions
+
+- This plugin helps monitor file lifecycle throughout workflow processing stages. It's designed to track files as they progress through various operations like transcoding, transfer, and processing.
+- **Example workflow scenario:** A workflow monitors a local folder, transcodes found files, and then sends them to multiple servers. The journal helps track the phases each file goes through.
+- Initial stage: The file found by Local File Watcher can be mapped to a Journal Plugin with File name, File Path, and Package name, along with an event like 'File initialized. Ready for transcoding'.
+- Processing stage: After the transcoding step, another journal plugin can mark the same file as in-progress state with an event saying 'Transcoding Complete'.
+- Completion stage: After the transfer step, the event could be marked as 'Transfer completed' and the status can be marked as complete.
+- This approach helps monitor files and track the status that each file has passed through on a larger scale.
+- **Important:** In a workflow, ensure that all journals are mapped to the file_id and package_id of the initial journal step for proper matching.
+- The plugin allows duplication of journaling events to a local file with a specific format using the syntax: `event[time],event[package],event[file],event[status],event[event]`.
+- It's possible to disable writing to the internal journal by disabling the 'Write to journal' flag.
+- Available event attributes (not all are mandatory): :time, :package, :file, :status, :event, :journal_name, :milestone, :new_package, :new_file, :workflow_name, :workflow_id, :work_order_name, :work_order_id, :work_step_name, :work_step_id.
+- **Important:** If journal is not stored in the database, the package_id and journal_file_id are not correctly set. It's important not to use them for input/output mapping in this case.
+- **Journal Book Management:** Journal Books can be created in the Journals page of the Workflows tab for better organization and tracking.
+- **Work Order Monitoring:** On launching the work order, you can view the journal logging details in the Journals page of the work orders tab.
+
+#### Dependencies
+
+- Database connectivity is required for internal journal storage and file/package ID management.
+- For external file logging, the aspweb user must have write permissions to the specified journaling file path.
+- Log file rotation requires appropriate filesystem permissions for file management operations.
+
+
 ### Hello world
 
 
@@ -18410,6 +19511,181 @@ This plug-in converts spoken audio to text using IBM Watson Speech to Text cloud
 - **Keyword not spotted:** Lower keywords threshold or verify spelling. Remember matching is case-insensitive.
 
 
+### Watson text to speech
+
+
+
+![Watson text to speech icon](icons/WatsonTextToSpeech.png)
+
+This action plug-in provides the ability to get speech-synthesis with IBM Watson Text to Speech service.
+
+
+| Version | Comment                                             |
+|---------|-----------------------------------------------------|
+| 0.2.1   | Enhanced action template UI                         |
+| 0.2.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
+| 0.1.0   | added API key support                               |
+| 0.0.1   | Initial implementation                              |
+
+#### How It Works
+
+- Converts **text to spoken audio** using IBM Watson Text to Speech cloud service.
+- Supports **plain text** and **SSML (Speech Synthesis Markup Language)** formatted text.
+- Generates audio files in various **formats and voices** based on configuration.
+- Authenticates using either **API key** or **username/password** credentials.
+- Saves the synthesized audio to a specified **file path** on the filesystem.
+- Returns the **file size** of the generated audio file.
+- Requires an active **IBM Cloud subscription** to Watson Text to Speech service.
+
+#### Configuration Instructions
+
+1.  Create a new action step using the **WatsonTextToSpeech** plugin.
+2.  Fill out the following fields:
+    - **Name**: The name used to identify a saved Watson Text to Speech configured instance.
+    - **Comments**: Comments about this saved Watson Text to Speech configured instance.
+    - **File path**: The path to the destination audio file where synthesized speech will be saved.
+    - **Url**: The URL of IBM Watson Text to Speech service endpoint.
+    - **Use api key**: If selected, the API key is used for authentication instead of username and password.
+    - **Api key**: The API key of IBM Watson Text to Speech service (required if 'Use api key' is selected).
+    - **Username**: The username of IBM Watson Text to Speech service (required if 'Use api key' is not selected).
+    - **Password**: The password of IBM Watson Text to Speech service (required if 'Use api key' is not selected).
+    - **Voice**: The identifier of the voice to be used for synthesized speech (e.g., en-US_AllisonVoice, en-GB_KateVoice).
+    - **Text**: The text to synthesize into audio spoken. Supports plain text and SSML markup.
+
+#### Example Configuration
+
+This is an example configuration for the WatsonTextToSpeech plugin using API key authentication.
+
+| Parameter   | Value                                                      |
+|-------------|------------------------------------------------------------|
+| Name        | Generate Welcome Audio                                     |
+| Comments    | Convert welcome message to speech                          |
+| File path   | /output/audio/welcome.wav                                  |
+| Url         | https://api.us-south.text-to-speech.watson.cloud.ibm.com   |
+| Use api key | Selected                                                   |
+| Api key     | your-api-key-here                                          |
+| Voice       | en-US_AllisonVoice                                         |
+| Text        | Welcome to our automated system. How may I help you today? |
+
+#### Saved Parameters Description
+
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| **Name** | The name used to identify a saved Watson Text to Speech configured instance. |
+| **Comments** | Comments about this saved Watson Text to Speech configured instance. |
+| **File path** | The path to the destination audio file where synthesized speech will be saved. |
+| **Url** | The URL of IBM Watson Text to Speech service endpoint. |
+| **Use api key** | If selected, the API key is used for authentication instead of username and password. |
+| **Api key** | The API key of IBM Watson Text to Speech service (required if 'Use api key' is selected). |
+| **Username** | The username of IBM Watson Text to Speech service (required if 'Use api key' is not selected). |
+| **Password** | The password of IBM Watson Text to Speech service (required if 'Use api key' is not selected). |
+| **Voice** | The identifier of the voice to be used for synthesized speech (e.g., en-US_AllisonVoice, en-GB_KateVoice). |
+| **Text** | The text to synthesize into audio spoken. Supports plain text and SSML markup. |
+
+#### Inputs Description
+
+The required inputs depend on the authentication mode selected. API key or username/password must be provided.
+
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| *file_path <span style="color: red;">\*</span>* | The path to the destination audio file. Can be a local filesystem path or network share. The directory must exist and be writable. |
+| *url <span style="color: red;">\*</span>* | The URL of IBM Watson Text to Speech service endpoint (e.g., https://api.us-south.text-to-speech.watson.cloud.ibm.com). |
+| *api_key <span style="color: red;">\*</span>* | The API key of IBM Watson Text to Speech service. Required if 'Use api key' is selected in configuration. |
+| *username <span style="color: red;">\*</span>* | The username of IBM Watson Text to Speech service. Required if 'Use api key' is not selected in configuration. |
+| *password <span style="color: red;">\*</span>* | The password of IBM Watson Text to Speech service. Required if 'Use api key' is not selected in configuration. |
+| *voice* | The identifier of the voice to be used for synthesized speech. Default is 'en-US_AllisonVoice'. Examples: en-US_AllisonVoice, en-GB_KateVoice, es-ES_LauraVoice, fr-FR_ReneeVoice. |
+| *text* | The text to synthesize into audio spoken. Default is 'Hello! I'm Allison.'. Supports plain text and SSML markup for advanced control. |
+
+#### Outputs Description
+
+| Parameter | Description                                               |
+|-----------|-----------------------------------------------------------|
+| file_size | The size of the generated destination audio file in bytes |
+
+#### Supported Actions
+
+None
+
+#### Dependencies
+
+Requires an active IBM Cloud subscription to Watson Text to Speech service. You get the credentials (URL, username, password, API key) with an online subscription.
+
+#### Operating Instructions
+
+This plug-in converts text to spoken audio using IBM Watson Text to Speech cloud service. The service accepts plain text or text that is marked up with the XML-based Speech Synthesis Markup Language (SSML).
+
+**Authentication Modes**
+
+- **API Key Authentication (Recommended):**
+  - Select 'Use api key' checkbox in configuration
+  - Provide the API key in the 'Api key' field
+  - Username and password are not required
+  - More secure and easier to manage
+- **Username/Password Authentication (Legacy):**
+  - Leave 'Use api key' checkbox unchecked
+  - Provide username in the 'Username' field
+  - Provide password in the 'Password' field
+  - API key is not required
+  - Used for older Watson service instances
+
+**Setup and Configuration Steps**
+
+- **Step 1: Subscribe to IBM Watson Text to Speech**
+  - Go to IBM Cloud (https://cloud.ibm.com)
+  - Create an account or sign in
+  - Navigate to the Catalog and search for 'Text to Speech'
+  - Create a new Text to Speech service instance
+  - Select an appropriate pricing plan
+- **Step 2: Get Service Credentials**
+  - From the IBM Cloud dashboard, open your Text to Speech service instance
+  - Go to 'Manage' → 'Credentials' or 'Service credentials'
+  - Create new credentials if needed
+  - Copy the API Key and URL (or Username/Password for legacy instances)
+- **Step 3: Configure Orchestrator Plugin**
+  - Create a new Watson Text to Speech action in your workflow
+  - Enter the service URL from IBM Cloud
+  - Select 'Use api key' and enter your API key (or use username/password)
+  - Choose a voice appropriate for your language and use case
+  - Specify the destination file path for the audio output
+- **Step 4: Test Configuration**
+  - Use simple test text to verify connectivity
+  - Confirm the audio file is created at the specified path
+  - Listen to the generated audio to verify quality and voice selection
+  - Check the file_size output to confirm successful generation
+
+**Common Use Cases**
+
+- **IVR/Phone systems:** Generate automated voice prompts for interactive voice response systems.
+- **Accessibility:** Create audio versions of written content for visually impaired users.
+- **E-learning:** Convert course materials and instructions into spoken audio for educational content.
+- **Notifications:** Generate voice alerts for monitoring systems or alarms.
+- **Podcasts/Audio content:** Automate creation of audio content from text scripts.
+- **Multilingual support:** Create audio in multiple languages for international applications.
+- **Voice assistants:** Generate dynamic responses for chatbots and virtual assistants.
+
+**Best Practices**
+
+- Choose **appropriate voices** based on your target audience and language requirements.
+- Use **SSML markup** for fine-grained control over pronunciation, pauses, and emphasis.
+- Store **credentials securely** - use API key authentication when possible.
+- Ensure the destination **file path directory exists** and has proper write permissions.
+- Use **descriptive filenames** that include context (e.g., welcome_en-US.wav, alert_message_123.mp3).
+- Test audio output with **sample text** before processing large volumes.
+- Monitor IBM Watson service **usage and quotas** to avoid service interruptions.
+- Implement **error handling** for network failures or service unavailability.
+- For large text volumes, consider **breaking into chunks** to manage file sizes and processing time.
+- Cache frequently used **audio files** to reduce API calls and costs.
+
+**Troubleshooting**
+
+- **Authentication failures:** Verify API key or username/password are correct and the service is active in IBM Cloud.
+- **File write errors:** Ensure the destination directory exists and Orchestrator has write permissions.
+- **Voice not found errors:** Verify the voice identifier is correct and supported by your Watson service plan.
+- **Service unavailable:** Check IBM Cloud service status and your network connectivity to Watson endpoints.
+- **Quota exceeded:** Monitor your Watson service usage in IBM Cloud dashboard and upgrade plan if needed.
+- **SSML parsing errors:** Validate SSML markup syntax using Watson documentation and test with simple examples first.
+
+
 ### Watson video enrichment
 
 
@@ -19562,6 +20838,96 @@ This plugin executes the following workflow step once for each element in an inp
 - Memory or resource issues: For large arrays, consider enabling 'Execute serial' to reduce concurrent resource usage.
 
 
+### Exit status
+
+
+
+![Exit status icon](icons/ExitStatus.png)
+
+This action plug-in can be used to set up special exit status messages within the workflow.
+
+
+| Version | Comment |
+|-------|---------------------------------------------------|
+| 0.1.2 | Enhanced action template UI |
+| 0.1.1 | Ensure all status configuration messages are stored (and not a single status message based on if-elsif-else condition) |
+| 0.1.0 | Updating to be compatible with Ruby 3.4 and Rails 8 |
+| 0.0.3 | Added help file |
+| 0.0.2 | 2015-02-16 ML - New icon |
+| 0.0.1 | initial release with 3 primary statuses |
+
+#### How It Works
+
+- Allows setting custom status messages (Complete, Failed, or Error) when a workflow ends.
+- Messages can reflect runtime values using `<%= variable %>` syntax.
+- Helps summarize the outcome of the workflow clearly for operators.
+
+#### Configuration Instructions
+
+1.  Create a new action step using the **ExitStatus** plugin.
+2.  Fill out the following fields:
+    - **Name**: A label to identify this step (e.g., `Set Final Status`).
+    - **Comments**: Information about the step (optional).
+    - **Complete status**: The message shown when the workflow completes successfully.
+    - **Failed status**: The message shown when the workflow fails.
+    - **Error status**: The message shown when the workflow ends in error.
+3.  Click **Update** to save the step.
+
+#### Example Configuration
+
+| Field           | Value                                    |
+|-----------------|------------------------------------------|
+| Name            | `Set Final Status`                       |
+| Comments        | Final status update for workflow summary |
+| Complete status | `Workflow completed successfully.`       |
+| Failed status   | `Workflow failed due to missing input.`  |
+| Error status    | `Unexpected error occurred.`             |
+
+#### Saved Parameters Description
+
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| **Name** | The name used to identify a saved Exit Status configured instance. |
+| **Comments** | The comments of the Exit status template. |
+| **Complete status** | The status details of WorkOrder, in a complete state, will be replaced by the text supplied in this field. |
+| **Failed status** | The status details of WorkOrder, in a failed state, will be replaced by the text supplied in this field. |
+| **Error status** | The status details of WorkOrder, in a error state, will be replaced by the text supplied in this field. |
+
+#### Inputs Description
+
+The list of inputs depends on the configuration of the Exit Status action template.
+
+All parameters are available as inputs at runtime if not specified by the template as optional fields.
+
+This plug-in does not support value overwrites: if a value is specified in the template it will not be available as input of the step at runtime.
+
+#### Outputs Description
+
+| Output | Description |
+|-------|---------------------------------------------------|
+| **Complete_status_message** | Message that was set as WorkOrder status details when it completed. |
+| **Failed_status_message** | Message that was set as WorkOrder status details when it failed. |
+| **Error_status_message** | Message that was set as WorkOrder status details when it error. |
+
+#### Supported Actions
+
+None
+
+#### Dependencies
+
+None
+
+#### Operating Instructions
+
+This plug-in allows users to provide necessary inputs required to set a custom message when an Orchestrator workorder ends.
+
+#### Troubleshooting
+
+- Ensure the plugin is placed at the final step of the workflow.
+- If using variables in status messages, ensure those variables are set in earlier steps.
+- Avoid conflicts between template-specified values and runtime inputs, as overrides are not supported.
+
+
 ### Federated workflow
 
 
@@ -20038,6 +21404,132 @@ This plugin can be used to reconcile inputs coming from different branches of lo
 
 - No external dependencies required - this plugin operates purely on workflow data and logical operations.
 - Proper workflow branch connections must be established for effective input merging from alternate paths.
+
+
+### Orchestrator Alert Configuration
+
+
+
+![Orchestrator Alert Configuration icon](icons/OrchestratorAlertEntry.png)
+
+This plugin is used to enter custom alerts into orchestrator
+
+
+| Version | Comment                                             |
+|---------|-----------------------------------------------------|
+| 0.1.1   | Enhanced action template UI                         |
+| 0.1.0   | Updating to be compatible with Ruby 3.4 and Rails 8 |
+| 0.0.1   | Initial implementation                              |
+
+#### How It Works
+
+- Creates **alert entries** in the Orchestrator system for monitoring and notification purposes.
+- Categorizes alerts using predefined **alert categories** for easy filtering and management.
+- Supports custom **alert headers** and **messages** for detailed information.
+- Alerts are stored in the Orchestrator database and visible in the **Alerts dashboard**.
+- Enables **workflow-driven alerting** based on conditions, errors, or events.
+- Can be used for **auditing, logging, and operational monitoring**.
+
+#### Configuration Instructions
+
+1.  Create a new action step using the **OrchestratorAlertEntry** plugin.
+2.  Fill out the following fields:
+    - **Name**: The name used to identify a saved Orchestrator Alert Entry configured instance.
+    - **Comments**: Comments about this saved Orchestrator Alert Entry configured instance.
+    - **Category**: Choose from the list of predefined alert categories (WorkflowAlerts, UserAlerts, WorkorderAlerts, MonitorAlerts, or PluginAlerts).
+    - **Header**: Alert header value that provides a brief summary or title for the alert.
+    - **Alert Message**: The detailed message for the alert describing the issue, event, or condition.
+
+#### Example Configuration
+
+This is an example configuration for the OrchestratorAlertEntry plugin creating a disk space warning alert.
+
+| Parameter | Value |
+|-------|---------------------------------------------------|
+| Name | Disk Space Alert |
+| Comments | Alert when disk space is low |
+| Category | MonitorAlerts |
+| Header | Low Disk Space Detected |
+| Alert Message | Available disk space has fallen below 10% threshold on server: \<%=server_name%\> |
+
+#### Saved Parameters Description
+
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| **Name** | The name used to identify a saved Orchestrator Alert Entry configured instance. |
+| **Comments** | Comments about this saved Orchestrator Alert Entry configured instance. |
+| **Category** | Choose from the list of predefined alert categories (WorkflowAlerts, UserAlerts, WorkorderAlerts, MonitorAlerts, or PluginAlerts). |
+| **Header** | Alert header value that provides a brief summary or title for the alert. |
+| **Alert Message** | The detailed message for the alert describing the issue, event, or condition. |
+
+#### Inputs Description
+
+All parameters support runtime variables. If values are configured in the template, they can be overridden at runtime using the corresponding inputs.
+
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| *Category* | The alert category. Categories help organize and filter alerts by type. |
+| *Header* | The alert header text (optional). Provides a concise summary of the alert. |
+| *Alert_Message* | The detailed alert message. Can include variable substitution for dynamic content. |
+
+#### Outputs Description
+
+The plugin returns information about the created alert entry that can be used in subsequent workflow steps.
+
+| Parameter | Description |
+|-------|---------------------------------------------------|
+| Alert_ID | The unique identifier assigned to the created alert entry in the Orchestrator database |
+| Timestamp | The date and time when the alert was created |
+
+#### Supported Actions
+
+None
+
+#### Dependencies
+
+None
+
+#### Operating Instructions
+
+This plug-in creates alert entries in the Orchestrator system for monitoring, notification, and auditing purposes.
+
+**Alert Categories**
+
+Select an appropriate category to classify the alert. Common categories include:
+
+- **WorkflowAlerts:** Alerts related to workflow execution, progress, or completion status.
+- **UserAlerts:** Alerts pertaining to user actions, authentication, permissions, or user-specific notifications.
+- **WorkorderAlerts:** Alerts associated with workorder status changes, failures, or important workorder events.
+- **MonitorAlerts:** Alerts from monitoring activities, threshold violations, or system health checks.
+- **PluginAlerts:** Alerts generated by plugin operations, errors, or plugin-specific events.
+
+**Variable Substitution in Headers and Messages**
+
+- Alert headers and messages support **variable substitution** using the syntax `<%=variable_name%>`.
+- Variables are replaced with their runtime values when the alert is created.
+- **Example header:** `"Failed Transfer for <%=filename%>"`
+- **Example message:** `"File <%=filename%> transfer failed on <%=hostname%> at <%=timestamp%> with error: <%=error_message%>"`
+- This enables dynamic, context-aware alerts with specific details from the workflow execution.
+
+**Common Use Cases**
+
+- **Error notification:** Create alerts when workflow steps fail, including error details and affected resources.
+- **Threshold monitoring:** Alert when metrics (disk space, memory, queue depth) exceed defined thresholds.
+- **Audit trail:** Log important workflow events (approvals, data modifications, user actions) as information alerts.
+
+**Best Practices**
+
+- Choose **appropriate categories** to ensure alerts are prioritized and routed correctly.
+- Write **clear, actionable headers** that immediately convey the nature of the alert.
+- Include **sufficient context** in alert messages (what, where, when, why) for effective troubleshooting.
+- Use **variable substitution** to include dynamic information (IDs, names, values, timestamps).
+- Document alert categories and conventions in team guidelines for consistency.
+- Regularly **review and purge old alerts** to maintain system performance and dashboard usability.
+- Consider integrating alerts with external monitoring or ticketing systems for automated incident management.
+
+**Viewing Alerts**
+
+Created alerts can be viewed in the Orchestrator Alerts section (seen on selecting the bell icon). Alerts provide a centralized location for monitoring workflow execution issues and events.
 
 
 ### Snapshot
