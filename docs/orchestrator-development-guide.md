@@ -2224,7 +2224,8 @@ The form of 4.1.6 mentions a `{{variable_name}}` syntax: it is not supported.
 
 The file [plugins.yml](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/plugins.yml) gives, for each plugin, its template attributes and the inputs and outputs of its steps, with the template settings they depend on.
 They were found by calling methods `inputs_spec` and `outputs_spec` of the plugin on templates with one or two attributes changed.
-Read one plugin with `ascli orchestrator plugins spec <PLUGIN_CLASS>`, or with `yq '.<PLUGIN_CLASS>' plugins.yml`.
+Read one plugin with `ascli orchestrator plugins spec show <PLUGIN_CLASS>`, or with `yq '.<PLUGIN_CLASS>' plugins.yml`.
+Key `manual_anchor` of a plugin is the anchor of its section in the [Plugin Manual](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc/blob/main/docs/Orchestrator_Plugin_Manual.md): `ascli orchestrator workflows development manual section <MANUAL_ANCHOR>` displays it.
 
 Each plugin is a key, its class name: the `Step_type` of a step, and the class of its template (key `<PLUGIN_CLASS>__<N>`).
 
@@ -2817,8 +2818,8 @@ A JSON array as value fails with status 500 ("undefined method 'gsub' for an ins
 | Work step | `ascli orchestrator workstep status <WORK_STEP_ID>`: status, inputs and outputs |
 | Work order | `ascli orchestrator workorders status <ID>`, `ascli orchestrator workorders output <ID>`, `ascli orchestrator workorders cancel <ID>` |
 | Journal, monitors, queues, resource pools | `ascli orchestrator journal files <BOOK>`, `ascli orchestrator monitors list <TYPE>`, `ascli orchestrator queues list`, `ascli orchestrator pools status <NAME>` |
-| Specification of a plugin, with no server | `ascli orchestrator plugins spec [<PLUGIN_CLASS>]`, then `attributes`, `inputs` or `outputs` |
-| Read this guide, with no server (`ascli` 4.29 or later) | `ascli orchestrator workflows development guide toc` lists the sections and their anchors, `ascli orchestrator workflows development guide <ANCHOR>` shows one |
+| Specification of a plugin, with no server | `ascli orchestrator plugins spec toc` lists the plugins, `ascli orchestrator plugins spec show <PLUGIN_CLASS>` shows one, then `attributes`, `inputs` or `outputs` |
+| Read this guide, with no server (`ascli` 4.29 or later) | `ascli orchestrator workflows development guide toc` lists the sections and their anchors, `ascli orchestrator workflows development guide section <ANCHOR>` shows one |
 | Query parameters of an API call | `--query=@json:'{...}'`; `--query=help` lists them, from the OpenAPI description |
 
 ### Inline validation
@@ -3709,7 +3710,7 @@ The designer checks most of them before setting `error_free`.
 | Graph | `graph.*`: terminal nodes once (`graph.terminal_count`), at least one step, unique ids and step names, `Synch_factor` present, not negative, and with a position when not `0` (`graph.synch_factor_position`), prerequisites that exist, no orphan step (`graph.step_orphan`), a path to a terminal node (`graph.no_termination`), a template for each step, outputs and parameters that exist, each step is a prerequisite with status `Complete` of another step or of `End`, `Fail` or `Error` (`graph.step_no_output`) |
 | Inputs | `step.input_missing`, `step.input_unknown`, `step.output_unknown` |
 
-It checks the templates and inputs against the specifications of the shipped plugins (the ones of `ascli orchestrator plugins spec`): for another plugin it only warns (`template.plugin_unknown`).
+It checks the templates and inputs against the specifications of the shipped plugins (the ones of `ascli orchestrator plugins spec show`): for another plugin it only warns (`template.plugin_unknown`).
 It does not know which plugins the server enables, and it does not run the code of a step.
 A file with no problem can still fail at run time, so read the lists below.
 `ascli orchestrator workflows import` runs the same check and prints its problems as warnings.
