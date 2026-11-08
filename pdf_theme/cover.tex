@@ -24,11 +24,16 @@
     \AtPageLowerLeft{\includegraphics[width=\paperwidth]{back_bottom.pdf}}
     \coverbrand
   }}
-% Title of the document without the first words, shown apart in bold
+% Product name on the cover: set with inputs: {"product-name" => "..."} in markdown_to_pdf (Ruby API), default "Aspera Orchestrator"
+\providecommand{\gfminputproductname}{Aspera Orchestrator}
+% Title of the document without the product name prefix, shown apart in bold
 \ExplSyntaxOn
 \NewDocumentCommand{\coverdocumenttitle}{}{
   \tl_set_eq:Nc \l_tmpa_tl {@title}
-  \tl_remove_once:Nn \l_tmpa_tl {Aspera~Orchestrator~}
+  % Expand \gfminputproductname into a tl, then append a space, then remove the prefix from the title
+  \tl_set:Nv \l_tmpb_tl {gfminputproductname}
+  \tl_put_right:Nn \l_tmpb_tl {~}
+  \tl_remove_once:NV \l_tmpa_tl \l_tmpb_tl
   \tl_use:N \l_tmpa_tl
 }
 \ExplSyntaxOff
@@ -40,7 +45,7 @@
       \color{covertext}%
       \coverput{75}{465}{745}{%
         \fontsize{38}{44}\selectfont
-        {\bfseries Aspera Orchestrator\par}%
+        {\bfseries\gfminputproductname\par}%
         \coverdocumenttitle\par
         \vspace{23pt}%
         \fontsize{17}{30}\selectfont

@@ -16,8 +16,22 @@
   place(bottom, image("back_bottom.svg", width: 100%))
   brand(page.width / 1086)
 }
+// Product name on the cover: set with `--input product-name=...` (typst compile), default is "Aspera Orchestrator"
+#let product-name = sys.inputs.at("product-name", default: "Aspera Orchestrator")
+// Plain string of Typst content (pandoc title is content, not str)
+#let to-string(it) = {
+  if type(it) == str { it }
+  else if it.has("text") { it.text }
+  else if it.has("children") { it.children.map(to-string).join("") }
+  else if it.has("body") { to-string(it.body) }
+  else { " " }
+}
 #let cover-text(title: none, subtitle: none, authors: (), date: none) = context {
   let px = page.width / 1086
+  // Title string without the "product-name " prefix, for display on the cover
+  let title-str = to-string(title)
+  let prefix = product-name + " "
+  let short-title = if title-str.starts-with(prefix) { title-str.slice(prefix.len()) } else { title-str }
   // Top of the text at its first baseline, leading from baseline to baseline
   set text(fill: rgb("#00000E"), top-edge: "baseline", bottom-edge: "baseline")
   brand(px)
@@ -26,11 +40,10 @@
     {
       set text(size: 38pt)
       set par(leading: 44pt)
-      text(weight: "bold")[Aspera Orchestrator]
+      text(weight: "bold")[#product-name]
       linebreak()
-      // Title of the document without the first words, shown apart in bold
-      show "Aspera Orchestrator ": none
-      title
+      // Title without the product name prefix
+      short-title
     },
     {
       set text(size: 17pt)

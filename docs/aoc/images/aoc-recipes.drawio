@@ -1,0 +1,101 @@
+<mxfile host="Electron" compressed="false" version="26.1.1">
+  <diagram name="aoc-recipe-watchfolder" id="aoc-recipe-watchfolder">
+    <mxGraphModel dx="1000" dy="500" grid="1" gridSize="4" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="800" pageHeight="260" background="#FFFFFF" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Step 1 Trigger -->
+        <mxCell id="r1-step1" value="&lt;b&gt;Step 1: Watch Folder Trigger&lt;/b&gt;&lt;br&gt;&lt;font face=&quot;Courier New&quot;&gt;/Drop/Incoming&lt;/font&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;Condition: *.mxf, size &gt; 1MB&lt;/font&gt;" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fontSize=11;fillColor=#E0F2F1;strokeColor=#00796B;fontColor=#004D40;" parent="1" vertex="1">
+          <mxGeometry x="20" y="30" width="220" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow 1 -> 2 -->
+        <mxCell id="r1-e1" value="File detected&lt;br&gt;&lt;font face=&quot;Courier New&quot; style=&quot;font-size:9px;&quot;&gt;filename, file_id&lt;/font&gt;" style="endArrow=block;endFill=1;html=1;strokeColor=#00796B;strokeWidth=1.5;fontSize=10;verticalAlign=bottom;fontColor=#00796B;labelBackgroundColor=#FFFFFF;" parent="1" source="r1-step1" target="r1-step2" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Step 2 Transfer -->
+        <mxCell id="r1-step2" value="&lt;b&gt;Step 2: FASP Transfer&lt;/b&gt;&lt;br&gt;&lt;font face=&quot;Courier New&quot;&gt;Node &amp;rarr; Production Bucket&lt;/font&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;AES-256, Overwrite Different&lt;/font&gt;" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fontSize=11;fillColor=#EDE7F6;strokeColor=#5E35B1;fontColor=#311B92;" parent="1" vertex="1">
+          <mxGeometry x="290" y="30" width="220" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow 2 -> 3 -->
+        <mxCell id="r1-e2" value="Transfer Complete" style="endArrow=block;endFill=1;html=1;strokeColor=#5E35B1;strokeWidth=1.5;fontSize=10;verticalAlign=bottom;fontColor=#5E35B1;labelBackgroundColor=#FFFFFF;" parent="1" source="r1-step2" target="r1-step3" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Step 3 Notification -->
+        <mxCell id="r1-step3" value="&lt;b&gt;Step 3: Email Notification&lt;/b&gt;&lt;br&gt;&lt;font face=&quot;Courier New&quot;&gt;production-alerts@example.com&lt;/font&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;&quot;{{{...filename}}} Ingested&quot;&lt;/font&gt;" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fontSize=11;fillColor=#E8F5E9;strokeColor=#2E7D32;fontColor=#1B5E20;" parent="1" vertex="1">
+          <mxGeometry x="560" y="30" width="220" height="70" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="aoc-recipe-sharedinbox" id="aoc-recipe-sharedinbox">
+    <mxGraphModel dx="1000" dy="500" grid="1" gridSize="4" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="800" pageHeight="260" background="#FFFFFF" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Step 1 Trigger -->
+        <mxCell id="r2-step1" value="&lt;b&gt;Step 1: Shared Inbox Trigger&lt;/b&gt;&lt;br&gt;&lt;font face=&quot;Courier New&quot;&gt;Dropbox: Client Deliveries&lt;/font&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;Package received with metadata&lt;/font&gt;" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fontSize=11;fillColor=#E0F2F1;strokeColor=#00796B;fontColor=#004D40;" parent="1" vertex="1">
+          <mxGeometry x="20" y="30" width="220" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow 1 -> 2 -->
+        <mxCell id="r2-e1" value="Package arrival&lt;br&gt;&lt;font face=&quot;Courier New&quot; style=&quot;font-size:9px;&quot;&gt;package_id, sender_email&lt;/font&gt;" style="endArrow=block;endFill=1;html=1;strokeColor=#00796B;strokeWidth=1.5;fontSize=10;verticalAlign=bottom;fontColor=#00796B;labelBackgroundColor=#FFFFFF;" parent="1" source="r2-step1" target="r2-step2" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Step 2 REST API -->
+        <mxCell id="r2-step2" value="&lt;b&gt;Step 2: REST API Action&lt;/b&gt;&lt;br&gt;&lt;font face=&quot;Courier New&quot;&gt;POST https://mam.example.com/api&lt;/font&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;Auth: Bearer Token&lt;/font&gt;" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fontSize=11;fillColor=#EDE7F6;strokeColor=#5E35B1;fontColor=#311B92;" parent="1" vertex="1">
+          <mxGeometry x="290" y="30" width="220" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow 2 -> 3 -->
+        <mxCell id="r2-e2" value="MAM Registered (200 OK)" style="endArrow=block;endFill=1;html=1;strokeColor=#5E35B1;strokeWidth=1.5;fontSize=10;verticalAlign=bottom;fontColor=#5E35B1;labelBackgroundColor=#FFFFFF;" parent="1" source="r2-step2" target="r2-step3" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Step 3 Archive Transfer -->
+        <mxCell id="r2-step3" value="&lt;b&gt;Step 3: Transfer to Deep Archive&lt;/b&gt;&lt;br&gt;&lt;font face=&quot;Courier New&quot;&gt;/Archive/{{{...sender_name}}}/&lt;/font&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;Cold Storage Repository&lt;/font&gt;" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fontSize=11;fillColor=#E8F5E9;strokeColor=#2E7D32;fontColor=#1B5E20;" parent="1" vertex="1">
+          <mxGeometry x="560" y="30" width="220" height="70" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="aoc-recipe-sync" id="aoc-recipe-sync">
+    <mxGraphModel dx="1000" dy="500" grid="1" gridSize="4" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="800" pageHeight="260" background="#FFFFFF" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Step 1 Trigger -->
+        <mxCell id="r3-step1" value="&lt;b&gt;Step 1: Scheduled Trigger&lt;/b&gt;&lt;br&gt;&lt;font face=&quot;Courier New&quot;&gt;Daily at 00:00 UTC&lt;/font&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;Cron / Calendar Schedule&lt;/font&gt;" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fontSize=11;fillColor=#E0F2F1;strokeColor=#00796B;fontColor=#004D40;" parent="1" vertex="1">
+          <mxGeometry x="20" y="30" width="220" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow 1 -> 2 -->
+        <mxCell id="r3-e1" value="Cron tick" style="endArrow=block;endFill=1;html=1;strokeColor=#00796B;strokeWidth=1.5;fontSize=10;verticalAlign=bottom;fontColor=#00796B;labelBackgroundColor=#FFFFFF;" parent="1" source="r3-step1" target="r3-step2" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Step 2 Transfer -->
+        <mxCell id="r3-step2" value="&lt;b&gt;Step 2: Differential Sync&lt;/b&gt;&lt;br&gt;&lt;font face=&quot;Courier New&quot;&gt;On-Prem Node &amp;rarr; Cloud Bucket&lt;/font&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;Policy: overwrite_different&lt;/font&gt;" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fontSize=11;fillColor=#EDE7F6;strokeColor=#5E35B1;fontColor=#311B92;" parent="1" vertex="1">
+          <mxGeometry x="290" y="30" width="220" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow 2 -> 3 -->
+        <mxCell id="r3-e2" value="Sync complete" style="endArrow=block;endFill=1;html=1;strokeColor=#5E35B1;strokeWidth=1.5;fontSize=10;verticalAlign=bottom;fontColor=#5E35B1;labelBackgroundColor=#FFFFFF;" parent="1" source="r3-step2" target="r3-step3" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Step 3 Source Archive -->
+        <mxCell id="r3-step3" value="&lt;b&gt;Step 3: Source Cleanup&lt;/b&gt;&lt;br&gt;&lt;font face=&quot;Courier New&quot;&gt;Move to /Archive_Processed/&lt;/font&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;Clean empty directories&lt;/font&gt;" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fontSize=11;fillColor=#E8F5E9;strokeColor=#2E7D32;fontColor=#1B5E20;" parent="1" vertex="1">
+          <mxGeometry x="560" y="30" width="220" height="70" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

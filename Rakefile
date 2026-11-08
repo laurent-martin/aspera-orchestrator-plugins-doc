@@ -223,23 +223,26 @@ task :extract_rpm do
   # FileUtils.rm_rf(PATH_RPM_OUT)
 end
 
-# Diagrams: one image per tab of the draw.io file, named after the tab, with draw.io desktop (see gfm2pdf-toolchain)
-PATH_DRAWIO = PATH_DOCS / 'images' / 'diagrams.drawio'
+# Diagrams: one image per tab of each draw.io file, named after the tab, with draw.io desktop (see gfm2pdf-toolchain)
 DRAWIO_TOOL = [RbConfig.ruby, (Pathname.new(ENV[ENV_VAR_DOC_TOOL]) / 'lib' / 'drawio.rb').to_s].freeze
+DRAWIO_FILES = PATH_DOCS.glob('**/*.drawio').freeze
 # SVG for GitHub, and PDF used instead of the SVG in PDF documents
-DRAWIO_SVGS = IO.popen([*DRAWIO_TOOL, 'list', PATH_DRAWIO.to_s, 'svg'], &:read).split.freeze
-DRAWIO_IMAGES = DRAWIO_SVGS.flat_map { |svg| [svg, svg.sub(/\.svg\z/, '.pdf')] }.freeze
-
-# An image is exported again only when older than the draw.io file
-DRAWIO_IMAGES.each do |image|
-  file image => PATH_DRAWIO do
-    sh(*DRAWIO_TOOL, 'export', PATH_DRAWIO.to_s, image, '--scale', '2')
+DRAWIO_IMAGES = DRAWIO_FILES.flat_map do |drawio_file|
+  svgs = IO.popen([*DRAWIO_TOOL, 'list', drawio_file.to_s, 'svg'], &:read).split
+  images = svgs.flat_map { |svg| [svg, svg.sub(/\.svg\z/, '.pdf')] }
+  images.each do |image|
+    file image => drawio_file do
+      sh(*DRAWIO_TOOL, 'export', drawio_file.to_s, image, '--scale', '2')
+    end
   end
-end
+  images
+end.freeze
+
+PATH_AOC = PATH_DOCS / 'aoc'
 
 # Generate PDF from Markdown documentation
 namespace :doc do
-  desc 'Export the diagrams of docs/images/diagrams.drawio (SVG and PDF)'
+  desc 'Export all draw.io diagrams (SVG and PDF)'
   task diagrams: DRAWIO_IMAGES
 
   desc 'Generate PDF from the Aspera Orchestrator Development Guide'
@@ -250,6 +253,19 @@ namespace :doc do
       theme: PDF_THEME
     )
   end
+
+  desc 'Generate PDF from the Aspera on Cloud Automation Development Guide'
+  task aoc_guide: :diagrams do
+    markdown_to_pdf(
+      md: PATH_AOC / 'aoc-automation-development-guide.md',
+      pdf: PATH_AOC / 'aoc-automation-development-guide.pdf',
+      theme: PDF_THEME,
+      inputs: { 'product-name' => 'IBM Aspera on Cloud' }
+    )
+  end
+
+  desc 'Generate PDF from all development guides (Orchestrator and AoC Automation)'
+  task all_guides: %i[guide aoc_guide]
 
   PATH_OVERLAY = TOP / 'lib' / 'plugins_overlay.yml'
 
