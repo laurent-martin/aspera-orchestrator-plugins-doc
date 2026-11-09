@@ -1676,12 +1676,12 @@ It uses the [plain format](#plain-format), which is the simplest to write.
     xml_export: |
       <?xml version="1.0" encoding="UTF-8"?>
       <Workflow id="0">
-      <Start x="100" y="50" id="start"><Parameters></Parameters></Start>
-      <Error x="900" y="350" id="error"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Error>
-      <End x="900" y="50" id="end"><Synch_factor>0</Synch_factor><Prerequisites><Prerequisite id="step1" status="Complete"/></Prerequisites></End>
-      <Fail x="900" y="200" id="fail"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Fail>
+      <Start x="60" y="100" id="start"><Parameters></Parameters></Start>
+      <Error x="700" y="400" id="error"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Error>
+      <End x="700" y="100" id="end"><Synch_factor>0</Synch_factor><Prerequisites><Prerequisite id="step1" status="Complete"/></Prerequisites></End>
+      <Fail x="700" y="250" id="fail"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Fail>
       <Steps>
-      <Step x="400" y="50" id="step1"><Action_id>1</Action_id><Step_name>Say hello</Step_name><Step_type>CustomRuby</Step_type><Synch_factor>0</Synch_factor><Prerequisites><Prerequisite id="start" status="true"/></Prerequisites><Parameters></Parameters><Inputs></Inputs><Outputs></Outputs></Step>
+      <Step x="350" y="80" id="step1"><Action_id>1</Action_id><Step_name>Say hello</Step_name><Step_type>CustomRuby</Step_type><Synch_factor>0</Synch_factor><Prerequisites><Prerequisite id="start" status="true"/></Prerequisites><Parameters></Parameters><Inputs></Inputs><Outputs></Outputs></Step>
       </Steps>
       <Parameters></Parameters><Notes></Notes>
       </Workflow>
@@ -1933,10 +1933,10 @@ ascli orchestrator workflows check_import my_workflow.yml
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <Workflow id="0">
-<Start x="100" y="50" id="start"><Parameters></Parameters></Start>
-<Error x="900" y="350" id="error"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Error>
-<End x="900" y="50" id="end"><Synch_factor>0</Synch_factor><Prerequisites>...</Prerequisites></End>
-<Fail x="900" y="200" id="fail"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Fail>
+<Start x="60" y="100" id="start"><Parameters></Parameters></Start>
+<Error x="700" y="400" id="error"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Error>
+<End x="700" y="100" id="end"><Synch_factor>0</Synch_factor><Prerequisites>...</Prerequisites></End>
+<Fail x="700" y="250" id="fail"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Fail>
 <Steps>
   <Step ...>...</Step>
 </Steps>
@@ -1955,12 +1955,61 @@ General rules:
 - Attribute `id` of every node is a string, unique in the graph, used to link nodes.
   The designer uses UUIDs; any unique string works, for example `start` or `step1`.
 - Attributes `x` and `y` are the position of the node in the designer.
-  They do not change execution.
+  They do not change execution; see [Layout](#layout) for the values that give a readable graph.
 - Usual XML escaping applies (`&amp;`, `&lt;`, `&quot;`).
   Values of parameters and of inputs mapped to a value are also URL-decoded: `%XX` and `%uXXXX` sequences are decoded.
   Write `%25` for a literal `%` followed by two hexadecimal digits.
 - On import, the graph is parsed and stored written again: root element `opt`, one element per line with indentation, attribute values in double quotes, and the new template ids in `Action_id` and in `action_id` of `Map_to` and `Carry_thru`.
   This is observed with both formats of file, and with `import_with_constraints`: the export of an imported workflow shows this form, not the one of the file.
+
+#### Layout
+
+The positions `x` and `y` do not change execution, but a workflow that is easy to read is easier to check and to maintain.
+A workflow written with the rules below opens in the designer as one straight line, the way the designer draws it when saved.
+They come from a workflow redrawn and saved in the designer: the numbers are the ones the designer wrote, the unit is a pixel of the canvas.
+The designer gives `x` and `y` of a node as its top left corner, and the links leave from the centre of the nodes, which is why the heights below differ.
+
+| Node | `x` | `y` |
+| --- | --- | --- |
+| `Start` | `60`, or `170` when parameters are linked to it | `100` (the baseline, `Y`) |
+| `End` | last step + `350` (`700` for one step) | `Y` |
+| `Fail` | same as `End` | `Y` + `150` |
+| `Error` | same as `End` | `Y` + `300` |
+| First step | `350` | `Y` - `20` |
+| Next steps of the main path | previous step + `250` | `Y` - `20` |
+| Parameters linked to `Start` | `60` | `Y` + `20`, then + `100` for each next one |
+
+Rules:
+
+- **One row, left to right.**
+  Put `Start`, the steps of the main path (the `Complete` links) and `End` on the same row.
+  A step is taller than the circles of `Start` and `End`: its `y` is `20` less, so that the links between them are straight and do not step up or down.
+  With the same `y` for all of them, each link has a visible jog.
+- **Terminal nodes in one column**, `End` on the row, `Fail` and `Error` below it, `150` apart, at the right of the last step.
+  Do not draw the links to `Fail` and `Error` that Orchestrator follows by itself (see [Terminal nodes](#terminal-nodes)): the three circles stay in place, as a reminder of the possible endings.
+- **Parameters in a column at the left of `Start`**, never below it, and `100` apart: a parameter node is about `70` high, so a spacing of `60` makes them overlap.
+  Their Manhattan links join in one vertical line and enter `Start` from the left, without going around it.
+  `Start` moves to the right only when it has parameters: `x` `170` instead of `60`, so that the column and the links fit at its left.
+  The steps and the terminal nodes keep the same positions with or without parameters.
+- **Branches and alternatives**: keep the success path on the row, and put the other steps below it, in the same column as the step they replace, `150` apart.
+  Several steps that start at the same time go in one column, `150` apart, around the row.
+- **A step is at least `250` after the previous one**: a step is about `115` wide, which leaves room for the link and its arrow.
+- **Join symbols** (`Synch_factor` other than `0`): at the middle of the link, between the last of the prerequisites and the node (see [Prerequisites and branches](#prerequisites-and-branches)).
+- **Links**: use the Manhattan style, which is the default, for the links of the main path and for the parameter links (they join in one vertical line).
+  Use a Bezier curve mainly for the `Failed` and `Error` exits of a step that you draw, in the cases where a Manhattan line would cross a step or hide another link, for example from a step to `Fail` or `Error`, or to a recovery step below the row.
+  Give all the exits of one step the same style (see [Prerequisites and branches](#prerequisites-and-branches)).
+
+Example: a workflow with one step and two runtime parameters.
+
+```xml
+<Start x="170" y="100" id="start"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites><Parameters><Parameter id="p_function"/><Parameter id="p_args"/></Parameters></Start>
+<Step x="350" y="80" id="s_toolbox">...</Step>
+<End x="700" y="100" id="end">...</End>
+<Fail x="700" y="250" id="fail">...</Fail>
+<Error x="700" y="400" id="error">...</Error>
+<Parameter x="60" y="120" id="p_function">...</Parameter>
+<Parameter x="60" y="220" id="p_args">...</Parameter>
+```
 
 #### Terminal nodes
 
@@ -2020,7 +2069,7 @@ A `Prerequisite` element links a previous node to the current one:
 | --- | --- |
 | `id` | `id` of the previous node. |
 | `status` | Status of the previous node that activates the link. `true` for a link from `Start`. Otherwise the final status of the previous step: `Complete`, `Failed` or `Error` (compared case-insensitively). |
-| `router` | Line style of the link in the designer (no effect on execution), chosen with a right-click on the link: `draw2d.ManhattanConnectionRouter` (right angles, the default when the attribute is absent), `draw2d.BezierConnectionRouter` (curve), `draw2d.NullConnectionRouter` (straight line), `draw2d.FanConnectionRouter` (straight lines spread apart when several links join the same two nodes). The designer uses the value as a JavaScript class name: no other value. Use Manhattan for step prerequisites and Bezier for parameter links; use Bezier on a step prerequisite only where the graph reads better, for example when a Manhattan line would cross a step. |
+| `router` | Line style of the link in the designer (no effect on execution), chosen with a right-click on the link: `draw2d.ManhattanConnectionRouter` (right angles, the default when the attribute is absent), `draw2d.BezierConnectionRouter` (curve), `draw2d.NullConnectionRouter` (straight line), `draw2d.FanConnectionRouter` (straight lines spread apart when several links join the same two nodes). The designer uses the value as a JavaScript class name: no other value. Use Manhattan for the main path and for parameter links (parameters in a column join in one vertical line, see [Layout](#layout)); use Bezier mainly for the `Failed` and `Error` exits of a step, where a Manhattan line would cross a step or hide another link. |
 
 `Synch_factor` sets how many prerequisites must be met:
 
@@ -2100,17 +2149,17 @@ Output `Step_information` is a `hash` with keys `step_id`, `step_name`, `step_st
 A parameter is defined once in the top-level `Parameters` element, and linked to `Start` (global parameter) or to a step (step parameter):
 
 ```xml
-<Start x="100" y="50" id="start"><Parameters><Parameter id="p_who"/></Parameters></Start>
+<Start x="170" y="100" id="start"><Parameters><Parameter id="p_who"/></Parameters></Start>
 ...
 <Parameters>
-  <Parameter x="100" y="200" id="p_who">
+  <Parameter x="60" y="120" id="p_who">
     <Name>who</Name><Value>world</Value><Value_type>string</Value_type>
     <Runtime_override>true</Runtime_override><Runtime_optional>true</Runtime_optional>
   </Parameter>
 </Parameters>
 ```
 
-Definition (`Parameter` with attributes `id`, `x`, `y`):
+Definition (`Parameter` with attributes `id`, `x`, `y`; for `x` and `y`, see [Layout](#layout)):
 
 | Child | Content |
 | --- | --- |
@@ -2121,7 +2170,7 @@ Definition (`Parameter` with attributes `id`, `x`, `y`):
 | `Runtime_optional` | `true`: a runtime value is optional, and `Value` is used when absent. Default `false`. |
 | `Comments` | Description. |
 
-Link (`Parameter` with attribute `id`, and `router="draw2d.BezierConnectionRouter"` for the designer) in `Start/Parameters` or `Step/Parameters`.
+Link (`Parameter` with attribute `id`; the designer writes `router="draw2d.ManhattanConnectionRouter"`, which is also the default) in `Start/Parameters` or `Step/Parameters`.
 
 Rules:
 
@@ -2652,12 +2701,12 @@ Installation, configuration and the dashboard are described in the README of the
 Map it to a required runtime parameter:
 
 ```xml
-<Start x="100" y="50" id="start"><Parameters><Parameter id="p_db_password"/></Parameters></Start>
+<Start x="170" y="100" id="start"><Parameters><Parameter id="p_db_password"/></Parameters></Start>
 ...
 <Inputs><Input name="DB_password"><Map_to type="parameter" name="db_password"/></Input></Inputs>
 ...
 <Parameters>
-  <Parameter x="100" y="200" id="p_db_password">
+  <Parameter x="60" y="120" id="p_db_password">
     <Name>db_password</Name><Value></Value><Value_type>pwd</Value_type>
     <Runtime_override>true</Runtime_override><Runtime_optional>false</Runtime_optional>
   </Parameter>
@@ -3739,7 +3788,8 @@ Graph:
 - Each parameter has a `Name` and a `Value_type`; a parameter that is not a runtime parameter, or that is an optional runtime parameter, has a `Value`.
 - Join nodes after mutually exclusive / alternative branches have `Synch_factor` 1; join nodes after concurrent parallel nominal branches have `Synch_factor` 0.
 - Each `Synch_factor` other than `0` has attributes `x` and `y`, else the designer shows an empty canvas.
-- Each `router`, when present, is one of the four `draw2d.*ConnectionRouter` values: Manhattan on step prerequisites (Bezier only where the graph reads better), Bezier on parameter links.
+- Each `router`, when present, is one of the four `draw2d.*ConnectionRouter` values: Manhattan on the main path and on parameter links, Bezier mainly on the `Failed` and `Error` exits of a step when a Manhattan line would cross a step.
+- Layout as in [Layout](#layout): one row for `Start`, the main path and `End` (steps `20` above the row), terminal nodes in a column, parameters in a column at the left of `Start`, `100` apart.
 - Retry settings (`Error_*`, `Failed_*`) only on steps that have an outgoing branch with that status.
 
 ### Known issues

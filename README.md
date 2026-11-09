@@ -31,6 +31,12 @@ Generated documents and guides are in folder `docs`:
 The Aspera Orchestrator Development Guide is written by hand (the task generates its PDF), the other documents are generated: do not edit them.
 [`workflow-authoring-guide.md`](docs/workflow-authoring-guide.md) is only a pointer to the guide, for old versions of `ascli`.
 The screenshots of the practices chapter are in `docs/images/practices`.
+Two extensions of Orchestrator come with a skill (`SKILL.md`) for AI assistants:
+
+| Extension | What the assistant gets | Skill |
+| --- | --- | --- |
+| Workflow `Admin - Orchestrator toolbox`, in [`docs/toolbox/`](docs/toolbox/) | The functions missing from the REST API: folders, moving and deleting workflows, remote nodes; extensible with Ruby files | [`docs/toolbox/SKILL.md`](docs/toolbox/SKILL.md) |
+| Plugin `SecretReference`, repository `aspera-orchestrator-secret-reference` | Secure access to secrets: a workflow holds a reference, never the secret | `SKILL.md` of that repository |
 
 Diagrams of the guide are drawn in [`docs/images/diagrams.drawio`](docs/images/diagrams.drawio), one tab per image: `rake doc:diagrams` exports each tab to `docs/images/<tab>.svg` (for GitHub) and `.pdf` (used in the PDF), with draw.io desktop, when the `.drawio` file is newer.
 

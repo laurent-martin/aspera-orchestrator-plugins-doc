@@ -1,0 +1,181 @@
+---
+- !ruby/object:Workflow
+  attributes:
+    name: Admin - Orchestrator toolbox
+    description: Extensible administration functions missing from the Orchestrator API (folders, moving and deleting workflows, ...). Start it with runtime parameters function and args (a hash), read output Toolbox:result (JSON text). New functions can be added without changing this workflow, in files <config_dir>/toolbox/*.rb on the server.
+    run_as: SYSTEM
+- !ruby/object:Whiteboard
+  attributes:
+    error_free: true
+    xml_export: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Workflow id="0">
+      <Start x="170" y="100" id="start"><Parameters><Parameter id="p_function"/><Parameter id="p_args"/></Parameters></Start>
+      <Error x="700" y="400" id="error"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Error>
+      <End x="700" y="100" id="end"><Synch_factor>0</Synch_factor><Prerequisites><Prerequisite id="s_toolbox" status="Complete"/></Prerequisites></End>
+      <Fail x="700" y="250" id="fail"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Fail>
+      <Steps>
+      <Step x="350" y="80" id="s_toolbox"><Action_id>1</Action_id><Step_name>Toolbox</Step_name><Step_type>CustomRuby</Step_type><Synch_factor>0</Synch_factor><Prerequisites><Prerequisite id="start" status="true"/></Prerequisites><Inputs><Input name="function"><Map_to type="parameter" name="function"/></Input><Input name="args"><Map_to type="parameter" name="args"/></Input></Inputs><Outputs></Outputs></Step>
+      </Steps>
+      <Parameters>
+      <Parameter x="60" y="120" id="p_function"><Name>function</Name><Value></Value><Value_type>string</Value_type><Runtime_override>true</Runtime_override><Runtime_optional>false</Runtime_optional><Comments>Name of the function, see function list_functions</Comments></Parameter>
+      <Parameter x="60" y="220" id="p_args"><Name>args</Name><Value>{}</Value><Value_type>hash</Value_type><Runtime_override>true</Runtime_override><Runtime_optional>true</Runtime_optional><Comments>Arguments of the function: a hash (JSON object)</Comments></Parameter>
+      </Parameters><Notes></Notes>
+      </Workflow>
+- CustomRuby__1: !ruby/object:CustomRuby
+    attributes:
+      name: W0__Toolbox
+      mandatory_inputs: "{'function'=>'string'}"
+      optional_inputs: "{'args'=>'hash'}"
+      typed_outputs: "{'result'=>'string'}"
+      execute_code: |
+        require 'json'
+
+        # ---- Registry ------------------------------------------------------
+        # A function is a name, a description and a block that receives the
+        # arguments (Hash with String keys) and returns a JSON-serializable
+        # value. Raise to fail. Extensions (<config_dir>/toolbox/*.rb) use the
+        # same `function` method and the helpers defined below.
+        registry = {}
+        load_errors = []
+        tb = Object.new
+        tb.define_singleton_method(:function) { |name, desc = '', &blk| registry[name.to_s] = { 'description' => desc, 'fn' => blk } }
+        tb.define_singleton_method(:root_id) { |v| (v.nil? || v.to_s.strip.empty? || v.to_i == 0) ? nil : v.to_i }
+        tb.define_singleton_method(:need) do |a, *keys|
+          missing = keys.select { |k| a[k].nil? || a[k].to_s.strip.empty? }
+          raise ArgumentError, "Missing argument(s): #{missing.join(', ')}" unless missing.empty?
+        end
+        tb.define_singleton_method(:folder_h) do |f|
+          { 'id' => f.id, 'name' => f.name, 'parent_id' => f.is_in_folder, 'full_name' => f.full_name, 'workflows' => Workflow.where(folder_id: f.id).count, 'comments' => f.comments }
+        end
+        tb.define_singleton_method(:workflow_h) { |w| { 'id' => w.id, 'name' => w.name, 'folder_id' => w.folder_id } }
+        tb.define_singleton_method(:parent_filter) { |parent| parent ? [parent] : [nil, 0] }
+
+        # ---- Built-in functions -------------------------------------------
+        tb.instance_eval do
+          function('list_functions', 'List the available functions and the extension load errors') do |a|
+            { 'functions' => registry.map { |n, e| { 'name' => n, 'description' => e['description'] } }.sort_by { |h| h['name'] }, 'load_errors' => load_errors }
+          end
+
+          function('list_folders', '[parent_id] [name]: list folders (all, or the children of parent_id, 0 for the root), optionally with this exact name') do |a|
+            scope = Folder.order(:id)
+            scope = scope.where(is_in_folder: parent_filter(root_id(a['parent_id']))) if a.key?('parent_id')
+            scope = scope.where(name: a['name']) if a['name'].present?
+            scope.map { |f| folder_h(f) }
+          end
+
+          function('create_folder', 'name [parent_id] [comments] [created_by]: create a folder, or return the existing one with the same name and parent (created=false)') do |a|
+            need(a, 'name')
+            parent = root_id(a['parent_id'])
+            raise ArgumentError, "Parent folder #{parent} not found" if parent && !Folder.exists?(parent)
+            existing = Folder.where(name: a['name'], is_in_folder: parent_filter(parent)).first
+            if existing
+              folder_h(existing).merge('created' => false)
+            else
+              f = Folder.new
+              f.name = a['name']
+              f.comments = a['comments']
+              f.is_in_folder = parent
+              f.created_by = (a['created_by'] || 1).to_i
+              raise "Cannot create folder: #{f.errors.full_messages.join(', ')}" unless f.save
+              Entitlement.set_permission({ user: f.created_by }, f)
+              Entitlement.set_permission({ role: Group.identify(Group::DEVELOPER) }, f)
+              Entitlement.set_permission({ role: Group.identify(Group::OPERATOR) }, f, :run)
+              Entitlement.set_permission({ role: Group.identify(Group::OPERATOR) }, f, :view)
+              folder_h(f).merge('created' => true)
+            end
+          end
+
+          function('rename_folder', 'id name: rename a folder') do |a|
+            need(a, 'id', 'name')
+            f = Folder.find(a['id'].to_i)
+            f.name = Folder.ensure_name_uniqueness(a['name'], f.id, f.is_in_folder.to_i)
+            raise "Cannot rename folder: #{f.errors.full_messages.join(', ')}" unless f.save
+            folder_h(f)
+          end
+
+          function('move_folder', 'id parent_id: move a folder into another one (0: root)') do |a|
+            need(a, 'id', 'parent_id')
+            f = Folder.find(a['id'].to_i)
+            parent = root_id(a['parent_id'])
+            raise ArgumentError, "Parent folder #{parent} not found" if parent && !Folder.exists?(parent)
+            raise ArgumentError, 'A folder cannot be moved into itself or its subfolders' if parent && Folder.find(parent).is_nested_in?(f.id)
+            f.update(is_in_folder: parent)
+            folder_h(f.reload)
+          end
+
+          function('delete_folder', 'id [with_content=true confirm=true]: delete a folder. By default its content moves to its parent; with_content deletes the workflows and subfolders too (not the running ones), and needs confirm=true') do |a|
+            need(a, 'id')
+            f = Folder.find(a['id'].to_i)
+            info = folder_h(f)
+            if a['with_content'].to_s == 'true'
+              raise ArgumentError, 'with_content needs confirm=true' unless a['confirm'].to_s == 'true'
+              f.remove_with_workflows_and_folders
+            else
+              f.remove_safely
+            end
+            info.merge('deleted' => true)
+          end
+
+          function('list_workflows', '[folder_id] [name]: list workflows, optionally of a folder (0: root) or with this exact name') do |a|
+            scope = Workflow.order(:id)
+            scope = scope.where(folder_id: a['folder_id'].to_i == 0 ? [nil, 0] : a['folder_id'].to_i) if a.key?('folder_id')
+            scope = scope.where(name: a['name']) if a['name'].present?
+            scope.map { |w| workflow_h(w) }
+          end
+
+          function('move_workflow', 'id (or ids: list) folder_id: move workflows into a folder (0: root)') do |a|
+            need(a, 'folder_id')
+            ids = Array(a['ids'] || a['id']).map(&:to_i)
+            raise ArgumentError, 'Missing argument: id or ids' if ids.empty?
+            folder = root_id(a['folder_id'])
+            raise ArgumentError, "Folder #{folder} not found" if folder && !Folder.exists?(folder)
+            Workflow.where(id: ids).map { |w| w.update(folder_id: folder); workflow_h(w.reload) }
+          end
+
+          function('delete_workflow', 'id confirm=true: delete a workflow, with its work orders. Fails and lists the work orders if some are still running') do |a|
+            need(a, 'id')
+            raise ArgumentError, 'delete_workflow needs confirm=true' unless a['confirm'].to_s == 'true'
+            w = Workflow.find(a['id'].to_i)
+            info = workflow_h(w)
+            running = w.clean_delete
+            raise "Workflow #{info['id']} has running work orders: #{running.map { |wo| "#{wo.id}->#{wo.status}" }.join(', ')}" unless running.nil?
+            info.merge('deleted' => true)
+          end
+        end
+
+        # ---- Extensions: <config_dir>/toolbox/*.rb ---------------------------
+        Dir.glob(File.join(OrchConfig.get.config_dir, 'toolbox', '*.rb')).sort.each do |file|
+          begin
+            tb.instance_eval(File.read(file), file)
+          rescue ScriptError, StandardError => e
+            load_errors << "#{File.basename(file)}: #{e.class}: #{e.message}"
+            Rails.logger.error "Toolbox: cannot load #{file}: #{e.full_message}"
+          end
+        end
+
+        # ---- Dispatch ------------------------------------------------------
+        name = @inputs['function'].to_s.strip
+        begin
+          raw = @inputs['args']
+          args = raw.is_a?(Hash) ? raw : (raw.to_s.strip.empty? ? {} : JSON.parse(raw.to_s))
+          raise ArgumentError, 'args must be a JSON object' unless args.is_a?(Hash)
+          args = args.transform_keys(&:to_s)
+          entry = registry[name]
+          if entry.nil?
+            @status = 'Failed'
+            @status_details = "Unknown function '#{name}'. Available: #{registry.keys.sort.join(', ')}"
+            outputs['result'] = JSON.generate('error' => @status_details, 'load_errors' => load_errors)
+          else
+            outputs['result'] = JSON.generate(entry['fn'].call(args))
+            @status_details = "#{name} done"
+          end
+        rescue StandardError => e
+          Rails.logger.error "Toolbox: #{name} failed: #{e.full_message}"
+          @status = 'Failed'
+          @status_details = "#{name}: #{e.class}: #{e.message}"
+          outputs['result'] = JSON.generate('error' => @status_details)
+        end
+- CustomRuby__1: []
+- {}
+- CustomRuby: 0.7.3
