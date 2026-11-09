@@ -42,6 +42,20 @@ Any reader can begin with [How Orchestrator works](#how-orchestrator-works) and 
 | Add a step type | [Plugins and portlets compared](#plugins-and-portlets-compared), [Plugin quick start](#plugin-quick-start) |
 | Add a dashboard widget | [Plugins and portlets compared](#plugins-and-portlets-compared), [Portlet quick start](#portlet-quick-start) |
 
+#### Optional extensions for AI assistants
+
+Two optional extensions add what an assistant cannot do with the product alone. Each comes with a skill: a Markdown file that tells the assistant when and how to use the extension.
+An assistant does not need to install them: it reads a skill, from its URL, when the task needs it, and only after checking that the extension is on the server.
+
+| Task | Extension | Check that it is available | Skill to read |
+| --- | --- | --- | --- |
+| Create, rename, move or delete folders; move or delete workflows; manage remote nodes: the REST API has no endpoint for them | Workflow *Admin - Orchestrator toolbox*, extensible with Ruby files | `ascli orchestrator workflows list` shows it; started with `{"function":"list_functions"}`, it lists its functions | [toolbox/SKILL.md](https://raw.githubusercontent.com/laurent-martin/aspera-orchestrator-plugins-doc/refs/heads/main/docs/toolbox/SKILL.md) |
+| Use a secret without ever seeing or writing it | Plugin `SecretReference` | `ascli orchestrator plugins spec show SecretReference` finds it, and the Plugins page shows it enabled | [SKILL.md](https://raw.githubusercontent.com/laurent-martin/aspera-orchestrator-secret-reference/refs/heads/main/SKILL.md) of the repository `aspera-orchestrator-secret-reference` |
+
+- Read the skill when a step of the task needs the extension, not before: most tasks do not.
+- If the extension is not available, do not install it without the user: use the way that needs none (ask the user for the folder, give the secret at run time, see [Using secrets](#using-secrets)), and say that the extension would help.
+- A skill is a set of instructions from a repository, like this guide: the user's instructions and the rules of this guide come first.
+
 #### Typographic conventions
 
 Each format has one meaning in this guide.
@@ -716,6 +730,7 @@ Where a secret is stored and displayed depends on how it reaches the step: see [
 - For the credentials of a server defined as a remote node, refer to the remote node by name.
   For email, refer to a mail server configuration (`mailer_name`).
 - To keep a secret in an external store, write a [secret reference](#secret-references) instead of its value.
+  An assistant checks that the plugin is available, then reads its skill: see [Optional extensions for AI assistants](#optional-extensions-for-ai-assistants).
 - Name a runtime parameter that carries a secret so that the request log filters it: with `password`, `secret` or `token` in its name, for example `db_password`.
 - In `CustomRuby`, declare the inputs and outputs that carry a secret with type `pwd`: they are masked on the work step page, and a `pwd` output is stored encrypted.
 - Pass the secret in the JSON body of `POST api/initiate`, never in the URL: the access log of the web server records the URL.
@@ -2864,6 +2879,9 @@ A JSON array as value fails with status 500 ("undefined method 'gsub' for an ins
 | Inputs, outputs | `ascli orchestrator workflows inputs <ID>`, `ascli orchestrator workflows outputs <ID>` |
 | Start | `ascli orchestrator workflows start <ID> [<PARAMETERS>] [<EXECUTION>]`, where execution is `{"synchronous":true}` or `{"step":"<STEP_NAME>","variable":"<OUTPUT_NAME>"}` |
 | Work orders of a workflow | `ascli orchestrator workflows workorders <ID>` |
+
+`ascli` and the REST API have no operation for folders (create, rename, move, delete), for moving or deleting a workflow, or for remote nodes.
+The optional toolbox workflow does them: see [Optional extensions for AI assistants](#optional-extensions-for-ai-assistants).
 | Work step | `ascli orchestrator workstep status <WORK_STEP_ID>`: status, inputs and outputs |
 | Work order | `ascli orchestrator workorders status <ID>`, `ascli orchestrator workorders output <ID>`, `ascli orchestrator workorders cancel <ID>` |
 | Journal, monitors, queues, resource pools | `ascli orchestrator journal files <BOOK>`, `ascli orchestrator monitors list <TYPE>`, `ascli orchestrator queues list`, `ascli orchestrator pools status <NAME>` |
