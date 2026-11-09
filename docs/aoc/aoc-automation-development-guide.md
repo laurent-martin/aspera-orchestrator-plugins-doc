@@ -693,7 +693,10 @@ ascli aoc automation workflows import @yaml:@file:workflow_backup.yml
 `ascli` creates the workflow, then each step in order. It adds the step to the workflow `step_order` before creating its actions, because the API refuses an action whose step is not in the workflow. In every string of the action data, it replaces the `ref_id` of steps and actions by the identifiers it created. The workflow is created in `draft` state. If a call fails, `ascli` deletes the partial workflow and reports the error.
 
 > [!NOTE]
-> Before `ascli` 4.29, `import` and `duplicate` created all steps first, failed on a manifest with a step after the trigger, left a partial `draft` workflow behind, and replaced identifiers only in `substitutions[].template`.
+> Before `ascli` 4.29, `import` created all steps first, failed on a manifest with a step after the trigger, left a partial `draft` workflow behind, and replaced identifiers only in `substitutions[].template`.
+
+> [!NOTE]
+> The API does not return secrets (tokens, passwords): an exported manifest does not contain them, and an imported workflow needs them to be set again. `duplicate` is not affected, because the server makes the copy (`POST /workflows/:id/copy`) and keeps them.
 
 #### Creating a workflow step by step
 
