@@ -1,6 +1,6 @@
 ---
 name: orchestrator-toolbox
-description: Administer an IBM Aspera Orchestrator for what its REST API cannot do - folders (create, list, rename, move, delete), moving and deleting workflows, remote nodes (list, get, create, update, delete, test) - through the "Admin - Orchestrator toolbox" workflow, started with ascli. Use when asked to organize workflows in folders, delete a workflow, or manage remote nodes, or to add such a missing administration function.
+description: Administer an IBM Aspera Orchestrator for what its REST API cannot do - folders (create, list, rename, move, delete), moving and deleting workflows, remote nodes (list, get, create, update, delete, test), portlets (list, install) - through the "Admin - Orchestrator toolbox" workflow, started with ascli. Use when asked to organize workflows in folders, delete a workflow, or manage remote nodes, or to add such a missing administration function.
 ---
 
 # Orchestrator toolbox
@@ -49,6 +49,7 @@ A failure sets the step to `Failed`, with a JSON `error` in the result.
 | `move_workflow` | `id or ids, folder_id` | Move to a folder (0: root) |
 | `delete_workflow` | `id confirm=true` | Delete with its work orders; refused if some are running |
 | `list_remote_nodes`, `get_remote_node`, `create_remote_node`, `update_remote_node`, `delete_remote_node`, `test_remote_node` | see `list_functions` | Remote nodes (extension [remote_nodes.rb](extensions/remote_nodes.rb)); secrets are never returned |
+| `list_portlets`, `install_portlet` | `name src [confirm]` | Portlets (extension [portlets.rb](extensions/portlets.rb)): `src` is a staged folder on the server; an installed portlet is replaced only with `confirm=true`, after a backup in `<config_dir>/portlets_backup`; then restart Orchestrator (`orchestrator restart`) |
 | `folder_tree` | `[root_id]` | Nested folders and workflows (example extension) |
 
 ## Rules for the assistant
