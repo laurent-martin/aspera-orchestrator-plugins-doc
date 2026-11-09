@@ -3,7 +3,11 @@
 # A portlet is a folder <config_dir>/portlets/<name>/ with <name>.rb and metadata.yml.
 # Orchestrator loads a portlet when it starts: restart it (`orchestrator restart`) after an install, the toolbox cannot do it
 # (the restart would stop the step that runs it).
+require 'base64'
 require 'fileutils'
+require 'rubygems/package'
+require 'stringio'
+require 'zlib'
 require 'yaml'
 
 PORTLET_NAME = /\A[a-z][a-z0-9_]*\z/
@@ -30,19 +34,42 @@ function('list_portlets', ': installed portlets (folders of <config_dir>/portlet
   end
 end
 
-function('install_portlet', 'name src [confirm]: copy the folder src (on the server, with metadata.yml and <name>.rb) to portlets/<name>; ' \
+PORTLET_FILE = /\A[A-Za-z0-9_][A-Za-z0-9_.-]*\z/
+
+# Files of a .portlet archive (tar.gz of the folder <name>/, as made by `rake package`)
+def portlet_archive_files(name, base64)
+  files = {}
+  Gem::Package::TarReader.new(Zlib::GzipReader.new(StringIO.new(Base64.strict_decode64(base64.to_s)))).each do |entry|
+    next unless entry.file?
+    folder, file = entry.full_name.sub(%r{\A\./}, '').split('/', 2)
+    raise ArgumentError, "archive: #{entry.full_name} is not in the folder #{name}/" unless folder == name && file && !file.include?('/')
+    files[file] = entry.read.force_encoding('UTF-8')
+  end
+  files
+rescue Zlib::Error, Gem::Package::TarInvalidError, ArgumentError => e
+  raise e if e.message.start_with?('archive:')
+  raise ArgumentError, "archive: not a base64 tar.gz (#{e.message})"
+end
+
+function('install_portlet', 'name archive|files [confirm]: install the portlet name from archive (base64 of the .portlet file, a tar.gz of the folder name/), ' \
+                            'or from files, a Hash file name -> text (small portlets: the arguments are limited to about 100 KB); metadata.yml and <name>.rb required; ' \
                             'an installed portlet is replaced only with confirm=true, after a copy in <config_dir>/portlets_backup. Restart Orchestrator after.') do |a|
-  need(a, 'name', 'src')
+  need(a, 'name')
   name = a['name'].to_s
   raise ArgumentError, "invalid portlet name: #{name}" unless name.match?(PORTLET_NAME)
-  src = File.realpath(a['src'].to_s)
-  raise ArgumentError, "src is not a folder: #{src}" unless File.directory?(src)
-  raise ArgumentError, 'src must not be in the portlets folder' if src.start_with?("#{portlets_dir}/")
-  %W[metadata.yml #{name}.rb].each { |f| raise ArgumentError, "src has no #{f}" unless File.file?(File.join(src, f)) }
-  links = Dir.glob(File.join(src, '**', '*'), File::FNM_DOTMATCH).select { |f| File.symlink?(f) }
-  raise ArgumentError, "src has symbolic links: #{links.map { |l| File.basename(l) }.join(', ')}" unless links.empty?
-  version = portlet_version(src)
-  raise ArgumentError, 'src/metadata.yml: no :revision_history with :version' if version.nil?
+  raise ArgumentError, 'Missing argument: archive or files' unless a['archive'] || a['files']
+  files = a['archive'] ? portlet_archive_files(name, a['archive']) : a['files']
+  raise ArgumentError, 'files: expecting a Hash of file name -> text' unless files.is_a?(Hash) && files.values.all?(String)
+  files = files.transform_keys(&:to_s)
+  bad = files.keys.reject { |f| f.match?(PORTLET_FILE) }
+  raise ArgumentError, "invalid file names: #{bad.join(', ')}" unless bad.empty?
+  %W[metadata.yml #{name}.rb].each { |f| raise ArgumentError, "files has no #{f}" unless files.key?(f) }
+  version = begin
+    YAML.safe_load(files['metadata.yml'], permitted_classes: [Symbol])[:revision_history].map { |r| r[:version].to_s }.max_by { |v| Gem::Version.new(v) }
+  rescue StandardError
+    nil
+  end
+  raise ArgumentError, 'metadata.yml: no :revision_history with :version' if version.nil?
   target = File.join(portlets_dir, name)
   previous = File.directory?(target) ? portlet_version(target) : nil
   backup = nil
@@ -52,10 +79,10 @@ function('install_portlet', 'name src [confirm]: copy the folder src (on the ser
     FileUtils.mkdir_p(File.dirname(backup))
     FileUtils.cp_r(target, backup)
   end
-  # Files of the portlet replaced one by one: the folder stays, and files that are not in src are removed
+  # The folder stays; files that are not given are removed
   FileUtils.mkdir_p(target)
-  (portlet_files(target) - portlet_files(src)).each { |f| FileUtils.rm_rf(File.join(target, f)) }
-  FileUtils.cp_r(File.join(src, '.'), target)
+  (portlet_files(target) - files.keys).each { |f| FileUtils.rm_rf(File.join(target, f)) }
+  files.each { |f, text| File.write(File.join(target, f), text) }
   { 'name' => name, 'version' => version, 'previous_version' => previous, 'backup' => backup, 'files' => portlet_files(target),
     'next' => 'restart Orchestrator: orchestrator restart' }
 end
