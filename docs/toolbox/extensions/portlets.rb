@@ -37,9 +37,18 @@ end
 PORTLET_FILE = /\A[A-Za-z0-9_][A-Za-z0-9_.-]*\z/
 
 # Files of a .portlet archive (tar.gz of the folder <name>/, as made by `rake package`)
+# The archive is its base64 content, or `@file:<path>` of the file on the server, as with ascli
 def portlet_archive_files(name, base64)
   files = {}
-  Gem::Package::TarReader.new(Zlib::GzipReader.new(StringIO.new(Base64.strict_decode64(base64.to_s)))).each do |entry|
+  data = base64.to_s
+  if data.start_with?('@file:')
+    path = data.delete_prefix('@file:')
+    raise ArgumentError, "archive: not a file on the server: #{path}" unless path.start_with?('/') && File.file?(path)
+    data = File.binread(path)
+  else
+    data = Base64.strict_decode64(data)
+  end
+  Gem::Package::TarReader.new(Zlib::GzipReader.new(StringIO.new(data))).each do |entry|
     next unless entry.file?
     folder, file = entry.full_name.sub(%r{\A\./}, '').split('/', 2)
     raise ArgumentError, "archive: #{entry.full_name} is not in the folder #{name}/" unless folder == name && file && !file.include?('/')
@@ -51,7 +60,7 @@ rescue Zlib::Error, Gem::Package::TarInvalidError, ArgumentError => e
   raise ArgumentError, "archive: not a base64 tar.gz (#{e.message})"
 end
 
-function('install_portlet', 'name archive|files [confirm]: install the portlet name from archive (base64 of the .portlet file, a tar.gz of the folder name/), ' \
+function('install_portlet', 'name archive|files [confirm]: install the portlet name from archive (the .portlet file, a tar.gz of the folder name/: its base64 content, or @file:<path> on the server), ' \
                             'or from files, a Hash file name -> text (small portlets: the arguments are limited to about 100 KB); metadata.yml and <name>.rb required; ' \
                             'an installed portlet is replaced only with confirm=true, after a copy in <config_dir>/portlets_backup. Restart Orchestrator after.') do |a|
   need(a, 'name')
