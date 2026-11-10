@@ -44,13 +44,14 @@ Any reader can begin with [How Orchestrator works](#how-orchestrator-works) and 
 
 #### Optional extensions for AI assistants
 
-Two optional extensions add what an assistant cannot do with the product alone. Each comes with a skill: a Markdown file that tells the assistant when and how to use the extension.
+Three optional extensions add what an assistant cannot do with the product alone. Each comes with a skill: a Markdown file that tells the assistant when and how to use the extension.
 An assistant does not need to install them: it reads a skill, from its URL, when the task needs it, and only after checking that the extension is on the server.
 
 | Task | Extension | Check that it is available | Skill to read |
 | --- | --- | --- | --- |
 | Create, rename, move or delete folders; move or delete workflows; manage remote nodes: the REST API has no endpoint for them | Workflow *Admin - Orchestrator toolbox*, extensible with Ruby files | `ascli orchestrator workflows list` shows it; started with `{"function":"list_functions"}`, it lists its functions | [toolbox/SKILL.md](https://raw.githubusercontent.com/laurent-martin/aspera-orchestrator-plugins-doc/refs/heads/main/docs/toolbox/SKILL.md) |
 | Use a secret without ever seeing or writing it | Plugin `SecretReference` | `ascli orchestrator plugins spec show SecretReference` finds it, and the Plugins page shows it enabled | [SKILL.md](https://raw.githubusercontent.com/laurent-martin/aspera-orchestrator-secret-reference/refs/heads/main/SKILL.md) of the repository `aspera-orchestrator-secret-reference` |
+| Transfer files from a transfer spec (remote node, Faspex 5 package) with IBM Aspera Transfer Daemon | Plugin `TransferdTransfer` | `ascli orchestrator plugins spec show TransferdTransfer` finds it, and the portlet *Transfer daemon* shows transferd reachable | `SKILL.md` of the repository `orchestrator-transferd-plugin` |
 
 - Read the skill when a step of the task needs the extension, not before: most tasks do not.
 - If the extension is not available, do not install it without the user: use the way that needs none (ask the user for the folder, give the secret at run time, see [Using secrets](#using-secrets)), and say that the extension would help.
@@ -4919,6 +4920,7 @@ Orchestrator has no extension point for that: the plugin changes core methods wh
 Such a plugin depends on the code of one Orchestrator version.
 
 The plugin `SecretReference` of repository `aspera-orchestrator-secret-reference` is an example: it replaces references `secret://...` in inputs and template attributes by secrets read from HashiCorp Vault, see [Secret references](#secret-references).
+The plugin `TransferdTransfer` of repository `orchestrator-transferd-plugin` is another example, for the library in a hidden folder: it is an asynchronous step that calls a service of the server with gRPC, with the gems `grpc` and `google-protobuf` in `.vendor`, loaded the first time a process transfers.
 
 Rules:
 
@@ -5006,6 +5008,7 @@ The shipped portlets are the best set of examples: folder `/opt/aspera/orchestra
 `orchestrator_information` is the simplest, `user_tasks` has parameters and a permission check, `csv_editor` has uploads, a modal dialog and several actions, `queue_management` has pagination and `helper_method`.
 
 The repository [`aspera-orchestrator-secret-reference`](https://github.com/IBM/aspera-orchestrator-secret-reference) contains the portlet `secret_dashboard` as a worked example: it uses a plugin (`SecretCore`), has four sections with AJAX actions, an admin-only check in every action, and a full RSpec test suite that runs outside Rails with stubs of `Portlet`, `PortletsController`, `Workflow`, `WorkStep` and `User`.
+The repository `orchestrator-transferd-plugin` contains the portlet `transferd_dashboard`: actions that cancel a work step (`cancel_action`) with the permission check of the work order page (`require_permission`), and a refresh of the transfers with `setInterval`.
 
 ### Portlet quick start
 
