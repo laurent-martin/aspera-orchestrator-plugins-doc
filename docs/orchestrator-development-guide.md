@@ -1173,6 +1173,10 @@ Pitfalls:
 - The output of a remote move is an array of paths: take the element you need.
 - On Windows nodes with an SSH docroot `C:\`, refer to `C:\temp\file.txt` as `/temp/file.txt`.
 - The FTP plugin runs on Orchestrator and can be slow: running the `ftp`, `ncftp` or `sftp` client of a remote system with `RemoteExecution` spares Orchestrator.
+- Orchestrator runs as its own user (`aspweb`).
+  A local plugin (`CustomRuby`, `LocalFileOperation`, `LocalExecution`...) writes on the host with that user.
+  The docroot of a node that runs on the same host belongs to the node user (for example `xfer`): `aspweb` can read what the node wrote there, but cannot create a folder in it.
+  Create the output folder once, writable by `aspweb` (for example `install -d -o aspweb -g <NODE_GROUP> -m 2775 <DOCROOT>/out`), else the step fails with `Permission denied @ dir_s_mkdir`.
 
 #### Transfers
 
@@ -2414,6 +2418,10 @@ Otherwise, each element gets its own work order, started one after the other, ab
 After a restart of Orchestrator, watchers start again automatically, and running work orders continue from where they were.
 A synchronous step that the restart interrupted ends with `Error`: "Recovery after partial execution is not supported".
 
+Restarting only workers (`systemctl restart orchestrator_worker_<N>`) does not give this: the work order of a watcher that was running is `Force-canceled`, and nothing watches until the workflow is started again (observed on 4.1.6, with a work order started by `ascli orchestrator workflows start`).
+Restart workers only when no watcher must keep running, and start the workflow again afterwards.
+A workflow with a trigger waits for its event: start it with `synchronous` `false` (`ascli orchestrator workflows start <ID> @json:'{}' @json:'{"synchronous":false}'`), else the command never returns.
+
 #### History of past triggers
 
 A trigger remembers the elements it has already detected, so that it does not detect them again.
@@ -2582,6 +2590,14 @@ Each event is one package: the oldest one not seen yet.
 | `polling_frequency` | Seconds between checks. |
 | `get_transfer_spec`, `transfer_type`, `destination_root` | Output `Transfer_spec`: the transfer spec to download the package, for `connect` or `transfer_client`, with `destination_root` replaced by the attribute when it is set. |
 
+The names of the inputs, when an attribute is left blank, are `Faspex_server_address`, `Faspex_user`, `Faspex_client_id` and `Ssh_private_key` (the manual of the plugin writes `Faspex_api_client_id`: it is `Faspex_client_id`).
+`Ssh_private_key` (and attribute `private_key`) is the PEM text, not a path.
+An input that is not declared is ignored, so check these names.
+
+Some Faspex 5 servers refuse `transfer_client` (observed: "Check that the transfer_type field is connect, http_gateway, or remote_transfer"): output `Transfer_spec` then holds that message instead of JSON, and the step that parses it ends with "unexpected character: 'Check'".
+Use `connect`, which is also the default of the plugin.
+With `new_only`, a package sent before the work order started is never seen: send the test packages after starting the workflow.
+
 Outputs:
 
 - `Id`: the package id, a number (as a `string`). `Package UUID`: its UUID.
@@ -2590,6 +2606,7 @@ Outputs:
   The token is stored in clear in the outputs of the work order.
 
 To download the package to a node, give `Transfer_spec` as payload to [`AsperaNodeApiTransferOperation`](#asperanodeapitransferoperation).
+Set `destination_root` of the spec (and `create_dir` to `true`) in a `CustomRuby` step before, for example `/<FOLDER>/<PACKAGE_ID>`: the files arrive in `<DOCROOT>/<FOLDER>/<PACKAGE_ID>/PKG - <TITLE>/`, so find them with `Dir.glob(File.join(dir, '**', name))`.
 
 #### AsperaNodeApiTransferOperation
 
@@ -2701,7 +2718,13 @@ The plugin `SecretReference` (repository `aspera-orchestrator-secret-reference`,
 secret://<STORE>/<PATH>[?<OPTIONS>][#<FIELD>]
 ```
 
-- A reference is the whole value of a Password parameter, a step input or a template attribute.
+- A reference is the whole value of a parameter, a step input or a template attribute.
+  For a parameter, use type `string`, not `pwd`: the designer hides the value of a `pwd` parameter, and with it the reference.
+  Give the default value of a runtime parameter as a reference (`Runtime_override` and `Runtime_optional` `true`), so that the workflow starts without parameters.
+- In a workflow file, write `#` as `%23` in the value of a parameter (`secret://ops/db_login%23password`): the values of parameters are URL-decoded when the workflow is read, and the API (`workflows inputs`) shows the value with `#`.
+  The **Define Parameter** dialog of the designer still shows the value cut at `#`, and saving the dialog writes it cut: do not save such a parameter from the dialog, edit the file and add a revision (see [Known issues](#known-issues)).
+- A reference that is not resolved reaches the step as text: the step fails with an error of its own, for example "Neither PUB key nor PRIV key" for a private key.
+  Check with a throwaway `CustomRuby` step that reports only the length and the start of the value of an input mapped to the reference.
   In a text, a placeholder such as `<%= Db_password %>` adds the input `Db_password` to the step: with a reference as its value, the placeholder is replaced by the secret.
 - When a step runs, the plugin reads the secret from its store: the step gets the value, and variables, outputs and saved states keep the reference.
   A secret rotated in the store is used by the next run of a step.
@@ -3838,6 +3861,9 @@ Observed in Orchestrator 4.1.6:
 - `OrchestratorAlertEntry` does not save its header (`execute` passes only the category and the message).
 - At publish, a designer note is looked up by its `note_id` in all workflows (`Note.find_by(note_id:)`): a note whose id is also used in another workflow updates the note of that workflow, and is not shown in this one.
   The designer generates UUIDs; in a hand-written file, use a UUID too, not `note1`.
+- The **Define Parameter** dialog of the designer shows, and on save writes back, a value cut at its first `#`: it puts the value in a URL (`encodeURI` does not escape `#`).
+  Writing `%23` in the file keeps the stored value right, but the dialog still shows the value cut, because the designer holds the decoded value: do not save a parameter that contains `#` from the dialog (see [Secret references](#secret-references)).
+  A fix in `app/views/whiteboards/gui/_parameter.js.erb`: escape `#` as `%23` where `pack_value` and `comments` are built.
 
 ## Extending Orchestrator
 
