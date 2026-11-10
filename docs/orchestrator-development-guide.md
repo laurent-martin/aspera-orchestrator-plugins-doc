@@ -4230,7 +4230,7 @@ Names that end with an irregular plural (`Data`, `Media`) or that contain an acr
 | --- | --- | --- |
 | `<FOLDER_SINGULAR>.rb` | yes | The plugin class. |
 | `metadata.yml` | yes | Versions, display name, category: see [metadata.yml](#plugin-metadata-file). |
-| `<VERSION>_<DESCRIPTION>.rb` | yes | Migrations: they create the table, see [Migrations](#migrations). |
+| `<VERSION>_<DESCRIPTION>.rb` | yes | Migrations: they create the table, see [Migrations](#migrations). A plugin made to be imported has none: see [Plugin importing and exporting](#plugin-importing-and-exporting). |
 | `edit.html.erb` | yes | Template form: see [Template form](#template-form). |
 | `help.html.erb` | no | Help page, see [Help page](#help-page). Shipped in 204 of the 205 plugins. |
 | `<CLASS>.png` | no | Icon in the designer and the template lists. Without it, a generic icon is shown. |
@@ -4826,6 +4826,7 @@ In `edit.html.erb`, write the URL with `<%= Rails.configuration.web_root %>/my_g
 
 `help.html.erb` is the help page of the plugin, opened by the help button of the template dialog.
 It is an ERB view, read from the stock folder (`/opt/aspera/orchestrator/actions/<FOLDER>/help.html.erb`).
+The help button shows no page for an imported plugin (log `Action help page not found`): see [Plugin importing and exporting](#plugin-importing-and-exporting).
 The help topics also show `:description` of `metadata.yml`.
 
 ### Plugin installation and updates
@@ -4864,8 +4865,34 @@ The **Import Plugin** button of the Plugins page installs a plugin from a file `
 tar -czf MyGreeting_1.0.0.plugin my_greetings
 ```
 
-Imported plugins are stored in `/opt/aspera/orchestrator/actions_imported/<FOLDER>/<N>/`, and enabled like stock plugins.
+Imported plugins are stored in `/opt/aspera/orchestrator/actions_imported/<FOLDER>/<N>/`, and enabled like stock plugins: **Enable** copies the folder to the load folder, and moves the migration files out of the copy.
 **Export** and the backups made at upgrade (`<ARCHIVE_DIR>/action_backups`, see [Server folders](#server-folders)) produce the same format.
+
+An imported plugin has no stock folder, so in 4.1.6 it misses three things:
+
+- *Migrations*: Orchestrator runs only those of the stock folder (see [Installing a plugin](#installing-a-plugin)).
+  The plugin gets no table: the log shows "Table '...' doesn't exist", and there is no default template.
+- *Icon*: only the icons of the stock folders are copied to the public folder (`rake actions:refresh_icons`): the plugin has the generic icon.
+- *Help page*: the help button reads only the stock folder (see [Help page](#help-page)): it shows `No help page found for action`.
+
+A plugin made to be imported does these itself, as the plugin `TransferdTransfer` of repository `orchestrator-transferd-plugin`:
+
+- It has no migration file.
+  Its main file, when loaded, creates the table if it is missing (`connection.create_table(table_name, if_not_exists: true)`, then `reset_column_information`); a later version adds its new columns the same way (`column_exists?`, `add_column`).
+  **Enable** loads the class before it creates the default template.
+  Every process loads the file: log the errors, do not raise them, so that Orchestrator starts.
+- When loaded, it copies its icon to `/opt/aspera/orchestrator/public/aspera/orchestrator/assets/actions/<CLASS>.png`, if missing or different.
+- Its form shows the help page (`File.read` of `help.html.erb`, in a collapsed section).
+
+The REST API also imports a plugin: `GET api/import_plugin?file=<PATH_ON_HOST>` (`ascli orchestrator plugins import <PATH_ON_HOST>`), from a file on the server, readable by `aspweb`.
+It differs from **Import Plugin**:
+
+- It extracts the file to the load folder `<CONFIG_DIR>/actions/<FOLDER>`, and loads the plugin: the plugin is enabled, without **Enable**.
+- It runs the migrations, but leaves the migration files in the load folder: at their next start, all the services of Orchestrator stop with `Zeitwerk::NameError` ("wrong constant name", followed by the version of the migration, see [Plugin files](#plugin-files)).
+  Move these files out of the load folder before any restart, or import a plugin without migration file.
+- It loads the plugin in the web server and in the engine, not in the workers: run `orchestrator restart`.
+- Never call `GET api/enable_plugin?action_type=<CLASS>` (`ascli orchestrator plugins enable <CLASS>`) for a plugin imported with the API: it looks for the plugin in the stock folder, deletes the load folder, and fails with `Errno::ENOENT`.
+  Import the file again to restore it.
 
 #### Updating a plugin
 
@@ -4930,6 +4957,7 @@ The rules for inputs are in [Security](#security).
 
 1. Choose the class name, and check `"<CLASS>".tableize.classify == "<CLASS>"`.
 2. Create the folder `<FOLDER>` with `<FOLDER_SINGULAR>.rb`, `metadata.yml`, one migration and `edit.html.erb`.
+   For a plugin made to be imported, no migration: see [Plugin importing and exporting](#plugin-importing-and-exporting).
 3. Give the migration a version not used by any other migration: the current date and time.
 4. Write `self.version` as in the [Quick start](#plugin-quick-start), `category`, `inputs_spec`, `outputs_spec` and `execute`.
 5. Prefer `default_inputs_spec` and `<ATTRIBUTE>_get`, with constants `VAR_` and `DEFAULT_`.
@@ -4946,7 +4974,7 @@ Orchestrator has no extension point for that: the plugin changes core methods wh
 Such a plugin depends on the code of one Orchestrator version.
 
 The plugin `SecretReference` of repository `aspera-orchestrator-secret-reference` is an example: it replaces references `secret://...` in inputs and template attributes by secrets read from HashiCorp Vault, see [Secret references](#secret-references).
-The plugin `TransferdTransfer` of repository `orchestrator-transferd-plugin` is another example, for the library in a hidden folder: it is an asynchronous step that calls a service of the server with gRPC, with the gems `grpc` and `google-protobuf` in `.vendor`, loaded the first time a process transfers.
+The plugin `TransferdTransfer` of repository `orchestrator-transferd-plugin` is another example, for the library in a hidden folder: it is an asynchronous step that calls a service of the server with gRPC, with files of aspera-cli and the gems `grpc`, `google-protobuf`, `googleapis-common-protos-types` and `rainbow` in `.vendor`, loaded the first time a process calls the service (a worker for a step, the web server for its portlet).
 
 Rules:
 
@@ -5556,6 +5584,7 @@ This chapter says how the content of each chapter was checked, for a reader who 
 - [Extending Orchestrator](#extending-orchestrator): the content comes from Plugin development and Portlet development, and was verified in the same way.
 - [Plugin development](#plugin-development): the content is derived from Orchestrator 4.1.6.
   The example plugin of [Plugin quick start](#plugin-quick-start) was installed, enabled, and executed in a workflow on Orchestrator 4.1.6, and the steps of [Installing a plugin](#installing-a-plugin) and [Updating a plugin](#updating-a-plugin) were done on that server.
+  The behaviors of imported plugins in [Plugin importing and exporting](#plugin-importing-and-exporting) were observed with the plugin `TransferdTransfer`, imported with the Plugins page and with the API, on an Orchestrator 4.1.6 server.
 - [Portlet development](#portlet-development): the content is derived from Orchestrator 4.1.6.
   - On an Orchestrator 4.1.6.2036 server: the example portlet of [Portlet quick start](#portlet-quick-start) was imported with **Import Portlet**, chosen and configured in a dashboard frame, displayed, and its action called with GET and POST. In Chrome, the **Ping** link (`ajaxUpdate`) and the automatic refresh worked with no JavaScript error. The behaviors of import (file name, collision), enable, disable, restart, the version API and the CSRF token described in that chapter were reproduced on this server.
   - From Orchestrator: the security notes, the custom portlets, the legacy upgrade script, and the counts of the [Portlet annex](#portlet-annex).
