@@ -37,7 +37,7 @@ Three extensions of Orchestrator come with a skill (`SKILL.md`) for AI assistant
 | --- | --- | --- |
 | Workflow `Admin - Orchestrator toolbox`, in [`docs/toolbox/`](docs/toolbox/) | The functions missing from the REST API: folders, moving and deleting workflows, remote nodes; extensible with Ruby files | [`docs/toolbox/SKILL.md`](docs/toolbox/SKILL.md) |
 | Plugin `SecretReference`, repository `aspera-orchestrator-secret-reference` | Secure access to secrets: a workflow holds a reference, never the secret | `SKILL.md` of that repository |
-| Plugin `TransferdTransfer`, repository `orchestrator-transferd-plugin` | Transfers from a transfer spec with IBM Aspera Transfer Daemon: the step, the portlet, the example workflows | `SKILL.md` of that repository |
+| Plugin `TransferdTransfer`, repository `aspera-orchestrator-transferd` | Transfers from a transfer spec with IBM Aspera Transfer Daemon: the step, the portlet, the example workflows | `SKILL.md` of that repository |
 
 Diagrams of the guide are drawn in [`docs/images/diagrams.drawio`](docs/images/diagrams.drawio), one tab per image: `rake doc:diagrams` exports each tab to `docs/images/<tab>.svg` (for GitHub) and `.pdf` (used in the PDF), with draw.io desktop, when the `.drawio` file is newer.
 

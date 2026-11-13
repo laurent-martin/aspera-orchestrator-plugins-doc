@@ -49,9 +49,9 @@ An assistant does not need to install them: it reads a skill, from its URL, when
 
 | Task | Extension | Check that it is available | Skill to read |
 | --- | --- | --- | --- |
-| Create, rename, move or delete folders; move or delete workflows; manage remote nodes: the REST API has no endpoint for them | Workflow *Admin - Orchestrator toolbox*, extensible with Ruby files | `ascli orchestrator workflows list` shows it; started with `{"function":"list_functions"}`, it lists its functions | [toolbox/SKILL.md](https://raw.githubusercontent.com/laurent-martin/aspera-orchestrator-plugins-doc/refs/heads/main/docs/toolbox/SKILL.md) |
+| Create, rename, move or delete folders; move or delete workflows; manage remote nodes; list and install portlets: the REST API has no endpoint for them | Workflow *Admin - Orchestrator toolbox*, extensible with Ruby files | `ascli orchestrator workflows list` shows it; started with `{"function":"list_functions"}`, it lists its functions | [toolbox/SKILL.md](https://raw.githubusercontent.com/laurent-martin/aspera-orchestrator-plugins-doc/refs/heads/main/docs/toolbox/SKILL.md) |
 | Use a secret without ever seeing or writing it | Plugin `SecretReference` | `ascli orchestrator plugins spec show SecretReference` finds it, and the Plugins page shows it enabled | [SKILL.md](https://raw.githubusercontent.com/laurent-martin/aspera-orchestrator-secret-reference/refs/heads/main/SKILL.md) of the repository `aspera-orchestrator-secret-reference` |
-| Transfer files from a transfer spec (remote node, Faspex 5 package) with IBM Aspera Transfer Daemon | Plugin `TransferdTransfer` | `ascli orchestrator plugins spec show TransferdTransfer` finds it, and the portlet *Transfer daemon* shows transferd reachable | `SKILL.md` of the repository `orchestrator-transferd-plugin` |
+| Transfer files from a transfer spec (remote node, Faspex 5 package) with IBM Aspera Transfer Daemon | Plugin `TransferdTransfer` | `ascli orchestrator plugins spec show TransferdTransfer` finds it, and the portlet *Transfer daemon* shows transferd reachable | `SKILL.md` of the repository `aspera-orchestrator-transferd` |
 
 - Read the skill when a step of the task needs the extension, not before: most tasks do not.
 - If the extension is not available, do not install it without the user: use the way that needs none (ask the user for the folder, give the secret at run time, see [Using secrets](#using-secrets)), and say that the extension would help.
@@ -3914,6 +3914,57 @@ Differences:
 
 The steps are in [Plugin installation and updates](#plugin-installation-and-updates) and [Portlet installation and updates](#portlet-installation-and-updates).
 
+#### Deploying from the command line
+
+A developer, or an AI assistant, can deploy a plugin and a portlet without the web interface.
+The plugin `TransferdTransfer` and its portlet `transferd_dashboard` were developed with this loop.
+
+Prerequisites:
+
+- SSH access to the Orchestrator server as `root`, or as a user allowed to run commands as `aspweb` and to restart Orchestrator; for an AI assistant, with a key and no prompt (`ssh -o BatchMode=yes`).
+- On the workstation, [`ascli`](https://github.com/IBM/aspera-cli) configured for the REST API of Orchestrator: URL `https://<HOST>/aspera/orchestrator` and a user with the permission `engine`, the permission of `api/import_plugin` and of the Plugins page.
+  Store them in a preset of `ascli`, used with `--preset=<PRESET>`: the password stays in the configuration of `ascli`, not in commands or scripts.
+- The files to deploy, built on the workstation: `<CLASS>_<VERSION>.plugin` and `<ID>.portlet` (see [Plugin importing and exporting](#plugin-importing-and-exporting) and [Portlet importing and exporting](#portlet-importing-and-exporting)).
+- On a shared server, the agreement of its other users for the restart of step 4.
+
+Steps, on the workstation:
+
+1. Copy the files to a folder that `aspweb` can read, owned by `aspweb`:
+
+   ```shell
+   scp <CLASS>_<VERSION>.plugin <ID>.portlet root@<HOST>:
+   ssh root@<HOST> install -d -o aspweb /home/aspweb/<FOLDER>
+   ssh root@<HOST> install -o aspweb -m 644 <CLASS>_<VERSION>.plugin <ID>.portlet /home/aspweb/<FOLDER>/
+   ```
+
+   `api/import_plugin` reads the file as `aspweb`: a file in `/root`, or in a `/tmp` of mode 700, is not readable.
+2. Plugin: `ascli orchestrator plugins import /home/aspweb/<FOLDER>/<CLASS>_<VERSION>.plugin`.
+   The import enables the plugin: never call `plugins enable` after it.
+   If the plugin has migration files, move them out of the load folder before the restart of step 4 (see [Plugin importing and exporting](#plugin-importing-and-exporting)).
+   To update the plugin, import the new file the same way.
+3. Portlet: extract the file as `aspweb` in the user folder:
+
+   ```shell
+   ssh root@<HOST> runuser -u aspweb -- tar -xzf /home/aspweb/<FOLDER>/<ID>.portlet -C /opt/aspera/var/config/orchestrator/portlets/
+   ```
+
+   The extraction keeps the files that the new version no longer has: delete them.
+   Do not use the import of portlets for an update (see [Portlet importing and exporting](#portlet-importing-and-exporting)).
+   Without SSH access, the function `install_portlet` of the toolbox workflow does the same through `ascli`, after a backup of the installed folder (see [Optional extensions for AI assistants](#optional-extensions-for-ai-assistants)).
+   A new portlet is then enabled on the page **Engine > Portlets** (see [Installing a portlet](#installing-a-portlet)).
+4. Restart all services: `ssh root@<HOST> orchestrator restart`.
+   The API import loads the plugin only in the web server and in the engine, not in the workers, and the web server does not load a portlet again.
+   Only a change of the form `edit.html.erb` of a plugin needs no restart: it is read at each display.
+5. Check the deployment:
+   - The logon page `https://<HOST>/aspera/orchestrator/logon` answers HTTP 200.
+   - `systemctl list-units 'orchestrator*'` shows the same services running as before the deployment.
+   - `log/production.log` shows `Loading newly installed/loaded plugin <CLASS>`, and no new error.
+   - The files of the load folder `<CONFIG_DIR>/actions/<FOLDER>` and of the user folder `<CONFIG_DIR>/portlets/<ID>` have the checksums (`sha256sum`) of the built files.
+
+> [!CAUTION]
+> A restart interrupts the work orders and the users of the whole server.
+> An AI assistant asks the user before each import, restart, start or cancel on a shared server.
+
 ### Testing and debugging
 
 Read `/opt/aspera/orchestrator/log/production.log`, the log of both: your `Rails.logger` messages, and the errors, for a plugin those of loading, of migrations and of execution.
@@ -4875,7 +4926,7 @@ An imported plugin has no stock folder, so in 4.1.6 it misses three things:
 - *Icon*: only the icons of the stock folders are copied to the public folder (`rake actions:refresh_icons`): the plugin has the generic icon.
 - *Help page*: the help button reads only the stock folder (see [Help page](#help-page)): it shows `No help page found for action`.
 
-A plugin made to be imported does these itself, as the plugin `TransferdTransfer` of repository `orchestrator-transferd-plugin`:
+A plugin made to be imported does these itself, as the plugin `TransferdTransfer` of repository `aspera-orchestrator-transferd`:
 
 - It has no migration file.
   Its main file, when loaded, creates the table if it is missing (`connection.create_table(table_name, if_not_exists: true)`, then `reset_column_information`); a later version adds its new columns the same way (`column_exists?`, `add_column`).
@@ -4901,6 +4952,7 @@ It differs from **Import Plugin**:
 | Code, form or help, same version | Edit the stock folder, then **Disable** and **Enable** the plugin: Enable copies the stock folder again. |
 | New version | Edit the stock folder, add a revision to `metadata.yml`, and add migrations for new columns. The Plugins page shows **Upgrade**: it saves the current version to `<ARCHIVE_DIR>/action_backups/<CLASS>_<VERSION>.plugin`, copies the stock folder and runs the new migrations. |
 | Quick test of a code change | Edit the load folder, then **Reload**: it loads the code of the load folder again, without copying the stock folder. The change is lost at the next Enable or Upgrade. |
+| Plugin imported with the API | Import the new file again with the API, then run `orchestrator restart`: see [Deploying from the command line](#deploying-from-the-command-line). |
 
 **Disable** removes the load folder and unloads the classes.
 The table and the templates are kept, and workflows that use the plugin cannot run until it is enabled again.
@@ -4974,7 +5026,7 @@ Orchestrator has no extension point for that: the plugin changes core methods wh
 Such a plugin depends on the code of one Orchestrator version.
 
 The plugin `SecretReference` of repository `aspera-orchestrator-secret-reference` is an example: it replaces references `secret://...` in inputs and template attributes by secrets read from HashiCorp Vault, see [Secret references](#secret-references).
-The plugin `TransferdTransfer` of repository `orchestrator-transferd-plugin` is another example, for the library in a hidden folder: it is an asynchronous step that calls a service of the server with gRPC, with files of aspera-cli and the gems `grpc`, `google-protobuf`, `googleapis-common-protos-types` and `rainbow` in `.vendor`, loaded the first time a process calls the service (a worker for a step, the web server for its portlet).
+The plugin `TransferdTransfer` of repository `aspera-orchestrator-transferd` is another example, for the library in a hidden folder: it is an asynchronous step that calls a service of the server with gRPC, with files of aspera-cli and the gems `grpc`, `google-protobuf`, `googleapis-common-protos-types` and `rainbow` in `.vendor`, loaded the first time a process calls the service (a worker for a step, the web server for its portlet).
 
 Rules:
 
@@ -5062,7 +5114,7 @@ The shipped portlets are the best set of examples: folder `/opt/aspera/orchestra
 `orchestrator_information` is the simplest, `user_tasks` has parameters and a permission check, `csv_editor` has uploads, a modal dialog and several actions, `queue_management` has pagination and `helper_method`.
 
 The repository [`aspera-orchestrator-secret-reference`](https://github.com/IBM/aspera-orchestrator-secret-reference) contains the portlet `secret_dashboard` as a worked example: it uses a plugin (`SecretCore`), has four sections with AJAX actions, an admin-only check in every action, and a full RSpec test suite that runs outside Rails with stubs of `Portlet`, `PortletsController`, `Workflow`, `WorkStep` and `User`.
-The repository `orchestrator-transferd-plugin` contains the portlet `transferd_dashboard`: actions that cancel a work step (`cancel_action`) with the permission check of the work order page (`require_permission`), and a refresh of the transfers with `setInterval`.
+The repository `aspera-orchestrator-transferd` contains the portlet `transferd_dashboard`: actions that cancel a work step (`cancel_action`) with the permission check of the work order page (`require_permission`), and a refresh of the transfers with `setInterval`.
 
 ### Portlet quick start
 
@@ -5412,7 +5464,8 @@ Stock folder `/opt/aspera/orchestrator/portlets` is overwritten by upgrades; use
 
 Loading order: the user folder `<CONFIG_DIR>/portlets/<ID>` has priority over the stock folder. `Portlet.available` lists both; a user folder counts as soon as it contains a `.rb` file.
 
-1. Put the folder in `/opt/aspera/var/config/orchestrator/portlets/<ID>`, or import `<ID>.portlet`.
+1. Put the folder in `/opt/aspera/var/config/orchestrator/portlets/<ID>`, owned by `aspweb`, or import `<ID>.portlet`.
+   From the command line, see [Deploying from the command line](#deploying-from-the-command-line).
 2. Open **Engine > Portlets** (permission `engine`) and enable the portlet. Enabling runs `Portlet.attempt_load(id)`: it loads `<ID>.rb`, checks the class, and creates the row with `active = true`.
 3. To enable a portlet at every start, add its ID to the OrchConfig setting `default_portlet_list` (comma-separated); `config/application.rb` loads these portlets after initialization. Setting `auto_activate_portlets` enables portlets when they are assigned to users by dashboard.
 
@@ -5430,7 +5483,7 @@ A disabled portlet is enabled again, with a new row, as soon as a frame displays
 
 #### Updating a portlet
 
-1. Replace the files in the user folder. Do not import a new archive with the same ID: it breaks the installed portlet (see [Importing and exporting](#portlet-importing-and-exporting)).
+1. Replace the files in the user folder, and delete those that the new version no longer has, for example as in [Deploying from the command line](#deploying-from-the-command-line). Do not import a new archive with the same ID: it breaks the installed portlet (see [Importing and exporting](#portlet-importing-and-exporting)).
 2. Increase `:version` in `metadata.yml`.
 3. Restart the web server: `systemctl restart orchestrator_server` (or `orchestrator restart` for all services). In production, `enable_reloading` is `false` and `eager_load` is `true`; Orchestrator does not reload a portlet in the running process. A disable followed by an enable runs `load` again on `<ID>.rb`, so the model and the methods of the controller change, but the views stay cached until restart; it also changes the row ID and loses permissions.
 4. Check the frames that use the portlet: they keep their stored parameters. A parameter removed from `parameters_spec` stays in the frame and is ignored.
@@ -5582,6 +5635,7 @@ This chapter says how the content of each chapter was checked, for a reader who 
 - [Workflow authoring](#workflow-authoring): the content is derived from Orchestrator 4.1.6.
   The examples in [Recipes](#recipes) were imported, published and executed on Orchestrator 4.1.6.
 - [Extending Orchestrator](#extending-orchestrator): the content comes from Plugin development and Portlet development, and was verified in the same way.
+  The steps of [Deploying from the command line](#deploying-from-the-command-line), except the toolbox function `install_portlet`, were done on an Orchestrator 4.1.6.2036 server to deploy the plugin `TransferdTransfer` and the portlet `transferd_dashboard`.
 - [Plugin development](#plugin-development): the content is derived from Orchestrator 4.1.6.
   The example plugin of [Plugin quick start](#plugin-quick-start) was installed, enabled, and executed in a workflow on Orchestrator 4.1.6, and the steps of [Installing a plugin](#installing-a-plugin) and [Updating a plugin](#updating-a-plugin) were done on that server.
   The behaviors of imported plugins in [Plugin importing and exporting](#plugin-importing-and-exporting) were observed with the plugin `TransferdTransfer`, imported with the Plugins page and with the API, on an Orchestrator 4.1.6 server.
