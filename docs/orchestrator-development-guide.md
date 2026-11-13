@@ -2071,7 +2071,7 @@ Each `Step` element has attributes `id`, `x`, `y`, and these children:
 | `Error_retryDelay` | no | Delay between attempts, in seconds. |
 | `Failed_attempts`, `Failed_retryFor`, `Failed_retryForUnit`, `Failed_retryDelay` | no | Same, for status `Failed`. |
 | `comments` | no | Description of the step. |
-| `weight` | no | Integer, used for progress display. |
+| `weight` | no | Integer from 0 to 100: percentage of the work order when the step ends, see [Progress](#progress). |
 | `Journaling` | no | Journal entry settings (`Book`, `Event`, `Package`, `File`, `File_path`, `File_status`, `JournalStepMilestone`, `JournalProcessingTimeout`). A missing journal book is created on import. |
 
 Element names are case-sensitive and must be written exactly as above.
@@ -3888,6 +3888,9 @@ Common points:
 - Version reading with `SafeYaml.load_file('metadata.yml')[:revision_history]`, sorted as `[major, minor, revision, patch]`.
 - The same libraries: `MultiType` (`TYPE_*`), `Payload.expand`, `OrchConfig`, `Rails.logger`, `BasicUpload` (also used by portlet `csv_editor`) and `ModuleSSHTools` (also included by portlets `aspera_service` and `transfer_console`).
 - A component can have its own controller class in its folder.
+- `Rails.cache` is shared by all the processes of Orchestrator: production sets no `cache_store`, so Rails uses a `FileStore` in `/opt/aspera/orchestrator/tmp/cache/`, seen by the web server, the engine and the workers.
+  A plugin, which runs in a worker, and a portlet, which runs in the web server, can share small values there without a table (`Rails.cache.write(<KEY>, <VALUE>, expires_in: <DURATION>)`, `Rails.cache.read(<KEY>)`).
+  Prefix the keys with the name of the component, and keep no secret there: the files are in clear.
 
 Differences:
 
@@ -3974,6 +3977,23 @@ Read `/opt/aspera/orchestrator/log/production.log`, the log of both: your `Rails
 | Check without a server | `ruby lib/plugin_probe.rb`: fields, inputs, outputs and errors. | `ruby -c <ID>.rb`: syntax only. |
 | Try on the server | **Test template**, then a step in a workflow. | **Preview** in a frame, then the URL of an action. |
 | Read the version | `GET api/plugin_version/<CLASS>`. | `GET api/portlet_version/<NAME>`, wrong in 4.1.6: see [Known issues](#portlet-known-issues). |
+
+To read the state of the server from the command line, run Ruby in the Rails environment of Orchestrator, as `aspweb`, in `/opt/aspera/orchestrator` (about 30 seconds per call, to load Rails):
+
+```shell
+sudo -u aspweb env PATH=<RUBY_BIN_FOLDER>:/usr/bin:/bin RAILS_ENV=production bin/rails runner '<RUBY_CODE>'
+```
+
+For example `p Plugin.where(action_type: "<CLASS>").pluck(:is_loaded)`, `p Portlet.pluck(:portlet_id, :active)` or `p Rails.cache.read("<KEY>")`.
+`<RUBY_BIN_FOLDER>` is the one of the service, given by `systemctl cat orchestrator_server`.
+Only read: a write there bypasses the checks of the web interface.
+
+URLs for scripts and screenshots, under `https://<HOST>/aspera/orchestrator/`:
+
+- `logon` is the logon page: use it to check that the web server answers (HTTP 200).
+  `login` is only a `POST` route: a `GET` of it answers HTTP 500 and writes an error in the log.
+- A dashboard is `frames/home?id=<DASHBOARD_ID>`: read the links of the menu rather than guess the URL.
+- The designer of a workflow is `workflows/<WORKFLOW_ID>/edit`.
 
 Symptoms and their causes are in [Plugin testing and debugging](#plugin-testing-and-debugging) and [Portlet testing and debugging](#portlet-testing-and-debugging).
 
@@ -4722,6 +4742,15 @@ When the value on the step is blank, the method `timeout` of the plugin gives it
 `report_progress(status, details, percent = nil)` updates the status details of the step during `execute`, and restarts the timeout.
 `status` is `nil` (unchanged), `STATUS_INPROGRESS` or `STATUS_PAUSED`.
 A final status ends the execution with that status.
+
+An asynchronous step sets `@percent_complete` (0 to 100) before `check_status` returns: Orchestrator records it only with a status that is not final.
+When the step ends, the value is not updated: a `Complete` step keeps its last percentage, for example 98.
+The API shows 100 only for an ended step that never set a percentage.
+
+The percentage of the work order comes from the `weight` of the steps (see [Step](#step)): the weight of a step is the percentage of the work order when this step ends.
+While a step runs, the work order shows `credited + (weight - credited) * percent / 100`, where `credited` is the largest weight of the ended steps and `percent` is the percentage of the running step.
+For example, with weights 20, 90 and 100, the work order is at 20 % when the first step ends, then follows the second step from 20 % to 90 %.
+Give increasing weights along the path of the workflow, and 100 to the last step.
 
 Write logs with `Rails.logger.info`, `Rails.logger.error`: they go to `/opt/aspera/orchestrator/log/production.log`.
 
@@ -5505,6 +5534,12 @@ It skips a folder that has a `metadata.yml`, and does not scope CSS rules to the
 For the log, see [Testing and debugging](#testing-and-debugging).
 
 - Check the syntax: `ruby -c <ID>.rb`.
+- Test the portlet without a server, with RSpec:
+  - Load the library files of Orchestrator extracted from the RPM (`rake extract_rpm` of the repository [`aspera-orchestrator-plugins-doc`](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc)) where they need no database, such as `MultiType`.
+  - Stub the rest, only the methods that the portlet calls, with the behavior of Orchestrator: `ActiveRecord::Base` and the models it reads (`WorkStep`, `WorkOrder`), the `Portlet` model with `parameters_spec` and `runtime_value`, and `PortletsController` with `params`, `render` and `current_user`.
+    A call to a method that Orchestrator does not have then fails in the test too.
+  - Test the methods of the model, call the actions of the controller, and render the views with `ERB` in the context of the portlet.
+- See the views without a server: render them to an HTML file with the Bootstrap and jQuery of Orchestrator (`app/assets/stylesheets/third-party/bootstrap` and `app/assets/javascripts/third-party` of the extracted RPM), stub `$.ajax` with sample answers, and take a screenshot with a headless browser (`chrome --headless --screenshot`).
 - Display the portlet in a frame with **Preview**, before saving the configuration.
 - Call an action in the browser: `/aspera/orchestrator/portlet_action?portlet=<ID>&portlet_action=<METHOD>&frame_id=1&frame_html_id=f1` (logged in).
 - Call `GET /aspera/orchestrator/api/portlet_version[/<NAME>]?format=json` (or `xml`), with API credentials, to read the version of a portlet from `metadata.yml`, or of all portlets without `<NAME>`. `<NAME>` is the portlet name, URL-encoded (`Hello%20banner`), not the ID. The result is wrong in 4.1.6 (see [Known issues](#portlet-known-issues)).
@@ -5635,6 +5670,7 @@ This chapter says how the content of each chapter was checked, for a reader who 
 - [Workflow authoring](#workflow-authoring): the content is derived from Orchestrator 4.1.6.
   The examples in [Recipes](#recipes) were imported, published and executed on Orchestrator 4.1.6.
 - [Extending Orchestrator](#extending-orchestrator): the content comes from Plugin development and Portlet development, and was verified in the same way.
+  The shared `Rails.cache`, `bin/rails runner` and the URLs of [Testing and debugging](#testing-and-debugging) were checked on an Orchestrator 4.1.6.2036 server.
   The steps of [Deploying from the command line](#deploying-from-the-command-line), except the toolbox function `install_portlet`, were done on an Orchestrator 4.1.6.2036 server to deploy the plugin `TransferdTransfer` and the portlet `transferd_dashboard`.
 - [Plugin development](#plugin-development): the content is derived from Orchestrator 4.1.6.
   The example plugin of [Plugin quick start](#plugin-quick-start) was installed, enabled, and executed in a workflow on Orchestrator 4.1.6, and the steps of [Installing a plugin](#installing-a-plugin) and [Updating a plugin](#updating-a-plugin) were done on that server.
