@@ -3917,6 +3917,28 @@ Differences:
 
 The steps are in [Plugin installation and updates](#plugin-installation-and-updates) and [Portlet installation and updates](#portlet-installation-and-updates).
 
+#### Building the files
+
+A `.plugin` or `.portlet` file is a gzip tar of the folder.
+On macOS, `tar -czf` adds the extended attributes of the files (for example the origin of a downloaded file) as AppleDouble entries `._<FILE>`, which `tar -tzf` of macOS does not list.
+The import of Orchestrator (Minitar) and `tar` of Linux extract them as files `._<FILE>` next to the real ones.
+On macOS, write the file without them:
+
+```shell
+tar --no-xattrs --no-mac-metadata -czf MyGreeting_1.0.0.plugin my_greetings
+```
+
+Better, write the archive with Ruby (`Zlib::GzipWriter` and `Gem::Package::TarWriter`), as `lib/plugin_archive.rb` of repository [`aspera-orchestrator-secret-reference`](https://github.com/IBM/aspera-orchestrator-secret-reference):
+
+- Entries sorted by name, hidden folders included (`.vendor`, see [Extending Orchestrator from a plugin](#extending-orchestrator-from-a-plugin)).
+- Fixed modes, `644` for files and `755` for folders: `aspweb` can read every file.
+- Fixed dates: `TarWriter` dates the entries `Gem.source_date_epoch` (1980-01-02, or the environment variable `SOURCE_DATE_EPOCH`), and the gzip header takes the date given to `GzipWriter#mtime=`, for example the `:date` of the last revision of `metadata.yml`.
+
+The same sources then give the same bytes: the `sha256sum` of the files on the server (step 5 of [Deploying from the command line](#deploying-from-the-command-line)) can be compared with the build.
+
+Build from a copy, not from the source folder: copy the source folder to `build/<FOLDER>`, add the generated parts there (library in `.vendor`, icon made from an SVG, scripts shared by a plugin and a portlet), run the tests on this copy, and archive it.
+The tests then check what is installed.
+
 #### Deploying from the command line
 
 A developer, or an AI assistant, can deploy a plugin and a portlet without the web interface.
@@ -3927,7 +3949,7 @@ Prerequisites:
 - SSH access to the Orchestrator server as `root`, or as a user allowed to run commands as `aspweb` and to restart Orchestrator; for an AI assistant, with a key and no prompt (`ssh -o BatchMode=yes`).
 - On the workstation, [`ascli`](https://github.com/IBM/aspera-cli) configured for the REST API of Orchestrator: URL `https://<HOST>/aspera/orchestrator` and a user with the permission `engine`, the permission of `api/import_plugin` and of the Plugins page.
   Store them in a preset of `ascli`, used with `--preset=<PRESET>`: the password stays in the configuration of `ascli`, not in commands or scripts.
-- The files to deploy, built on the workstation: `<CLASS>_<VERSION>.plugin` and `<ID>.portlet` (see [Plugin importing and exporting](#plugin-importing-and-exporting) and [Portlet importing and exporting](#portlet-importing-and-exporting)).
+- The files to deploy, built on the workstation: `<CLASS>_<VERSION>.plugin` and `<ID>.portlet` (see [Building the files](#building-the-files), [Plugin importing and exporting](#plugin-importing-and-exporting) and [Portlet importing and exporting](#portlet-importing-and-exporting)).
 - On a shared server, the agreement of its other users for the restart of step 4.
 
 Steps, on the workstation:
@@ -4902,6 +4924,39 @@ fetch('/aspera/orchestrator/my_greeting/list_profiles/0').then(function (r) { re
 In `edit.html.erb`, write the URL with `<%= Rails.configuration.web_root %>/my_greeting/list_profiles/0`.
 `CerifyFileVerification` (`cerify_file_verifications`) is an example.
 
+These routes are the catch-all routes of `config/routes.rb`, `GET` only: Orchestrator checks that the user is logged in, but no permission, and the values sent are in the URL, so in the request log.
+Check the permission in the controller, for example `require_permission(Action, :edit)`, which raises `AccessDeniedError`.
+
+To send values with a `POST`, with the CSRF token checked by Orchestrator, a plugin can use the route of the form itself, `POST action_edit`, handled by `ActionsController#edit`: prepend a module that answers the requests with a parameter of the plugin, and calls `super` for all others.
+This changes a method of Orchestrator: follow the rules of [Extending Orchestrator from a plugin](#extending-orchestrator-from-a-plugin) (check of the parameters of `edit`, plugin enabled), as the plugin `SecretReference` does for the lists of its form.
+
+```ruby
+module MyPluginEditHook
+  def edit
+    return super unless params[:action_type].to_s.eql?('MyPlugin') && params[:my_lookup].present?
+    return render(json: {error: 'POST only'}, status: 403) unless request.post?
+    require_permission(Action, :edit)
+    render(json: {profiles: ['default', 'fast']})
+  rescue AccessDeniedError
+    render(json: {error: 'Not allowed to edit steps'}, status: 403)
+  end
+end
+ActionsController.prepend(MyPluginEditHook)
+```
+
+```erb
+<script>
+  (function () {
+    var url = <%= raw action_edit_path(action_type: 'MyPlugin').to_json %>;
+    var token = <%= raw form_authenticity_token.to_json %>;
+    fetch(url, {method: 'POST', headers: {'X-CSRF-Token': token, 'Content-Type': 'application/x-www-form-urlencoded'}, body: 'my_lookup=profiles'})
+      .then(function (r) { return r.json(); }).then(function (answer) { /* ... */ });
+  })();
+</script>
+```
+
+A `fetch` sends no CSRF token by itself: without the header `X-CSRF-Token`, Orchestrator invalidates the sessions of the user (see [JavaScript](#javascript) of portlets).
+
 #### Help page
 
 `help.html.erb` is the help page of the plugin, opened by the help button of the template dialog.
@@ -4944,6 +4999,8 @@ The **Import Plugin** button of the Plugins page installs a plugin from a file `
 ```shell
 tar -czf MyGreeting_1.0.0.plugin my_greetings
 ```
+
+On macOS, add options to this command, or write the file with Ruby: see [Building the files](#building-the-files).
 
 Imported plugins are stored in `/opt/aspera/orchestrator/actions_imported/<FOLDER>/<N>/`, and enabled like stock plugins: **Enable** copies the folder to the load folder, and moves the migration files out of the copy.
 **Export** and the backups made at upgrade (`<ARCHIVE_DIR>/action_backups`, see [Server folders](#server-folders)) produce the same format.
@@ -5007,6 +5064,26 @@ For the log, see [Testing and debugging](#testing-and-debugging).
 
 - Check the inputs and outputs of a plugin without a server, with the probe of the repository [`aspera-orchestrator-plugins-doc`](https://github.com/laurent-martin/aspera-orchestrator-plugins-doc): `ruby lib/plugin_probe.rb <PLUGINS_FOLDER> build/<VERSION>/src/lib` prints, as JSON, the fields of the form, the inputs and outputs for several template settings, and the errors.
   It needs the library files extracted by `rake extract_rpm`.
+- Test the plugin without a server, with RSpec, as the tests of `aspera-orchestrator-secret-reference`:
+  - Load the files of Orchestrator that need no database, extracted by `rake extract_rpm`, in this order: `multi_type.rb`, `payload.rb`, `abstract.rb`, `action_tools.rb`, `action.rb`.
+  - Stub the rest, only what the plugin calls, with the behavior of Orchestrator: `ActiveRecord::Base` with `column` and `columns_hash`, `Rails.logger` writing to a `StringIO` that the tests read, `SafeYaml.load_file`, `OrchConfig.get` with temporary folders, `SharedState` with `Marshal`, `Engine.version`.
+  - Load the plugin folder as `Plugin.load_plugin` does: `Dir[File.join(dir, '[A-Za-z]*.rb')].sort_by(&:size).each { |file| load(file) }`.
+  - Call `inputs_spec`, `outputs_spec` and `execute` of a template made with `new(<ATTRIBUTES>)`, after setting `@inputs`.
+  - A plugin that changes Orchestrator for all steps: define a small test plugin (`include Action`) before loading yours, and check what its `execute` receives.
+- Check the Zeitwerk names without a server: a wrong name stops all the services at their next start (see [Plugin files](#plugin-files)).
+  On a copy of the plugin folder without its migration files, as Enable makes the load folder:
+
+  ```ruby
+  require 'zeitwerk'
+  loader = Zeitwerk::Loader.new
+  loader.push_dir(<LOAD_FOLDER_COPY>)
+  p loader.all_expected_cpaths.values.sort   # ["MyGreeting", "MyGreetingHelper", "Object"]: a constant for each file
+  ```
+
+  `all_expected_cpaths` raises `Zeitwerk::NameError` for a file or folder whose name is not a constant name (`vendor/aspera-cli`), and ignores hidden folders (`.vendor`).
+  It does not load the files: check also, in the RSpec tests, that each file defines the constant of its name.
+- Test the checks of a plugin that changes methods of Orchestrator in a separate Ruby process (`Open3.capture2e(RbConfig.ruby, '-e', <SCRIPT>)`): the script loads the stubs, redefines a changed method with other parameters, loads the plugin, and prints whether the changes were installed and the log.
+  In the process of the tests, a prepended module cannot be removed.
 - On the server, open a template and click **Test template**: the action tester runs it with the input values you give.
 - Run it in a workflow: see the [Workflow authoring chapter](#workflow-authoring), for example with `ascli orchestrator workflows start <ID> @json:'{"who":"Laurent"}'`.
 
@@ -5044,7 +5121,7 @@ The rules for inputs are in [Security](#security).
 5. Prefer `default_inputs_spec` and `<ATTRIBUTE>_get`, with constants `VAR_` and `DEFAULT_`.
 6. Return a final status and the outputs from `execute`; for a long wait, use asynchronous execution, and set `@outputs` before the final status of `check_status`.
 7. Build the form with `form_with ... id: "edit_action"`, one `<li>` per attribute; keep CSS and JavaScript in files of the folder.
-8. Check with `lib/plugin_probe.rb`, install, enable, restart the web server, run in a workflow.
+8. Check with `lib/plugin_probe.rb` and the Zeitwerk names (see [Plugin testing and debugging](#plugin-testing-and-debugging)), build the file (see [Building the files](#building-the-files)), install, enable, restart the web server, run in a workflow.
 
 ### Plugin annex
 
@@ -5066,15 +5143,42 @@ Rules:
   Copy the library and its gems into `.vendor` of the plugin folder, and add their `lib` folders to `$LOAD_PATH` from the support file: no `bundle install`.
   The runtime dependencies of these gems must be satisfied by the gems of Orchestrator, at their versions (see `Gemfile.lock`).
   Enable copies the folder with its subfolders, and the plugin file (`tar.gz`) keeps them.
+- *Library checked at build*: make `.vendor` with a script that fails rather than a plugin that fails on the server, as `lib/vendor_library.rb` of `aspera-orchestrator-secret-reference`:
+  - Start from the files that the plugin requires, and follow their `require` lines to find the other files of the library.
+    Fail on a `require` of a computed name (`"store/#{type}"`) that is not declared unused.
+  - Copy the `lib` folder and the license of each gem.
+  - Check each runtime dependency of the copied gems against the gems copied or the versions of `Gemfile.lock` of Orchestrator (`Gem::Dependency#match?`).
+  - Check that every other required feature is in the standard library: `ruby --disable-gems -e 'require "<FEATURE>"'`.
+  - Write a file `.vendor/VERSIONS` with the commit of the library and the version of each gem, and refuse to package a library that has uncommitted changes.
 - *Change with `prepend`*: prepend a module whose methods call `super` to the class or module of Orchestrator (`ActionTools.prepend(Hook)`, `ActionTools.singleton_class.prepend(Hook)` for a class method).
   A module prepended to a module, such as `ActionTools`, also applies to classes that included it before.
-- *Once per process*: a file is loaded by Zeitwerk at boot, then again with `load` by Enable, Reload and the reload of plugins by workers (`Engine.reload_plugin`).
+- *Once per process*: a file is loaded by Zeitwerk, then again with `load` by Enable, Reload and the reload of plugins by workers (`Engine.reload_plugin`).
   Install the changes once per process (a flag in the support module).
-  Each service (web server, engine, workers) loads the plugin, so each one installs the changes.
+- *Services started by `rake`*: only the web server (puma) eager loads the plugin at boot, and so installs the changes at start.
+  The engine, the workers, the monitor and the process manager are `rake <SERVICE>:start` processes, which do not eager load: Rails only registers the constants of the load folders for autoload.
+  At start, a worker loads only the enabled plugins whose constant is not defined, and `Object.const_defined?` is already `true` for a constant registered for autoload; the engine loads only the plugins changed after its start.
+  In these services, the plugin is loaded, and the changes are installed, only when the process first uses its class, possibly after steps of other plugins.
+  To install them when each process starts, the plugin writes, when loaded, an initializer `config/initializers/<FOLDER_SINGULAR>.rb` of Orchestrator, used from the next start:
+
+  ```ruby
+  # Written by plugin MyPlugin when loaded: loads it when Orchestrator starts, in every process
+  Rails.application.config.after_initialize do
+    'MyPlugin'.safe_constantize
+  rescue StandardError, LoadError => e
+    Rails.logger.warn("MyPlugin: not loaded at start: #{e.class}: #{e.message}")
+  end
+  ```
+
+  Write it only if its content differs, and log each installation with the process (`$PROGRAM_NAME`, `Process.pid`): `log/production.log` then shows one line per worker after `orchestrator restart`.
+- *Several processes at once*: the web server, the engine and each worker load the plugin at the same time.
+  Create a table with `create_table(<TABLE>, if_not_exists: true)`, and write a file to a temporary name, `File.rename` then to its final name.
 - *Disabled plugin*: Disable unloads only the constants under the name of the plugin class (`Plugin.unload_plugin_classes`): the support module and the prepended modules stay in memory.
   Each changed method checks that the plugin is enabled (`Object.const_defined?(:SecretReference)`), and else only calls `super`.
 - *Versions*: set `:minimum_server_version` and `:maximum_server_version` of `metadata.yml` to the version you tested.
   Before installing the changes, check the parameters of each changed method (`ActionTools.instance_method(:assign_inputs).parameters`): if one differs, install nothing, and log it.
+  Keep the changed methods in one table, owner name, class or instance method, method name and expected parameters, for example `['ActionTools', true, :retrieve, [%i[req state_id]]]`, and check them all before changing any.
+  Orchestrator checks the versions of `metadata.yml` when it imports or enables the plugin, not when it loads an installed plugin after an upgrade of Orchestrator: also compare `Engine.version` (for example `4.1.6.2036`) with the version you tested, and log a warning if it differs.
+  A change that is not needed for the plugin to work (for example a list in the template form) has its own check: if it fails, install the other changes.
 - *Upgrade*: code already loaded (the library) is not loaded again: restart Orchestrator after **Upgrade** (`orchestrator restart`).
 
 #### Patterns in the shipped plugins
@@ -5142,7 +5246,7 @@ Read it when users need a view or an action that no shipped portlet offers, or t
 The shipped portlets are the best set of examples: folder `/opt/aspera/orchestrator/portlets` of an Orchestrator server, one folder per portlet.
 `orchestrator_information` is the simplest, `user_tasks` has parameters and a permission check, `csv_editor` has uploads, a modal dialog and several actions, `queue_management` has pagination and `helper_method`.
 
-The repository [`aspera-orchestrator-secret-reference`](https://github.com/IBM/aspera-orchestrator-secret-reference) contains the portlet `secret_dashboard` as a worked example: it uses a plugin (`SecretCore`), has four sections with AJAX actions, an admin-only check in every action, and a full RSpec test suite that runs outside Rails with stubs of `Portlet`, `PortletsController`, `Workflow`, `WorkStep` and `User`.
+The repository [`aspera-orchestrator-secret-reference`](https://github.com/IBM/aspera-orchestrator-secret-reference) contains the portlet `secret_dashboard` as a worked example: it uses a plugin (`SecretCore`, see [Portlet of a plugin](#portlet-of-a-plugin)), has seven tabs with AJAX actions, a check of the role (administrator, or group Developer for one tab) in every action, and a full RSpec test suite that runs outside Rails with stubs of `Portlet`, `PortletsController`, `Workflow`, `WorkStep` and `User`.
 The repository `aspera-orchestrator-transferd` contains the portlet `transferd_dashboard`: actions that cancel a work step (`cancel_action`) with the permission check of the work order page (`require_permission`), and a refresh of the transfers with `setInterval`.
 
 ### Portlet quick start
@@ -5249,7 +5353,7 @@ end
 
 #### Portlet install and run
 
-1. Pack the folder as `hello_banner.portlet`: `tar -czf hello_banner.portlet hello_banner`. The file name must be exactly `<ID>.portlet` (see [Importing and exporting](#portlet-importing-and-exporting)).
+1. Pack the folder as `hello_banner.portlet`: `tar -czf hello_banner.portlet hello_banner`. The file name must be exactly `<ID>.portlet` (see [Importing and exporting](#portlet-importing-and-exporting)). On macOS, see [Building the files](#building-the-files).
 2. In the web interface, open **Engine > Portlets**, click **Import Portlet**, and select the file. Alternatively, copy the folder to `/opt/aspera/var/config/orchestrator/portlets/hello_banner` and use the slider of the portlet.
 3. Enable the portlet with its slider, if the import did not already do so.
 4. Open **Dashboard**, select a frame, choose **Hello banner** in **Choose Portlet**, set the parameters, and click **Save Configuration**.
@@ -5385,6 +5489,8 @@ Gotchas:
 All 23 shipped portlets have a parameter `refresh` (seconds) in `defaulted_parameters`; 19 also declare it in `parameters_spec` as `TYPE_INT`. Declare it in both. With a value ***above*** `0` and no sub-frame, the dashboard reloads the frame periodically while the page is visible. `-1` or `0` disables it.
 The layout `individual_portlet` shows "Last refreshed at" when `refresh` is set and is `0` ***or more***.
 If `refresh` is not in the link of the frame, the frame uses `defaulted_parameters['refresh']`.
+A refresh replaces the content of the frame: what the user is typing in a form of the portlet is lost.
+For a portlet with a form, set the default to `0`, and leave `refresh` out of the configuration partial; refresh parts of the view with actions instead.
 
 ### Views and actions
 
@@ -5423,6 +5529,8 @@ Rules:
 - jQuery 3.7.1, jQuery UI, Bootstrap 5, select2, SweetAlert2 and clipboard.js are already loaded by the application layout.
 - 14 of the 22 shipped main views contain a `<script>` (`custom_portlet` has no main view). The script runs when the frame content is inserted.
 - Check permissions in the view for data that depends on them: `check_permission({ user: @session_user }, workflow, :run)`, `authorized_workflows_selector(session[:user], ...)`, `User.admin?(session[:user])`.
+  For a role given by a group of Orchestrator: `Group.is_a_member(Group::DEVELOPER, session[:user])`, `true` also for administrators unless the third argument is `false`.
+  Show only the sections of the role, and check the same role in the actions.
 
 #### Configuration partial
 
@@ -5608,6 +5716,8 @@ Therefore:
 
 - Orchestrator checks only that the user is logged in, the CSRF token and the host name. It never checks a permission for a portlet action.
 - Check the permission in every action that reads sensitive data or changes something: `check_permission({ user: session[:user] }, workflow, :run)` or `User.admin?(session[:user])`, and respond with an error otherwise.
+- Refuse a `GET` for an action that changes something or receives a value that must not be in the URL (`return render(json: {error: 'POST only'}, status: 403) unless request.post?`): `portlet_action` answers both methods, and only a `POST` has its CSRF token checked.
+  Put the checks in one private method of the controller, called first by each action.
 - Do not name an action like an existing `PortletsController` method.
 - Parameters of the frame, as they reach an action, are parsed from the stored text with a regular expression. A value that contains `"` or `\` comes back with extra backslashes. Do not put such values in parameters used by an action, or read them with `@portlet.runtime_value`.
 
@@ -5634,6 +5744,34 @@ A definition (`custom_portlet_definitions`) has a name, a display name, a versio
 - IDs are `c_<N>`.
 
 Use it for a quick prototype. Write a file portlet for anything that is kept, versioned, tested and reviewed.
+
+#### Portlet of a plugin
+
+A portlet can show the state of a plugin and call its code, as the portlet `secret_dashboard` for the plugin `SecretReference`.
+The portlet runs in the web server, where the files of an enabled plugin are loaded at boot.
+Check the plugin in the portlet, and in each action, before calling it, and tell the user what to do:
+
+| Case | Test | Message |
+| --- | --- | --- |
+| Not installed, not enabled, or enabled after the start of the web server | `Object.const_defined?(:<SUPPORT_MODULE>, false)` is `false` | Import and enable the plugin, then restart Orchestrator. |
+| Disabled since the start | `Object.const_defined?(:<CLASS>, false)` is `false`: Disable removes the plugin class, not the support module (see [Extending Orchestrator from a plugin](#extending-orchestrator-from-a-plugin)) | Enable the plugin. |
+| Too old | `<CLASS>.version` is lower than the version that the portlet needs (`(version <=> [1, 5, 0]).negative?`) | Import a newer version, then restart Orchestrator. |
+
+Write the required version of the plugin in the description of the portlet too: it is shown in **Engine > Portlets** before the portlet is enabled.
+
+#### Finding where a value is used
+
+A portlet can list where a value (a remote node, a secret reference, a URL) is used, as the tab **In use** of `secret_dashboard`:
+
+- Published workflows: `Workflow.where.not(revision_id: nil, generated_from: nil)`, then the graph of each one, `Whiteboard.find_by(id: workflow.generated_from)&.xml_export`.
+  In the XML (see [Graph XML](#graph-xml)), the value given to an input is in `//Step/Inputs/Input/Map_to[@type='value']/@name`, with the step name in `Step_name`, and the value of a parameter is in `//Parameter/Value`.
+  Parse it with REXML, in the standard library.
+- Templates: for each loaded plugin (`Plugin.where(is_loaded: true).pluck(:action_type)`), the class (`Object.const_get(action_type.camelize)`), its text columns (`columns_hash`, type `:string` or `:text`), and one query with `LIKE` on these columns, the column names quoted with `connection.quote_column_name`, the value bound.
+- Recent work steps: `WorkStep` is a large table.
+  Look only at the last N rows by ID (`where('id > ?', WorkStep.maximum(:id).to_i - N)`), and give N as a parameter of the portlet.
+
+Catch the errors for each workflow and each plugin, and show them as rows: one broken workflow must not hide the others.
+Limit the number of rows shown, and say when the list is cut.
 
 #### Patterns in the shipped portlets
 
@@ -5672,9 +5810,13 @@ This chapter says how the content of each chapter was checked, for a reader who 
 - [Extending Orchestrator](#extending-orchestrator): the content comes from Plugin development and Portlet development, and was verified in the same way.
   The shared `Rails.cache`, `bin/rails runner` and the URLs of [Testing and debugging](#testing-and-debugging) were checked on an Orchestrator 4.1.6.2036 server.
   The steps of [Deploying from the command line](#deploying-from-the-command-line), except the toolbox function `install_portlet`, were done on an Orchestrator 4.1.6.2036 server to deploy the plugin `TransferdTransfer` and the portlet `transferd_dashboard`.
+  In [Building the files](#building-the-files), the files `._<FILE>` were reproduced with `tar` of macOS, extracted with Minitar 1.1.0 (the version of Orchestrator 4.1.6) and with GNU tar, and two builds with `Gem::Package::TarWriter` gave the same bytes.
 - [Plugin development](#plugin-development): the content is derived from Orchestrator 4.1.6.
   The example plugin of [Plugin quick start](#plugin-quick-start) was installed, enabled, and executed in a workflow on Orchestrator 4.1.6, and the steps of [Installing a plugin](#installing-a-plugin) and [Updating a plugin](#updating-a-plugin) were done on that server.
   The behaviors of imported plugins in [Plugin importing and exporting](#plugin-importing-and-exporting) were observed with the plugin `TransferdTransfer`, imported with the Plugins page and with the API, on an Orchestrator 4.1.6 server.
+  The rules added to [Extending Orchestrator from a plugin](#extending-orchestrator-from-a-plugin) and the route `POST action_edit` of [Server data for the form](#server-data-for-the-form) come from the plugin `SecretReference` and from the code of Orchestrator 4.1.6 (`config/routes.rb`, `Worker.run`, `Engine#check_newly_loaded_plugins`); on an Orchestrator 4.1.6.2036 server with its initializer, each worker, the engine, the monitor and the process manager logged the installation of the changes at start.
+  The tests of [Plugin testing and debugging](#plugin-testing-and-debugging) are those of the repository `aspera-orchestrator-secret-reference`, run with the library files of Orchestrator 4.1.6.
 - [Portlet development](#portlet-development): the content is derived from Orchestrator 4.1.6.
   - On an Orchestrator 4.1.6.2036 server: the example portlet of [Portlet quick start](#portlet-quick-start) was imported with **Import Portlet**, chosen and configured in a dashboard frame, displayed, and its action called with GET and POST. In Chrome, the **Ping** link (`ajaxUpdate`) and the automatic refresh worked with no JavaScript error. The behaviors of import (file name, collision), enable, disable, restart, the version API and the CSRF token described in that chapter were reproduced on this server.
   - From Orchestrator: the security notes, the custom portlets, the legacy upgrade script, and the counts of the [Portlet annex](#portlet-annex).
+  - From the portlet `secret_dashboard` and its tests, with the classes of Orchestrator 4.1.6 checked in its code (`Group.is_a_member`, `Whiteboard#xml_export`): [Portlet of a plugin](#portlet-of-a-plugin) and [Finding where a value is used](#finding-where-a-value-is-used).
