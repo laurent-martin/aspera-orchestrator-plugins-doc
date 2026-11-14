@@ -1,0 +1,8 @@
+{
+  "name": "orchestrator-doc-figures",
+  "private": true,
+  "description": "Capture of documentation figures from the Orchestrator web UI",
+  "dependencies": {
+    "playwright-core": "^1.56.0"
+  }
+}

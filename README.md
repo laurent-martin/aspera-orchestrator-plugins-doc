@@ -33,7 +33,7 @@ Generated documents and guides are in folder `docs`:
 
 The two development guides are written by hand (the tasks generate their PDF), the other documents are generated: do not edit them.
 [`workflow-authoring-guide.md`](docs/workflow-authoring-guide.md) is only a pointer to the guide, for old versions of `ascli`.
-The screenshots of the practices chapter are in `docs/images/practices`.
+The screenshots of the practices chapter are in `docs/images/practices`; `tools/figures` makes them again on a new version of Orchestrator.
 Three extensions of Orchestrator come with a skill (`SKILL.md`) for AI assistants:
 
 | Extension | What the assistant gets | Skill |
@@ -68,6 +68,7 @@ The guide has these chapters:
 | `lib`                  | Generators: plugin manual, template reference, plugin probe (`plugins.yml`), API check; `plugins_overlay.yml` has the hand-written data merged into `plugins.yml` |
 | `templates`            | ERB templates of the HTML pages (manual, list, banner)                                                                                                            |
 | `pdf_theme`            | Look of the PDF documents: cover, last page, logo and fonts                                                                                                       |
+| `tools`                | Capture of the screenshots of the practices chapter (`tools/figures`, see its README)                                                                             |
 | `Rakefile`             | Tasks to extract the RPM and generate the documents                                                                                                               |
 | `build` (not in Git)   | Extract of the RPM and intermediate files, one folder per Orchestrator version                                                                                    |
 | `private` (not in Git) | The Orchestrator RPM and working files                                                                                                                            |

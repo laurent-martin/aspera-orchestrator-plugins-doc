@@ -1,0 +1,53 @@
+<%# Form of the task "Choose target" (workflow Pattern - operator decision), in <config_dir>/actions_config/user_inputs/.
+    The form already has the buttons Cancel and Complete Task.
+    Displayed data: received_parameters (inputs of the step). Requested data: fields outputs[<name>].
+    The preview is a fixed test video: a real form gets its URL from an input, for example the output of a ConvertPath step. %>
+<% preview_url = 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4' %>
+<style>
+  .delivery .banner { display: flex; align-items: center; gap: 1em; margin-bottom: 0.8em; }
+  .delivery .banner img { width: 2em; height: 2em; object-fit: cover; object-position: left; } /* icon only: the text of this logo is white */
+  .delivery .banner h3 { margin: 0; }
+  .delivery .bar { background: #00608f; color: #fff; padding: 0.15em 0.7em; }
+  .delivery .value { color: #00608f; padding: 0.25em 0.7em; }
+  .delivery video { display: block; width: 100%; padding: 0.6em 0.7em; box-sizing: border-box; }
+  .delivery .targets { display: grid; grid-template-columns: repeat(3, 1fr); margin-bottom: 0.8em; }
+  .delivery .targets label { margin: 0; cursor: pointer; }
+  .delivery .targets span { display: block; background: #00608f; color: #fff; padding: 0.15em 0.7em; border-top: 1px solid #fff; border-right: 1px solid #fff; }
+  .delivery .targets input { margin: 0.4em 0.7em; }
+  .delivery .fields { width: 100%; }
+  .delivery .fields th { width: 11em; padding: 0.3em 0.7em; text-align: right; vertical-align: middle; font-weight: bold; }
+  .delivery .fields td { padding: 0.3em 0; }
+  .delivery .fields input[type=text], .delivery .fields textarea { width: 100%; box-sizing: border-box; }
+</style>
+<div class="delivery">
+  <div class="banner">
+    <%= image_tag 'aspera_orchestrator_logo.png', alt: 'Orchestrator' %>
+    <h3>External delivery</h3>
+  </div>
+  <div class="bar">File Name:</div>
+  <div class="value"><%= File.basename(received_parameters['media_file_path'].to_s) %></div>
+  <div class="bar">Preview Video:</div>
+  <video controls preload="metadata" src="<%= preview_url %>"></video>
+  <div class="bar">Target:</div>
+  <div class="targets">
+    <% ['VOD Distrib', 'CABLE Distrib', 'MOBILE Distrib'].each do |target| %>
+      <label><span><%= target %></span><input type="radio" name="outputs[target]" value="<%= target %>" required></label>
+    <% end %>
+  </div>
+  <table class="fields">
+    <tr><th>Description</th><td><textarea name="outputs[description]" rows="2"></textarea></td></tr>
+    <tr>
+      <th>Profile</th>
+      <td><select name="outputs[profile]"><% %w[MPEG2 H264 ProRes].each do |profile| %><option><%= profile %></option><% end %></select></td>
+    </tr>
+    <tr>
+      <th>Source</th>
+      <td><select name="outputs[source]"><% %w[News Sport Archive].each do |source| %><option><%= source %></option><% end %></select></td>
+    </tr>
+    <tr><th>Target media file path</th><td><input type="text" name="outputs[final_media_path]" value="/export/cable/hi-res/"></td></tr>
+    <tr><th>Target proxy file path</th><td><input type="text" name="outputs[final_proxy_path]" value="/export/cable/proxy/"></td></tr>
+    <tr><th>Target metadata file path</th><td><input type="text" name="outputs[final_metadata_path]" value="/export/cable/metadata/"></td></tr>
+    <tr><th>Offer Start Time</th><td><input type="datetime-local" name="outputs[date_start]"></td></tr>
+    <tr><th>Offer Stop Time</th><td><input type="datetime-local" name="outputs[date_stop]"></td></tr>
+  </table>
+</div>

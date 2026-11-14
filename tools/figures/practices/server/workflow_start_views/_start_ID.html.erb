@@ -1,0 +1,21 @@
+<%# Start page of workflow Pattern - operator decision: copy as <config_dir>/workflow_start_views/_start_<workflow id>.html.erb,
+    and replace ID in validate_workflow_ID by the workflow id.
+    Each runtime parameter is a field external_parameters[<name>]. %>
+<script>
+  // called when the form is submitted, if defined: returns false to stay on the page
+  validate_workflow_ID = function() {
+    var selected = document.getElementById("id_media_file").selectedIndex != 0;
+    if (!selected) alert("Select a media file");
+    return selected;
+  }
+</script>
+<li>
+  <label>Media file</label>
+  <% candidates = Dir.glob('/data/ingest/media/*.mp4').sort %>
+  <select name="external_parameters[media_file_path]" id="id_media_file">
+    <option value="" selected>-Select a media file-</option>
+    <% candidates.each do |candidate| %>
+      <option value="<%= candidate %>"><%= File.basename(candidate) %></option>
+    <% end %>
+  </select>
+</li>

@@ -2854,6 +2854,12 @@ It does not check that the file exists: a wrong path returns the same empty list
 | `remote node constraints` | Remote node name to choice: `Map to the existing Remote Node`, `Create a new Remote Node with a different name`, `Override the Existing Remote Node with this importing node`. |
 | `Auto-enable missing plugins?` | `true` or `false`. |
 
+`Override the existing Global Template with this new template` does not replace the existing global template *(4.1.6, read in the source, not run)*.
+The import saves a copy of the template: Orchestrator gives it a new name, `<NAME>_<N>` (`<NAME>_1` the first time), because the name of an action template must be unique, and the imported workflow is meant to use that copy.
+The existing global template is unchanged, and so are the other workflows that use it.
+A comment of the source says that the save of the copy does not work with the current version of Rails: check the result of the import.
+Use `Map to the existing Global Template` to keep the existing template, or `Create a new Global Template with a different name` to get a copy named `<NAME> (import_<N>)`.
+
 Response: the workflow as JSON.
 The workflow is not published.
 
