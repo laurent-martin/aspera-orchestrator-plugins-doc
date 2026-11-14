@@ -946,9 +946,9 @@ After 2 minutes, a reminder is sent and the wait goes on; after one hour, the wo
 - The step that waits receives several links: if they are exclusive, join them with an OR (in the figure, the OR before "wait for media file").
 - The timer runs until the work order ends: the steps after the watched step must not take longer than the timeout, or the timer fires anyway.
   In that case, use the timeout of the step itself.
-- When the timer is cancelled because the other branch completed, the timer step ends as failed: link its failed exit so that this does not conflict with the completion.
+- When the timer is canceled because the other branch completed, the timer step ends as failed: link its failed exit so that this does not conflict with the completion.
 
-  ![A schedule trigger as a timeout of a receipt search; its failed exit (timer cancelled) joins the success path](images/practices/4.1.6/schedule-trigger-timeout.png)
+  ![A schedule trigger as a timeout of a receipt search; its failed exit (timer canceled) joins the success path](images/practices/4.1.6/schedule-trigger-timeout.png)
 
 - Do not overuse a periodic `ScheduleTrigger`: each run creates a work order.
   To detect files, use a file watcher.
@@ -996,9 +996,9 @@ Enter it again before saving, and check it in the **Revisions** tab, which shows
 
 #### Cancel
 
-- Cancelling a step stops its action only if the plugin implements cancel (for example `RemoteExecution` with **Is cancelable**, not the FTP plugins); the step and the work order then end as failed, and the failed exit is followed.
-- Cancelling the work order does not follow the failed exits of its steps.
-- A remote command is not stopped when its work order is destroyed or cancelled, unless it is cancelable.
+- Canceling a step stops its action only if the plugin implements cancel (for example `RemoteExecution` with **Is cancelable**, not the FTP plugins); the step and the work order then end as failed, and the failed exit is followed.
+- Canceling the work order does not follow the failed exits of its steps.
+- A remote command is not stopped when its work order is destroyed or canceled, unless it is cancelable.
 
 #### Meaningful status
 
@@ -1120,7 +1120,7 @@ The persistency scope sets the memory of a trigger: which elements it has alread
   ![One file or another: when the first check times out, the second one runs; the work order fails if both files are absent](images/practices/4.1.6/dependency-checker.png)
 
 - A watcher configuration change applies to the next clone; reset the waiting work order to apply it at once.
-  A code change (new steps) requires cancelling the waiting work order and starting a new one; files still in the folder are then detected again with the default scope.
+  A code change (new steps) requires canceling the waiting work order and starting a new one; files still in the folder are then detected again with the default scope.
 
 #### Choosing a watcher
 
@@ -1356,7 +1356,7 @@ The legacy layout with `ResourceManager` is the same:
 | Setting | Meaning | Use |
 | --- | --- | --- |
 | Wait timeout | Maximum wait for a slot; then the step passes (more parallel work than the capacity) or fails (**On wait timeout action**). | Service level: after 50 minutes without a local transcoder, use an expensive cloud transcoder. |
-| Hold timeout | The slot returns to the pool after this time, even if not released. The work goes on. | Protection against forgotten releases (cancelled or destroyed work orders). Set it above the longest possible hold (for example twice that time), or more work runs in parallel than allowed. |
+| Hold timeout | The slot returns to the pool after this time, even if not released. The work goes on. | Protection against forgotten releases (canceled or destroyed work orders). Set it above the longest possible hold (for example twice that time), or more work runs in parallel than allowed. |
 | Allocation block size | Number of slots to reserve. | Big files reserve 2 slots, small files 1. |
 | Use weight for allocation | The weight of the queued element is the number of slots. | Same, set when queuing. |
 
@@ -2040,7 +2040,7 @@ Example: a workflow with one step and two runtime parameters.
 | `Fail` | `Synch_factor`, `Prerequisites` | Reached: the work order is `Failed`. |
 | `Error` | `Synch_factor`, `Prerequisites` | Reached: the work order is `Error`. |
 
-The first of these nodes reached ends the work order: the steps still running on other branches are cancelled.
+The first of these nodes reached ends the work order: the steps still running on other branches are canceled.
 
 `Fail` and `Error` are also reached ***implicitly***: when a work step ends with status `Failed` (or `Error`) and no step is connected to it for that status, the work order goes to `Fail` (or `Error`).
 So only success paths need to be connected to `End`; failures do not need explicit links.

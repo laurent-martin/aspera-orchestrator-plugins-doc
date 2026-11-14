@@ -3,9 +3,11 @@
 This repository holds the documentation of IBM Aspera Orchestrator for people who build on it, and the tools that generate part of it.
 It has two kinds of content:
 
-- **A hand-written development guide**, the *Aspera Orchestrator Development Guide*: how Orchestrator works, how to design and write workflows (in the designer or as files), and how to extend Orchestrator with action plugins and portlets.
-  It is written for people and for AI assistants.
-  Read it online: <https://ibm.biz/aspera-orchestrator-book>, or get the [PDF](https://raw.githubusercontent.com/laurent-martin/aspera-orchestrator-plugins-doc/refs/heads/main/docs/orchestrator-development-guide.pdf).
+- **Hand-written development guides**:
+  - The *Aspera Orchestrator Development Guide*: how Orchestrator works, how to design and write workflows (in the designer or as files), and how to extend Orchestrator with action plugins and portlets.
+    It is written for people and for AI assistants.
+    Read it online: <https://ibm.biz/aspera-orchestrator-book>, or get the [PDF](https://raw.githubusercontent.com/laurent-martin/aspera-orchestrator-plugins-doc/refs/heads/main/docs/orchestrator-development-guide.pdf).
+  - The *IBM Aspera on Cloud Automation Development Guide*, in folder [`docs/aoc`](docs/aoc): the same for the Automation app of IBM Aspera on Cloud, with the Automation API and `ascli`.
 - **Generated reference documents** for the action plugins shipped with Orchestrator: manual, list, banner, template reference and machine-readable specifications (`plugins.yml`).
   They are generated from the Orchestrator RPM: the `actions` folder and some library files are extracted from it, then the metadata and help page of each plugin are rendered to HTML, Markdown and PDF, and the plugin code is evaluated to find the inputs and outputs of each plugin.
 
@@ -27,8 +29,9 @@ Generated documents and guides are in folder `docs`:
 | [`action-template-reference.md`](docs/action-template-reference.md)                                                                                                                                                                  | Template attributes, inputs and outputs of each action plugin                   | `doc:template_reference`       |
 | [`plugins.yml`](docs/plugins.yml)                                                                                                                                                                                                    | Same, as data, with allowed values and conditions                               | `doc:plugin_specs`             |
 | [`orchestrator-development-guide.md`](docs/orchestrator-development-guide.md) and [`.pdf`](https://raw.githubusercontent.com/laurent-martin/aspera-orchestrator-plugins-doc/refs/heads/main/docs/orchestrator-development-guide.pdf) | Development guide: workflow practices, workflow authoring, plugins and portlets | `doc:guide` (PDF and diagrams) |
+| [`aoc/aoc-automation-development-guide.md`](docs/aoc/aoc-automation-development-guide.md) and [`.pdf`](https://raw.githubusercontent.com/laurent-martin/aspera-orchestrator-plugins-doc/refs/heads/main/docs/aoc/aoc-automation-development-guide.pdf) | IBM Aspera on Cloud Automation development guide: concepts, triggers, actions | `doc:aoc_guide` (PDF and diagrams) |
 
-The Aspera Orchestrator Development Guide is written by hand (the task generates its PDF), the other documents are generated: do not edit them.
+The two development guides are written by hand (the tasks generate their PDF), the other documents are generated: do not edit them.
 [`workflow-authoring-guide.md`](docs/workflow-authoring-guide.md) is only a pointer to the guide, for old versions of `ascli`.
 The screenshots of the practices chapter are in `docs/images/practices`.
 Three extensions of Orchestrator come with a skill (`SKILL.md`) for AI assistants:
@@ -39,7 +42,7 @@ Three extensions of Orchestrator come with a skill (`SKILL.md`) for AI assistant
 | Plugin `SecretReference`, repository `aspera-orchestrator-secret-reference` | Secure access to secrets: a workflow holds a reference, never the secret | `SKILL.md` of that repository |
 | Plugin `TransferdTransfer`, repository `aspera-orchestrator-transferd` | Transfers from a transfer spec with IBM Aspera Transfer Daemon: the step, the portlet, the example workflows | `SKILL.md` of that repository |
 
-Diagrams of the guide are drawn in [`docs/images/diagrams.drawio`](docs/images/diagrams.drawio), one tab per image: `rake doc:diagrams` exports each tab to `docs/images/<tab>.svg` (for GitHub) and `.pdf` (used in the PDF), with draw.io desktop, when the `.drawio` file is newer.
+Diagrams of the guides are drawn in [`docs/images/diagrams.drawio`](docs/images/diagrams.drawio) (Orchestrator) and in the `.drawio` files of [`docs/aoc/images`](docs/aoc/images) (AoC Automation), one tab per image: `rake doc:diagrams` exports each tab to `<tab>.svg` (for GitHub) and `.pdf` (used in the PDF), in the folder of the `.drawio` file, with draw.io desktop, when the `.drawio` file is newer.
 
 Intermediate HTML files (`rake html`) are in `build/<VERSION>/out`.
 
@@ -132,7 +135,11 @@ rake doc:template_reference
 rake doc:plugin_specs
 rake doc:diagrams
 rake doc:guide
+rake doc:aoc_guide
+rake doc:all_guides
 ```
+
+`doc:guide` and `doc:aoc_guide` generate the PDF of the Orchestrator guide and of the AoC Automation guide, `doc:all_guides` both.
 
 `doc:plugin_specs` generates `plugins.yml`, for tools and AI assistants: for each plugin, the template attributes (label, allowed values, defaults) and the inputs and outputs, with the template settings they depend on.
 It also gives the anchor of the section of each plugin in the Plugin Manual (`manual_anchor`): the manual is generated first if needed.
