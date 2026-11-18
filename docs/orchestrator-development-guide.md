@@ -2227,6 +2227,15 @@ There, `Carry_thru` is the way to offer an output to the step after the next one
 A mapping to an output that the list does not offer, such as one set by a file, is kept when the step is edited in the designer, but the list then shows **[Select]**; choosing **[Select]** removes the mapping.
 In a file, map the output directly.
 
+How the designer builds the list *(4.1.6, read in the source)*:
+
+- **Map Inputs** sends the steps linked to the step (`getPrerequisites`), with the `Carry_thru` of these steps (`getPreviousCarryThru`), in `app/views/whiteboards/gui/_step.js.erb:415-550`; through a join symbol, the steps linked to the join symbol.
+  Only these steps count: neither the steps before them, nor the `Carry_thru` of those.
+- The server lists all the outputs of the template of each of these steps, then their `Carry_thru` (`app/controllers/whiteboards_controller.rb:166-205`).
+- An option is selected when its value equals the mapping, `<OUTPUT>__<STEP_TYPE>__<ACTION_ID>__<STEP_ID>` (`app/views/whiteboards/_list_inputs.html.erb:18-31`); no option equals a mapping to an output of another step, so **[Select]** is shown.
+- To show such a mapping in the designer, add a `Carry_thru` of that output to the `Outputs` of the step immediately before. Observed on 4.1.6: the list then shows `source_path (from 'Find media file' - carried thru)`, selected.
+- The designer saves the mappings it holds, whether or not the list shows them: **Update** changes only the inputs whose list was changed (`mapInput`, `app/views/whiteboards/gui/_step_property_window.js.erb:232-308`), and the save writes each held mapping as a `Map_to` (`getInputsXML`, `app/views/whiteboards/gui/_xml_serializer.js.erb:251-290`).
+
 Output `Step_information` is a `hash` with keys `step_id`, `step_name`, `step_status`, `step_status_details`, `attempts`, `processingTime`, `elapsedTime`, `completionTime`.
 
 #### Parameters
@@ -3986,6 +3995,7 @@ Graph:
 - Each step is the prerequisite of at least one node with status `Complete` or `true` (else: "Step does not have output").
 - At least one prerequisite reaches `End`, `Fail` or `Error` (else: "Workflow does not terminate").
 - Each `Map_to` of type `output` refers to an existing step, by `step_name`, `step_type` and `action_id`.
+- A `Map_to` to an output of a step that is not linked to the step runs, but the designer shows it as **[Select]**: when the workflow is also edited in the designer, add a `Carry_thru` of that output to the step immediately before (see [Outputs](#outputs)).
 - Each `Map_to` of type `parameter` refers to a defined parameter, linked to `Start` or a step.
 - Each required input of each template is mapped.
 - Each parameter has a `Name` and a `Value_type`; a parameter that is not a runtime parameter, or that is an optional runtime parameter, has a `Value`.
