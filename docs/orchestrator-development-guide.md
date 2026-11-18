@@ -368,7 +368,7 @@ For each task, take the first option that does the job:
 
 | Order | Step | Example: transcode a file with `ffmpeg` |
 | ----- | ---- | ---------------------------------------- |
-| 1 | The dedicated plugin, when one exists (see [Plugin specifications](#plugin-specifications)) | **FFMPEG transcoding** (`FfmpgTranscoding`): input and output paths, options, execution node |
+| 1 | The dedicated plugin, when one exists (see [Plugin specifications](#plugin-specifications)) | **FFMPEG transcoding** (`FfmpgTranscoding`, see [FfmpgTranscoding](#ffmpgtranscoding)): input and output paths, options, execution node |
 | 2 | A generic plugin: **Local execution** (`LocalExecution`) on Orchestrator, **Remote execution** (`RemoteExecution`) or **Async Remote Execution** (`AsyncRemoteExecution`) on another host, REST or SOAP request, file operations | `RemoteExecution` with the command `ffmpeg -i <%= source %> <%= options %> <%= target %>`, when the plugin is not installed or lacks an option; `LocalExecution` only with a script of the scripts folder (see below) |
 | 3 | `CustomRuby`: logic that no plugin provides (see [Custom code](#custom-code)) | Never: `CustomRuby` must not run a command |
 
@@ -2666,6 +2666,39 @@ Take the first element in the input of the next step, with pre-processing:
 
 - Type `string`: `input_value = (JSON.parse(input_value).first rescue input_value).to_s.strip` (observed on 4.1.6).
 - Type `array`: `input_value = Array(input_value).first.to_s.strip`.
+
+#### FfmpgTranscoding
+
+**FFMPEG transcoding** (`FfmpgTranscoding`) runs `ffmpeg` over SSH on a remote node: see [Choosing the step](#choosing-the-step) for the remote node, also to run it on the Orchestrator host.
+
+| Attribute | Content |
+| --- | --- |
+| `execution_node` | Name of the remote node. Blank: becomes an input, with `binary_path`, `execution_login`, `execution_password` and `overwrite_output`. |
+| `binary_path` | Path of `ffmpeg` on the node (default `ffmpeg`). |
+| `input_file_path`, `output_file_path` | Paths of the source and target files on the node. |
+| `options` | Options placed before the output path, for example `-vf scale=1280:720`. |
+| `post_path_parameters` | Parameters placed after the output path. |
+| `overwrite_output` | Replace an existing output file (default: no). |
+| `execution_on_windoz` | The node runs Windows: no redirection to `/dev/null`. |
+| `is_manual_command`, `manual_command` | Run `manual_command` instead of the built command. |
+
+The command line is built in this order *(4.1.6, plugin 0.6.1, read in the source: `ffmpg_transcoding.rb`, lines 120-127)*:
+
+```text
+<BINARY_PATH> -i "<INPUT_FILE_PATH>" <-y|-n> <OPTIONS> "<OUTPUT_FILE_PATH>" <POST_PATH_PARAMETERS> > /dev/null
+```
+
+- The input and output paths are in double quotes: a path with spaces, such as the folder `PKG - <TITLE>` of a Faspex package, works.
+  The quotes are added as is, with no escaping: a path that contains `"`, `$`, a backtick or `\` is interpreted by the shell of the node.
+- `binary_path`, `options` and `post_path_parameters` are not quoted: they are split by the shell, so a path in `options` needs its own quotes.
+- `-y` with `overwrite_output`, `-n` otherwise: with `-n`, `ffmpeg` exits without transcoding if the output file exists.
+  The step then ends with `Error`: the plugin also checks the messages of `ffmpeg` for "already exists" and "Error opening output file" (lines 79 and 110-113).
+  Write a new output path for each run, or set `overwrite_output`.
+- With `is_manual_command`, `manual_command` is run as is (line 72): no quoting, no `-y` or `-n`, no redirection; quote the paths in the command.
+  The only output is then `transformation_report`.
+
+Outputs: `Result_file_path`, the output path, and `transformation_report`, the messages of `ffmpeg` without the progress lines (lines 81-88 and 98-108).
+The plugin has no attribute `force_file_format`: give the format in `options`, for example `-f mp4` *(4.1.6, plugin 0.6.1)*.
 
 #### Faspex5InboxWatcher
 
