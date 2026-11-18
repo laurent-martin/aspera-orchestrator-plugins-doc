@@ -326,7 +326,7 @@ The most important rules, each detailed later:
 10. Choose the step in this order: the dedicated plugin (for example **FFMPEG transcoding** for `ffmpeg`), then a generic plugin (**Local execution**, **Remote execution**, REST request, file operations), and `CustomRuby` last, only when no plugin does the job, or when it saves many steps.
     Never run a command from `CustomRuby` ([Choosing the step](#choosing-the-step), [Custom code](#custom-code)).
 11. Between the allocation and the release of a resource, put one step or one sub-workflow, and release on every exit ([Resource management](#resource-management)).
-12. When a load manager and its queue are in the same work order, map the **Expected queued item** ([Queue](#queue)).
+12. When a load manager and its queue are in the same work order, map the **Expected queued item**, and queue a value unique to the work order ([Queue](#queue)).
 13. Test each block alone, and test after each change ([Testing](#testing)).
 14. After changing the structure of a workflow, run new work orders (relaunch); reset reruns the old revision ([Changes and revisions](#changes-and-revisions)).
 
@@ -1339,10 +1339,33 @@ It is the most complex part of Orchestrator, and the only one that requires real
 #### Resource pools
 
 > [!IMPORTANT]
-> Create the pool first, in **Workflows > Resources**, before designing the workflow.
+> Create the pool first, with its final capacity, before the first work order.
 
-Do not create it ad hoc from the workflow step: a pool is not a workflow-level object.
-Create it as **Custom** to be able to change resource names and capacities later.
+A pool is not a workflow-level object: all workflows that use the same pool name share it.
+Three ways to create it, which give the same pool:
+
+- In the GUI: **Workflows > Resources**.
+  Create it as **Custom** to be able to change resource names and capacities later.
+- Without the GUI: `ascli orchestrator pools add_resource <POOL> <RESOURCE> --query=@json:'{"capacity":<CAPACITY>}'` (`api/add_resource`), once per resource.
+  The pool exists as soon as it has one resource.
+- Ad hoc, from the `LoadManager` reserve step (`is_adhoc`, checked by default): the first reserve creates the pool `unique_id` with `max_resources` resources of capacity `resource_capacity`, ***only if no pool has this name***.
+  Keep **Unicity scope** `absolute` (the default): the other scopes create one pool per step, work order group or workflow.
+  On an existing pool, these settings of the step have no effect.
+  Observed: a pool created with capacity 2 kept capacity 2 with a step set to `resource_capacity` 1; 4 work orders started at once on a new ad hoc pool created one resource only.
+
+Without the GUI, create the pool with `ascli`, and keep the ad hoc settings of the step equal to it: if someone deletes the pool, the next reserve creates it again with the same capacity.
+For "no more than 2 at a time": one resource of capacity 2 (`max_resources` 1, `resource_capacity` 2).
+
+Without the GUI, check and change the pool with `ascli`; changes apply at once:
+
+| Command | Action |
+| --- | --- |
+| `ascli orchestrator pools status <POOL>` | `taken` and `capacity` of each resource; an empty list if the pool does not exist. |
+| `ascli orchestrator pools capacity <POOL> <CAPACITY>` | Changes the capacity of all resources of the pool. |
+| `ascli orchestrator pools resource_capacity <POOL> <RESOURCE> <CAPACITY>` | Changes the capacity of one resource. |
+| `ascli orchestrator pools offline <POOL> <RESOURCE>`, `pools online` | Takes a resource offline or online. |
+
+No REST API endpoint and no `ascli` command deletes a pool: see [Deleting pools and queues](#deleting-pools-and-queues).
 
 ![Create New Resource Pool: custom, two resources of capacity 2](images/practices/4.1.6/create-resource-pool.png)
 
@@ -1364,6 +1387,8 @@ Always the same layout:
 
 ![Add to queue, reserve, transcode, release if OK; failure and error of the transcoding go through an OR to "Release if not OK"](images/practices/4.1.6/load-manager-pattern.png)
 
+- Step 3 is one step when one step needs the resource (for example one transcoding step): no sub-workflow.
+  When several steps need it, put them in one sub-workflow (`SubWorkflow`, see [Sub-workflow or workflow launcher](#sub-workflow-or-workflow-launcher)).
 - Every path after the reservation must release, or the slot is never freed: *starvation*.
   New work orders wait forever ("No resource to allocate"), and a manual release only delays the next starvation.
   With several steps between reserve and release, every failed and error exit must reach a release: unreadable and fragile.
@@ -1411,7 +1436,16 @@ Fallback to another resource when one fails:
 Without a queue, nobody sees what waits for a slot, the order is not controlled, and nothing can be prioritized.
 A queue (FIFO with priorities) between the work and the pool fixes this.
 
-- Create the queue in the **Queues** view (Scheduler group), not ad hoc from the step.
+- Create the queue before the first work order, with **Auto-purge: On work order stop** (below).
+  - In the GUI: the **Queues** view (Scheduler group).
+  - Without the GUI: no REST API endpoint and no `ascli` command creates a queue.
+    `ascli orchestrator queues add` adds an element to a queue name, but does not create the queue: it is not listed (read in the source).
+    Create it ad hoc from the `QueueStager` step: `adhoc_queue` `1` and `lifetime` `WorkOrder` (**Auto-purge: On work order stop**).
+    The first execution of the step creates the queue, whatever its action, ***only if no queue has this name***; on an existing queue, these settings have no effect.
+  - Check: `ascli orchestrator queues list` lists the queue, `ascli orchestrator queues items <QUEUE>` its elements.
+    The REST API does not show the auto-purge setting: the **Queues** view does.
+    Without the GUI, test it: cancel a work order that waits in the queue; its element disappears (observed within 15 seconds).
+  - The auto-purge setting of an existing queue changes only in the **Queues** view (**Edit**), or by deleting the queue ([Deleting pools and queues](#deleting-pools-and-queues)) and creating it again.
 - `QueueStager` with action **add** (90 % of uses) puts a ***string*** in the queue (a path, not the file).
   Set a **Queued item description** that helps operators: by default it is the item; for example `<%= File.basename(queued_item) %> <%= workflow_description %>` (variables become inputs).
 
@@ -1424,8 +1458,9 @@ A queue (FIFO with priorities) between the work and the pool fixes this.
 ![Load manager inputs: Queue and Expected_queued_item mapped to the outputs of "Add to queue"](images/practices/4.1.6/expected-queued-item.png)
 
 - ***Expected queued item is not a required input, but forgetting it in the same work order is a serious bug***: a work order processes the element of another work order ("inversion of context"), which is very hard to detect.
+- The load manager finds its element by its value: queue a value that is unique to the work order, for example a file path or a package id, not a constant.
 
-- **Set Auto-purge: On work order stop** on the queue.
+- **Set Auto-purge: On work order stop** on the queue (`lifetime` `WorkOrder` for an ad hoc queue).
   Otherwise, when someone cancels or destroys a work order, its element stays at the top of the queue, and all other work orders wait forever, even with free slots: a very common case.
   A workflow can also remove the element explicitly (`QueueStager` with action remove), for example after a wait timeout.
 
@@ -1437,7 +1472,7 @@ A queue (FIFO with priorities) between the work and the pool fixes this.
   The total weight ahead of a priority (action `list_all`) tells whether a deadline can be met, for example to send an urgent file another way.
 - *Tags* (4.0 and later, `LoadManager` only): a tag set on a queued item and on a resource makes the load manager take the first item that matches the tag of a free resource, even if it is not at the top of the queue.
 - Operators with the Scheduler group and membership of the queue can reorder, remove and pause elements from the **Queues** view or a dashboard.
-- In the **Queues** view, **Delete** deletes the queue definition; **Clear** removes its elements.
+- In the **Queues** view, **Delete** deletes the queue definition (only when the queue is empty); **Clear** removes its elements.
 
 ![A dashboard page: the pool is full (Managed Load Utilization Monitor), the next files wait in the queue with priority, weight and controls (Queue Manager)](images/practices/4.1.6/queue-and-tokens-portlet.png)
 
@@ -1448,6 +1483,27 @@ A queue (FIFO with priorities) between the work and the pool fixes this.
 - Take one resource offline (or lower its capacity) to work on one server.
 - Add a resource to a pool at any time: it is used at once.
 - After destroying work orders by hand, release their slots and remove their queue elements, or set a hold timeout and auto-purge.
+- To test the limit, start more work orders than slots at once, and poll `ascli orchestrator pools status <POOL>` (`taken` never above `capacity`) and `ascli orchestrator queues items <QUEUE>` (the other work orders wait there).
+  Observed with 4 work orders started at once and one resource of capacity 2: `taken` 2, the next elements in the queue, and all work orders ended `Complete`.
+
+#### Deleting pools and queues
+
+No REST API endpoint, no `ascli` command and no toolbox function deletes a pool or a queue (read in the source of 4.1.6).
+
+- In the GUI: the pool view (**Delete**); the **Queues** view (**Clear**, then **Delete**).
+- Without the GUI: an administrator with a shell on the Orchestrator host runs a Rails runner script as the Orchestrator user (`aspweb`), which deletes the same rows as the GUI.
+  Delete only pools and queues that no running work order uses.
+
+```shell
+cd /opt/aspera/orchestrator
+RAILS_ENV=production bundle exec rails runner - <<'EOF'
+ManagedResource.where(resource_name: "<POOL>" + ManagedResource::POOL_DELIMITER).destroy_all
+ManagedQueue.where(name: "<QUEUE>").destroy_all
+EOF
+```
+
+In the database, a pool name ends with `__a` (`ManagedResource::POOL_DELIMITER`); `ascli` and the GUI show it without.
+An agent without this access asks an administrator, or leaves the pool and the queue in place: the next work orders use them again.
 
 #### High volume
 
@@ -1691,6 +1747,8 @@ Data and configuration:
 - [ ] No constant, address or credential in steps or code: parameter sets, lookup tables, remote nodes.
 - [ ] Lookup tables have their key mapped and no empty cells.
 - [ ] Load managers in the same work order as their queue have the expected queued item mapped; queues have auto-purge on work order stop.
+- [ ] The queued value is unique to the work order (a file path, a package id).
+- [ ] Pools and queues exist before the first load, with their final capacity and auto-purge (created in the GUI, with `ascli`, or ad hoc with the same settings).
 
 Readability:
 
@@ -3587,9 +3645,10 @@ Rules of this pattern (from `ArrayFanout` and `Funnelin`, and tests):
 
 Workflow *queue* runs step *Work* for one work order at a time, in the order the work orders started:
 
-- *Enqueue* (`QueueStager`, operation `Add`): adds the runtime parameter `item` to the queue *doc test queue*, created on first use (`adhoc_queue`).
-  With `lifetime` `WorkOrder`, the items of a work order that stopped are removed from the queue.
-- *Reserve* (`LoadManager`, action `Reserve`): reserves a resource of the pool *doc test pool*, created on first use (default `is_adhoc`) with one resource of capacity 1 (`max_resources`, `resource_capacity`).
+- *Enqueue* (`QueueStager`, operation `Add`): adds the runtime parameter `item` to the queue *doc test queue*, created by the first execution if it does not exist (`adhoc_queue`): the way to create a queue without the GUI ([Queue](#queue)).
+  With `lifetime` `WorkOrder` (**Auto-purge: On work order stop**), the items of a work order that stopped are removed from the queue.
+- *Reserve* (`LoadManager`, action `Reserve`): reserves a resource of the pool *doc test pool*, created by the first reserve if it does not exist (default `is_adhoc`) with one resource of capacity 1 (`max_resources`, `resource_capacity`).
+  Create the pool before with `ascli orchestrator pools add_resource`, with the same capacity ([Resource pools](#resource-pools)): the step then uses it as is.
   With `queue_id` set to the queue, and input `Expected_queued_item` mapped to output `Queued_item` of *Enqueue*, it waits until this item is the first of the queue and a resource is free, and then removes the item from the queue.
   The value of an item identifies it: use a value that is unique to the work order, for example a file path.
 - *Work* (`CustomRuby`): 10 seconds of work; with `fail` set to `yes`, it raises an exception (`Error`).
@@ -3675,6 +3734,7 @@ Workflow *queue* runs step *Work* for one work order at a time, in the order the
 ```
 
 ```shell
+ascli orchestrator pools add_resource 'doc test pool' resource_1 --query=@json:'{"capacity":1}'   # once: fails if the resource exists
 ascli orchestrator workflows import queue.yml @json:'{"publish":true}'
 ascli orchestrator workflows start <ID> @json:'{"item":"a"}'
 ascli orchestrator workflows start <ID> @json:'{"item":"b","fail":"yes"}'
@@ -3685,6 +3745,8 @@ ascli orchestrator pools status 'doc test pool'   # taken 0, capacity 1: all rel
 
 Observed: *Reserve* waited 0 s for `a`, 15 s for `b` and 25 s for `c` (`processingTime` in `Step_information`).
 `a` and `c` end `Complete`; `b` ends `Failed`, through *Release on error*.
+Also observed with this workflow, a pool of one resource of capacity 2 (created with `ascli`, or ad hoc with `resource_capacity` 2) and 4 work orders started at once: 2 ran together, 2 waited in the queue, and all 4 ended `Complete`.
+Delete the test pool and queue afterwards: [Deleting pools and queues](#deleting-pools-and-queues).
 Generic resources are named `resource_1`, `resource_2`, ... (output `Resource_reserved`).
 
 #### Recipe: lookup table
