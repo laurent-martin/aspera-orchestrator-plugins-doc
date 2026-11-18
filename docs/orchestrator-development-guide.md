@@ -1726,11 +1726,11 @@ It uses the [plain format](#plain-format), which is the simplest to write.
       <?xml version="1.0" encoding="UTF-8"?>
       <Workflow id="0">
       <Start x="60" y="100" id="start"><Parameters></Parameters></Start>
-      <Error x="700" y="400" id="error"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Error>
-      <End x="700" y="100" id="end"><Synch_factor>0</Synch_factor><Prerequisites><Prerequisite id="step1" status="Complete"/></Prerequisites></End>
-      <Fail x="700" y="250" id="fail"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Fail>
+      <Error x="370" y="400" id="error"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Error>
+      <End x="370" y="100" id="end"><Synch_factor>0</Synch_factor><Prerequisites><Prerequisite id="step1" status="Complete"/></Prerequisites></End>
+      <Fail x="370" y="250" id="fail"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Fail>
       <Steps>
-      <Step x="350" y="80" id="step1"><Action_id>1</Action_id><Step_name>Say hello</Step_name><Step_type>CustomRuby</Step_type><Synch_factor>0</Synch_factor><Prerequisites><Prerequisite id="start" status="true"/></Prerequisites><Parameters></Parameters><Inputs></Inputs><Outputs></Outputs></Step>
+      <Step x="190" y="80" id="step1"><Action_id>1</Action_id><Step_name>Say hello</Step_name><Step_type>CustomRuby</Step_type><Synch_factor>0</Synch_factor><Prerequisites><Prerequisite id="start" status="true"/></Prerequisites><Parameters></Parameters><Inputs></Inputs><Outputs></Outputs></Step>
       </Steps>
       <Parameters></Parameters><Notes></Notes>
       </Workflow>
@@ -1985,9 +1985,9 @@ ascli orchestrator workflows check_import my_workflow.yml
 <?xml version="1.0" encoding="UTF-8"?>
 <Workflow id="0">
 <Start x="60" y="100" id="start"><Parameters></Parameters></Start>
-<Error x="700" y="400" id="error"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Error>
-<End x="700" y="100" id="end"><Synch_factor>0</Synch_factor><Prerequisites>...</Prerequisites></End>
-<Fail x="700" y="250" id="fail"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Fail>
+<Error x="370" y="400" id="error"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Error>
+<End x="370" y="100" id="end"><Synch_factor>0</Synch_factor><Prerequisites>...</Prerequisites></End>
+<Fail x="370" y="250" id="fail"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites></Fail>
 <Steps>
   <Step ...>...</Step>
 </Steps>
@@ -2016,18 +2016,31 @@ General rules:
 #### Layout
 
 The positions `x` and `y` do not change execution, but a workflow that is easy to read is easier to check and to maintain.
-A workflow written with the rules below opens in the designer as one straight line, the way the designer draws it when saved.
-They come from a workflow redrawn and saved in the designer: the numbers are the ones the designer wrote, the unit is a pixel of the canvas.
+A workflow written with the rules below opens in the designer as one compact straight line, without overlapping names.
+The unit of `x` and `y` is a pixel of the canvas of the designer at zoom 100%.
 The designer gives `x` and `y` of a node as its top left corner, and the links leave from the centre of the nodes, which is why the heights below differ.
+When a node is moved with the mouse, the designer puts it on a grid of `10` (its dotted background has a dot every `9`): the `x` below are multiples of `10`.
+
+Sizes of the nodes in the designer, from which the numbers below are made:
+
+| Node | Width x height | Name |
+| --- | --- | --- |
+| Step | `126` x `126` (`130` wide with its ports) | above the node, on one line, centred on the node when wider than it: about `6.5` per character (`Set download folder`: `121`) |
+| `Start`, `End`, `Fail`, `Error` | `80` x `80`, plus a glow of `13` at the left | none |
+| Parameter | `77` x `77` | below the node, centred |
+| Join symbol (`Synch_factor` other than `0`) | `76` x `76` | none |
 
 | Node | `x` | `y` |
 | --- | --- | --- |
 | `Start` | `60`, or `170` when parameters are linked to it | `100` (the baseline, `Y`) |
-| `End` | last step + `350` (`700` for one step) | `Y` |
+| First step | `Start` + `130`: `190`, or `300` with parameters | `Y` - `20` |
+| Next steps of the main path | previous step + `180` | `Y` - `20` |
+| `End` | last step + `180` | `Y` |
 | `Fail` | same as `End` | `Y` + `150` |
 | `Error` | same as `End` | `Y` + `300` |
-| First step | `350` | `Y` - `20` |
-| Next steps of the main path | previous step + `250` | `Y` - `20` |
+| Steps of a second row (branch) | as on the main path, `x` + `180` from the previous column | row above + `150` |
+| Join symbol before a step | the step - `100`, which takes the place of a step: the step is `280` after the previous column | the step + `14` |
+| Join symbol before `End`, `Fail` or `Error` | the node - `100` | the node - `5` |
 | Parameters linked to `Start` | `60` | `Y` + `20`, then + `100` for each next one |
 
 Rules:
@@ -2036,16 +2049,24 @@ Rules:
   Put `Start`, the steps of the main path (the `Complete` links) and `End` on the same row.
   A step is taller than the circles of `Start` and `End`: its `y` is `20` less, so that the links between them are straight and do not step up or down.
   With the same `y` for all of them, each link has a visible jog.
-- **Terminal nodes in one column**, `End` on the row, `Fail` and `Error` below it, `150` apart, at the right of the last step.
+- **Compact: a step is `180` after the previous one**, the next column of the graph.
+  A step is `126` wide, so this leaves `50` between two nodes, about `5` points of the dotted grid: enough for the link and its arrow.
+  Do not spread the graph more: with a pitch of `250`, the gaps are `120` wide and the graph is about one third longer for nothing.
+- **Long step names**: the name is shown above the node on one line, centred, about `6.5` per character.
+  With a pitch of `180`, two neighbour names of up to `24` characters each do not touch.
+  Prefer short names; for a longer name, add `10` to the pitch for each `3` characters over `24`, between this step and each of its neighbours on the row.
+  Steps of different rows do not conflict: a row is `150` below the other, and the name is above its node.
+- **Terminal nodes in one column**, `End` on the row, `Fail` and `Error` below it, `150` apart (the pitch of the rows), `180` after the last step.
   Do not draw the links to `Fail` and `Error` that Orchestrator follows by itself (see [Terminal nodes](#terminal-nodes)): the three circles stay in place, as a reminder of the possible endings.
-- **Parameters in a column at the left of `Start`**, never below it, and `100` apart: a parameter node is about `70` high, so a spacing of `60` makes them overlap.
+- **Parameters in a column at the left of `Start`**, never below it, and `100` apart: a parameter node is `77` high and its name is below it, so a spacing of `60` makes them overlap.
   Their Manhattan links join in one vertical line and enter `Start` from the left, without going around it.
-  `Start` moves to the right only when it has parameters: `x` `170` instead of `60`, so that the column and the links fit at its left.
-  The steps and the terminal nodes keep the same positions with or without parameters.
-- **Branches and alternatives**: keep the success path on the row, and put the other steps below it, in the same column as the step they replace, `150` apart.
+  `Start` moves to the right only when it has parameters: `x` `170` instead of `60`, so that the column and the links fit at its left; the steps and the terminal nodes move `110` to the right with it.
+  A parameter name is centred below the node: a name of more than about `17` characters reaches the vertical line of the links (still readable).
+- **Branches and alternatives**: keep the success path on the row, and put the other steps on a second row `150` below it, in the same column as the step they replace, or in the next column, `180` apart as on the main path.
   Several steps that start at the same time go in one column, `150` apart, around the row.
-- **A step is at least `250` after the previous one**: a step is about `115` wide, which leaves room for the link and its arrow.
-- **Join symbols** (`Synch_factor` other than `0`): at the middle of the link, between the last of the prerequisites and the node (see [Prerequisites and branches](#prerequisites-and-branches)).
+- **Join symbols** (`Synch_factor` other than `0`): just before the node, between the last of the prerequisites and the node (see [Prerequisites and branches](#prerequisites-and-branches)).
+  The symbol takes the place of a step in the row: at `x` - `100` of the node, `24` before it, and the node is `280` after the previous column.
+  Its `y` (`y` of the step + `14`, `y` of `End` - `5`) puts its ports on the line of the node: the link of the row stays straight.
 - **Links**: use the Manhattan style, which is the default, for the links of the main path and for the parameter links (they join in one vertical line).
   Use a Bezier curve mainly for the `Failed` and `Error` exits of a step that you draw, in the cases where a Manhattan line would cross a step or hide another link, for example from a step to `Fail` or `Error`, or to a recovery step below the row.
   Give all the exits of one step the same style (see [Prerequisites and branches](#prerequisites-and-branches)).
@@ -2054,12 +2075,22 @@ Example: a workflow with one step and two runtime parameters.
 
 ```xml
 <Start x="170" y="100" id="start"><Synch_factor>0</Synch_factor><Prerequisites></Prerequisites><Parameters><Parameter id="p_function"/><Parameter id="p_args"/></Parameters></Start>
-<Step x="350" y="80" id="s_toolbox">...</Step>
-<End x="700" y="100" id="end">...</End>
-<Fail x="700" y="250" id="fail">...</Fail>
-<Error x="700" y="400" id="error">...</Error>
+<Step x="300" y="80" id="s_toolbox">...</Step>
+<End x="480" y="100" id="end">...</End>
+<Fail x="480" y="250" id="fail">...</Fail>
+<Error x="480" y="400" id="error">...</Error>
 <Parameter x="60" y="120" id="p_function">...</Parameter>
 <Parameter x="60" y="220" id="p_args">...</Parameter>
+```
+
+Example: the main row of a longer workflow, with a join symbol (`1`, OR) after an alternative branch on a second row.
+
+```xml
+<Step x="300" y="80" id="s_watch">...</Step>
+<Step x="480" y="80" id="s_check">...</Step>
+<Step x="660" y="230" id="s_ask">...</Step>        <!-- second row: Failed exit of s_check -->
+<Step x="940" y="80" id="s_merge">...<Synch_factor x="840" y="94">1</Synch_factor>...</Step>
+<End x="1120" y="100" id="end">...</End>
 ```
 
 #### Terminal nodes
@@ -3908,7 +3939,7 @@ Graph:
 - Join nodes after mutually exclusive / alternative branches have `Synch_factor` 1; join nodes after concurrent parallel nominal branches have `Synch_factor` 0.
 - Each `Synch_factor` other than `0` has attributes `x` and `y`, else the designer shows an empty canvas.
 - Each `router`, when present, is one of the four `draw2d.*ConnectionRouter` values: Manhattan on the main path and on parameter links, Bezier mainly on the `Failed` and `Error` exits of a step when a Manhattan line would cross a step.
-- Layout as in [Layout](#layout): one row for `Start`, the main path and `End` (steps `20` above the row), terminal nodes in a column, parameters in a column at the left of `Start`, `100` apart.
+- Layout as in [Layout](#layout): compact, one row for `Start`, the main path and `End` (steps `20` above the row), each step `180` after the previous one (more only for names over `24` characters), `End` `180` after the last step, `Fail` and `Error` below it and rows `150` apart, parameters in a column at the left of `Start`, `100` apart.
 - Retry settings (`Error_*`, `Failed_*`) only on steps that have an outgoing branch with that status.
 
 ### Known issues
