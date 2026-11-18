@@ -366,7 +366,7 @@ For each task, take the first option that does the job:
 | Order | Step | Example: transcode a file with `ffmpeg` |
 | ----- | ---- | ---------------------------------------- |
 | 1 | The dedicated plugin, when one exists (see [Plugin specifications](#plugin-specifications)) | **FFMPEG transcoding** (`FfmpgTranscoding`): input and output paths, options, execution node |
-| 2 | A generic plugin: **Local execution** (`LocalExecution`) on Orchestrator, **Remote execution** (`RemoteExecution`) or **Async Remote Execution** (`AsyncRemoteExecution`) on another host, REST or SOAP request, file operations | `LocalExecution` (or `RemoteExecution`) with the command `ffmpeg -i <%= source %> <%= options %> <%= target %>`, when the plugin is not installed or lacks an option |
+| 2 | A generic plugin: **Local execution** (`LocalExecution`) on Orchestrator, **Remote execution** (`RemoteExecution`) or **Async Remote Execution** (`AsyncRemoteExecution`) on another host, REST or SOAP request, file operations | `RemoteExecution` with the command `ffmpeg -i <%= source %> <%= options %> <%= target %>`, when the plugin is not installed or lacks an option; `LocalExecution` only with a script of the scripts folder (see below) |
 | 3 | `CustomRuby`: logic that no plugin provides (see [Custom code](#custom-code)) | Never: `CustomRuby` must not run a command |
 
 Why this order:
@@ -380,6 +380,10 @@ Before writing a step, list the plugins of the task (`ascli orchestrator plugins
 A plugin with an attribute `execution_node` (widget `remote_node`), such as **FFMPEG transcoding**, always runs its command over SSH on that remote node: it has no local mode, and a blank `execution_node` fails *(4.1.6, read in the source)*.
 To run it on the Orchestrator host itself, use a remote node of type SSH whose address is that host (often named `localhost`): list the remote nodes with the toolbox function `list_remote_nodes`, check one with `test_remote_node` (see [Optional extensions for AI assistants](#optional-extensions-for-ai-assistants)), and give its name in `execution_node`.
 Choose the generic `LocalExecution` only when no such remote node exists and none can be created.
+
+`LocalExecution` runs only executables of the scripts folder of Orchestrator, `/opt/aspera/orchestrator/scripts/`: the first word of `command` is joined to that folder, and any other program fails with "Executable ... is not installed in executable directory" *(4.1.6, read in the source)*.
+It also splits `command` on spaces, with no quoting: a path with a space (such as the folder `PKG - <TITLE>` of a Faspex package) becomes several arguments.
+To run `ffmpeg` or another installed program, use the dedicated plugin or `RemoteExecution` on a remote node; adding a script to the scripts folder is a change of the server, to agree with its administrator.
 
 #### Automation levels
 
