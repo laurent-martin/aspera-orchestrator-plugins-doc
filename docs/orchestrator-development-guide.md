@@ -768,6 +768,7 @@ Where a secret is stored and displayed depends on how it reaches the step: see [
 - Pass the secret in the JSON body of `POST api/initiate`, never in the URL: the access log of the web server records the URL.
   `ascli orchestrator workflows start` sends the parameters in the body.
   Do not type the secret on the command line (shell history, process list): read the parameters from a file, or from an environment variable, with `@json:@file:<PARAMS_FILE>` or `@json:@env:<VARIABLE>`.
+  Better, keep the secret in the `ascli` vault and refer to it from the file: see [Secret given at run time](#secret-given-at-run-time).
 - Do not put a secret in an output, in `@status_details`, in an exception message or in a log (`Rails.logger`, `puts`).
   Outputs are returned by the API, and the status details of a step are in its output `Step_information`.
 - Do not count on masking to protect a secret: the web UI masks values only according to their type and name, and the API does not mask.
@@ -2945,6 +2946,18 @@ Errors are returned with the exception message and stack trace in the response b
 | `publish_workflow` | no | `true` or `1`: publish after import. The server option `publish_api_imported_workflow` sets the default. |
 
 Response: the new workflow as JSON (`{"workflow": {"id": ..., "name": ..., ...}}`), in both formats.
+To keep the secret out of the file, store it in the `ascli` vault, and write in the file a vault reference closed by `@`: `{"db_password":"@vault:<LABEL>.password@"}`.
+The same applies to any `ascli` parameter file, for example the `recipients` of `faspex5 packages send`.
+Add `@extend:`, which evaluates the references in the text read from the file:
+
+```shell
+ascli orchestrator workflows start <WORKFLOW_ID> @json:@extend:@file:<PARAMS_FILE>
+```
+
+- `@json:@file:` alone does not evaluate values inside the JSON, and a reference without the closing `@` is not evaluated either: the value sent is the text `@vault:...`.
+- `ascli` before 4.30.0 does not decode `@file:` after `@extend:` (error `unexpected character: '@file:...'`): give the content instead, `@json:@extend:"$(cat <PARAMS_FILE>)"`.
+- Check the result before use with `ascli config echo @json:@extend:@file:<PARAMS_FILE>`: values from the vault are shown as `***`.
+
 Other responses with status 200:
 
 - `{"plugins": [...], "missing_deps": [...]}`: plugins that could not be enabled; nothing is imported.
