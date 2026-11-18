@@ -377,6 +377,10 @@ Why this order:
 
 Before writing a step, list the plugins of the task (`ascli orchestrator plugins spec toc`) and read the specification of the candidate (`ascli orchestrator plugins spec show <PLUGIN>`).
 
+A plugin with an attribute `execution_node` (widget `remote_node`), such as **FFMPEG transcoding**, always runs its command over SSH on that remote node: it has no local mode, and a blank `execution_node` fails *(4.1.6, read in the source)*.
+To run it on the Orchestrator host itself, use a remote node of type SSH whose address is that host (often named `localhost`): list the remote nodes with the toolbox function `list_remote_nodes`, check one with `test_remote_node` (see [Optional extensions for AI assistants](#optional-extensions-for-ai-assistants)), and give its name in `execution_node`.
+Choose the generic `LocalExecution` only when no such remote node exists and none can be created.
+
 #### Automation levels
 
 | Level | Description | Started by |
@@ -1746,6 +1750,8 @@ ascli config preset set default orchestrator orch
 `@secret:` asks for the password on the terminal, so that it stays out of the shell history (see [Using secrets](#using-secrets)).
 Option `--auth_style` chooses how `ascli` authenticates.
 The default, `token`, calls `api/login`, which answers with status 403 when **Use Secure JWT API Auth** is not set (see [REST API](#rest-api)): `ascli` then stops with an authentication error, and the preset needs `--auth_style=basic`.
+The other way round, when the option is set (the default), `basic` and `query` get status 401 Unauthorized: use `token`.
+To check a preset, run `ascli orchestrator workflows list`; to fix it, `ascli config preset set <PRESET> auth_style token`.
 
 ```shell
 ascli orchestrator workflows check_import hello.yml    # no server needed: prints "no problem found"
