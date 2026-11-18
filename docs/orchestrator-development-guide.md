@@ -2922,6 +2922,16 @@ Use `Map to the existing Global Template` to keep the existing template, or `Cre
 Response: the workflow as JSON.
 The workflow is not published.
 
+The file must be writable by the Orchestrator user, `aspweb`: for a file in [plain format](#plain-format), the import rewrites it in place in the current format before loading it *(4.1.6, read in the source: `lib/compatibility/workflow_yml_updater.rb`, line 36, called by `ImportExporter.import_new`)*.
+A `.wkf` file is extracted in a folder next to it, and its workflow file is rewritten there.
+Observed on 4.1.6: a file copied as `root` fails with "workflow_yml_updater.rb:36:in 'File#initialize': Permission denied @ rb_sysopen - <RUN_DIR>/workflows/import/<FILE>".
+Copy the file, then give it to `aspweb`:
+
+```shell
+scp <FILE> root@<HOST>:<RUN_DIR>/workflows/import/
+ssh root@<HOST> chown aspweb: <RUN_DIR>/workflows/import/<FILE>
+```
+
 #### initiate
 
 `POST api/initiate?format=json`, JSON body `{"workflow_id": <ID>, "external_parameters": {"<NAME>": <VALUE>, ...}}`.
@@ -2961,7 +2971,7 @@ A JSON array as value fails with status 500 ("undefined method 'gsub' for an ins
 | Check a file, with no server | `ascli orchestrator workflows check_import <FILE>` |
 | Import | `ascli orchestrator workflows import <FILE>`; with `@json:'{"publish":true}'` after the file, it also publishes |
 | Find the constraints of a file on the server | `ascli orchestrator workflows find_constraints <SERVER_PATH> [<ID>]`, before `import_with_constraints` |
-| Import with constraints, or as a revision | `ascli orchestrator workflows import_with_constraints @json:'{"filename":"<SERVER_PATH>","add_as_revision":<ID>}'` |
+| Import with constraints, or as a revision | `ascli orchestrator workflows import_with_constraints @json:'{"filename":"<SERVER_PATH>","add_as_revision":<ID>}'`; the file must be writable by `aspweb` (see [import_with_constraints](#import_with_constraints)) |
 | Export | `ascli orchestrator workflows export <ID> --out.file=<FILE>` |
 | Export with dependencies (`.wkf`) | `ascli orchestrator workflows export <ID> @json:'{"dependencies":true}' --to-folder=<FOLDER>` |
 | Publish | `ascli orchestrator workflows publish <ID>` |
@@ -3840,6 +3850,7 @@ To add a revision to an existing workflow, the file must be on the Orchestrator 
 1. Have the file on the server.
    `import_workflow` stores each uploaded file in `<RUN_DIR>/workflows/import/<IMPORT_FILE_NAME>` (for example `/opt/aspera/orchestrator/var/run/orchestrator/workflows/import/`), but also imports it as a new workflow.
    Upload it with `publish_workflow` set to `false`, so that this copy is not published, and delete the copy in the user interface.
+   Or copy it with `scp <FILE> root@<HOST>:<RUN_DIR>/workflows/import/`, then `ssh root@<HOST> chown aspweb: <RUN_DIR>/workflows/import/<FILE>`: the file must be writable by `aspweb`, because the import rewrites it in place (see [import_with_constraints](#import_with_constraints)).
 2. Call `import_with_constraints` with the path of the file and the id of the workflow to update (see [import_with_constraints](#import_with_constraints)).
    The response is the workflow; its last revision is the imported one.
 3. Publish the workflow: the new revision becomes the running one.
