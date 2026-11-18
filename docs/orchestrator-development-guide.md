@@ -2978,15 +2978,15 @@ A JSON array as value fails with status 500 ("undefined method 'gsub' for an ins
 | Inputs, outputs | `ascli orchestrator workflows inputs <ID>`, `ascli orchestrator workflows outputs <ID>` |
 | Start | `ascli orchestrator workflows start <ID> [<PARAMETERS>] [<EXECUTION>]`, where execution is `{"synchronous":true}` or `{"step":"<STEP_NAME>","variable":"<OUTPUT_NAME>"}` |
 | Work orders of a workflow | `ascli orchestrator workflows workorders <ID>` |
-
-`ascli` and the REST API have no operation for folders (create, rename, move, delete), for moving or deleting a workflow, or for remote nodes.
-The optional toolbox workflow does them: see [Optional extensions for AI assistants](#optional-extensions-for-ai-assistants).
 | Work step | `ascli orchestrator workstep status <WORK_STEP_ID>`: status, inputs and outputs |
 | Work order | `ascli orchestrator workorders status <ID>`, `ascli orchestrator workorders output <ID>`, `ascli orchestrator workorders cancel <ID>` |
 | Journal, monitors, queues, resource pools | `ascli orchestrator journal files <BOOK>`, `ascli orchestrator monitors list <TYPE>`, `ascli orchestrator queues list`, `ascli orchestrator pools status <NAME>` |
 | Specification of a plugin, with no server | `ascli orchestrator plugins spec toc` lists the plugins, `ascli orchestrator plugins spec show <PLUGIN_CLASS>` shows one, then `attributes`, `inputs` or `outputs` |
 | Read this guide, with no server (`ascli` 4.29 or later) | `ascli orchestrator workflows development guide toc` lists the sections and their anchors, `ascli orchestrator workflows development guide section <ANCHOR>` shows one |
 | Query parameters of an API call | `--query=@json:'{...}'`; `--query=help` lists them, from the OpenAPI description |
+
+`ascli` and the REST API have no operation for folders (create, rename, move, delete), for moving or deleting a workflow, or for remote nodes.
+The optional toolbox workflow does them: see [Optional extensions for AI assistants](#optional-extensions-for-ai-assistants).
 
 ### Inline validation
 
