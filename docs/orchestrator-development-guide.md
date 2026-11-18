@@ -320,7 +320,8 @@ The most important rules, each detailed later:
 7. Centralize configuration in templates (stored parameter set, lookup table, remote nodes); never hard-code values in steps or in Ruby code ([Configuration](#configuration)).
 8. Exactly one step between a fan-out and its funnel-in: use a sub-workflow for more ([Fan-out and funnel-in](#fan-out-and-funnel-in)).
 9. Make every outcome readable: work order label, exit status messages, journals ([Meaningful status](#meaningful-status)).
-10. Use `CustomRuby` only when no plugin does the job, or when it saves many steps ([Custom code](#custom-code)).
+10. Choose the step in this order: the dedicated plugin (for example **FFMPEG transcoding** for `ffmpeg`), then a generic plugin (**Local execution**, **Remote execution**, REST request, file operations), and `CustomRuby` last, only when no plugin does the job, or when it saves many steps.
+    Never run a command from `CustomRuby` ([Choosing the step](#choosing-the-step), [Custom code](#custom-code)).
 11. Between the allocation and the release of a resource, put one step or one sub-workflow, and release on every exit ([Resource management](#resource-management)).
 12. When a load manager and its queue are in the same work order, map the **Expected queued item** ([Queue](#queue)).
 13. Test each block alone, and test after each change ([Testing](#testing)).
@@ -349,7 +350,7 @@ That sentence is not enough to build the workflow.
 - Plan the clean-up: move or delete detected files and temporary folders, or the file system fills up.
 - Check the network layout: where the remote systems are (safe zone, DMZ, cloud), which side opens connections, which ports, Windows or Linux (paths).
   Triggers poll from Orchestrator: the watched system must be reachable from Orchestrator.
-- Identify third-party interfaces early: existing plugin, generic REST or SOAP request, remote command, or Ruby code.
+- Identify third-party interfaces early, in this order of preference: existing plugin, generic REST or SOAP request, local or remote command, Ruby code (see [Choosing the step](#choosing-the-step)).
 - Run heavy processing on dedicated machines, not on Orchestrator or on transfer servers: Orchestrator coordinates.
 - Do not over-engineer: if 10 transfers happen per day, no queue or resource pool is needed.
 - Do not use Orchestrator only to start scripts: write the logic as a workflow, so that it is visible, monitored and restartable.
@@ -357,6 +358,24 @@ That sentence is not enough to build the workflow.
 Most integrations need few plugins.
 With the generic plugins (REST request, SOAP request, database query, local and remote command execution, file operations) you can do almost everything.
 The other plugins wrap the same techniques with a simpler interface.
+
+#### Choosing the step
+
+For each task, take the first option that does the job:
+
+| Order | Step | Example: transcode a file with `ffmpeg` |
+| ----- | ---- | ---------------------------------------- |
+| 1 | The dedicated plugin, when one exists (see [Plugin specifications](#plugin-specifications)) | **FFMPEG transcoding** (`FfmpgTranscoding`): input and output paths, options, execution node |
+| 2 | A generic plugin: **Local execution** (`LocalExecution`) on Orchestrator, **Remote execution** (`RemoteExecution`) or **Async Remote Execution** (`AsyncRemoteExecution`) on another host, REST or SOAP request, file operations | `LocalExecution` (or `RemoteExecution`) with the command `ffmpeg -i <%= source %> <%= options %> <%= target %>`, when the plugin is not installed or lacks an option |
+| 3 | `CustomRuby`: logic that no plugin provides (see [Custom code](#custom-code)) | Never: `CustomRuby` must not run a command |
+
+Why this order:
+
+- A dedicated plugin shows its settings in the designer, checks its inputs, reports errors and progress, and is supported by Aspera.
+- An execution step shows the command, its output and its exit code in the work order, and can run on another host (heavy processing does not belong on Orchestrator).
+- A command run from Ruby (`system`, backticks, `Open3`, `IO.popen`) hides the command, its output and its exit code, holds a worker, and gives no timeout.
+
+Before writing a step, list the plugins of the task (`ascli orchestrator plugins spec toc`) and read the specification of the candidate (`ascli orchestrator plugins spec show <PLUGIN>`).
 
 #### Automation levels
 
@@ -1256,6 +1275,7 @@ When to use it:
 
 When not to:
 
+- to run a command or a program (`system`, backticks, `Open3`, `IO.popen`, `spawn`): use the dedicated plugin, or `LocalExecution` / `RemoteExecution` (see [Choosing the step](#choosing-the-step)).
 - to merge two standard steps: standard steps are readable, and their bugs are fixed by Aspera support.
 - for constants: use a [configuration](#configuration) step.
 - to parse JSON or build payloads: `CollectionManager`, `RestRequest` output processing, `FileGenerator`.
