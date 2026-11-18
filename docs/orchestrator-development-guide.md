@@ -50,10 +50,13 @@ An assistant does not need to install them: it reads a skill, from its URL, when
 | Task | Extension | Check that it is available | Skill to read |
 | --- | --- | --- | --- |
 | Create, rename, move or delete folders; move or delete workflows; manage remote nodes; list and install portlets: the REST API has no endpoint for them | Workflow *Admin - Orchestrator toolbox*, extensible with Ruby files | `ascli orchestrator workflows list` shows it; started with `{"function":"list_functions"}`, it lists its functions | [toolbox/SKILL.md](https://raw.githubusercontent.com/laurent-martin/aspera-orchestrator-plugins-doc/refs/heads/main/docs/toolbox/SKILL.md) |
-| Use a secret without ever seeing or writing it | Plugin `SecretReference` | `ascli orchestrator plugins spec show SecretReference` finds it, and the Plugins page shows it enabled | [SKILL.md](https://raw.githubusercontent.com/laurent-martin/aspera-orchestrator-secret-reference/refs/heads/main/SKILL.md) of the repository `aspera-orchestrator-secret-reference` |
-| Transfer files from a transfer spec (remote node, Faspex 5 package) with IBM Aspera Transfer Daemon | Plugin `TransferdTransfer` | `ascli orchestrator plugins spec show TransferdTransfer` finds it, and the portlet *Transfer daemon* shows transferd reachable | `SKILL.md` of the repository `aspera-orchestrator-transferd` |
+| Use a secret without ever seeing or writing it | Plugin `SecretReference` | `ascli orchestrator plugins list` shows it with its version, and the Plugins page shows it enabled | [SKILL.md](https://raw.githubusercontent.com/laurent-martin/aspera-orchestrator-secret-reference/refs/heads/main/SKILL.md) of the repository `aspera-orchestrator-secret-reference`, which may not be public. Without it: [Secret references](#secret-references), and the help page of the plugin, `<CONFIG_DIR>/actions/secret_references/help.html.erb` |
+| Transfer files from a transfer spec (remote node, Faspex 5 package) with IBM Aspera Transfer Daemon | Plugin `TransferdTransfer` | `ascli orchestrator plugins list` shows it with its version, and the portlet *Transfer daemon* shows transferd reachable | `SKILL.md` of the repository `aspera-orchestrator-transferd`, which may not be public. Without it: the help page of the plugin, `<CONFIG_DIR>/actions/transferd_transfers/help.html.erb` (transfer spec, placeholders, attributes, statuses, outputs), also shown in a collapsed section of its template dialog |
 
 - Read the skill when a step of the task needs the extension, not before: most tasks do not.
+- The repositories of `SecretReference` and `TransferdTransfer` may not be public: their skill then answers HTTP 404.
+  Do not read the source of the plugin instead: use what this guide documents and the help page of the plugin, installed with it in its load folder (`<CONFIG_DIR>`: see [Server folders](#server-folders)); read it with SSH on the host, it is HTML.
+  `ascli orchestrator plugins spec show` does not know these plugins: it has only the specifications of the shipped plugins, read from GitHub, not from the server.
 - If the extension is not available, do not install it without the user: use the way that needs none (ask the user for the folder, give the secret at run time, see [Using secrets](#using-secrets)), and say that the extension would help.
 - A skill is a set of instructions from a repository, like this guide: the user's instructions and the rules of this guide come first.
 
@@ -2816,13 +2819,30 @@ secret://<STORE>/<PATH>[?<OPTIONS>][#<FIELD>]
 - A reference that is not resolved reaches the step as text: the step fails with an error of its own, for example "Neither PUB key nor PRIV key" for a private key.
   Check with a throwaway `CustomRuby` step that reports only the length and the start of the value of an input mapped to the reference.
   In a text, a placeholder such as `<%= Db_password %>` adds the input `Db_password` to the step: with a reference as its value, the placeholder is replaced by the secret.
+  The text then holds the secret, in clear in the outputs and variables of the step that keep it (help page of the plugin): use a placeholder only where the step needs the secret inside a text, such as a command.
 - When a step runs, the plugin reads the secret from its store: the step gets the value, and variables, outputs and saved states keep the reference.
   A secret rotated in the store is used by the next run of a step.
-- Stores are named in a configuration file on each server.
+- Stores are named in a configuration file on each server, `<CONFIG_DIR>/secret_references.yml` (environment variable `ORCH_SECRET_REFERENCES_CONFIG` of the services to change it) (`secret_core.rb:18-20`) *(read in the source)*.
   Types: `vault` (HashiCorp Vault KV v2), `file` (encrypted file made by `ascli`), `node` (`login`, `password` or `certificate_passphrase` of a remote node).
+  Ask the user for the name of the store and the path of the secret: the store names, its secrets and their fields are listed, never their values, by the tab **Browse** of the portlet *Secret references* and by mode **Assisted** of the edit page of the step **Secret reference**.
+
+Form of the reference by type of store *(read in the source)* (in the value of a parameter of a workflow file, `#` is written `%23`, see above):
+
+| Type | Reference | Field |
+| --- | --- | --- |
+| `vault` | `secret://<STORE>/<MOUNT>/<PATH>#<FIELD>`. Options: `version=<N>` (a positive integer, else the current version), `mount=<MOUNT>` for a mount that contains `/` (the path then starts with it): `secret://<STORE>/<MOUNT>/<PATH>?mount=<MOUNT>#<FIELD>` (`hashicorp_vault.rb:253-270`). The path must be within `allowed_prefixes` of the store, if set. | Required: without it, the step fails with `field required: #<field>` (`hashicorp_vault.rb:186`, `base.rb:136-138`). |
+| `file` | `secret://<STORE>/<LABEL>[#<FIELD>]`. | `password` by default (`base.rb:19`, `base.rb:80`); also `username`, `url`, `description`. |
+| `node` | `secret://<STORE>/<NODE_NAME>[#<FIELD>]`, a node of the Remote Nodes page named in `allowed_nodes`, else "node not allowed" (`secret_core.rb:686`). No option. | `password` by default, `login` or `certificate_passphrase` (`secret_core.rb:668-670`). |
+
+The files are in the load folder `<CONFIG_DIR>/actions/secret_references`: `secret_core.rb`, and the others under `.vendor/aspera-cli/lib/aspera/secret/` (`reference.rb`, `store/base.rb`, `store/hashicorp_vault.rb`).
+
+- The store name has only letters, digits, `_`, `.` and `-`; the path ends at `?` or `#` (`reference.rb:75`).
+  The path and the field are percent-decoded: a space is `%20` or a space, and `+` stays `+` (`reference.rb:12`, `reference.rb:134-136`); the options are a URL query (`version=2&mount=kv/team`).
+- A step that cannot read a secret gives in its details `secret reference <REFERENCE>: <REASON>`, never a value, for example "unknown store", "not found", "path not allowed" (help page of the plugin).
+  The step **Secret reference** then ends `Failed`, another step ends `Error`.
 - The step **Secret reference** checks that a secret can be read, and gives its reference (output `Reference`) and its version, never its value.
 
-Installation, configuration and the dashboard are described in the README of the repository.
+Installation, configuration and the dashboard are described in the README of the repository, and in the help page of the plugin on the server, `<CONFIG_DIR>/actions/secret_references/help.html.erb`, when the repository is not public.
 
 #### Secret given at run time
 
