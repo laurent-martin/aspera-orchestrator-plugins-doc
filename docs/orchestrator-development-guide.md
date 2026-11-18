@@ -662,6 +662,7 @@ They are needed mostly between a single value and a list: a watcher returns a pa
   Produce a new output.
 - In a fixed runtime value of a step input, avoid backslashes, quotes and double underscores (`test__1.xml`): put such a value in a `MassParameterSetter` and map it.
 - Lookup tables return strings, unless typed outputs are enabled ([Lookup table](#lookup-table)).
+- `XmlParsing` returns a list for each XPath, written as text (`["MP4"]`) with type `string`: take the first element ([XmlParsing](#xmlparsing)).
 
 #### Keep data small
 
@@ -1259,7 +1260,7 @@ Pitfalls:
 - With **Continue monitoring**, `RestRequest` is a REST watcher: set a record id.
 - File uploads (`curl -F`) are not supported: use `RemoteExecution` with `curl`.
 - `CollectionManager` converts a JSON string into a hash and extracts elements (one level per step in 4.0).
-- `XmlParsing` extracts values with XPath.
+- `XmlParsing` extracts values with XPath: each output is a list, also with type `string` (see [XmlParsing](#xmlparsing)).
 
 Other helpers:
 
@@ -2604,6 +2605,34 @@ Example: the step has input `Profile`, and outputs `FFMPEG Options` and `Target 
       parameters_associations: "Profile:::FFMPEG Options:::Target Extension\r\nMP4:::-vf scale=1280:720:::mp4\r\nXDCAM HD422:::-target pal-dvd -aspect 16:9:::avi"
 ```
 
+#### XmlParsing
+
+**XML parsing** (`XmlParsing`) reads an XML document and gives one output per XPath expression.
+
+| Attribute | Content |
+| --- | --- |
+| `xml_file_path` | Path of the XML file on the Orchestrator host. Blank: becomes input `xml_file_path`. |
+| `accept_xml_as_string`, `xml_file_as_string` | Read the XML from text instead of a file. Blank text: becomes input `xml_file_as_string`. |
+| `parameters` | The outputs: a map of output name to XPath and type, for example `{'profile'=>['//Asset/Profile/text()','string']}`. The type is `string`, `int`, `flag` or `array`. |
+
+Each XPath gives the list of the texts of all the matching nodes, and the type then converts that list *(4.1.6, read in the source: `xml_parsing.rb`, lines 66-101)*:
+
+| Type | Output |
+| --- | --- |
+| `array` | The list, for example `["MP4"]`. |
+| `string` | The list written as text (Ruby `to_s`): `["MP4"]`, not `MP4`. No match gives `[]`. |
+| `int` | The first element, as an integer. |
+| `flag` | No value (`nil`): the conversion calls a method that strings do not have. |
+
+- The plugin has no option to return only the first match *(4.1.6, read in the source)*.
+- An XPath that returns a value instead of nodes, such as `string(//Profile)` or `count(//Asset)`, makes the whole step fail; the parsing error is only in the Orchestrator log *(4.1.6, read in the source)*.
+
+Observed on 4.1.6: a `string` output `profile` mapped to the input `Profile` of a [`SimpleParameterLookup`](#simpleparameterlookup) is `["MP4"]`, so no row matches, even for a valid profile, and the lookup ends with `Failed`.
+Take the first element in the input of the next step, with pre-processing:
+
+- Type `string`: `input_value = (JSON.parse(input_value).first rescue input_value).to_s.strip` (observed on 4.1.6).
+- Type `array`: `input_value = Array(input_value).first.to_s.strip`.
+
 #### Faspex5InboxWatcher
 
 Waits for packages in a Faspex 5 mailbox.
@@ -3601,6 +3630,7 @@ ascli orchestrator workflows start <ID> @json:'{"profile":"AUDIO_HQ"}' @json:'{"
 - `AUDIO_HQ` matches the row `/^AUDIO/`, a regular expression.
 - With `{}`, `profile` has its default value `MP4`.
 - `PRORES` matches no row: *Profile settings* ends with `Failed` ("No configuration match for data set: Profile:PRORES"), and the work order goes to `Fail`.
+- A key read with `XmlParsing` is a list, such as `["MP4"]`, and matches no row: take its first element in the input (see [XmlParsing](#xmlparsing)).
 
 #### Recipe: operator decision
 
