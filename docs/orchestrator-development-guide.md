@@ -2969,6 +2969,18 @@ Start it with the parameters read from a file that only its owner can read (`chm
 ascli orchestrator workflows start <WORKFLOW_ID> @json:@file:<PARAMS_FILE>
 ```
 
+To keep the secret out of the file, store it in the `ascli` vault, and write in the file a vault reference closed by `@`: `{"db_password":"@vault:<LABEL>.password@"}`.
+The same applies to any `ascli` parameter file, for example the `recipients` of `faspex5 packages send`.
+Add `@extend:`, which evaluates the references in the text read from the file:
+
+```shell
+ascli orchestrator workflows start <WORKFLOW_ID> @json:@extend:@file:<PARAMS_FILE>
+```
+
+- `@json:@file:` alone does not evaluate values inside the JSON, and a reference without the closing `@` is not evaluated either: the value sent is the text `@vault:...`.
+- `ascli` before 4.30.0 does not decode `@file:` after `@extend:` (error `unexpected character: '@file:...'`): give the content instead, `@json:@extend:"$(cat <PARAMS_FILE>)"`.
+- Check the result before use with `ascli config echo @json:@extend:@file:<PARAMS_FILE>`: values from the vault are shown as `***`.
+
 ### REST API
 
 Base URL: `https://<HOST>/aspera/orchestrator/api/`.
@@ -3004,18 +3016,6 @@ Errors are returned with the exception message and stack trace in the response b
 | `publish_workflow` | no | `true` or `1`: publish after import. The server option `publish_api_imported_workflow` sets the default. |
 
 Response: the new workflow as JSON (`{"workflow": {"id": ..., "name": ..., ...}}`), in both formats.
-To keep the secret out of the file, store it in the `ascli` vault, and write in the file a vault reference closed by `@`: `{"db_password":"@vault:<LABEL>.password@"}`.
-The same applies to any `ascli` parameter file, for example the `recipients` of `faspex5 packages send`.
-Add `@extend:`, which evaluates the references in the text read from the file:
-
-```shell
-ascli orchestrator workflows start <WORKFLOW_ID> @json:@extend:@file:<PARAMS_FILE>
-```
-
-- `@json:@file:` alone does not evaluate values inside the JSON, and a reference without the closing `@` is not evaluated either: the value sent is the text `@vault:...`.
-- `ascli` before 4.30.0 does not decode `@file:` after `@extend:` (error `unexpected character: '@file:...'`): give the content instead, `@json:@extend:"$(cat <PARAMS_FILE>)"`.
-- Check the result before use with `ascli config echo @json:@extend:@file:<PARAMS_FILE>`: values from the vault are shown as `***`.
-
 Other responses with status 200:
 
 - `{"plugins": [...], "missing_deps": [...]}`: plugins that could not be enabled; nothing is imported.
